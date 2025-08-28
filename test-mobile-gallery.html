@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Gallery Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .test-panel {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        
+        .test-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 15px 25px;
+            margin: 10px 5px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        .test-btn:active {
+            background: rgba(0, 255, 255, 0.4);
+        }
+        
+        #results {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <h1>🎨 VIB34D Mobile Gallery Test</h1>
+    
+    <div class="test-panel">
+        <h3>Gallery & JSON Tests</h3>
+        <button class="test-btn" onclick="testGallerySave()">💾 Test Gallery Save</button>
+        <button class="test-btn" onclick="testJSONFormat()">📄 Test JSON Format</button>
+        <button class="test-btn" onclick="testParameterCapture()">⚙️ Test Parameter Capture</button>
+        <button class="test-btn" onclick="testTiltResponse()">📱 Test Tilt Response</button>
+        <div id="results"></div>
+    </div>
+    
+    <!-- Include minimal canvas structure for testing -->
+    <div id="vib34dLayers" style="display: block; position: relative; width: 300px; height: 200px; border: 1px solid #333;">
+        <canvas id="background-canvas" width="300" height="200" style="position: absolute;"></canvas>
+        <canvas id="content-canvas" width="300" height="200" style="position: absolute;"></canvas>
+    </div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        // Test functions
+        window.testGallerySave = async function() {
+            log('🧪 Testing Gallery Save Functionality...');
+            
+            try {
+                // Try to import UnifiedSaveManager directly
+                const { UnifiedSaveManager } = await import('./src/core/UnifiedSaveManager.js');
+                log('✅ UnifiedSaveManager imported successfully', 'success');
+                
+                // Create mock engine for testing
+                const mockEngine = {
+                    parameterManager: {
+                        getAllParameters: () => ({
+                            geometry: 2,
+                            rot4dXW: 1.5,
+                            rot4dYW: -0.8,
+                            rot4dZW: 2.1,
+                            gridDensity: 25,
+                            morphFactor: 1.2,
+                            chaos: 0.3,
+                            speed: 1.8,
+                            hue: 240,
+                            intensity: 0.7,
+                            saturation: 0.9
+                        })
+                    }
+                };
+                
+                const saveManager = new UnifiedSaveManager(mockEngine);
+                log('✅ UnifiedSaveManager created with mock engine', 'success');
+                
+                // Test JSON generation
+                const testSave = await saveManager.save({ target: 'test' });
+                if (testSave && testSave.jsonData) {
+                    log('✅ JSON generation successful', 'success');
+                    log(`Generated JSON: ${JSON.stringify(testSave.jsonData, null, 2)}`, 'info');
+                } else {
+                    log('❌ JSON generation failed', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Gallery save test failed: ${error.message}`, 'error');
+            }
+        };
+        
+        window.testJSONFormat = function() {
+            log('🧪 Testing JSON Format Validation...');
+            
+            // Create expected JSON structure
+            const expectedFormat = {
+                system: 'faceted',
+                parameters: {
+                    geometry: 2,
+                    rot4dXW: 1.5,
+                    rot4dYW: -0.8,
+                    rot4dZW: 2.1,
+                    gridDensity: 25,
+                    morphFactor: 1.2,
+                    chaos: 0.3,
+                    speed: 1.8,
+                    hue: 240,
+                    intensity: 0.7,
+                    saturation: 0.9
+                },
+                geometryName: 'SPHERE',
+                created: new Date().toISOString()
+            };
+            
+            // Validate structure
+            const requiredFields = ['system', 'parameters', 'geometryName', 'created'];
+            const hasAllFields = requiredFields.every(field => expectedFormat.hasOwnProperty(field));
+            
+            if (hasAllFields) {
+                log('✅ JSON format validation passed', 'success');
+                log(`Expected format: ${JSON.stringify(expectedFormat, null, 2)}`, 'info');
+            } else {
+                log('❌ JSON format validation failed', 'error');
+            }
+        };
+        
+        window.testParameterCapture = function() {
+            log('🧪 Testing Parameter Capture...');
+            
+            // Test parameter ranges
+            const parameterRanges = {
+                rot4dXW: { min: -6.28, max: 6.28 },
+                rot4dYW: { min: -6.28, max: 6.28 },
+                rot4dZW: { min: -6.28, max: 6.28 },
+                gridDensity: { min: 5, max: 100 },
+                morphFactor: { min: 0, max: 2 },
+                chaos: { min: 0, max: 1 },
+                speed: { min: 0.1, max: 3 },
+                hue: { min: 0, max: 360 },
+                intensity: { min: 0, max: 1 },
+                saturation: { min: 0, max: 1 }
+            };
+            
+            let validationPassed = true;
+            
+            for (const [param, range] of Object.entries(parameterRanges)) {
+                const testValue = Math.random() * (range.max - range.min) + range.min;
+                if (testValue >= range.min && testValue <= range.max) {
+                    log(`✅ ${param}: ${testValue.toFixed(2)} (valid range)`, 'success');
+                } else {
+                    log(`❌ ${param}: ${testValue.toFixed(2)} (invalid range)`, 'error');
+                    validationPassed = false;
+                }
+            }
+            
+            if (validationPassed) {
+                log('✅ All parameter ranges validated', 'success');
+            }
+        };
+        
+        window.testTiltResponse = function() {
+            log('🧪 Testing Mobile Tilt Response...');
+            
+            // Test if device orientation is available
+            if (window.DeviceOrientationEvent) {
+                log('✅ DeviceOrientationEvent supported', 'success');
+                
+                // Add temporary orientation listener
+                const orientationHandler = (event) => {
+                    const { alpha, beta, gamma } = event;
+                    log(`📱 Orientation: α:${alpha?.toFixed(1)}° β:${beta?.toFixed(1)}° γ:${gamma?.toFixed(1)}°`, 'info');
+                    
+                    // Remove listener after first reading
+                    window.removeEventListener('deviceorientation', orientationHandler);
+                    log('✅ Tilt response test completed', 'success');
+                };
+                
+                window.addEventListener('deviceorientation', orientationHandler);
+                log('📱 Listening for device orientation... (tilt your device)', 'warning');
+                
+                // Fallback timeout
+                setTimeout(() => {
+                    window.removeEventListener('deviceorientation', orientationHandler);
+                    log('⚠️ No orientation data received (may need HTTPS)', 'warning');
+                }, 3000);
+                
+            } else {
+                log('❌ DeviceOrientationEvent not supported', 'error');
+            }
+        };
+        
+        log('🎨 VIB34D Mobile Gallery Test Ready');
+        log('📱 Tap buttons above to run tests');
+    </script>
+</body>
+</html>

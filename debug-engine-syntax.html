@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Engine Syntax Debug</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 20px; }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <h1>Engine Syntax Debug</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        // Try to fetch and parse the Engine.js file to see exactly where the syntax error occurs
+        try {
+            const response = await fetch('./src/core/Engine.js');
+            const content = await response.text();
+            log('✅ Successfully fetched Engine.js file', 'success');
+            log(`File length: ${content.length} characters`, 'info');
+            
+            // Check for common syntax error patterns
+            const lines = content.split('\n');
+            log(`File has ${lines.length} lines`, 'info');
+            
+            // Look for any malformed patterns
+            let errorFound = false;
+            
+            // Check for unmatched braces
+            let openBraces = 0;
+            let openParens = 0;
+            let openBrackets = 0;
+            let inString = false;
+            let inTemplate = false;
+            let stringChar = '';
+            
+            for (let i = 0; i < content.length; i++) {
+                const char = content[i];
+                const prevChar = i > 0 ? content[i-1] : '';
+                
+                // Track string state
+                if (!inString && !inTemplate) {
+                    if (char === '"' || char === "'") {
+                        inString = true;
+                        stringChar = char;
+                    } else if (char === '`') {
+                        inTemplate = true;
+                    }
+                } else if (inString && char === stringChar && prevChar !== '\\\\') {
+                    inString = false;
+                    stringChar = '';
+                } else if (inTemplate && char === '`' && prevChar !== '\\\\') {
+                    inTemplate = false;
+                }
+                
+                // Count braces/parens outside strings
+                if (!inString && !inTemplate) {
+                    if (char === '{') openBraces++;
+                    else if (char === '}') openBraces--;
+                    else if (char === '(') openParens++;
+                    else if (char === ')') openParens--;
+                    else if (char === '[') openBrackets++;
+                    else if (char === ']') openBrackets--;
+                    
+                    if (openBraces < 0) {
+                        log(`❌ Extra closing brace at position ${i}`, 'error');
+                        const lineNum = content.substring(0, i).split('\\n').length;
+                        log(`Line ${lineNum}: ${lines[lineNum-1]}`, 'error');
+                        errorFound = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!errorFound) {
+                log(`Brace balance: ${openBraces} open braces`, openBraces === 0 ? 'success' : 'error');
+                log(`Paren balance: ${openParens} open parens`, openParens === 0 ? 'success' : 'error');
+                log(`Bracket balance: ${openBrackets} open brackets`, openBrackets === 0 ? 'success' : 'error');
+                
+                if (openBraces === 0 && openParens === 0 && openBrackets === 0) {
+                    log('✅ No obvious syntax errors found - trying import...', 'success');
+                    
+                    // Try the actual import
+                    try {
+                        const engineModule = await import('./src/core/Engine.js');
+                        log('✅ Import successful!', 'success');
+                    } catch (importError) {
+                        log(`❌ Import failed: ${importError.message}`, 'error');
+                        log(`Stack: ${importError.stack}`, 'error');
+                    }
+                }
+            }
+            
+        } catch (error) {
+            log(`❌ Failed to analyze file: ${error.message}`, 'error');
+        }
+    </script>
+</body>
+</html>

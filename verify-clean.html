@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Clean Architecture</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        .fail { color: #f00; }
+        .pass { color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>ACTUAL Clean Architecture Status</h1>
+    <div id="results"></div>
+    
+    <script>
+        const log = document.getElementById('results');
+        
+        function addResult(test, passed) {
+            const div = document.createElement('div');
+            div.className = passed ? 'pass' : 'fail';
+            div.textContent = `${passed ? '✅' : '❌'} ${test}`;
+            log.appendChild(div);
+        }
+        
+        // Load the clean architecture and test what ACTUALLY works
+        const iframe = document.createElement('iframe');
+        iframe.src = 'index-clean.html';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        
+        iframe.onload = () => {
+            setTimeout(() => {
+                const win = iframe.contentWindow;
+                
+                // Test what's ACTUALLY available
+                addResult('window.switchSystem exists', typeof win.switchSystem === 'function');
+                addResult('window.selectGeometry exists', typeof win.selectGeometry === 'function');
+                addResult('window.updateParameter exists', typeof win.updateParameter === 'function');
+                addResult('window.randomizeAll exists', typeof win.randomizeAll === 'function');
+                addResult('window.resetAll exists', typeof win.resetAll === 'function');
+                addResult('window.canvasManager exists', !!win.canvasManager);
+                addResult('window.reactivityManager exists', !!win.reactivityManager);
+                addResult('window.audioEngine exists', !!win.audioEngine);
+                addResult('window.vib34dApp exists', !!win.vib34dApp);
+                
+                // Test DOM elements
+                const doc = iframe.contentDocument;
+                addResult('Canvas container exists', !!doc.getElementById('canvasContainer'));
+                addResult('Control panel exists', !!doc.getElementById('controlPanel'));
+                addResult('Geometry grid exists', !!doc.getElementById('geometryGrid'));
+                
+                // Show the truth
+                const summary = document.createElement('h2');
+                const passed = log.querySelectorAll('.pass').length;
+                const total = log.querySelectorAll('div').length;
+                summary.textContent = `REALITY: ${passed}/${total} working (${(passed/total*100).toFixed(1)}%)`;
+                summary.style.color = passed/total > 0.8 ? '#0f0' : '#f00';
+                log.appendChild(summary);
+            }, 2000); // Wait for initialization
+        };
+    </script>
+</body>
+</html>

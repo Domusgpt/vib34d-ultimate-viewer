@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Gallery - Multi-System Portfolio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            overflow-x: hidden;
+            overscroll-behavior: contain; /* Prevent scroll chaining */
+            touch-action: pan-y; /* Allow vertical scrolling */
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+        }
+        
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid #00ffff;
+            padding: 15px 30px;
+        }
+        
+        .header h1 {
+            color: #00ffff;
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .stat-item {
+            background: rgba(0, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        
+        .header-nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .nav-btn {
+            background: rgba(255, 150, 0, 0.2);
+            border: 2px solid #ff9600;
+            color: #ff9600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255, 150, 0, 0.4);
+            box-shadow: 0 0 15px rgba(255, 150, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ffff;
+            font-size: 1.4rem;
+            text-align: center;
+            z-index: 100;
+        }
+        
+        /* COLLECTIONS GRID */
+        .collections-container {
+            margin-top: 140px;
+            padding: 25px;
+        }
+        
+        .collection-section {
+            margin-bottom: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            /* CRITICAL: Allow hover previews to expand beyond section */
+            overflow: visible;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .collection-title {
+            color: #00ffff;
+            font-size: 1.4rem;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            font-weight: 700;
+        }
+        
+        .collection-meta {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: right;
+        }
+        
+        .variations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            /* CRITICAL: Allow hover previews to expand beyond grid boundaries */
+            overflow: visible;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .variation-card {
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            padding-bottom: 15px; /* Reduced since no buttons */
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            overflow: visible; /* Changed for holographic popup effect */
+            transform-style: preserve-3d;
+            transform-origin: 50% 50%;
+            will-change: transform;
+            touch-action: pan-y; /* Allow vertical scrolling through cards */
+            /* CSS variables for mouse tracking */
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            --bend-intensity: 0;
+        }
+        
+        /* Default desktop tilt intensity */
+        .variation-card {
+            --tilt-intensity-y: 1.2deg;
+            --tilt-intensity-x: 0.6deg;
+            --accel-x: 0;
+            --accel-y: 0;
+        }
+
+        .variation-card:hover {
+            border-color: #00ffff;
+            box-shadow: 
+                0 30px 60px rgba(0, 255, 255, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(255, 0, 255, 0.4);
+            transform: 
+                perspective(1200px)
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * 8deg))
+                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * 8deg))
+                translateZ(calc(var(--bend-intensity) * 40px))
+                translateY(-15px)
+                scale(1.02);
+            backdrop-filter: blur(20px);
+            z-index: 10;
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+        }
+
+        /* Mobile optimization: Reduced tilt intensity by 50% */
+        @media (max-width: 768px), (pointer: coarse) {
+            .variation-card {
+                --tilt-intensity-y: 0.6deg;
+                --tilt-intensity-x: 0.3deg;
+            }
+        }
+        
+        .variation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ffff, #ff64ff, #ff9600);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .variation-card:hover::before {
+            opacity: 1;
+        }
+        
+        .card-preview {
+            width: 100%;
+            height: 280px;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: visible; /* Allow hologram to extend beyond */
+            margin-bottom: 15px;
+            background: #111;
+            position: relative;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transform-style: preserve-3d;
+            transition: all 0.2s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+        }
+        
+        /* PROPER CENTERING: Scale from center while preserving all holographic effects */
+        .variation-card:hover .card-preview {
+            transform: 
+                perspective(1000px)
+                translateZ(30px)
+                scale(2.0)  /* 2x scale from center */
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * 0.75 + var(--accel-y) * 6deg))
+                rotateX(calc((50 - var(--mouse-y)) * var(--tilt-intensity-x) + var(--accel-x) * 6deg));
+            transform-origin: center center;
+            z-index: 100;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.8),
+                0 0 100px rgba(255, 0, 255, 0.6),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            background: rgba(17, 17, 17, 0.7);
+            backdrop-filter: blur(15px);
+            filter: brightness(1.3) contrast(1.1) saturate(1.2);
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+            overflow: visible;
+        }
+        
+        /* Bidirectional RGB shimmer effect - mirrors card tilt direction */
+        .card-preview::after,
+        .card-preview::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            mix-blend-mode: screen;
+        }
+        
+        /* Primary RGB shimmer - follows mouse position */
+        .card-preview::after {
+            background: linear-gradient(
+                calc(45deg + (var(--mouse-x) - 50) * 0.5deg),
+                transparent 20%,
+                rgba(255, 0, 0, 0.15) 45%,
+                rgba(0, 255, 255, 0.2) 50%,
+                rgba(255, 0, 255, 0.15) 55%,
+                transparent 80%
+            );
+        }
+        
+        /* Secondary RGB shimmer - opposite direction for balance */
+        .card-preview::before {
+            background: linear-gradient(
+                calc(-45deg - (var(--mouse-x) - 50) * 0.5deg),
+                transparent 20%,
+                rgba(0, 255, 0, 0.15) 45%,
+                rgba(255, 255, 0, 0.2) 50%,
+                rgba(0, 0, 255, 0.15) 55%,
+                transparent 80%
+            );
+        }
+        
+        .variation-card:hover .card-preview::after {
+            transform: 
+                translateX(calc((var(--mouse-x) - 50) * 1.5%)) 
+                rotate(calc(45deg + (var(--mouse-x) - 50) * 0.3deg));
+            opacity: 1;
+        }
+        
+        .variation-card:hover .card-preview::before {
+            transform: 
+                translateX(calc((50 - var(--mouse-x)) * 1.5%)) 
+                rotate(calc(-45deg - (var(--mouse-x) - 50) * 0.3deg));
+            opacity: 0.8;
+        }
+        
+        .card-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: auto; /* Allow interaction for parameter reactivity */
+            border-radius: 12px;
+            background: #000;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: none;
+            transform-origin: center center;
+            touch-action: pan-y; /* Allow vertical scrolling to pass through */
+            -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
+        }
+        
+        /* Transparent overlay for card tilt continuity */
+        .card-preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none; /* Pass through to iframe for parameter reactivity */
+            background: transparent;
+            border-radius: 12px;
+        }
+        
+        /* During hover, overlay captures mouse for card tilting while iframe gets parameter events */
+        .variation-card:hover .card-preview::before {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        
+        .static-preview {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+        
+        /* Enhanced loading state */
+        .static-preview.loading {
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 
+                    inset 0 0 30px rgba(0, 255, 255, 0.1),
+                    0 0 20px rgba(0, 255, 255, 0.2);
+            }
+            50% { 
+                box-shadow: 
+                    inset 0 0 30px rgba(0, 255, 255, 0.3),
+                    0 0 30px rgba(0, 255, 255, 0.4);
+            }
+        }
+        
+        .preview-id {
+            font-size: 3rem;
+            font-weight: 900;
+            text-shadow: 0 0 25px currentColor;
+            margin-bottom: 12px;
+        }
+        
+        .preview-system {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .preview-geometry {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        
+        .preview-bar {
+            width: 80px;
+            height: 4px;
+            border-radius: 2px;
+            box-shadow: 0 0 12px currentColor;
+        }
+        
+        .preview-hint {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            opacity: 0.7;
+        }
+        
+        .card-info h3 {
+            color: #00ffff;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .card-params {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .card-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .card-btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+        }
+        
+        .card-btn.primary {
+            background: rgba(255, 150, 0, 0.3);
+            border-color: #ff9600;
+            color: #ff9600;
+        }
+        
+        .card-btn.primary:hover {
+            background: rgba(255, 150, 0, 0.5);
+            box-shadow: 0 0 12px rgba(255, 150, 0, 0.5);
+        }
+        
+        .system-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .system-badge.faceted {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+        }
+        
+        .system-badge.holographic {
+            background: rgba(255, 100, 255, 0.2);
+            border: 1px solid #ff64ff;
+            color: #ff64ff;
+        }
+        
+        .system-badge.polychora {
+            background: rgba(255, 150, 0, 0.2);
+            border: 1px solid #ff9600;
+            color: #ff9600;
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 50px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            border-radius: 15px;
+            margin: 25px;
+        }
+        
+        .error-message h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 255, 255, 0.3);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        
+        .refresh-btn:hover {
+            background: rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            transform: translateY(-3px);
+        }
+        
+        /* 🌟 HOLOGRAPHIC CARD BENDING EFFECTS */
+        
+        /* Edge bending effect - card stretches unnaturally at edges */
+        .variation-card.edge-bend {
+            transform: 
+                perspective(800px)
+                rotateY(calc(25deg * var(--bend-intensity)))
+                rotateX(calc(5deg * (var(--mouse-y) - 50) / 50))
+                translateZ(calc(var(--bend-intensity) * 40px))
+                translateY(-10px)
+                scaleX(calc(1 + abs(var(--mouse-x) - 50) * 0.006))
+                scaleY(calc(1 + abs(var(--mouse-y) - 50) * 0.004))
+                skewX(calc((var(--mouse-x) - 50) * 0.2deg))
+                skewY(calc((var(--mouse-y) - 50) * 0.15deg));
+            filter: contrast(1.08) brightness(1.1);
+            border-color: rgba(255, 0, 255, 0.7);
+        }
+        
+        /* Holographic explosion effect */
+        .variation-card.holographic-explosion {
+            transform: 
+                perspective(400px)
+                rotateY(calc(45deg + (var(--mouse-x) - 50) * 0.6deg))
+                rotateX(calc((var(--mouse-y) - 50) * -0.8deg))
+                rotateZ(calc((var(--mouse-x) - 50) * 0.3deg))
+                scaleX(calc(1.1 + abs(var(--mouse-x) - 50) * 0.01))
+                scaleY(calc(0.9 + abs(var(--mouse-y) - 50) * 0.008))
+                skewX(calc((var(--mouse-x) - 50) * 0.8deg))
+                skewY(calc((var(--mouse-y) - 50) * 0.6deg))
+                translateZ(calc(var(--bend-intensity) * 100px))
+                translateX(calc((var(--mouse-x) - 50) * 1.2px))
+                translateY(calc((var(--mouse-y) - 50) * 0.8px));
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+            filter: contrast(1.3) brightness(1.3) saturate(1.2) blur(0.5px);
+            box-shadow: 
+                0 0 60px rgba(255, 0, 255, 0.6),
+                0 0 120px rgba(0, 255, 255, 0.4),
+                inset 0 0 15px rgba(255, 255, 255, 0.2);
+            border-width: 3px;
+            border-color: rgba(255, 255, 255, 0.9);
+            z-index: 100;
+            animation: holographic-pulse 0.6s ease-out;
+        }
+        
+        @keyframes holographic-pulse {
+            0% { 
+                filter: contrast(1) brightness(1) saturate(1) blur(0px);
+                box-shadow: 
+                    0 0 30px rgba(0, 255, 255, 0.3),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                filter: contrast(2) brightness(2) saturate(2) blur(2px);
+                box-shadow: 
+                    0 0 100px rgba(255, 0, 255, 0.8),
+                    0 0 200px rgba(0, 255, 255, 0.6),
+                    inset 0 0 30px rgba(255, 255, 255, 0.4);
+            }
+            100% { 
+                filter: contrast(1.3) brightness(1.3) saturate(1.2) blur(0.5px);
+                box-shadow: 
+                    0 0 60px rgba(255, 0, 255, 0.6),
+                    0 0 120px rgba(0, 255, 255, 0.4),
+                    inset 0 0 15px rgba(255, 255, 255, 0.2);
+            }
+        }
+        
+        /* Enhanced iframe scaling when card is hovered - properly centered */
+        .variation-card:hover .card-preview iframe {
+            transform: 
+                scale(1.0)
+                rotateY(calc((var(--mouse-x) - 50) * -0.4deg))
+                rotateX(calc((var(--mouse-y) - 50) * -0.2deg));
+            filter: brightness(1.15) contrast(1.05);
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+        }
+        
+        /* Canvas preview expands when hovering over preview area specifically */
+        .card-preview:hover iframe {
+            transform: 
+                scale(1.5) /* Expand when hovering canvas area */
+                rotateY(calc((var(--mouse-x) - 50) * -0.6deg))
+                rotateX(calc((var(--mouse-y) - 50) * -0.3deg));
+            z-index: 100;
+        }
+        
+        /* Viewer button that appears on expanded preview - CENTERED for easy access */
+        .viewer-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 12px 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.9) 0%, rgba(255, 0, 255, 0.9) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 255, 255, 0.4);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            display: none;
+        }
+        
+        .card-preview:hover .viewer-button {
+            display: block;
+            opacity: 0.9;
+            transform: translate(-50%, -50%);
+        }
+        
+        .viewer-button:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 1.0) 0%, rgba(255, 0, 255, 1.0) 100%);
+            border-color: #00ffff;
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.6);
+        }
+        
+        /* Enhanced iframe scaling when card is bent */
+        .variation-card.edge-bend .card-preview iframe,
+        .variation-card.holographic-explosion .card-preview iframe {
+            transform: 
+                scale(1.02) 
+                rotateY(calc((var(--mouse-x) - 50) * -0.1deg));
+            filter: brightness(1.15) contrast(1.05);
+        }
+        
+        /* Perspective container for entire gallery */
+        .collections-container {
+            perspective: 2000px;
+            perspective-origin: center center;
+        }
+        
+        /* Loading animation for instant feedback */
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .preview-hint {
+            transition: all 0.2s ease;
+        }
+        
+        /* Enhanced date-based organization styling */
+        .date-section {
+            margin-bottom: 30px;
+        }
+        
+        .date-header {
+            padding: 20px 0 15px 0;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .date-title {
+            color: #00ffff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .date-meta {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+        
+        .collection-description {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .collection-timestamp {
+            color: rgba(0, 255, 255, 0.8);
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+        
+        .collection-filename {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌌 VIB34D Multi-System Portfolio</h1>
+        <div class="header-stats">
+            <div class="stat-item">Systems: <span id="systemCount">0</span></div>
+            <div class="stat-item">Total Variations: <span id="variationCount">0</span></div>
+            <div class="stat-item">Status: <span id="statusText">Loading...</span></div>
+        </div>
+        <div class="header-nav">
+            <a href="index.html" class="nav-btn">🎛️ VIB34D Engine</a>
+            <button class="nav-btn" onclick="downloadEngine()">⬇️ Download Engine</button>
+        </div>
+    </div>
+    
+    <div class="loading" id="loadingMsg">
+        🔍 Loading VIB34D Portfolio...<br>
+        <small>Multi-system collection discovery</small>
+    </div>
+    
+    <div class="collections-container" id="collectionsContainer" style="display: none;">
+        <!-- Collections will be populated here -->
+    </div>
+    
+    <div class="refresh-btn" onclick="refreshCollections()">
+        🔄 Refresh Portfolio
+    </div>
+    
+    <script type="module">
+        import { CollectionManager } from './src/features/CollectionManager.js';
+        
+        console.log('🌌 VIB34D Multi-System Portfolio');
+        
+        let collectionManager = null;
+        let collections = [];
+        
+        
+        // Initialize gallery
+        window.addEventListener('load', async () => {
+            console.log('🚀 Initializing VIB34D Portfolio...');
+            await initializeGallery();
+        });
+        
+        async function initializeGallery() {
+            try {
+                // Initialize collection manager
+                collectionManager = new CollectionManager();
+                
+                // Auto-discover user-saved collections from collections/ folder
+                collections = await collectionManager.autoDiscoverCollections();
+                
+                // Update stats
+                updateStats();
+                
+                // Render collections
+                renderCollections();
+                
+                // Initialize holographic card effects AFTER cards are rendered
+                setTimeout(() => {
+                    initializeHolographicCardEffects();
+                    console.log('🌟 Holographic card effects initialized after render');
+                }, 100);
+                
+                // Hide loading
+                document.getElementById('loadingMsg').style.display = 'none';
+                document.getElementById('collectionsContainer').style.display = 'block';
+                
+                console.log('✅ VIB34D Portfolio initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize gallery:', error);
+                showError('Failed to load VIB34D portfolio. Please refresh.');
+            }
+        }
+        
+        
+        function updateStats() {
+            let totalCollections = collections.length;
+            let totalVariations = collections.reduce((sum, col) => sum + col.variations.length, 0);
+            
+            if (collectionManager) {
+                const stats = collectionManager.getStatistics();
+                totalCollections = stats.totalCollections;
+                totalVariations = stats.totalVariations;
+            }
+            
+            document.getElementById('systemCount').textContent = totalCollections;
+            document.getElementById('variationCount').textContent = totalVariations;
+            document.getElementById('statusText').textContent = totalCollections > 0 ? 'Ready' : 'No collections';
+        }
+        
+        function renderCollections() {
+            const container = document.getElementById('collectionsContainer');
+            container.innerHTML = '';
+            
+            if (collections.length === 0) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <h3>No VIB34D Collections Found</h3>
+                        <p>The VIB34D portfolio system requires collection data to display variations.</p>
+                        <br>
+                        <button class="card-btn primary" onclick="refreshCollections()">Refresh Portfolio</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // ENHANCED ORGANIZATION: Sort collections by date and group by time periods
+            const sortedCollections = collections.sort((a, b) => {
+                const dateA = new Date(a.created || a.timestamp || 0);
+                const dateB = new Date(b.created || b.timestamp || 0);
+                return dateB - dateA; // Newest first
+            });
+            
+            // Group collections by date for better organization
+            const collectionsByDate = {};
+            sortedCollections.forEach(collection => {
+                const date = new Date(collection.created || collection.timestamp || Date.now());
+                const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                const displayDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                if (!collectionsByDate[dateKey]) {
+                    collectionsByDate[dateKey] = { 
+                        displayDate, 
+                        collections: [], 
+                        totalVariations: 0 
+                    };
+                }
+                collectionsByDate[dateKey].collections.push(collection);
+                collectionsByDate[dateKey].totalVariations += collection.variations.length;
+            });
+            
+            // Render organized collections by date
+            Object.entries(collectionsByDate).forEach(([dateKey, dateGroup]) => {
+                // Create date section header
+                const dateSection = document.createElement('div');
+                dateSection.className = 'date-section';
+                dateSection.innerHTML = `
+                    <div class="date-header">
+                        <h3 class="date-title">${dateGroup.displayDate}</h3>
+                        <div class="date-meta">
+                            ${dateGroup.collections.length} collection${dateGroup.collections.length !== 1 ? 's' : ''} • 
+                            ${dateGroup.totalVariations} variation${dateGroup.totalVariations !== 1 ? 's' : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(dateSection);
+                
+                // Render collections for this date
+                dateGroup.collections.forEach((collection, collectionIndex) => {
+                    const section = document.createElement('div');
+                    section.className = 'collection-section';
+                    const createdTime = new Date(collection.created || collection.timestamp || Date.now());
+                    const timeString = createdTime.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit'
+                    });
+                    
+                    section.innerHTML = `
+                        <div class="collection-header">
+                            <div>
+                                <div class="collection-title">${escapeHtml(collection.name)}</div>
+                                <div class="collection-description">${escapeHtml(collection.description || '')}</div>
+                                <div class="collection-timestamp">Created at ${timeString}</div>
+                            </div>
+                            <div class="collection-meta">
+                                ${collection.variations.length} variations<br>
+                                <span class="collection-filename">${collection.filename}</span>
+                            </div>
+                        </div>
+                        <div class="variations-grid">
+                            ${collection.variations.map((variation, variationIndex) => 
+                                createVariationCard(variation, collectionIndex, variationIndex)
+                            ).join('')}
+                        </div>
+                    `;
+                    container.appendChild(section);
+                });
+            });
+        }
+        
+        function createVariationCard(variation, collectionIndex, variationIndex) {
+            const parametersQuery = buildParametersQuery(variation.parameters);
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            // Use the variation's globalId directly for proper sequential numbering
+            const globalId = variation.globalId || variation.id || (variationIndex + 1);
+            
+            // System colors and info
+            const systemInfo = {
+                faceted: { color: '#00ffff', name: 'FACETED' },
+                holographic: { color: '#ff64ff', name: 'HOLOGRAPHIC' },  
+                polychora: { color: '#ff9600', name: 'POLYCHORA' }
+            };
+            
+            const system = variation.system || 'faceted';
+            const sysInfo = systemInfo[system] || systemInfo.faceted;
+            
+            // Parameter display
+            const hue = variation.parameters.hue || 0;
+            const saturation = (variation.parameters.saturation || 0.8) * 100;
+            
+            return `
+                <div class="variation-card" 
+                     data-collection="${collectionIndex}" 
+                     data-variation="${variationIndex}"
+                     data-system="${system}"
+                     data-global-id="${globalId}"
+                     data-params="${parametersQuery}"
+                     ${isMobile ? 'onclick="handleMobileTouch(this, event)"' : 'onmouseenter="startPreview(this, \'' + parametersQuery.replace(/'/g, '&apos;').replace(/"/g, '&quot;') + '\')"'}>
+                    
+                    <div class="system-badge ${system}">${sysInfo.name}</div>
+                    
+                    <div class="card-preview" data-preview-container ondblclick="openVariation(this.parentElement)">
+                        <button class="viewer-button" onclick="openVariation(this.parentElement.parentElement); event.stopPropagation();">👁️ VIEW</button>
+                        <div class="static-preview" ondblclick="openVariation(this.parentElement.parentElement)">
+                            <div class="preview-id" style="color: hsl(${hue}, ${saturation}%, 60%);">
+                                #${globalId}
+                            </div>
+                            <div class="preview-system" style="color: ${sysInfo.color};">
+                                ${sysInfo.name}
+                            </div>
+                            <div class="preview-geometry" style="color: hsl(${hue}, ${saturation}%, 70%);">
+                                ${getGeometryName(variation.parameters)}
+                            </div>
+                            <div class="preview-bar" style="background: hsl(${hue}, ${saturation}%, 60%);"></div>
+                            <div class="preview-hint">
+                                ${isMobile ? 'TAP' : 'HOVER'} → LIVE
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-info">
+                        <h3>${escapeHtml(variation.name)} <span style="color: rgba(255,255,255,0.4); font-size: 0.8em;">#${globalId}</span></h3>
+                        <div class="card-params">
+                            System: ${sysInfo.name}<br>
+                            Geometry: ${getGeometryName(variation.parameters)}<br>
+                            Hue: ${Math.round(hue)}° | Global ID: ${globalId}
+                        </div>
+                    </div>
+                    
+                    <!-- Buttons removed - card click opens viewer -->
+                </div>
+            `;
+        }
+        
+        function buildParametersQuery(params) {
+            const urlParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    urlParams.set(key, value);
+                }
+            });
+            return urlParams.toString();
+        }
+        
+        function getGeometryName(params) {
+            const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'];
+            const polytopeNames = ['5-CELL', 'TESSERACT', '16-CELL', '24-CELL', '600-CELL', '120-CELL'];
+            
+            if (params.polytope !== undefined) {
+                return polytopeNames[params.polytope] || 'POLYTOPE';
+            }
+            
+            const geomType = params.geometryType !== undefined ? params.geometryType : params.geometry;
+            return geometryNames[geomType] || 'GEOMETRY';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showError(message) {
+            document.getElementById('loadingMsg').style.display = 'none';
+            document.getElementById('collectionsContainer').innerHTML = `
+                <div class="error-message">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                    <br>
+                    <button class="card-btn primary" onclick="refreshCollections()">Try Again</button>
+                </div>
+            `;
+            document.getElementById('collectionsContainer').style.display = 'block';
+        }
+        
+        // Preview system adapted from working gallery
+        let activeIframes = new Map();
+        let hoverTimeouts = new WeakMap();
+        
+        // CRITICAL: WebGL context management to prevent overflow
+        const MAX_WEBGL_CONTEXTS = 4; // Conservative limit
+        let activeWebGLContexts = new Set();
+        
+        function enforceWebGLLimit() {
+            if (activeWebGLContexts.size >= MAX_WEBGL_CONTEXTS) {
+                console.log(`⚠️ WebGL limit reached (${activeWebGLContexts.size}/${MAX_WEBGL_CONTEXTS}). Cleaning oldest context.`);
+                const oldestCard = activeWebGLContexts.values().next().value;
+                if (oldestCard) {
+                    stopPreview(oldestCard);
+                    activeWebGLContexts.delete(oldestCard);
+                }
+            }
+        }
+        
+        let currentPreviewCard = null; // Track currently previewing card
+        
+        window.startPreview = function(card, params) {
+            console.log('🎬 startPreview called for card:', card, 'params:', params);
+            const container = card.querySelector('[data-preview-container]');
+            
+            // Remove existing iframe first to allow refresh
+            if (container && container.querySelector('iframe')) {
+                console.log('🔄 Removing existing iframe for refresh');
+                const existingIframe = container.querySelector('iframe');
+                existingIframe.remove();
+            }
+            
+            // Stop previous preview when starting a new one
+            if (currentPreviewCard && currentPreviewCard !== card) {
+                stopPreview(currentPreviewCard);
+            }
+            currentPreviewCard = card;
+            
+            // CRITICAL: Enforce WebGL context limit before creating new iframe
+            enforceWebGLLimit();
+            activeWebGLContexts.add(card);
+            console.log(`🎬 Starting preview - Active contexts: ${activeWebGLContexts.size}/${MAX_WEBGL_CONTEXTS}`);
+            
+            if (hoverTimeouts.has(card)) {
+                clearTimeout(hoverTimeouts.get(card));
+            }
+            
+            // Get system before setTimeout to avoid scope issues
+            const system = card.getAttribute('data-system') || 'faceted';
+            
+            const timeoutId = setTimeout(() => {
+                console.log('⏰ Creating iframe after timeout for system:', system);
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = `
+                    width: 100%; 
+                    height: 100%; 
+                    border: none; 
+                    border-radius: 12px; 
+                    background: #000;
+                    transform-origin: center center;
+                    opacity: 0;
+                    transition: opacity 0.1s ease;
+                    pointer-events: auto; /* Enable interaction but handle double-clicks specially */
+                `;
+                
+                iframe.onload = function() {
+                    console.log('✅ Iframe loaded successfully for system:', system);
+                    // Wait for the iframe content to fully load and apply hideui
+                    setTimeout(() => {
+                        iframe.style.opacity = '1';
+                        console.log('👁️ Iframe visible, opacity set to 1');
+                        
+                        // Enable mouse interaction pass-through to iframe
+                        try {
+                            // Send message to iframe to enable interactivity
+                            iframe.contentWindow.postMessage({
+                                type: 'enableInteractivity',
+                                galleryPreview: true
+                            }, '*');
+                        } catch (e) {
+                            console.log('Could not post message to iframe:', e);
+                        }
+                    }, 30); // Much faster loading - 1/10 of previous delay
+                    // INSTANT LOADING: Show animated canvas immediately
+                    setTimeout(() => {
+                        const staticPreview = container.querySelector('.static-preview');
+                        if (staticPreview) {
+                            staticPreview.classList.remove('loading');
+                            staticPreview.style.opacity = '0';
+                            staticPreview.style.transition = 'opacity 0.15s ease';
+                            setTimeout(() => staticPreview.style.display = 'none', 50);
+                        }
+                        
+                        // Force iframe to start animation immediately
+                        try {
+                            iframe.contentWindow.postMessage({ action: 'startAnimation' }, '*');
+                        } catch (e) {
+                            console.log('🎬 Animation start message sent to iframe');
+                        }
+                    }, 100); // Speed optimized: Reduced delay for faster initialization
+                };
+                
+                iframe.onerror = function(error) {
+                    console.error('❌ Gallery preview iframe FAILED to load:', error);
+                    console.error('❌ Failed URL:', iframe.src);
+                    console.error('❌ System:', system, 'Params:', params);
+                };
+                
+                container.appendChild(iframe);
+                
+                // Forward mouse events to iframe for visualizer interactivity
+                container.addEventListener('mousemove', (e) => {
+                    const rect = container.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width;
+                    const y = (e.clientY - rect.top) / rect.height;
+                    
+                    // DON'T override card tilt - let the card's own mousemove handle it
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'mouseMove',
+                            x: x,
+                            y: y,
+                            intensity: 1.0
+                        }, '*');
+                    } catch (err) {}
+                });
+                
+                // Single click for interaction
+                container.addEventListener('click', (e) => {
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'mouseClick',
+                            intensity: 1.0
+                        }, '*');
+                    } catch (err) {}
+                });
+                
+                // Double-click handler for opening viewer
+                container.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    openVariation(card);
+                });
+                
+                // Also add double-click directly to iframe
+                iframe.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    openVariation(card);
+                });
+                
+                // CRITICAL FIX: Put system parameter FIRST so it gets processed before other parameters
+                // Add alllayers=true to ensure all 5 canvas layers render with full fidelity
+                iframe.src = `index-clean.html?system=${system}&hideui=true&alllayers=true&highquality=true&${params}`;
+                console.log(`🎯 Loading preview: system=${system}, URL: ${iframe.src}`);
+            }, 20); // ULTRA FAST: Immediate preview loading
+            
+            hoverTimeouts.set(card, timeoutId);
+            
+            // Show enhanced loading state immediately
+            const staticPreview = container.querySelector('.static-preview');
+            if (staticPreview) {
+                staticPreview.classList.add('loading');
+                const previewHint = staticPreview.querySelector('.preview-hint');
+                if (previewHint) {
+                    previewHint.textContent = 'LOADING VISUALIZER...';
+                    previewHint.style.fontWeight = '700';
+                    previewHint.style.color = '#00ffff';
+                    previewHint.style.textShadow = '0 0 15px currentColor';
+                }
+            }
+        };
+        
+        window.stopPreview = function(card) {
+            if (hoverTimeouts.has(card)) {
+                clearTimeout(hoverTimeouts.get(card));
+                hoverTimeouts.delete(card);
+            }
+            
+            // CRITICAL FIX: IMMEDIATE WebGL context cleanup to prevent overflow
+            const container = card.querySelector('[data-preview-container]');
+            if (container) {
+                const iframe = container.querySelector('iframe');
+                if (iframe) {
+                    console.log('🧹 IMMEDIATE WebGL cleanup - destroying iframe to free contexts');
+                    
+                    // Show static preview again
+                    const staticPreview = container.querySelector('.static-preview');
+                    if (staticPreview) {
+                        staticPreview.classList.remove('loading');
+                        staticPreview.style.display = 'flex';
+                        staticPreview.style.opacity = '1';
+                    }
+                    
+                    // Remove iframe completely to free WebGL contexts
+                    iframe.remove();
+                    
+                    // Remove from active contexts tracking
+                    activeWebGLContexts.delete(card);
+                    console.log(`🧹 WebGL context freed - Active: ${activeWebGLContexts.size}/${MAX_WEBGL_CONTEXTS}`);
+                }
+            }
+        };
+        
+        // Double-tap handler for mobile
+        let lastTapTime = 0;
+        let lastTappedCard = null;
+        
+        window.handleMobileTouch = function(card, event) {
+            event.preventDefault();
+            
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            
+            // If double-tap on same card (within 500ms)
+            if (tapLength < 500 && tapLength > 0 && lastTappedCard === card) {
+                openVariation(card);
+                lastTapTime = 0;
+                lastTappedCard = null;
+            } else {
+                // Single tap - start preview
+                // Clean up all other active previews before starting new one
+                document.querySelectorAll('.variation-card').forEach(otherCard => {
+                    if (otherCard !== card) {
+                        stopPreview(otherCard);
+                    }
+                });
+                
+                const params = card.getAttribute('data-params');
+                startPreview(card, params);
+                
+                lastTapTime = currentTime;
+                lastTappedCard = card;
+            }
+        };
+        
+        window.openVariation = function(card) {
+            const params = card.getAttribute('data-params');
+            const system = card.getAttribute('data-system') || 'faceted';
+            const globalId = card.getAttribute('data-global-id');
+            const variationName = card.querySelector('h3').textContent.split('#')[0].trim();
+            
+            console.log('🎬 Opening viewer for:', variationName, system);
+            
+            // Build URL for viewer.html with all parameters - FIXED: Use current path base
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+            const viewerUrl = new URL(`${basePath}viewer.html`, window.location.origin);
+            viewerUrl.searchParams.set('system', system);
+            viewerUrl.searchParams.set('name', variationName);
+            viewerUrl.searchParams.set('id', globalId);
+            
+            // Add all visualization parameters
+            const urlParams = new URLSearchParams(params);
+            urlParams.forEach((value, key) => {
+                viewerUrl.searchParams.set(key, value);
+            });
+            
+            // Navigate to viewer (same tab for memory optimization)
+            console.log('🎯 Current location:', window.location.href);
+            console.log('🎯 Current path:', currentPath);
+            console.log('🎯 Base path:', basePath);
+            console.log('🎯 About to navigate to:', viewerUrl.toString());
+            
+            // Navigate to viewer.html
+            window.location.href = viewerUrl.toString();
+        };
+        
+        window.loadIntoEngine = function(card, event) {
+            event.stopPropagation();
+            const params = card.getAttribute('data-params');
+            const system = card.getAttribute('data-system');
+            const globalId = card.getAttribute('data-global-id');
+            
+            // Store for engine pickup
+            localStorage.setItem('vib34d-load-params', JSON.stringify({
+                system: system,
+                parameters: JSON.parse(`{${params.split('&').map(p => {
+                    const [k,v] = p.split('=');
+                    return `"${k}":"${decodeURIComponent(v)}"`;
+                }).join(',')}}`) || {},
+                globalId: globalId
+            }));
+            
+            window.location.href = 'index.html';
+        };
+        
+        window.openFullscreen = function(card, event) {
+            event.stopPropagation();
+            const params = card.getAttribute('data-params');
+            const system = card.getAttribute('data-system');
+            // Use same tab for fullscreen too
+            window.location.href = `index.html?${params}&system=${system}&hideui=true`;
+        };
+        
+        window.downloadEngine = function() {
+            // Create download link for the entire VIB34D engine
+            const link = document.createElement('a');
+            link.href = window.location.origin + window.location.pathname.replace('gallery.html', '');
+            link.setAttribute('download', 'vib34d-engine.zip');
+            alert('🚀 VIB34D Engine available for download!\n\nBookmark this page or save the URL to access the full system locally.');
+        };
+        
+        window.refreshCollections = async function() {
+            document.getElementById('statusText').textContent = 'Refreshing...';
+            await initializeGallery();
+        };
+        
+        // CRITICAL FIX: Real-time gallery updates - listen for save events
+        window.addEventListener('gallery-refresh-needed', async function() {
+            console.log('🔄 Gallery refresh event received - updating collections...');
+            await refreshCollections();
+        });
+        
+        // CRITICAL FIX: Listen for storage events from other windows/tabs
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'vib34d-unified-variations' || 
+                e.key === 'vib34d-unified-collections' ||
+                e.key === 'vib34d-gallery-update-trigger') {
+                console.log('🔄 localStorage change detected - refreshing gallery...');
+                setTimeout(async () => {
+                    await refreshCollections();
+                }, 500); // Small delay to ensure data is fully written
+            }
+        });
+        
+        // CRITICAL FIX: Cross-window communication for real-time updates
+        window.addEventListener('message', async function(event) {
+            if (event.data && event.data.type === 'vib34d-variation-saved') {
+                console.log('🔄 New variation saved - refreshing gallery...');
+                await refreshCollections();
+            }
+        });
+        
+        // 🌟 HOLOGRAPHIC CARD BENDING SYSTEM
+        function initializeHolographicCardEffects() {
+            console.log('🌟 Initializing holographic card bending effects...');
+            
+            const cards = document.querySelectorAll('.variation-card');
+            
+            cards.forEach(card => {
+                let isHovering = false;
+                
+                // Mouse enter - start holographic effect
+                card.addEventListener('mouseenter', (e) => {
+                    isHovering = true;
+                    card.style.setProperty('--bend-intensity', '0.8');
+                    console.log('🌌 Holographic card activated');
+                });
+                
+                // Mouse leave - end holographic effect
+                card.addEventListener('mouseleave', (e) => {
+                    isHovering = false;
+                    card.style.setProperty('--bend-intensity', '0');
+                    card.style.setProperty('--mouse-x', '50%');
+                    card.style.setProperty('--mouse-y', '50%');
+                    console.log('🌌 Holographic card deactivated');
+                });
+                
+                // Mouse move - track position for card bending + visual reactivity
+                function handleCardMouseMove(e) {
+                    if (!isHovering) return;
+                    
+                    const rect = card.getBoundingClientRect();
+                    const cardX = ((e.clientX - rect.left) / rect.width) * 100;
+                    const cardY = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    // Calculate distance from center for bend intensity
+                    const centerX = 50;
+                    const centerY = 50;
+                    const distanceFromCenter = Math.sqrt(
+                        Math.pow(cardX - centerX, 2) + Math.pow(cardY - centerY, 2)
+                    );
+                    
+                    // Dynamic bend intensity based on mouse position
+                    const bendIntensity = Math.min(1, (distanceFromCenter / 70) + 0.3);
+                    
+                    // Update CSS variables for real-time transformation
+                    card.style.setProperty('--mouse-x', cardX);
+                    card.style.setProperty('--mouse-y', cardY);
+                    card.style.setProperty('--bend-intensity', bendIntensity);
+                    
+                    // SURGICAL FIX: Send mouse data to iframe visualization
+                    const iframe = card.querySelector('iframe');
+                    if (iframe && iframe.contentWindow) {
+                        try {
+                            iframe.contentWindow.postMessage({
+                                type: 'mouseMove',
+                                x: cardX / 100, // Normalize to 0-1
+                                y: cardY / 100,
+                                intensity: bendIntensity
+                            }, '*');
+                        } catch (e) {
+                            // Cross-origin restriction - expected
+                        }
+                    }
+                    
+                    // Add extra class for edge effects
+                    if (cardX < 20 || cardX > 80 || cardY < 20 || cardY > 80) {
+                        card.classList.add('edge-bend');
+                    } else {
+                        card.classList.remove('edge-bend');
+                    }
+                }
+                
+                // Attach mousemove to card
+                card.addEventListener('mousemove', handleCardMouseMove);
+                
+                // CRITICAL FIX: Watch for iframe creation and attach listeners when it appears
+                const observeIframe = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.tagName === 'IFRAME') {
+                                console.log('🎯 Iframe detected, attaching tilt continuity handlers');
+                                
+                                // When iframe loads, set up continuous tilt tracking
+                                node.addEventListener('load', () => {
+                                    // Create invisible overlay for mouse tracking
+                                    const mouseTracker = document.createElement('div');
+                                    mouseTracker.style.cssText = `
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        width: 100%;
+                                        height: 100%;
+                                        z-index: 1000;
+                                        pointer-events: auto;
+                                        cursor: pointer;
+                                        background: transparent;
+                                    `;
+                                    
+                                    // Add mouse tracking to overlay
+                                    mouseTracker.addEventListener('mousemove', handleCardMouseMove);
+                                    
+                                    // Allow clicks to pass through to iframe for double-click
+                                    mouseTracker.addEventListener('dblclick', (e) => {
+                                        mouseTracker.style.pointerEvents = 'none';
+                                        setTimeout(() => {
+                                            const clickEvent = new MouseEvent('dblclick', {
+                                                bubbles: true,
+                                                cancelable: true,
+                                                view: window,
+                                                clientX: e.clientX,
+                                                clientY: e.clientY
+                                            });
+                                            node.dispatchEvent(clickEvent);
+                                            mouseTracker.style.pointerEvents = 'auto';
+                                        }, 10);
+                                    });
+                                    
+                                    // Add tracker to preview container
+                                    const preview = card.querySelector('.card-preview');
+                                    if (preview && !preview.querySelector('.mouse-tracker')) {
+                                        mouseTracker.classList.add('mouse-tracker');
+                                        preview.appendChild(mouseTracker);
+                                        console.log('✅ Mouse tracker overlay added for continuous tilt');
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+                
+                // Start observing the card for iframe additions
+                const preview = card.querySelector('.card-preview');
+                if (preview) {
+                    observeIframe.observe(preview, { childList: true, subtree: true });
+                }
+                
+                // Click effect - holographic explosion + visual reactivity
+                card.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+                    
+                    const rect = card.getBoundingClientRect();
+                    const cardX = ((e.clientX - rect.left) / rect.width) * 100;
+                    const cardY = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    card.style.setProperty('--mouse-x', cardX);
+                    card.style.setProperty('--mouse-y', cardY);
+                    card.style.setProperty('--bend-intensity', '1.5');
+                    
+                    card.classList.add('holographic-explosion');
+                    
+                    // SURGICAL FIX: Send click data to iframe visualization  
+                    const iframe = card.querySelector('iframe');
+                    if (iframe && iframe.contentWindow) {
+                        try {
+                            iframe.contentWindow.postMessage({
+                                type: 'click',
+                                x: cardX / 100,
+                                y: cardY / 100,
+                                intensity: 1.5
+                            }, '*');
+                        } catch (e) {
+                            // Cross-origin restriction - expected
+                        }
+                    }
+                    
+                    setTimeout(() => {
+                        card.classList.remove('holographic-explosion');
+                        if (!isHovering) {
+                            card.style.setProperty('--bend-intensity', '0');
+                        }
+                    }, 600);
+                    
+                    console.log('💥 Holographic explosion effect triggered');
+                });
+            });
+            
+            console.log(`✅ Holographic effects initialized for ${cards.length} cards`);
+        }
+        
+        // Initialize holographic effects when DOM is ready
+        // Mobile Accelerometer Card Tilt System
+        class MobileAccelerometerTilt {
+            constructor() {
+                this.isActive = false;
+                this.smoothedX = 0;
+                this.smoothedY = 0;
+                this.smoothingFactor = 0.1;
+                this.cards = [];
+                
+                this.init();
+            }
+            
+            async init() {
+                // Only initialize on mobile devices
+                if (!this.isMobile()) return;
+                
+                try {
+                    // Request device motion permission on iOS 13+
+                    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                        const permission = await DeviceMotionEvent.requestPermission();
+                        if (permission !== 'granted') {
+                            console.log('[Mobile] Device motion permission denied');
+                            return;
+                        }
+                    }
+                    
+                    // Get all gallery cards
+                    this.cards = document.querySelectorAll('.variation-card');
+                    console.log(`[Mobile] Accelerometer tilt enabled for ${this.cards.length} cards`);
+                    
+                    // Start listening to device motion
+                    window.addEventListener('deviceorientation', this.handleDeviceOrientation.bind(this));
+                    this.isActive = true;
+                    
+                } catch (error) {
+                    console.log('[Mobile] Accelerometer not available:', error);
+                }
+            }
+            
+            isMobile() {
+                return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                       (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+            }
+            
+            handleDeviceOrientation(event) {
+                if (!this.isActive) return;
+                
+                // Get device orientation values
+                const beta = event.beta;   // X-axis rotation (-180 to 180)
+                const gamma = event.gamma; // Y-axis rotation (-90 to 90)
+                
+                if (beta === null || gamma === null) return;
+                
+                // Normalize values to -1 to 1 range
+                const normalizedX = Math.max(-1, Math.min(1, beta / 45));   // Tilt forward/back
+                const normalizedY = Math.max(-1, Math.min(1, gamma / 45));  // Tilt left/right
+                
+                // Apply smoothing to prevent jittery motion
+                this.smoothedX = this.smoothedX + (normalizedX - this.smoothedX) * this.smoothingFactor;
+                this.smoothedY = this.smoothedY + (normalizedY - this.smoothedY) * this.smoothingFactor;
+                
+                // Apply accelerometer values to all cards
+                this.cards.forEach(card => {
+                    card.style.setProperty('--accel-x', this.smoothedX);
+                    card.style.setProperty('--accel-y', this.smoothedY);
+                });
+            }
+            
+            destroy() {
+                window.removeEventListener('deviceorientation', this.handleDeviceOrientation.bind(this));
+                this.isActive = false;
+            }
+        }
+        
+        // Initialize mobile accelerometer system
+        let mobileAccelerometer = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Small delay to ensure cards are rendered
+            setTimeout(() => {
+                initializeHolographicCardEffects();
+                
+                // Initialize mobile accelerometer tilt system
+                mobileAccelerometer = new MobileAccelerometerTilt();
+            }, 50);
+        });
+    </script>
+</body>
+</html>

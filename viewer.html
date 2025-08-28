@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Premium Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: 
+                radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.05) 0%, transparent 60%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0f1419 100%);
+            animation: background-pulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes background-pulse {
+            0%, 100% { 
+                background: 
+                    radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 85%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.05) 0%, transparent 60%),
+                    linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0f1419 100%);
+            }
+            50% { 
+                background: 
+                    radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.25) 0%, transparent 50%),
+                    radial-gradient(circle at 75% 75%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.1) 0%, transparent 70%),
+                    linear-gradient(135deg, #0f0f0f 0%, #2a2a3e 40%, #26314e 70%, #1f2429 100%);
+            }
+        }
+        
+        /* PREMIUM ENHANCED viewer card styling with METALLIC FOIL */
+        .variation-card {
+            background: 
+                linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(10, 10, 30, 0.9) 50%, rgba(20, 20, 40, 0.85) 100%),
+                radial-gradient(circle at top left, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+            border: 4px solid;
+            border-image: linear-gradient(
+                45deg,
+                #fff 0%,
+                #00ffff 10%,
+                #fff 20%,
+                #ff64ff 35%,
+                #fff 45%,
+                #ff9600 60%,
+                #fff 70%,
+                #64ff96 85%,
+                #fff 95%,
+                #00ffff 100%
+            ) 1;
+            animation: border-metallic-rotate 8s linear infinite;
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            overflow: visible;
+            transform-style: preserve-3d;
+            transform-origin: 50% 50%;
+            will-change: transform;
+            width: 500px; /* Larger for premium standalone viewing */
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            /* CSS variables for mouse tracking */
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            --bend-intensity: 0;
+        }
+        
+        .variation-card:hover {
+            border-image: linear-gradient(45deg, #00ffff, #ff64ff, #64ff96, #ff9600, #00ffff) 1;
+            box-shadow: 
+                0 40px 100px rgba(0, 255, 255, 0.4),
+                0 20px 80px rgba(255, 0, 255, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                0 0 60px rgba(255, 150, 0, 0.2);
+            transform: 
+                perspective(1200px)
+                rotateY(calc((var(--mouse-x) - 50) * 0.4deg * var(--bend-intensity)))
+                rotateX(calc((var(--mouse-y) - 50) * 0.2deg * var(--bend-intensity)))
+                translateZ(calc(var(--bend-intensity) * 40px))
+                translateY(-15px)
+                scale(1.02);
+            transition: all 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+            backdrop-filter: blur(30px);
+            z-index: 10;
+            background: 
+                linear-gradient(135deg, rgba(10, 10, 40, 0.95) 0%, rgba(20, 20, 50, 0.9) 50%, rgba(30, 30, 60, 0.85) 100%),
+                radial-gradient(circle at top left, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.2) 0%, transparent 50%);
+        }
+        
+        .variation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00ffff, #ff64ff, #ff9600);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .variation-card:hover::before {
+            opacity: 1;
+        }
+        
+        .card-preview {
+            width: 100%;
+            height: 380px; /* Much larger for premium viewing */
+            aspect-ratio: 1 / 1;
+            border-radius: 16px;
+            overflow: visible; /* Allow expansion beyond boundaries */
+            margin-bottom: 20px;
+            background: 
+                linear-gradient(135deg, #111 0%, #1a1a2e 50%, #16213e 100%);
+            position: relative;
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            transform-style: preserve-3d;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 
+                inset 0 0 40px rgba(0, 255, 255, 0.1),
+                0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* EXACT MATCH to portfolio cards: Proper X/Y position-based tilting with smooth animation */
+        .variation-card:hover .card-preview {
+            /* Host card responds to mouse position with subtle counter-tilt */
+            transform: 
+                perspective(1000px)
+                translateZ(30px)
+                scale(1.05)
+                rotateY(calc((var(--mouse-x) - 50) * -0.15deg))
+                rotateX(calc((50 - var(--mouse-y)) * 0.1deg));
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.6),
+                0 0 100px rgba(255, 0, 255, 0.4),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: rgba(17, 17, 17, 0.7);
+            backdrop-filter: blur(15px);
+            filter: brightness(1.2) contrast(1.05) saturate(1.1);
+            overflow: visible;
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+        }
+        
+        /* Add edge bending class for enhanced effects */
+        .variation-card.edge-bend {
+            filter: brightness(1.3) contrast(1.1) saturate(1.2) hue-rotate(10deg);
+        }
+        
+        /* Canvas visualization container inside preview - FILLS SPACE */
+        .visualization-container {
+            width: 100%; /* Fill entire preview */
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.5));
+            transition: all 0.6s ease;
+        }
+        
+        .variation-card:hover .visualization-container {
+            width: 100%; /* Keep full size */
+            height: 100%;
+            left: 0;
+            top: 0;
+            transform: scale(1.02); /* Slight expansion on hover */
+            filter: 
+                drop-shadow(0 0 50px rgba(0, 255, 255, 0.8))
+                drop-shadow(5px 5px 0 rgba(255, 0, 0, 0.3))
+                drop-shadow(-5px -5px 0 rgba(0, 255, 0, 0.3))
+                drop-shadow(0 0 100px rgba(255, 0, 255, 0.4));
+        }
+        
+        /* RGB Moire Offset Effect */
+        .visualization-container::before,
+        .visualization-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            opacity: 0.15;
+            border-radius: 12px;
+        }
+        
+        .visualization-container::before {
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 0, 0, 0.3) 2px,
+                rgba(255, 0, 0, 0.3) 4px
+            );
+            transform: translate(2px, -2px);
+        }
+        
+        .visualization-container::after {
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 255, 0.3) 2px,
+                rgba(0, 255, 255, 0.3) 4px
+            );
+            transform: translate(-2px, 2px);
+        }
+        
+        /* Holographic shimmer effect overlay - DIRECTIONAL BASED ON MOUSE */
+        .card-preview::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                calc(45deg + (var(--mouse-x) - 50) * 0.5deg),
+                transparent 30%,
+                rgba(0, 255, 255, 0.1) 50%,
+                rgba(255, 0, 255, 0.1) 52%,
+                transparent 70%
+            );
+            transform: translateX(calc(-100% + (var(--mouse-x) - 50) * 0.5%)) rotate(calc(45deg + (var(--mouse-x) - 50) * 0.3deg));
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+            opacity: 0;
+        }
+        
+        .variation-card:hover .card-preview::after {
+            transform: translateX(calc(100% - (var(--mouse-x) - 50) * 0.5%)) rotate(calc(45deg + (var(--mouse-x) - 50) * 0.3deg));
+            opacity: 1;
+        }
+        
+        .system-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .system-badge.faceted {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+        }
+        
+        .system-badge.holographic {
+            background: rgba(255, 100, 255, 0.2);
+            border: 1px solid #ff64ff;
+            color: #ff64ff;
+        }
+        
+        .system-badge.quantum {
+            background: rgba(100, 255, 150, 0.2);
+            border: 1px solid #64ff96;
+            color: #64ff96;
+        }
+        
+        .system-badge.polychora {
+            background: rgba(255, 150, 0, 0.2);
+            border: 1px solid #ff9600;
+            color: #ff9600;
+        }
+        
+        .card-info h3 {
+            background: linear-gradient(
+                125deg,
+                #fff 0%,
+                #00ffff 20%,
+                #fff 25%,
+                #64ff96 45%,
+                #fff 50%,
+                #ff64ff 70%,
+                #fff 75%,
+                #ff9600 90%,
+                #fff 100%
+            );
+            background-size: 200% 200%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.5),
+                0 2px 4px rgba(0, 0, 0, 0.5);
+            animation: metallic-shine 4s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        
+        @keyframes metallic-shine {
+            0%, 100% { 
+                background-position: 0% 50%;
+                text-shadow: 
+                    0 0 30px rgba(0, 255, 255, 0.5),
+                    0 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            50% { 
+                background-position: 100% 50%;
+                text-shadow: 
+                    0 0 40px rgba(255, 100, 255, 0.7),
+                    0 2px 6px rgba(0, 0, 0, 0.7);
+            }
+        }
+        
+        @keyframes title-glow {
+            0%, 100% { text-shadow: 0 0 30px rgba(0, 255, 255, 0.5); }
+            50% { text-shadow: 0 0 40px rgba(255, 100, 255, 0.7); }
+        }
+        
+        @keyframes border-metallic-rotate {
+            0% {
+                border-image: linear-gradient(
+                    45deg,
+                    #fff, #00ffff, #fff, #ff64ff, #fff, #ff9600, #fff, #64ff96, #fff
+                ) 1;
+            }
+            25% {
+                border-image: linear-gradient(
+                    90deg,
+                    #fff, #ff64ff, #fff, #ff9600, #fff, #64ff96, #fff, #00ffff, #fff
+                ) 1;
+            }
+            50% {
+                border-image: linear-gradient(
+                    135deg,
+                    #fff, #ff9600, #fff, #64ff96, #fff, #00ffff, #fff, #ff64ff, #fff
+                ) 1;
+            }
+            75% {
+                border-image: linear-gradient(
+                    180deg,
+                    #fff, #64ff96, #fff, #00ffff, #fff, #ff64ff, #fff, #ff9600, #fff
+                ) 1;
+            }
+            100% {
+                border-image: linear-gradient(
+                    45deg,
+                    #fff, #00ffff, #fff, #ff64ff, #fff, #ff9600, #fff, #64ff96, #fff
+                ) 1;
+            }
+        }
+        
+        .card-params {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+            line-height: 1.6;
+            background: 
+                linear-gradient(135deg, rgba(0, 255, 255, 0.05) 0%, rgba(255, 0, 255, 0.05) 100%);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .card-btn {
+            background: 
+                linear-gradient(135deg, rgba(0, 255, 255, 0.15) 0%, rgba(0, 200, 255, 0.25) 100%);
+            border: 2px solid;
+            border-image: linear-gradient(45deg, #00ffff, #0080ff) 1;
+            color: #00ffff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 8px 20px rgba(0, 255, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-btn:hover {
+            background: 
+                linear-gradient(135deg, rgba(0, 255, 255, 0.35) 0%, rgba(0, 200, 255, 0.45) 100%);
+            border-image: linear-gradient(45deg, #00ffff, #64ff96, #0080ff) 1;
+            box-shadow: 
+                0 12px 30px rgba(0, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 20px rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px) scale(1.05);
+        }
+        
+        .card-btn.primary {
+            background: 
+                linear-gradient(135deg, rgba(255, 150, 0, 0.2) 0%, rgba(255, 100, 50, 0.35) 100%);
+            border-image: linear-gradient(45deg, #ff9600, #ff6432) 1;
+            color: #ff9600;
+            box-shadow: 
+                0 8px 20px rgba(255, 150, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-btn.primary:hover {
+            background: 
+                linear-gradient(135deg, rgba(255, 150, 0, 0.4) 0%, rgba(255, 100, 50, 0.55) 100%);
+            border-image: linear-gradient(45deg, #ff9600, #ff64ff, #ff6432) 1;
+            box-shadow: 
+                0 12px 30px rgba(255, 150, 0, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                0 0 25px rgba(255, 150, 0, 0.5);
+            transform: translateY(-2px) scale(1.05);
+        }
+        
+        /* Navigation buttons */
+        .nav-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* Perspective container for entire viewer */
+        body {
+            perspective: 2000px;
+            perspective-origin: center center;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-controls">
+        <a href="gallery.html" class="nav-btn">← Back to Portfolio</a>
+        <a href="index.html" class="nav-btn">Open in Engine</a>
+    </div>
+    
+    <div class="variation-card" id="viewerCard">
+        <div class="system-badge" id="systemBadge">SYSTEM</div>
+        
+        <div class="card-preview" data-preview-container>
+            <div class="visualization-container" id="visualizationContainer">
+                <!-- Visualization will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="card-info">
+            <h3 id="cardTitle">Loading...</h3>
+            <div class="card-params" id="cardParams">
+                Loading parameters...
+            </div>
+        </div>
+        
+        <div class="card-controls">
+            <button class="card-btn" onclick="randomizeVisualization()">🎲 Randomize</button>
+            <button class="card-btn primary" onclick="loadIntoEngine()">🎛️ Load Engine</button>
+            <button class="card-btn" onclick="generateTradingCard()">🎴 Trading Card</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Parse URL parameters
+        function parseURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const params = {};
+            
+            urlParams.forEach((value, key) => {
+                if (key === 'name' || key === 'id') {
+                    params[key] = value;
+                } else {
+                    params[key] = parseFloat(value) || value;
+                }
+            });
+            
+            return params;
+        }
+        
+        // Initialize viewer
+        async function initializeViewer() {
+            const params = parseURLParameters();
+            console.log('🎬 VIB34D Individual Viewer - Loading parameters:', params);
+            
+            // Update UI with parameter info
+            updateCardInfo(params);
+            
+            // Load the visualization engine for the specified system
+            await loadVisualization(params);
+            
+            // Initialize mouse tracking effects
+            initializeHolographicCardEffects();
+            
+            console.log('✅ Individual viewer initialized');
+        }
+        
+        function updateCardInfo(params) {
+            const systemInfo = {
+                faceted: { color: '#00ffff', name: 'FACETED' },
+                holographic: { color: '#ff64ff', name: 'HOLOGRAPHIC' },
+                quantum: { color: '#64ff96', name: 'QUANTUM' },
+                polychora: { color: '#ff9600', name: 'POLYCHORA' }
+            };
+            
+            const system = params.system || 'faceted';
+            const sysInfo = systemInfo[system] || systemInfo.faceted;
+            const name = params.name || 'VIB34D Variation';
+            const globalId = params.id || '???';
+            
+            // Update system badge
+            const badge = document.getElementById('systemBadge');
+            badge.textContent = sysInfo.name;
+            badge.className = `system-badge ${system}`;
+            
+            // Update title
+            document.getElementById('cardTitle').textContent = `${name} #${globalId}`;
+            
+            // Update parameters display
+            const paramsText = [
+                `System: ${sysInfo.name}`,
+                `Geometry: ${getGeometryName(params)}`,
+                `Hue: ${Math.round(params.hue || 0)}°`,
+                `Grid Density: ${params.gridDensity || 15}`,
+                `Morph Factor: ${(params.morphFactor || 1.0).toFixed(1)}`,
+                `Speed: ${(params.speed || 1.0).toFixed(1)}x`
+            ].join('<br>');
+            
+            document.getElementById('cardParams').innerHTML = paramsText;
+            
+            // Update page title
+            document.title = `VIB34D ${sysInfo.name} - ${name}`;
+        }
+        
+        function getGeometryName(params) {
+            const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'];
+            const polytopeNames = ['5-CELL', 'TESSERACT', '16-CELL', '24-CELL', '600-CELL', '120-CELL'];
+            
+            if (params.polytope !== undefined) {
+                return polytopeNames[params.polytope] || 'POLYTOPE';
+            }
+            
+            const geomType = params.geometryType !== undefined ? params.geometryType : params.geometry;
+            return geometryNames[geomType] || 'GEOMETRY';
+        }
+        
+        async function loadVisualization(params) {
+            const container = document.getElementById('visualizationContainer');
+            const system = params.system || 'faceted';
+            
+            // Create iframe with the same system and parameters, but in hideui mode
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = `
+                width: 100%;
+                height: 100%;
+                border: none;
+                border-radius: 12px;
+                background: #000;
+                transform-origin: center center;
+            `;
+            
+            // Build parameter string
+            const paramString = Object.entries(params)
+                .filter(([key]) => !['name', 'id'].includes(key))
+                .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+                .join('&');
+            
+            iframe.src = `index.html?system=${system}&hideui=true&${paramString}`;
+            console.log(`🎯 Loading visualization: ${iframe.src}`);
+            
+            container.appendChild(iframe);
+        }
+        
+        // EXACT COPY from gallery.html - Mouse tracking for individual viewer
+        function initializeHolographicCardEffects() {
+            console.log('🌟 Initializing individual viewer holographic effects...');
+            
+            const card = document.getElementById('viewerCard');
+            if (!card) return;
+            
+            let isHovering = false;
+            
+            // Mouse enter - start holographic effect
+            card.addEventListener('mouseenter', (e) => {
+                isHovering = true;
+                card.style.setProperty('--bend-intensity', '0.8');
+                console.log('🌌 Viewer card holographic effect activated');
+            });
+            
+            // Mouse leave - end holographic effect
+            card.addEventListener('mouseleave', (e) => {
+                isHovering = false;
+                card.style.setProperty('--bend-intensity', '0');
+                card.style.setProperty('--mouse-x', '50%');
+                card.style.setProperty('--mouse-y', '50%');
+                console.log('🌌 Viewer card holographic effect deactivated');
+            });
+            
+            // Mouse move - track position for card bending + iframe parameter updates
+            function handleCardMouseMove(e) {
+                if (!isHovering) return;
+                
+                const rect = card.getBoundingClientRect();
+                const cardX = ((e.clientX - rect.left) / rect.width) * 100;
+                const cardY = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                // Calculate distance from center for bend intensity
+                const centerX = 50;
+                const centerY = 50;
+                const distanceFromCenter = Math.sqrt(
+                    Math.pow(cardX - centerX, 2) + Math.pow(cardY - centerY, 2)
+                );
+                
+                // Dynamic bend intensity based on mouse position
+                const bendIntensity = Math.min(1, (distanceFromCenter / 70) + 0.3);
+                
+                // Update CSS variables for real-time transformation
+                card.style.setProperty('--mouse-x', cardX);
+                card.style.setProperty('--mouse-y', cardY);
+                card.style.setProperty('--bend-intensity', bendIntensity);
+                
+                // CRITICAL FIX: Send mouse data to iframe visualization (MATCH GALLERY)
+                const iframe = card.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'mouseMove',
+                            x: cardX / 100, // Normalize to 0-1
+                            y: cardY / 100,
+                            intensity: bendIntensity
+                        }, '*');
+                    } catch (e) {
+                        // Cross-origin restriction - expected
+                    }
+                }
+                
+                // Add extra class for edge effects
+                if (cardX < 20 || cardX > 80 || cardY < 20 || cardY > 80) {
+                    card.classList.add('edge-bend');
+                } else {
+                    card.classList.remove('edge-bend');
+                }
+            }
+            
+            // Attach mousemove to card with optimized event handling
+            card.addEventListener('mousemove', handleCardMouseMove);
+            
+            console.log('✅ Individual viewer holographic effects initialized');
+        }
+        
+        // Action functions
+        window.randomizeVisualization = function() {
+            // Reload with randomized parameters
+            window.location.reload();
+        };
+        
+        window.loadIntoEngine = function() {
+            // Load into main engine with current parameters
+            const currentUrl = new URL(window.location.href);
+            const engineUrl = new URL('index.html', window.location.origin);
+            
+            // Copy all parameters except name and id
+            for (const [key, value] of currentUrl.searchParams) {
+                if (!['name', 'id'].includes(key)) {
+                    engineUrl.searchParams.set(key, value);
+                }
+            }
+            
+            window.location.href = engineUrl.toString();
+        };
+        
+        window.generateTradingCard = async function() {
+            try {
+                // Import trading card generator
+                const { TradingCardGenerator } = await import('./src/export/TradingCardGenerator.js');
+                
+                const params = parseURLParameters();
+                const mockEngine = {
+                    parameterManager: {
+                        getAllParameters: () => params
+                    }
+                };
+                
+                window.currentSystem = params.system || 'faceted';
+                
+                const generator = new TradingCardGenerator(mockEngine);
+                const result = await generator.generateCardHTML('classic');
+                
+                if (result.success) {
+                    // Navigate to the trading card (same tab)
+                    const blob = new Blob([result.html], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Navigate to trading card in same tab
+                    window.location.href = url;
+                    
+                    console.log('✅ Trading card generated and navigating');
+                } else {
+                    throw new Error(result.error || 'Generation failed');
+                }
+            } catch (error) {
+                console.error('❌ Trading card generation failed:', error);
+                alert('Trading card generation failed. Please try again.');
+            }
+        };
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeViewer();
+        });
+        
+        console.log('🎬 VIB34D Individual Viewer ready');
+    </script>
+</body>
+</html>

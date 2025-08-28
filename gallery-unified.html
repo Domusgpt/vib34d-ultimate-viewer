@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Unified Gallery - Single Context Portfolio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+        }
+        
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid #00ffff;
+            padding: 15px 30px;
+        }
+        
+        .header h1 {
+            color: #00ffff;
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .architecture-badge {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 255, 255, 0); }
+        }
+        
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-number {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .nav-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn.primary {
+            background: #00ffff;
+            color: #000;
+        }
+        
+        /* MAIN CONTENT */
+        .main-content {
+            margin-top: 200px;
+            padding: 30px;
+            min-height: calc(100vh - 200px);
+        }
+        
+        /* LOADING */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(0, 255, 255, 0.2);
+            border-top: 3px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #00ffff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .loading-details {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        /* COLLECTIONS CONTAINER */
+        #collectionsContainer {
+            display: none;
+        }
+        
+        .date-section {
+            margin-bottom: 40px;
+        }
+        
+        .date-header {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            margin-bottom: 25px;
+        }
+        
+        .date-title {
+            color: #00ffff;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+        
+        .date-meta {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .collection-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: visible;
+        }
+        
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .collection-title {
+            color: #fff;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        
+        .collection-meta {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .system-tag {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 255, 255, 0.4);
+        }
+        
+        /* UNIFIED CARD GRID */
+        .variations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            position: relative;
+            z-index: 1;
+            /* CRITICAL: Allow hover previews to expand beyond grid boundaries */
+            overflow: visible;
+        }
+        
+        /* UNIFIED TILTING CARD SYSTEM - MOBILE OPTIMIZED */
+        .variation-card {
+            background: 
+                linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.6) 100%),
+                radial-gradient(circle at top left, rgba(0, 255, 255, 0.1) 0%, transparent 60%),
+                radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.1) 0%, transparent 60%);
+            
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 0;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            height: 200px;
+            transform-style: preserve-3d;
+            transform-origin: 50% 50%;
+            will-change: transform;
+            
+            /* UNIFIED ARCHITECTURE VARIABLES */
+            --tilt-intensity-y: 1.2deg;
+            --tilt-intensity-x: 0.6deg;
+            --bend-intensity: 1;
+            --mouse-x: 50;
+            --mouse-y: 50;
+            --accel-x: 0;
+            --accel-y: 0;
+        }
+        
+        /* Mobile optimization: Reduced tilt intensity by 50% */
+        @media (max-width: 768px) {
+            .variation-card {
+                --tilt-intensity-y: 0.6deg;
+                --tilt-intensity-x: 0.3deg;
+                --bend-intensity: 0.5;
+            }
+        }
+        
+        .variation-card:hover {
+            border: 1px solid rgba(0, 255, 255, 0.6);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(0, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            
+            /* UNIFIED TILTING SYSTEM */
+            transform: 
+                perspective(1200px)
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity)))
+                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity)))
+                translateZ(20px);
+            
+            /* Smooth transform transition */
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
+        }
+        
+        /* UNIFIED IFRAME PREVIEW SYSTEM */
+        .preview-iframe {
+            width: 100%;
+            height: 140px;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            background: #000;
+            pointer-events: none; /* Allow card tilting while iframe displays */
+        }
+        
+        .card-info {
+            padding: 15px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .card-system {
+            color: #00ffff;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+        
+        /* LAZY LOADING OPTIMIZATION */
+        .variation-card[data-loaded="false"] .preview-iframe {
+            background: 
+                linear-gradient(45deg, transparent 25%, rgba(0, 255, 255, 0.1) 25%, rgba(0, 255, 255, 0.1) 50%, transparent 50%),
+                linear-gradient(-45deg, transparent 75%, rgba(0, 255, 255, 0.1) 75%);
+            background-size: 20px 20px;
+            animation: loading-pattern 2s linear infinite;
+        }
+        
+        @keyframes loading-pattern {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 20px 20px, -20px -20px; }
+        }
+        
+        /* ERROR HANDLING */
+        .error-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .error-message h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .error-message p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        /* UNIFIED PERFORMANCE MONITOR */
+        .performance-monitor {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 0.7rem;
+            color: #00ffff;
+            z-index: 1100;
+        }
+        
+        .perf-item {
+            margin-bottom: 5px;
+        }
+        
+        .perf-value {
+            color: #0f0;
+            font-weight: bold;
+        }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .header-stats {
+                gap: 15px;
+            }
+            
+            .nav-controls {
+                gap: 10px;
+            }
+            
+            .nav-btn {
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+            
+            .main-content {
+                margin-top: 180px;
+                padding: 20px 15px;
+            }
+            
+            .variations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            .collection-section {
+                padding: 20px 15px;
+            }
+            
+            .architecture-badge {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 10px auto;
+                display: block;
+                text-align: center;
+                width: fit-content;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="architecture-badge">1 WebGL Context</div>
+        <h1>VIB34D UNIFIED GALLERY</h1>
+        
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-number" id="systemCount">0</div>
+                <div>Collections</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="variationCount">0</div>
+                <div>Variations</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="contextCount">1</div>
+                <div>WebGL Contexts</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="statusText">Loading</div>
+                <div>Status</div>
+            </div>
+        </div>
+        
+        <div class="nav-controls">
+            <a href="index-unified.html" class="nav-btn">🎮 Main Engine</a>
+            <a href="viewer-unified.html" class="nav-btn">🔍 Viewer</a>
+            <button class="nav-btn" onclick="refreshCollections()">🔄 Refresh</button>
+            <button class="nav-btn primary" onclick="createNewVariation()">➕ New Variation</button>
+        </div>
+    </div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- LOADING STATE -->
+        <div id="loadingMsg" class="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Initializing Unified Gallery</div>
+            <div class="loading-details">
+                Loading portfolio with single WebGL context architecture.<br>
+                Canvas explosion eliminated • Mobile optimized • Touch-friendly cards
+            </div>
+        </div>
+        
+        <!-- COLLECTIONS CONTAINER -->
+        <div id="collectionsContainer">
+            <!-- Collections will be populated here -->
+        </div>
+    </div>
+    
+    <!-- UNIFIED PERFORMANCE MONITOR -->
+    <div class="performance-monitor">
+        <div class="perf-item">WebGL: <span class="perf-value" id="webgl-contexts">1</span> contexts</div>
+        <div class="perf-item">FPS: <span class="perf-value" id="fps-monitor">--</span></div>
+        <div class="perf-item">Memory: <span class="perf-value" id="memory-usage">--</span></div>
+        <div class="perf-item">Touch: <span class="perf-value" id="touch-status">Ready</span></div>
+    </div>
+
+    <!-- UNIFIED GALLERY SCRIPT -->
+    <script type="module">
+        // Import unified architecture
+        import { VIB34DUnifiedEngine } from './src/core/UnifiedEngine.js';
+        import { CollectionManager } from './src/features/CollectionManager.js';
+        import { UnifiedSaveManager } from './src/core/UnifiedSaveManager.js';
+        
+        // Global state
+        let unifiedEngine = null;
+        let collectionManager = null;
+        let unifiedSaveManager = null;
+        let collections = [];
+        let currentSystem = 'faceted';
+        
+        // Initialize unified gallery system
+        async function initializeUnifiedGallery() {
+            try {
+                console.log('🎮 Initializing Unified Gallery with single WebGL context...');
+                
+                // Create unified engine (1 WebGL context for all previews)
+                unifiedEngine = new VIB34DUnifiedEngine({
+                    useSingleContext: true,
+                    enableMobileOptimizations: true,
+                    enableTouchControls: true,
+                    previewMode: true // Special mode for gallery previews
+                });
+                
+                // Initialize collection management
+                collectionManager = new CollectionManager();
+                unifiedSaveManager = new UnifiedSaveManager(unifiedEngine);
+                
+                // Load collections
+                await loadCollections();
+                
+                // Render collections
+                renderUnifiedCollections();
+                
+                // Setup tilting card interactions
+                setupUnifiedCardInteractions();
+                
+                // Setup performance monitoring
+                setupPerformanceMonitoring();
+                
+                // Hide loading
+                document.getElementById('loadingMsg').style.display = 'none';
+                document.getElementById('collectionsContainer').style.display = 'block';
+                
+                updateStats();
+                console.log('✅ Unified Gallery initialized - Canvas explosion eliminated!');
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize unified gallery:', error);
+                showError('Failed to load unified gallery: ' + error.message);
+            }
+        }
+        
+        async function loadCollections() {
+            try {
+                // Load from multiple sources
+                const sources = [
+                    './collections/base-variations.json',
+                    // Add more collection sources as needed
+                ];
+                
+                collections = [];
+                for (const source of sources) {
+                    try {
+                        const response = await fetch(source);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (Array.isArray(data)) {
+                                collections.push(...data);
+                            } else if (data.collections) {
+                                collections.push(...data.collections);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Could not load collection from ${source}:`, e);
+                    }
+                }
+                
+                // Fallback: Create demo collections if none loaded
+                if (collections.length === 0) {
+                    collections = createDemoCollections();
+                }
+                
+                console.log(`📚 Loaded ${collections.length} collections`);
+                
+            } catch (error) {
+                console.error('Failed to load collections:', error);
+                collections = createDemoCollections();
+            }
+        }
+        
+        function createDemoCollections() {
+            const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+            const demoCollections = [];
+            
+            systems.forEach(system => {
+                const collection = {
+                    id: `demo-${system}`,
+                    name: `${system.charAt(0).toUpperCase() + system.slice(1)} Variations`,
+                    system: system,
+                    created: new Date().toISOString(),
+                    timestamp: Date.now(),
+                    variations: []
+                };
+                
+                // Create 6 demo variations per system
+                for (let i = 0; i < 6; i++) {
+                    collection.variations.push({
+                        id: `${system}-demo-${i}`,
+                        name: `${system} Variation ${i + 1}`,
+                        system: system,
+                        parameters: {
+                            geometry: i % 8,
+                            rot4dXW: (i * 0.5) % 6.28,
+                            rot4dYW: (i * 0.7) % 6.28,
+                            rot4dZW: (i * 0.3) % 6.28,
+                            gridDensity: 15 + (i * 5),
+                            morphFactor: 0.5 + (i * 0.2),
+                            chaos: 0.1 + (i * 0.1),
+                            speed: 1.0,
+                            hue: (i * 60) % 360,
+                            intensity: 0.8,
+                            saturation: 0.7
+                        },
+                        created: new Date(Date.now() - i * 3600000).toISOString()
+                    });
+                }
+                
+                demoCollections.push(collection);
+            });
+            
+            return demoCollections;
+        }
+        
+        function renderUnifiedCollections() {
+            const container = document.getElementById('collectionsContainer');
+            container.innerHTML = '';
+            
+            if (collections.length === 0) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <h3>No Collections Found</h3>
+                        <p>The unified gallery system is ready but no collections are available.</p>
+                        <button class="nav-btn primary" onclick="createNewVariation()">Create First Variation</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group by date (same as original)
+            const collectionsByDate = {};
+            const sortedCollections = collections.sort((a, b) => {
+                const dateA = new Date(a.created || a.timestamp || 0);
+                const dateB = new Date(b.created || b.timestamp || 0);
+                return dateB - dateA;
+            });
+            
+            sortedCollections.forEach(collection => {
+                const date = new Date(collection.created || collection.timestamp || Date.now());
+                const dateKey = date.toISOString().split('T')[0];
+                const displayDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                if (!collectionsByDate[dateKey]) {
+                    collectionsByDate[dateKey] = { 
+                        displayDate, 
+                        collections: [], 
+                        totalVariations: 0 
+                    };
+                }
+                collectionsByDate[dateKey].collections.push(collection);
+                collectionsByDate[dateKey].totalVariations += collection.variations.length;
+            });
+            
+            // Render organized collections
+            Object.entries(collectionsByDate).forEach(([dateKey, dateGroup]) => {
+                const dateSection = document.createElement('div');
+                dateSection.className = 'date-section';
+                dateSection.innerHTML = `
+                    <div class="date-header">
+                        <h3 class="date-title">${dateGroup.displayDate}</h3>
+                        <div class="date-meta">
+                            ${dateGroup.collections.length} collection${dateGroup.collections.length !== 1 ? 's' : ''} • 
+                            ${dateGroup.totalVariations} variation${dateGroup.totalVariations !== 1 ? 's' : ''} • 
+                            <span style="color: #0f0;">1 WebGL Context</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(dateSection);
+                
+                // Render collections for this date
+                dateGroup.collections.forEach(collection => {
+                    const section = document.createElement('div');
+                    section.className = 'collection-section';
+                    const createdTime = new Date(collection.created || collection.timestamp || Date.now());
+                    const timeString = createdTime.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit'
+                    });
+                    
+                    section.innerHTML = `
+                        <div class="collection-header">
+                            <h4 class="collection-title">${collection.name || 'Unnamed Collection'}</h4>
+                            <div class="collection-meta">
+                                <span class="system-tag">${collection.system || 'unknown'}</span>
+                                <span>${timeString}</span>
+                                <span>${collection.variations.length} variations</span>
+                            </div>
+                        </div>
+                        <div class="variations-grid" data-collection-id="${collection.id}">
+                            ${collection.variations.map(variation => createUnifiedVariationCard(variation)).join('')}
+                        </div>
+                    `;
+                    
+                    container.appendChild(section);
+                });
+            });
+            
+            // Setup lazy loading for previews
+            setupLazyLoading();
+        }
+        
+        function createUnifiedVariationCard(variation) {
+            const previewUrl = `viewer-unified.html?${createPreviewParams(variation)}`;
+            
+            return `
+                <div class="variation-card" 
+                     data-variation-id="${variation.id}"
+                     data-system="${variation.system}"
+                     data-loaded="false"
+                     onclick="openVariation('${variation.id}')">
+                    <iframe class="preview-iframe" 
+                            data-src="${previewUrl}"
+                            loading="lazy"
+                            title="Preview: ${variation.name}">
+                    </iframe>
+                    <div class="card-info">
+                        <h5 class="card-title">${variation.name || 'Untitled'}</h5>
+                        <span class="card-system">${variation.system || 'unknown'}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createPreviewParams(variation) {
+            const params = new URLSearchParams();
+            params.set('system', variation.system || 'faceted');
+            
+            if (variation.parameters) {
+                Object.entries(variation.parameters).forEach(([key, value]) => {
+                    params.set(key, value);
+                });
+            }
+            
+            params.set('preview', 'true');
+            return params.toString();
+        }
+        
+        function setupUnifiedCardInteractions() {
+            document.addEventListener('mousemove', (e) => {
+                const cards = document.querySelectorAll('.variation-card:hover');
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    card.style.setProperty('--mouse-x', x);
+                    card.style.setProperty('--mouse-y', y);
+                });
+            });
+        }
+        
+        function setupLazyLoading() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
+                        const iframe = card.querySelector('.preview-iframe');
+                        
+                        if (iframe && iframe.dataset.src && card.dataset.loaded === 'false') {
+                            iframe.src = iframe.dataset.src;
+                            card.dataset.loaded = 'true';
+                            observer.unobserve(card);
+                        }
+                    }
+                });
+            }, { rootMargin: '50px' });
+            
+            document.querySelectorAll('.variation-card').forEach(card => {
+                observer.observe(card);
+            });
+        }
+        
+        function setupPerformanceMonitoring() {
+            setInterval(() => {
+                if (unifiedEngine) {
+                    const stats = unifiedEngine.getPerformanceStats();
+                    document.getElementById('webgl-contexts').textContent = stats.canvasContexts;
+                    document.getElementById('fps-monitor').textContent = stats.fps.toFixed(0);
+                    document.getElementById('memory-usage').textContent = stats.memoryStats.usage;
+                }
+            }, 1000);
+        }
+        
+        function updateStats() {
+            const totalCollections = collections.length;
+            const totalVariations = collections.reduce((sum, col) => sum + col.variations.length, 0);
+            
+            document.getElementById('systemCount').textContent = totalCollections;
+            document.getElementById('variationCount').textContent = totalVariations;
+            document.getElementById('contextCount').textContent = '1'; // Always 1 with unified architecture
+            document.getElementById('statusText').textContent = totalCollections > 0 ? 'Ready' : 'Empty';
+        }
+        
+        function openVariation(variationId) {
+            const variation = findVariationById(variationId);
+            if (variation) {
+                const params = createPreviewParams(variation);
+                window.open(`viewer-unified.html?${params}`, '_blank');
+            }
+        }
+        
+        function findVariationById(id) {
+            for (const collection of collections) {
+                const variation = collection.variations.find(v => v.id === id);
+                if (variation) return variation;
+            }
+            return null;
+        }
+        
+        function refreshCollections() {
+            console.log('🔄 Refreshing unified gallery...');
+            document.getElementById('loadingMsg').style.display = 'flex';
+            document.getElementById('collectionsContainer').style.display = 'none';
+            
+            setTimeout(() => {
+                initializeUnifiedGallery();
+            }, 500);
+        }
+        
+        function createNewVariation() {
+            window.open('index-unified.html', '_blank');
+        }
+        
+        function showError(message) {
+            const container = document.getElementById('collectionsContainer');
+            container.innerHTML = `
+                <div class="error-message">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                    <button class="nav-btn" onclick="refreshCollections()">Try Again</button>
+                </div>
+            `;
+            container.style.display = 'block';
+            document.getElementById('loadingMsg').style.display = 'none';
+        }
+        
+        // Global exports
+        window.refreshCollections = refreshCollections;
+        window.createNewVariation = createNewVariation;
+        window.openVariation = openVariation;
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initializeUnifiedGallery);
+    </script>
+</body>
+</html>

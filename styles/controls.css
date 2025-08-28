@@ -1,0 +1,163 @@
+/* VIB34D Control Panel Styles */
+
+.control-panel {
+    position: fixed;
+    top: 50px;
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.95);
+    border-left: 2px solid #00ffff;
+    padding: 20px;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.panel-header {
+    font-size: 1.1rem;
+    color: #ff00ff;
+    margin-bottom: 20px;
+    text-align: center;
+    text-shadow: 0 0 10px #ff00ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mobile-collapse-btn {
+    background: rgba(255, 0, 255, 0.2);
+    border: 1px solid #ff00ff;
+    color: #ff00ff;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.mobile-collapse-btn:hover {
+    background: rgba(255, 0, 255, 0.4);
+}
+
+.control-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.control-section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: #00ffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* Geometry Grid */
+.geometry-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+}
+
+.geom-btn {
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.3s;
+}
+
+.geom-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+}
+
+.geom-btn.active {
+    background: rgba(0, 255, 255, 0.4);
+    border-color: #00ffff;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+/* Parameter Controls */
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.control-value {
+    color: #00ffff;
+    font-weight: bold;
+}
+
+.control-slider {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 255, 255, 0.2);
+    outline: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+    appearance: none;
+    border-radius: 3px;
+}
+
+.control-slider:hover {
+    opacity: 1;
+}
+
+.control-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #00ffff;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.control-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #00ffff;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+/* Action Buttons */
+.panel-btn {
+    background: rgba(255, 0, 255, 0.1);
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    color: #ff00ff;
+    padding: 10px 20px;
+    margin: 5px 0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.panel-btn:hover {
+    background: rgba(255, 0, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.panel-btn.wide {
+    width: 100%;
+    margin-bottom: 10px;
+}

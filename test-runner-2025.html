@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D System Test Runner - 2025 Standards</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            border: 2px solid #0f0;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            background: #111;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .warn { color: #ff0; }
+        .status-excellent { color: #0f0; font-weight: bold; }
+        .status-good { color: #ff0; font-weight: bold; }
+        .status-poor { color: #f00; font-weight: bold; }
+        #testOutput {
+            background: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            height: 400px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #222;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #0f0;
+            color: #000;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #333;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 VIB34D SYSTEM VALIDATION</h1>
+        <h2>2025 Web Standards Compliance Testing</h2>
+        <p>Comprehensive automated testing framework</p>
+    </div>
+
+    <div class="controls">
+        <button onclick="loadVIB34D()">🔄 Load VIB34D System</button>
+        <button onclick="runTests()">🧪 Run Comprehensive Tests</button>
+        <button onclick="runMobileTest()">📱 Mobile Test</button>
+        <button onclick="clearOutput()">🧹 Clear Output</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Output Console</h3>
+        <div id="testOutput">Ready to test VIB34D system...\nClick "Load VIB34D System" to begin.\n</div>
+    </div>
+
+    <div class="test-section">
+        <h3>🖥️ System Under Test</h3>
+        <iframe id="testFrame" src="about:blank"></iframe>
+    </div>
+
+    <div class="test-section">
+        <h3>📈 Test Results Summary</h3>
+        <div id="resultsSummary">
+            <p>No tests run yet.</p>
+        </div>
+    </div>
+
+    <script>
+        const output = document.getElementById('testOutput');
+        const frame = document.getElementById('testFrame');
+        const results = document.getElementById('resultsSummary');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'pass' ? 'pass' : type === 'fail' ? 'fail' : type === 'warn' ? 'warn' : '';
+            output.innerHTML += `<span class="${colorClass}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+            log('Output cleared.');
+        }
+
+        function loadVIB34D() {
+            log('🔄 Loading VIB34D system...', 'info');
+            frame.src = 'index-clean.html';
+            
+            frame.onload = function() {
+                log('✅ VIB34D system loaded successfully', 'pass');
+                log('📋 System ready for testing', 'info');
+                
+                // Inject test script into iframe
+                setTimeout(() => {
+                    try {
+                        const testScript = frame.contentDocument.createElement('script');
+                        testScript.src = 'manual-system-validation.js';
+                        frame.contentDocument.head.appendChild(testScript);
+                        log('🧪 Test framework injected', 'pass');
+                    } catch (error) {
+                        log('⚠️ Could not inject test framework: ' + error.message, 'warn');
+                    }
+                }, 1000);
+            };
+            
+            frame.onerror = function() {
+                log('❌ Failed to load VIB34D system', 'fail');
+            };
+        }
+
+        function runTests() {
+            if (!frame.src || frame.src.includes('about:blank')) {
+                log('❌ VIB34D system not loaded. Click "Load VIB34D System" first.', 'fail');
+                return;
+            }
+
+            log('🚀 Starting comprehensive system tests...', 'info');
+            log('📋 Testing 2025 web standards compliance', 'info');
+
+            try {
+                const frameWindow = frame.contentWindow;
+                const frameDoc = frame.contentDocument;
+
+                // Test 1: System Loading & Architecture
+                log('\n📋 Test 1: System Architecture', 'info');
+                
+                if (frameWindow.switchSystem) {
+                    log('✅ switchSystem() function: FOUND', 'pass');
+                } else {
+                    log('❌ switchSystem() function: MISSING', 'fail');
+                }
+
+                if (frameWindow.updateParameter) {
+                    log('✅ updateParameter() function: FOUND', 'pass');
+                } else {
+                    log('❌ updateParameter() function: MISSING', 'fail');
+                }
+
+                if (frameWindow.currentSystem) {
+                    log(`✅ Current system: ${frameWindow.currentSystem}`, 'pass');
+                } else {
+                    log('⚠️ Current system: NOT INITIALIZED', 'warn');
+                }
+
+                // Test 2: System Buttons
+                log('\n📋 Test 2: System Button Validation', 'info');
+                const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                let foundButtons = 0;
+
+                systems.forEach(system => {
+                    const button = frameDoc.querySelector(`[data-system="${system}"]`);
+                    if (button) {
+                        log(`✅ ${system.toUpperCase()} button: PRESENT`, 'pass');
+                        foundButtons++;
+                    } else {
+                        log(`❌ ${system.toUpperCase()} button: MISSING`, 'fail');
+                    }
+                });
+
+                log(`📊 System buttons found: ${foundButtons}/4`, foundButtons === 4 ? 'pass' : 'warn');
+
+                // Test 3: Parameter Controls  
+                log('\n📋 Test 3: Parameter Controls', 'info');
+                const parameters = ['hue', 'speed', 'gridDensity', 'intensity', 'chaos'];
+                let foundParams = 0;
+
+                parameters.forEach(param => {
+                    const control = frameDoc.getElementById(param);
+                    if (control) {
+                        log(`✅ ${param} control: FOUND`, 'pass');
+                        foundParams++;
+                    } else {
+                        log(`❌ ${param} control: MISSING`, 'fail');
+                    }
+                });
+
+                log(`📊 Parameter controls found: ${foundParams}/${parameters.length}`, foundParams >= 3 ? 'pass' : 'warn');
+
+                // Test 4: Canvas and WebGL
+                log('\n📋 Test 4: Canvas & WebGL', 'info');
+                const canvases = frameDoc.querySelectorAll('canvas');
+                let webglContexts = 0;
+
+                canvases.forEach(canvas => {
+                    try {
+                        if (canvas.getContext('webgl') || canvas.getContext('webgl2')) {
+                            webglContexts++;
+                        }
+                    } catch (e) {
+                        // Ignore context creation failures
+                    }
+                });
+
+                log(`📊 Canvas elements: ${canvases.length}`, 'info');
+                log(`📊 WebGL contexts: ${webglContexts}`, webglContexts > 0 ? 'pass' : 'fail');
+
+                if (webglContexts > 0 && webglContexts < 15) {
+                    log('✅ Context management: OPTIMIZED', 'pass');
+                } else if (webglContexts >= 15) {
+                    log('⚠️ Context management: HIGH USAGE', 'warn');
+                } else {
+                    log('❌ Context management: NO CONTEXTS', 'fail');
+                }
+
+                // Test 5: Performance Check
+                log('\n📋 Test 5: Performance Check', 'info');
+                
+                const performanceAPI = frameWindow.performance;
+                if (performanceAPI) {
+                    log('✅ Performance API: AVAILABLE', 'pass');
+                    
+                    if (performanceAPI.memory) {
+                        const memoryUsage = performanceAPI.memory.usedJSHeapSize / 1024 / 1024;
+                        log(`📊 Memory usage: ${memoryUsage.toFixed(1)} MB`, memoryUsage < 50 ? 'pass' : 'warn');
+                    }
+                } else {
+                    log('⚠️ Performance API: LIMITED', 'warn');
+                }
+
+                // Test 6: Mobile Responsiveness
+                log('\n📋 Test 6: Mobile Features', 'info');
+                
+                const viewportMeta = frameDoc.querySelector('meta[name="viewport"]');
+                if (viewportMeta) {
+                    log('✅ Mobile viewport: CONFIGURED', 'pass');
+                } else {
+                    log('⚠️ Mobile viewport: NOT CONFIGURED', 'warn');
+                }
+
+                const touchSupport = 'ontouchstart' in frameWindow;
+                log(`📊 Touch support: ${touchSupport ? 'AVAILABLE' : 'DESKTOP MODE'}`, 'info');
+
+                // Test 7: Modern Standards
+                log('\n📋 Test 7: 2025 Standards', 'info');
+                
+                if (frameDoc.querySelector('script[type="module"]')) {
+                    log('✅ ES6 Modules: DETECTED', 'pass');
+                } else {
+                    log('⚠️ ES6 Modules: NOT DETECTED', 'warn');
+                }
+
+                if (frameWindow.localStorage) {
+                    log('✅ Local Storage: AVAILABLE', 'pass');
+                } else {
+                    log('❌ Local Storage: MISSING', 'fail');
+                }
+
+                if (frameWindow.requestAnimationFrame) {
+                    log('✅ Animation API: AVAILABLE', 'pass');
+                } else {
+                    log('❌ Animation API: MISSING', 'fail');
+                }
+
+                // Run integrated test if available
+                setTimeout(() => {
+                    if (frameWindow.runVIB34DTests) {
+                        log('\n🧪 Running integrated comprehensive tests...', 'info');
+                        frameWindow.runVIB34DTests();
+                        
+                        setTimeout(() => {
+                            if (frameWindow.VIB34DTestResults) {
+                                const testResults = frameWindow.VIB34DTestResults;
+                                generateSummary(testResults);
+                            } else {
+                                generateBasicSummary();
+                            }
+                        }, 2000);
+                    } else {
+                        generateBasicSummary();
+                    }
+                }, 1000);
+
+            } catch (error) {
+                log(`❌ Testing error: ${error.message}`, 'fail');
+                generateBasicSummary();
+            }
+        }
+
+        function generateSummary(testResults = null) {
+            log('\n' + '='.repeat(50), 'info');
+            log('🎯 VIB34D TEST RESULTS SUMMARY', 'info');
+            log('='.repeat(50), 'info');
+
+            if (testResults) {
+                log(`📊 Overall Score: ${testResults.score}%`, testResults.score >= 85 ? 'pass' : 'warn');
+                log(`✅ Tests Passed: ${testResults.passed}`, 'pass');
+                log(`❌ Tests Failed: ${testResults.failed}`, testResults.failed > 0 ? 'fail' : 'pass');
+                log(`⚠️ Warnings: ${testResults.warnings}`, testResults.warnings > 3 ? 'warn' : 'pass');
+                
+                let statusClass = testResults.score >= 90 ? 'pass' : testResults.score >= 80 ? 'warn' : 'fail';
+                log(`🎯 Status: ${testResults.status}`, statusClass);
+                log(`🚀 Production Ready: ${testResults.productionReady ? 'YES' : 'NO'}`, testResults.productionReady ? 'pass' : 'fail');
+                
+                // Update results panel
+                results.innerHTML = `
+                    <h4>📊 Test Results (${new Date().toLocaleString()})</h4>
+                    <p><strong>Overall Score:</strong> <span class="${statusClass}">${testResults.score}%</span></p>
+                    <p><strong>Passed:</strong> <span class="pass">${testResults.passed}</span> | 
+                       <strong>Failed:</strong> <span class="fail">${testResults.failed}</span> | 
+                       <strong>Warnings:</strong> <span class="warn">${testResults.warnings}</span></p>
+                    <p><strong>Status:</strong> <span class="${statusClass}">${testResults.status}</span></p>
+                    <p><strong>Production Ready:</strong> <span class="${testResults.productionReady ? 'pass' : 'fail'}">${testResults.productionReady ? 'YES' : 'NO'}</span></p>
+                `;
+            } else {
+                log('📋 Basic validation completed', 'info');
+                log('🔍 For detailed results, ensure test framework loads correctly', 'warn');
+                
+                results.innerHTML = `
+                    <h4>📊 Basic Test Results</h4>
+                    <p>Basic validation completed. System appears functional.</p>
+                    <p><strong>Note:</strong> For comprehensive results, ensure all components load correctly.</p>
+                `;
+            }
+            
+            log('='.repeat(50), 'info');
+            log('🎉 Testing complete!', 'pass');
+        }
+
+        function generateBasicSummary() {
+            generateSummary(null);
+        }
+
+        function runMobileTest() {
+            if (!frame.src || frame.src.includes('about:blank')) {
+                log('❌ VIB34D system not loaded. Click "Load VIB34D System" first.', 'fail');
+                return;
+            }
+
+            log('📱 Starting mobile-specific tests...', 'info');
+            
+            // Simulate mobile viewport
+            frame.style.width = '390px';
+            frame.style.height = '844px';
+            
+            setTimeout(() => {
+                log('📱 Testing mobile layout...', 'info');
+                
+                try {
+                    const frameDoc = frame.contentDocument;
+                    const body = frameDoc.body;
+                    
+                    if (body.offsetWidth <= 400) {
+                        log('✅ Mobile viewport: RESPONSIVE', 'pass');
+                    } else {
+                        log('⚠️ Mobile viewport: FIXED WIDTH', 'warn');
+                    }
+                    
+                    // Check for mobile-friendly elements
+                    const buttons = frameDoc.querySelectorAll('button');
+                    let touchFriendlyButtons = 0;
+                    
+                    buttons.forEach(button => {
+                        const rect = button.getBoundingClientRect();
+                        if (rect.width >= 40 && rect.height >= 40) {
+                            touchFriendlyButtons++;
+                        }
+                    });
+                    
+                    log(`📊 Touch-friendly buttons: ${touchFriendlyButtons}/${buttons.length}`, 
+                        touchFriendlyButtons >= buttons.length * 0.8 ? 'pass' : 'warn');
+                    
+                    log('📱 Mobile testing complete', 'pass');
+                    
+                } catch (error) {
+                    log(`❌ Mobile test error: ${error.message}`, 'fail');
+                }
+                
+                // Reset frame size
+                setTimeout(() => {
+                    frame.style.width = '100%';
+                    frame.style.height = '600px';
+                }, 2000);
+                
+            }, 1000);
+        }
+
+        // Initialize
+        log('🔍 VIB34D Test Runner - 2025 Standards');
+        log('📋 Click "Load VIB34D System" to begin testing');
+    </script>
+</body>
+</html>

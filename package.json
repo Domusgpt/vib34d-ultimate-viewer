@@ -1,0 +1,29 @@
+{
+  "name": "v2-refactored",
+  "version": "1.0.0",
+  "description": "**Revolutionary transformation: 20+ WebGL contexts → 1 unified context**",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:report": "npx playwright show-report",
+    "dev": "python3 -m http.server 8145"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Domusgpt/v2-refactored.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Domusgpt/v2-refactored/issues"
+  },
+  "homepage": "https://github.com/Domusgpt/v2-refactored#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "playwright": "^1.55.0"
+  }
+}

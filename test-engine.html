@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Engine Import Test</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 20px; }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <h1>Direct Engine Import Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        try {
+            log('🧪 Testing VIB34DIntegratedEngine import...');
+            
+            const engineModule = await import('./src/core/Engine.js');
+            log('✅ Engine.js module loaded successfully', 'success');
+            
+            if (engineModule.VIB34DIntegratedEngine) {
+                log('✅ VIB34DIntegratedEngine class found', 'success');
+                log(`Constructor type: ${typeof engineModule.VIB34DIntegratedEngine}`, 'success');
+                
+                // Try to create instance (this might fail due to missing canvas elements)
+                try {
+                    const engine = new engineModule.VIB34DIntegratedEngine();
+                    log('✅ Engine instance created (unexpected success!)', 'success');
+                } catch (constructorError) {
+                    log(`⚠️ Engine constructor failed (expected): ${constructorError.message}`, 'info');
+                }
+                
+            } else {
+                log('❌ VIB34DIntegratedEngine class not found in module', 'error');
+            }
+            
+        } catch (error) {
+            log(`❌ Import failed: ${error.message}`, 'error');
+            log(`Stack: ${error.stack}`, 'error');
+        }
+    </script>
+</body>
+</html>

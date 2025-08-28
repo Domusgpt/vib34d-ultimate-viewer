@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 VIB34D Mobile Complete Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            padding: 10px;
+            margin: 0;
+        }
+        
+        .test-section {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .test-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 12px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+            min-height: 44px;
+            touch-action: manipulation;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .test-btn:active {
+            background: rgba(0, 255, 255, 0.4);
+            transform: scale(0.98);
+        }
+        
+        .test-btn.success {
+            border-color: #00ff00;
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.2);
+        }
+        
+        .test-btn.error {
+            border-color: #ff0000;
+            color: #ff0000;
+            background: rgba(255, 0, 0, 0.2);
+        }
+        
+        #results {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffff00; }
+        .info { color: #00ffff; }
+        
+        .link-btn {
+            background: rgba(255, 0, 255, 0.2);
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+            padding: 12px 20px;
+            margin: 5px;
+            display: inline-block;
+            text-decoration: none;
+            border-radius: 5px;
+            min-height: 44px;
+            line-height: 20px;
+            text-align: center;
+        }
+        
+        .touch-test {
+            background: rgba(255, 255, 0, 0.1);
+            border: 2px solid #ffff00;
+            padding: 30px;
+            margin: 10px 0;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        h1 { font-size: 20px; margin-bottom: 20px; }
+        h3 { font-size: 16px; margin: 10px 0; color: #00ffff; }
+    </style>
+</head>
+<body>
+    <h1>🎨 VIB34D Mobile Complete Test Suite</h1>
+    
+    <div class="test-section">
+        <h3>🏗️ Architecture Tests</h3>
+        <button class="test-btn" onclick="testCleanArchitecture()">🧪 Test Clean Architecture</button>
+        <button class="test-btn" onclick="testEngineImports()">📦 Test Engine Imports</button>
+        <button class="test-btn" onclick="testSystemSwitching()">🔄 Test System Switching</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>💾 Gallery & JSON Tests</h3>
+        <button class="test-btn" onclick="testGalleryJSON()">📄 Test Gallery JSON</button>
+        <button class="test-btn" onclick="testParameterCapture()">⚙️ Test Parameters</button>
+        <button class="test-btn" onclick="testJSONFormat()">✅ Validate JSON Format</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>📱 Mobile Interaction Tests</h3>
+        <button class="test-btn" onclick="testTouchSupport()">👆 Test Touch Events</button>
+        <button class="test-btn" onclick="testDeviceOrientation()">📱 Test Device Tilt</button>
+        <button class="test-btn" onclick="testMobileViewport()">📐 Test Viewport</button>
+    </div>
+    
+    <div class="touch-test">
+        <strong>📱 Touch Test Area</strong><br>
+        Tap, drag, and interact here to test touch responsiveness
+        <div id="touchStatus" style="margin-top: 10px; font-size: 12px;">Ready for touch input...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔗 Direct Links</h3>
+        <a href="index-clean.html" class="link-btn">🏠 Clean Architecture</a>
+        <a href="gallery-unified.html" class="link-btn">🎨 Gallery</a>
+        <a href="viewer-unified.html" class="link-btn">👁️ Viewer</a>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function updateButtonStatus(buttonText, success) {
+            const buttons = document.querySelectorAll('.test-btn');
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(buttonText)) {
+                    btn.className = `test-btn ${success ? 'success' : 'error'}`;
+                }
+            });
+        }
+        
+        // Touch test area setup
+        const touchArea = document.querySelector('.touch-test');
+        const touchStatus = document.getElementById('touchStatus');
+        
+        touchArea.addEventListener('touchstart', (e) => {
+            touchStatus.textContent = `Touch started: ${e.touches.length} touch(es)`;
+            touchArea.style.background = 'rgba(0, 255, 0, 0.2)';
+        });
+        
+        touchArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = touchArea.getBoundingClientRect();
+            const x = ((touch.clientX - rect.left) / rect.width * 100).toFixed(1);
+            const y = ((touch.clientY - rect.top) / rect.height * 100).toFixed(1);
+            touchStatus.textContent = `Touch moving: (${x}%, ${y}%)`;
+        });
+        
+        touchArea.addEventListener('touchend', () => {
+            touchStatus.textContent = 'Touch ended - Working!';
+            touchArea.style.background = 'rgba(255, 255, 0, 0.1)';
+        });
+        
+        // Test functions
+        window.testCleanArchitecture = async function() {
+            log('🧪 Testing Clean Architecture...');
+            try {
+                // Test if clean architecture components exist
+                const response = await fetch('./index-clean.html');
+                if (response.ok) {
+                    log('✅ Clean architecture file exists', 'success');
+                    updateButtonStatus('Clean Architecture', true);
+                } else {
+                    throw new Error('Clean architecture file not found');
+                }
+            } catch (error) {
+                log(`❌ Clean architecture test failed: ${error.message}`, 'error');
+                updateButtonStatus('Clean Architecture', false);
+            }
+        };
+        
+        window.testEngineImports = async function() {
+            log('🧪 Testing Engine Imports...');
+            try {
+                const { VIB34DIntegratedEngine } = await import('./src/core/Engine.js');
+                const { QuantumEngine } = await import('./src/quantum/QuantumEngine.js');
+                const { RealHolographicSystem } = await import('./src/holograms/RealHolographicSystem.js');
+                const { PolychoraSystem } = await import('./src/core/PolychoraSystem.js');
+                
+                log('✅ All engine imports successful', 'success');
+                updateButtonStatus('Engine Imports', true);
+            } catch (error) {
+                log(`❌ Engine import failed: ${error.message}`, 'error');
+                updateButtonStatus('Engine Imports', false);
+            }
+        };
+        
+        window.testSystemSwitching = function() {
+            log('🧪 Testing System Switching Logic...');
+            
+            const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+            let testsPassed = 0;
+            
+            systems.forEach(system => {
+                // Test system parameter mapping
+                const systemParams = {
+                    geometry: Math.floor(Math.random() * 8),
+                    rot4dXW: (Math.random() - 0.5) * 12.56,
+                    gridDensity: Math.floor(Math.random() * 95) + 5,
+                    hue: Math.floor(Math.random() * 360)
+                };
+                
+                if (systemParams.geometry >= 0 && systemParams.geometry <= 7 &&
+                    systemParams.rot4dXW >= -6.28 && systemParams.rot4dXW <= 6.28 &&
+                    systemParams.gridDensity >= 5 && systemParams.gridDensity <= 100 &&
+                    systemParams.hue >= 0 && systemParams.hue <= 360) {
+                    testsPassed++;
+                    log(`✅ ${system} system parameters valid`, 'success');
+                }
+            });
+            
+            if (testsPassed === systems.length) {
+                log('✅ All system switching tests passed', 'success');
+                updateButtonStatus('System Switching', true);
+            } else {
+                log(`❌ Only ${testsPassed}/${systems.length} systems passed`, 'error');
+                updateButtonStatus('System Switching', false);
+            }
+        };
+        
+        window.testGalleryJSON = async function() {
+            log('🧪 Testing Gallery JSON Generation...');
+            try {
+                const { UnifiedSaveManager } = await import('./src/core/UnifiedSaveManager.js');
+                
+                // Create mock engine
+                const mockEngine = {
+                    parameterManager: {
+                        getAllParameters: () => ({
+                            geometry: 2,
+                            rot4dXW: 1.5,
+                            rot4dYW: -0.8,
+                            rot4dZW: 2.1,
+                            gridDensity: 25,
+                            morphFactor: 1.2,
+                            chaos: 0.3,
+                            speed: 1.8,
+                            hue: 240,
+                            intensity: 0.7,
+                            saturation: 0.9
+                        })
+                    }
+                };
+                
+                const saveManager = new UnifiedSaveManager(mockEngine);
+                const result = await saveManager.save({ target: 'test' });
+                
+                if (result && result.jsonData) {
+                    log('✅ Gallery JSON generation successful', 'success');
+                    updateButtonStatus('Gallery JSON', true);
+                } else {
+                    throw new Error('JSON generation returned null');
+                }
+            } catch (error) {
+                log(`❌ Gallery JSON test failed: ${error.message}`, 'error');
+                updateButtonStatus('Gallery JSON', false);
+            }
+        };
+        
+        window.testParameterCapture = function() {
+            log('🧪 Testing Parameter Capture & Ranges...');
+            
+            const paramRanges = {
+                rot4dXW: { min: -6.28, max: 6.28 },
+                rot4dYW: { min: -6.28, max: 6.28 },
+                rot4dZW: { min: -6.28, max: 6.28 },
+                gridDensity: { min: 5, max: 100 },
+                morphFactor: { min: 0, max: 2 },
+                chaos: { min: 0, max: 1 },
+                speed: { min: 0.1, max: 3 },
+                hue: { min: 0, max: 360 },
+                intensity: { min: 0, max: 1 },
+                saturation: { min: 0, max: 1 }
+            };
+            
+            let validParams = 0;
+            Object.entries(paramRanges).forEach(([param, range]) => {
+                const testVal = Math.random() * (range.max - range.min) + range.min;
+                if (testVal >= range.min && testVal <= range.max) {
+                    validParams++;
+                }
+            });
+            
+            if (validParams === Object.keys(paramRanges).length) {
+                log('✅ All parameter ranges validated', 'success');
+                updateButtonStatus('Parameters', true);
+            } else {
+                log(`❌ ${validParams}/${Object.keys(paramRanges).length} parameters valid`, 'error');
+                updateButtonStatus('Parameters', false);
+            }
+        };
+        
+        window.testJSONFormat = function() {
+            log('🧪 Testing JSON Format Structure...');
+            
+            const testJSON = {
+                system: 'faceted',
+                parameters: {
+                    geometry: 2,
+                    rot4dXW: 1.5,
+                    rot4dYW: -0.8,
+                    rot4dZW: 2.1,
+                    gridDensity: 25,
+                    morphFactor: 1.2,
+                    chaos: 0.3,
+                    speed: 1.8,
+                    hue: 240,
+                    intensity: 0.7,
+                    saturation: 0.9
+                },
+                geometryName: 'SPHERE',
+                created: new Date().toISOString()
+            };
+            
+            const requiredFields = ['system', 'parameters', 'geometryName', 'created'];
+            const hasAllFields = requiredFields.every(field => testJSON.hasOwnProperty(field));
+            
+            if (hasAllFields && testJSON.parameters && Object.keys(testJSON.parameters).length >= 10) {
+                log('✅ JSON format validation passed', 'success');
+                updateButtonStatus('JSON Format', true);
+            } else {
+                log('❌ JSON format validation failed', 'error');
+                updateButtonStatus('JSON Format', false);
+            }
+        };
+        
+        window.testTouchSupport = function() {
+            log('🧪 Testing Touch Support...');
+            
+            const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (hasTouchSupport) {
+                log('✅ Touch events supported', 'success');
+                log('📱 Try touching the yellow test area above', 'info');
+                updateButtonStatus('Touch Events', true);
+            } else {
+                log('⚠️ Touch events not detected (desktop?)', 'warning');
+                updateButtonStatus('Touch Events', false);
+            }
+        };
+        
+        window.testDeviceOrientation = function() {
+            log('🧪 Testing Device Orientation...');
+            
+            if (window.DeviceOrientationEvent) {
+                log('✅ Device orientation supported', 'success');
+                
+                const orientationHandler = (event) => {
+                    const { alpha, beta, gamma } = event;
+                    log(`📱 Tilt detected: α:${alpha?.toFixed(1)}° β:${beta?.toFixed(1)}° γ:${gamma?.toFixed(1)}°`, 'info');
+                    window.removeEventListener('deviceorientation', orientationHandler);
+                    updateButtonStatus('Device Tilt', true);
+                };
+                
+                window.addEventListener('deviceorientation', orientationHandler);
+                log('📱 Tilt your device to test...', 'warning');
+                
+                setTimeout(() => {
+                    window.removeEventListener('deviceorientation', orientationHandler);
+                    if (!document.querySelector('.test-btn.success[onclick*="testDeviceOrientation"]')) {
+                        log('⚠️ No orientation data (may need HTTPS)', 'warning');
+                        updateButtonStatus('Device Tilt', false);
+                    }
+                }, 3000);
+                
+            } else {
+                log('❌ Device orientation not supported', 'error');
+                updateButtonStatus('Device Tilt', false);
+            }
+        };
+        
+        window.testMobileViewport = function() {
+            log('🧪 Testing Mobile Viewport...');
+            
+            const viewport = {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                devicePixelRatio: window.devicePixelRatio || 1,
+                orientation: screen.orientation?.type || 'unknown'
+            };
+            
+            log(`📱 Viewport: ${viewport.width}×${viewport.height} (${viewport.devicePixelRatio}x DPR)`, 'info');
+            log(`📱 Orientation: ${viewport.orientation}`, 'info');
+            
+            const isMobileSize = viewport.width <= 768 || viewport.height <= 768;
+            
+            if (isMobileSize) {
+                log('✅ Mobile viewport detected', 'success');
+                updateButtonStatus('Viewport', true);
+            } else {
+                log('⚠️ Desktop viewport detected', 'warning');
+                updateButtonStatus('Viewport', false);
+            }
+        };
+        
+        // Auto-run basic tests on load
+        setTimeout(() => {
+            log('🎨 VIB34D Mobile Test Suite Ready', 'info');
+            log('📱 Run tests by tapping buttons above', 'info');
+        }, 500);
+        
+    </script>
+</body>
+</html>

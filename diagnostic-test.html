@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIB34D Diagnostic Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            background: #000; 
+            color: #0f0; 
+            padding: 20px; 
+        }
+        .test { margin: 10px 0; padding: 5px; }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>🔍 VIB34D System Diagnostic</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function test(name, condition, details = '') {
+            const status = condition ? 'PASS' : 'FAIL';
+            const color = condition ? 'pass' : 'fail';
+            results.innerHTML += `<div class="test ${color}">${status}: ${name} ${details}</div>`;
+            console.log(`${status}: ${name}`, details);
+        }
+
+        // Test system loading
+        test('Page loaded', document.readyState === 'complete');
+        
+        // Load the actual system in iframe and test
+        const iframe = document.createElement('iframe');
+        iframe.src = 'index-clean.html';
+        iframe.style.width = '100%';
+        iframe.style.height = '400px';
+        iframe.style.border = '1px solid #333';
+        
+        iframe.onload = function() {
+            setTimeout(() => {
+                try {
+                    const iframeWindow = iframe.contentWindow;
+                    const iframeDoc = iframe.contentDocument;
+                    
+                    test('System loaded in iframe', !!iframeWindow);
+                    test('Document accessible', !!iframeDoc);
+                    
+                    // Test critical functions
+                    test('switchSystem function', typeof iframeWindow.switchSystem === 'function');
+                    test('updateParameter function', typeof iframeWindow.updateParameter === 'function');
+                    test('currentSystem variable', !!iframeWindow.currentSystem);
+                    
+                    // Test ReactivityManager
+                    test('ReactivityManager exists', !!iframeWindow.reactivityManager);
+                    
+                    if (iframeWindow.reactivityManager) {
+                        const rm = iframeWindow.reactivityManager;
+                        test('ReactivityManager currentClickMode', rm.currentClickMode === 'ripple', `(${rm.currentClickMode})`);
+                        test('ReactivityManager initialized', !!rm.clickModes);
+                        
+                        if (rm.clickModes) {
+                            test('BurstMode exists', !!rm.clickModes.burst);
+                            test('RippleMode exists', !!rm.clickModes.ripple);
+                        }
+                    }
+                    
+                    // Test system switching
+                    if (typeof iframeWindow.switchSystem === 'function') {
+                        try {
+                            iframeWindow.switchSystem('holographic');
+                            setTimeout(() => {
+                                const holoMode = iframeWindow.reactivityManager?.currentClickMode;
+                                test('Holographic uses burst mode', holoMode === 'burst', `(${holoMode})`);
+                                
+                                iframeWindow.switchSystem('faceted');
+                                setTimeout(() => {
+                                    const facetedMode = iframeWindow.reactivityManager?.currentClickMode;
+                                    test('Faceted uses ripple mode', facetedMode === 'ripple', `(${facetedMode})`);
+                                    
+                                    // Test click simulation
+                                    const canvas = iframeDoc.querySelector('.visualization-canvas');
+                                    test('Canvas found', !!canvas);
+                                    
+                                    if (canvas) {
+                                        // Simulate click on faceted (should trigger ripple/morph)
+                                        const beforeMorph = parseFloat(iframeDoc.getElementById('morphFactor')?.value || 1.0);
+                                        
+                                        const rect = canvas.getBoundingClientRect();
+                                        const clickEvent = new MouseEvent('click', {
+                                            clientX: rect.left + rect.width/2,
+                                            clientY: rect.top + rect.height/2,
+                                            bubbles: true
+                                        });
+                                        canvas.dispatchEvent(clickEvent);
+                                        
+                                        setTimeout(() => {
+                                            const afterMorph = parseFloat(iframeDoc.getElementById('morphFactor')?.value || 1.0);
+                                            const morphChanged = Math.abs(beforeMorph - afterMorph) > 0.01;
+                                            test('Click affects morphFactor on faceted', morphChanged, `(${beforeMorph} → ${afterMorph})`);
+                                            
+                                            results.innerHTML += '<div class="test pass">✅ Diagnostic complete!</div>';
+                                        }, 500);
+                                    }
+                                }, 300);
+                            }, 300);
+                        } catch (error) {
+                            test('System switching', false, `Error: ${error.message}`);
+                        }
+                    }
+                    
+                } catch (error) {
+                    test('System access', false, `Error: ${error.message}`);
+                    console.error('Diagnostic error:', error);
+                }
+            }, 2000);
+        };
+        
+        iframe.onerror = function() {
+            test('System loading', false, 'Failed to load iframe');
+        };
+        
+        document.body.appendChild(iframe);
+    </script>
+</body>
+</html>

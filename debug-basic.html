@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Basic Debug</title>
+</head>
+<body style="background: red; color: white; font-size: 24px;">
+    <h1>BASIC TEST - Can you see this red page?</h1>
+    <p>Server: Working</p>
+    <p>HTML: Loading</p>
+    <p>Time: <span id="time"></span></p>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleTimeString();
+        console.log('BASIC DEBUG: Page loaded at', new Date());
+        alert('BASIC DEBUG: JavaScript is working!');
+    </script>
+</body>
+</html>

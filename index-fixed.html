@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Engine - Clean Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* ========== TOP BAR ========== */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 2px solid #00ffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+        }
+        
+        .system-selector {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .system-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .system-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .system-btn.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            background: rgba(255, 0, 255, 0.1);
+            border: 2px solid rgba(255, 0, 255, 0.3);
+            color: #ff00ff;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 0, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+        
+        /* ========== CANVAS ========== */
+        .canvas-container {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 300px;
+            bottom: 0;
+        }
+        
+        /* MOBILE FIX: Ensure canvas container takes full viewport on mobile */
+        @media (max-width: 768px) {
+            .canvas-container {
+                right: 0; /* Remove space for control panel on mobile */
+                top: 0;   /* Use full height on mobile */
+            }
+        }
+        
+        .visualization-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* ========== CONTROL PANEL ========== */
+        .control-panel {
+            position: fixed;
+            top: 50px;
+            right: 0;
+            bottom: 0;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 2px solid #00ffff;
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .control-panel {
+                width: 100vw;
+                height: 40vh;
+                top: auto;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                border-left: none;
+                border-top: 2px solid #00ffff;
+                transform: translateY(0);
+            }
+            
+            .control-panel.collapsed {
+                transform: translateY(calc(40vh - 60px));
+            }
+            
+            .canvas-container {
+                right: 0;
+                bottom: 60px;
+            }
+            
+            .top-bar {
+                position: relative;
+                z-index: 200;
+            }
+            
+            .system-selector {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .system-btn {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+        }
+        
+        .panel-header {
+            font-size: 1.1rem;
+            color: #ff00ff;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px #ff00ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mobile-collapse-btn {
+            background: rgba(255, 0, 255, 0.2);
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-collapse-btn:hover {
+            background: rgba(255, 0, 255, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-collapse-btn {
+                display: block !important;
+            }
+            
+            .panel-header {
+                text-align: left;
+            }
+            
+            .system-btn, .action-btn, .geom-btn, .panel-btn {
+                min-height: 44px;
+                font-size: 0.9rem;
+                touch-action: manipulation;
+            }
+            
+            .control-slider {
+                height: 8px;
+                min-height: 44px;
+            }
+            
+            .control-slider::-webkit-slider-thumb {
+                width: 24px;
+                height: 24px;
+            }
+            
+            /* Touch feedback */
+            .touch-active {
+                opacity: 0.7;
+                transform: scale(0.95);
+            }
+        }
+        
+        .control-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .control-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 0.9rem;
+            color: #00ffff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        /* Geometry Grid */
+        .geometry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+        }
+        
+        .geom-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.3s;
+        }
+        
+        .geom-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+        
+        .geom-btn.active {
+            background: rgba(0, 255, 255, 0.4);
+            border-color: #00ffff;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* Sliders */
+        .control-group {
+            margin-bottom: 12px;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+        }
+        
+        .control-value {
+            color: #00ffff;
+            font-weight: bold;
+        }
+        
+        .control-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            background: rgba(0, 255, 255, 0.2);
+            outline: none;
+            border-radius: 3px;
+        }
+        
+        .control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ffff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* Action Buttons */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .panel-btn {
+            flex: 1;
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            color: #ff00ff;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+        
+        .panel-btn:hover {
+            background: rgba(255, 0, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+        
+        /* Hide scrollbar but keep scrollable */
+        .control-panel::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .control-panel::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .control-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+        
+        /* Hide gallery modal by default */
+        .modal.gallery-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+        }
+        
+        .modal.gallery-modal.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">VIB34D ENGINE</div>
+        
+        <div class="system-selector">
+            <button class="system-btn active" data-system="faceted" onclick="switchSystem('faceted')">
+                🔷 Faceted
+            </button>
+            <button class="system-btn" data-system="quantum" onclick="switchSystem('quantum')">
+                🌌 Quantum
+            </button>
+            <button class="system-btn" data-system="holographic" onclick="switchSystem('holographic')">
+                ✨ Holographic
+            </button>
+            <button class="system-btn" data-system="polychora" onclick="switchSystem('polychora')">
+                🔮 Polychora
+            </button>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="action-btn" onclick="openGallery()" title="Gallery">🖼️</button>
+            <button class="action-btn" onclick="toggleAudio()" title="Audio">🎵</button>
+            <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters">🤖</button>
+            <button class="action-btn" onclick="toggleInteractivity()" title="Interactivity Menu (Press I)">I</button>
+        </div>
+    </div>
+    
+    <!-- Canvas Container -->
+    <div class="canvas-container" id="canvasContainer">
+        <!-- VIB34D Faceted System Canvases -->
+        <div class="holographic-layers" id="vib34dLayers" style="display: block;">
+            <canvas id="background-canvas" class="visualization-canvas"></canvas>
+            <canvas id="shadow-canvas" class="visualization-canvas"></canvas>
+            <canvas id="content-canvas" class="visualization-canvas"></canvas>
+            <canvas id="highlight-canvas" class="visualization-canvas"></canvas>
+            <canvas id="accent-canvas" class="visualization-canvas"></canvas>
+        </div>
+        
+        <!-- VIB34D Quantum System Canvases -->
+        <div class="holographic-layers" id="quantumLayers" style="display: none;">
+            <canvas id="quantum-background-canvas" class="visualization-canvas"></canvas>
+            <canvas id="quantum-shadow-canvas" class="visualization-canvas"></canvas>
+            <canvas id="quantum-content-canvas" class="visualization-canvas"></canvas>
+            <canvas id="quantum-highlight-canvas" class="visualization-canvas"></canvas>
+            <canvas id="quantum-accent-canvas" class="visualization-canvas"></canvas>
+        </div>
+        
+        <!-- Holographic System Canvases -->
+        <div class="holographic-layers" id="holographicLayers" style="display: none;">
+            <canvas id="holo-background-canvas" class="visualization-canvas"></canvas>
+            <canvas id="holo-shadow-canvas" class="visualization-canvas"></canvas>
+            <canvas id="holo-content-canvas" class="visualization-canvas"></canvas>
+            <canvas id="holo-highlight-canvas" class="visualization-canvas"></canvas>
+            <canvas id="holo-accent-canvas" class="visualization-canvas"></canvas>
+        </div>
+        
+        <!-- Polychora System Canvases -->
+        <div class="holographic-layers" id="polychoraLayers" style="display: none;">
+            <canvas id="polychora-background-canvas" class="visualization-canvas"></canvas>
+            <canvas id="polychora-shadow-canvas" class="visualization-canvas"></canvas>
+            <canvas id="polychora-content-canvas" class="visualization-canvas"></canvas>
+            <canvas id="polychora-highlight-canvas" class="visualization-canvas"></canvas>
+            <canvas id="polychora-accent-canvas" class="visualization-canvas"></canvas>
+        </div>
+    </div>
+    
+    <!-- Control Panel -->
+    <div class="control-panel" id="controlPanel">
+        <div class="panel-header" id="panelHeader">
+            <span>FACETED SYSTEM</span>
+            <button class="mobile-collapse-btn" id="mobileCollapseBtn" onclick="toggleMobilePanel()" style="display: none;">▼</button>
+        </div>
+        
+        <!-- GEOMETRY SECTION (Faceted & Polychora) -->
+        <div class="control-section" id="geometrySection">
+            <div class="section-title">GEOMETRY</div>
+            <div class="geometry-grid" id="geometryGrid">
+                <!-- Will be populated based on system -->
+            </div>
+        </div>
+        
+        <!-- HOLOGRAPHIC PARAMETERS (Audio Reactive) -->
+        <div class="control-section" id="holographicSection" style="display: none;">
+            <div class="section-title">AUDIO REACTIVE</div>
+            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">
+                💡 Holographic system responds to microphone input.<br>
+                Use geometry + visual parameters above to customize base appearance.
+            </div>
+        </div>
+        
+        <!-- 4D ROTATION SECTION -->
+        <div class="control-section">
+            <div class="section-title">4D ROTATION</div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>XW Plane</span>
+                    <span class="control-value" id="xwValue">0.00</span>
+                </div>
+                <input type="range" class="control-slider" id="rot4dXW" 
+                       min="-6.28" max="6.28" step="0.01" value="0" 
+                       oninput="updateParameter('rot4dXW', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>YW Plane</span>
+                    <span class="control-value" id="ywValue">0.00</span>
+                </div>
+                <input type="range" class="control-slider" id="rot4dYW" 
+                       min="-6.28" max="6.28" step="0.01" value="0" 
+                       oninput="updateParameter('rot4dYW', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>ZW Plane</span>
+                    <span class="control-value" id="zwValue">0.00</span>
+                </div>
+                <input type="range" class="control-slider" id="rot4dZW" 
+                       min="-6.28" max="6.28" step="0.01" value="0" 
+                       oninput="updateParameter('rot4dZW', this.value)">
+            </div>
+        </div>
+        
+        <!-- VISUAL PARAMETERS SECTION -->
+        <div class="control-section">
+            <div class="section-title">VISUAL</div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Density</span>
+                    <span class="control-value" id="densityValue">15</span>
+                </div>
+                <input type="range" class="control-slider" id="gridDensity" 
+                       min="5" max="100" value="15" 
+                       oninput="updateParameter('gridDensity', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Morph</span>
+                    <span class="control-value" id="morphValue">1.0</span>
+                </div>
+                <input type="range" class="control-slider" id="morphFactor" 
+                       min="0" max="2" step="0.01" value="1" 
+                       oninput="updateParameter('morphFactor', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Chaos</span>
+                    <span class="control-value" id="chaosValue">0.2</span>
+                </div>
+                <input type="range" class="control-slider" id="chaos" 
+                       min="0" max="1" step="0.01" value="0.2" 
+                       oninput="updateParameter('chaos', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Speed</span>
+                    <span class="control-value" id="speedValue">1.0</span>
+                </div>
+                <input type="range" class="control-slider" id="speed" 
+                       min="0.1" max="3" step="0.1" value="1" 
+                       oninput="updateParameter('speed', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Hue</span>
+                    <span class="control-value" id="hueValue">200°</span>
+                </div>
+                <input type="range" class="control-slider" id="hue" 
+                       min="0" max="360" value="200" 
+                       oninput="updateParameter('hue', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Intensity</span>
+                    <span class="control-value" id="intensityValue">0.5</span>
+                </div>
+                <input type="range" class="control-slider" id="intensity" 
+                       min="0" max="1" step="0.01" value="0.5" 
+                       oninput="updateParameter('intensity', this.value)">
+            </div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Saturation</span>
+                    <span class="control-value" id="saturationValue">0.8</span>
+                </div>
+                <input type="range" class="control-slider" id="saturation" 
+                       min="0" max="1" step="0.01" value="0.8" 
+                       oninput="updateParameter('saturation', this.value)">
+            </div>
+        </div>
+        
+        <!-- ACTION BUTTONS -->
+        <div class="action-row">
+            <button class="panel-btn" onclick="randomizeAll()">🎲 Random</button>
+            <button class="panel-btn" onclick="randomizeEverything()">🌀 Full</button>
+        </div>
+        <div class="action-row">
+            <button class="panel-btn" onclick="resetAll()">🔄 Reset</button>
+            <button class="panel-btn" onclick="saveToGallery()" style="background: rgba(0, 255, 255, 0.1); border-color: rgba(0, 255, 255, 0.3); color: #00ffff;">💾 Save to Gallery</button>
+        </div>
+        <div class="action-row">
+            <button class="panel-btn" onclick="createTradingCard('classic')" style="background: rgba(255, 150, 0, 0.1); border-color: rgba(255, 150, 0, 0.3); color: #ff9600;">🎴 Trading Card</button>
+            <button class="panel-btn" onclick="createTradingCard('social')" style="background: rgba(255, 100, 255, 0.1); border-color: rgba(255, 100, 255, 0.3); color: #ff64ff;">📱 Social Card</button>
+        </div>
+    </div>
+    
+    <!-- CRITICAL BUG FIX: Move switchSystem function outside ES6 module for global access -->
+    <script>
+        // CRITICAL FIX: Parse URL parameters FIRST, before any ES6 module loading
+        function parseURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Check if this is a gallery preview
+            if (urlParams.has('system')) {
+                const targetSystem = urlParams.get('system');
+                const hideUI = urlParams.get('hideui') === 'true';
+                
+                // Hide UI for clean preview (with DOM ready check)
+                if (hideUI) {
+                    // Wait for DOM to be ready before trying to hide elements
+                    const hideUIElements = () => {
+                        const topBar = document.querySelector('.top-bar');
+                        const controlPanel = document.querySelector('.control-panel');
+                        const canvasContainer = document.querySelector('.canvas-container');
+                        
+                        if (topBar) topBar.style.display = 'none';
+                        if (controlPanel) controlPanel.style.display = 'none';
+                        if (canvasContainer) {
+                            // Make canvas container fill the entire iframe viewport
+                            canvasContainer.style.cssText = `
+                                position: fixed !important;
+                                top: 0 !important;
+                                left: 0 !important;
+                                width: 100vw !important;
+                                height: 100vh !important;
+                                display: block !important;
+                                background: #000 !important;
+                            `;
+                            
+                            // Make all canvas layers fill the container completely - MOBILE FIX
+                            const allCanvases = canvasContainer.querySelectorAll('canvas');
+                            allCanvases.forEach((canvas, index) => {
+                                canvas.style.cssText = `
+                                    position: absolute !important;
+                                    top: 0 !important;
+                                    left: 0 !important;
+                                    width: 100% !important;
+                                    height: 100% !important;
+                                    min-width: 100vw !important;
+                                    min-height: 100vh !important;
+                                `;
+                                
+                                // CRITICAL MOBILE FIX: Force canvas dimensions immediately
+                                const rect = canvas.getBoundingClientRect();
+                                if (rect.width === 0 || rect.height === 0) {
+                                    const viewWidth = window.innerWidth;
+                                    const viewHeight = window.innerHeight;
+                                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                                    
+                                    canvas.width = viewWidth * dpr;
+                                    canvas.height = viewHeight * dpr;
+                                    
+                                    if (window.mobileOptimization) {
+                                        window.mobileOptimization.log(`🔧 Fixed canvas ${canvas.id}: ${canvas.width}x${canvas.height}`);
+                                    }
+                                }
+                            });
+                        }
+                    };
+                    
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', hideUIElements);
+                    } else {
+                        hideUIElements();
+                    }
+                }
+                
+                // Load parameters from URL
+                const parameters = {};
+                urlParams.forEach((value, key) => {
+                    if (!['system', 'hideui', 'alllayers', 'highquality'].includes(key)) {
+                        parameters[key] = parseFloat(value) || value;
+                    }
+                });
+                
+                // Enable all layers for gallery preview if requested
+                const allLayers = urlParams.get('alllayers') === 'true';
+                const highQuality = urlParams.get('highquality') === 'true';
+                if (allLayers || highQuality) {
+                    window.forceAllLayers = true;
+                    window.forceHighQuality = true;
+                    console.log('🎨 Gallery preview: Forcing all 5 layers with high quality');
+                }
+                
+                // Store for initialization
+                window.galleryPreviewData = {
+                    system: targetSystem,
+                    parameters: parameters,
+                    hideUI: hideUI
+                };
+                
+                console.log('🎨 Gallery preview mode detected:', window.galleryPreviewData);
+                console.log('🎨 URL that triggered this:', window.location.href);
+                console.log('🎨 Parameters parsed:', parameters);
+                console.log('🎨 System to switch to:', targetSystem);
+                window.isGalleryPreview = true;
+                
+                // CRITICAL FIX: Set currentSystem immediately for gallery previews  
+                window.currentSystem = targetSystem;
+                console.log(`🎯 Gallery preview: currentSystem set to ${targetSystem}`);
+                
+                // CRITICAL FIX: Show correct system canvas layers immediately to prevent wrong visualizer flash
+                const showCorrectSystemLayers = () => {
+                    const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                    systems.forEach(sys => {
+                        const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
+                        const layers = document.getElementById(layerId);
+                        if (layers) {
+                            const shouldShow = sys === targetSystem;
+                            layers.style.display = shouldShow ? 'block' : 'none';
+                            console.log(`🎯 EARLY CANVAS CONTROL: ${sys} layers → ${shouldShow ? 'VISIBLE' : 'HIDDEN'}`);
+                        }
+                    });
+                };
+                
+                // Apply immediately if DOM ready, otherwise wait for it
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', showCorrectSystemLayers);
+                } else {
+                    showCorrectSystemLayers();
+                }
+            }
+        }
+        
+        // Parse URL parameters immediately
+        parseURLParameters();
+        
+        // SURGICAL FIX: Smart Canvas Management
+        class CanvasLayerManager {
+            static switchSystem(targetSystem) {
+                const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                let activeCanvases = 0;
+                
+                systems.forEach(sys => {
+                    const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
+                    const layers = document.getElementById(layerId);
+                    if (layers) {
+                        const shouldShow = sys === targetSystem;
+                        
+                        // Optimize display changes
+                        if (shouldShow) {
+                            layers.style.display = 'block';
+                            layers.style.visibility = 'visible';
+                            layers.style.opacity = '1';
+                            activeCanvases += layers.children.length;
+                            
+                            // CRITICAL ANDROID FIX: Force canvas dimensions after display change
+                            setTimeout(() => {
+                                const canvases = layers.querySelectorAll('canvas');
+                                canvases.forEach(canvas => {
+                                    const rect = canvas.getBoundingClientRect();
+                                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                                    
+                                    // If still 0x0 after display:block, use viewport dimensions
+                                    if (rect.width === 0 || rect.height === 0) {
+                                        const viewWidth = window.innerWidth;
+                                        const viewHeight = window.innerHeight;
+                                        canvas.width = viewWidth * dpr;
+                                        canvas.height = viewHeight * dpr;
+                                        
+                                        if (window.mobileOptimization) {
+                                            window.mobileOptimization.log(`🔧 Fixed ${canvas.id}: ${canvas.width}x${canvas.height} (viewport fallback)`);
+                                        }
+                                    } else {
+                                        canvas.width = rect.width * dpr;
+                                        canvas.height = rect.height * dpr;
+                                        
+                                        if (window.mobileOptimization) {
+                                            window.mobileOptimization.log(`✅ Updated ${canvas.id}: ${canvas.width}x${canvas.height} (from rect)`);
+                                        }
+                                    }
+                                });
+                            }, 50); // Small delay to let display:block take effect
+                            
+                        } else {
+                            layers.style.display = 'none';
+                            layers.style.visibility = 'hidden';
+                            layers.style.opacity = '0';
+                        }
+                    }
+                });
+                
+                console.log(`🎯 Canvas Manager: ${targetSystem} active (${activeCanvases} contexts)`);
+            }
+        }
+        
+        // Global system switching function - accessible to HTML onclick handlers
+        window.switchSystem = async function(system) {
+            console.log(`🎯 switchSystem called with: ${system}`);
+            console.log(`🔍 Current state: moduleReady=${!!window.moduleReady}, currentSystem=${window.currentSystem}`);
+            
+            // SURGICAL FIX: Use smart canvas management immediately
+            CanvasLayerManager.switchSystem(system);
+            
+            // CRITICAL FIX: Wait for ES6 module OR timeout quickly for better performance
+            if (!window.moduleReady) {
+                console.log('⏳ Waiting for module initialization...');
+                
+                // For gallery preview iframes, don't wait forever - try direct switch after short timeout
+                let waitCount = 0;
+                const maxWait = 10; // 500ms max (10 × 50ms)
+                
+                while (!window.moduleReady && waitCount < maxWait) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    waitCount++;
+                }
+                
+                if (!window.moduleReady) {
+                    console.warn('⚠️ Module not ready after 500ms, proceeding with direct system switch');
+                    // Force module ready state to prevent further waiting
+                    window.moduleReady = true;
+                }
+            }
+            
+            window.currentSystem = system;
+            
+            console.log(`🔄 System switched to: ${system}`);
+            console.log(`✅ Verification: window.currentSystem is now: ${window.currentSystem}`);
+            console.log(`🔍 Engine availability at switch time:`, {
+                engine: !!window.engine,
+                quantumEngine: !!window.quantumEngine,
+                holographicSystem: !!window.holographicSystem,
+                polychoraSystem: !!window.polychoraSystem
+            });
+            
+            // Update UI
+            document.querySelectorAll('.system-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.system === system);
+            });
+            
+            // Update panel header
+            const headers = {
+                faceted: 'FACETED SYSTEM',
+                quantum: 'QUANTUM SYSTEM', 
+                holographic: 'HOLOGRAPHIC SYSTEM',
+                polychora: 'POLYCHORA SYSTEM'
+            };
+            const panelHeader = document.getElementById('panelHeader');
+            if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
+            
+            // Show/hide sections based on system
+            const geometrySection = document.getElementById('geometrySection');
+            const holographicSection = document.getElementById('holographicSection');
+            if (geometrySection) geometrySection.style.display = 'block';
+            if (holographicSection) holographicSection.style.display = system === 'holographic' ? 'block' : 'none';
+            
+            // Setup geometry for current system
+            if (window.setupGeometry) window.setupGeometry(system);
+            
+            // Switch visualization systems
+            if (system === 'faceted') {
+                // Show VIB34D canvases, hide others
+                const vib34dLayers = document.getElementById('vib34dLayers');
+                const quantumLayers = document.getElementById('quantumLayers');
+                const holographicLayers = document.getElementById('holographicLayers');
+                const polychoraLayers = document.getElementById('polychoraLayers');
+                
+                if (vib34dLayers) vib34dLayers.style.display = 'block';
+                if (quantumLayers) quantumLayers.style.display = 'none';
+                if (holographicLayers) holographicLayers.style.display = 'none';
+                if (polychoraLayers) polychoraLayers.style.display = 'none';
+                
+                if (window.quantumEngine) window.quantumEngine.setActive(false);
+                if (window.holographicSystem) window.holographicSystem.setActive(false);
+                if (window.polychoraSystem) window.polychoraSystem.stop();
+                
+            } else if (system === 'quantum') {
+                // Show Quantum canvases, hide others
+                const vib34dLayers = document.getElementById('vib34dLayers');
+                const quantumLayers = document.getElementById('quantumLayers');
+                const holographicLayers = document.getElementById('holographicLayers');
+                const polychoraLayers = document.getElementById('polychoraLayers');
+                
+                if (vib34dLayers) vib34dLayers.style.display = 'none';
+                if (quantumLayers) quantumLayers.style.display = 'block';
+                if (holographicLayers) holographicLayers.style.display = 'none';
+                if (polychoraLayers) polychoraLayers.style.display = 'none';
+                
+                if (window.holographicSystem) {
+                    window.holographicSystem.setActive(false);
+                } else {
+                    console.warn('⚠️ holographicSystem not available for system switch');
+                }
+                
+                if (window.polychoraSystem) {
+                    window.polychoraSystem.stop();
+                } else {
+                    console.warn('⚠️ polychoraSystem not available for system switch');
+                }
+                
+                if (window.quantumEngine) {
+                    window.quantumEngine.setActive(true);
+                } else {
+                    console.warn('⚠️ quantumEngine not available for system switch - this will cause parameter routing to faceted system');
+                }
+                
+            } else if (system === 'holographic') {
+                // Show Holographic canvases, hide others
+                const vib34dLayers = document.getElementById('vib34dLayers');
+                const quantumLayers = document.getElementById('quantumLayers');
+                const holographicLayers = document.getElementById('holographicLayers');
+                const polychoraLayers = document.getElementById('polychoraLayers');
+                
+                if (vib34dLayers) vib34dLayers.style.display = 'none';
+                if (quantumLayers) quantumLayers.style.display = 'none';
+                if (holographicLayers) holographicLayers.style.display = 'block';
+                if (polychoraLayers) polychoraLayers.style.display = 'none';
+                
+                if (window.quantumEngine) {
+                    window.quantumEngine.setActive(false);
+                } else {
+                    console.warn('⚠️ quantumEngine not available for system switch');
+                }
+                
+                if (window.polychoraSystem) {
+                    window.polychoraSystem.stop();
+                } else {
+                    console.warn('⚠️ polychoraSystem not available for system switch');
+                }
+                
+                if (window.holographicSystem) {
+                    window.holographicSystem.setActive(true);
+                } else {
+                    console.warn('⚠️ holographicSystem not available for system switch - this will cause parameter routing to faceted system');
+                }
+                
+            } else if (system === 'polychora') {
+                // Show Polychora canvases, hide others
+                const vib34dLayers = document.getElementById('vib34dLayers');
+                const quantumLayers = document.getElementById('quantumLayers');
+                const holographicLayers = document.getElementById('holographicLayers');
+                const polychoraLayers = document.getElementById('polychoraLayers');
+                
+                if (vib34dLayers) vib34dLayers.style.display = 'none';
+                if (quantumLayers) quantumLayers.style.display = 'none';
+                if (holographicLayers) holographicLayers.style.display = 'none';
+                if (polychoraLayers) polychoraLayers.style.display = 'block';
+                
+                if (window.quantumEngine) window.quantumEngine.setActive(false);
+                if (window.holographicSystem) window.holographicSystem.setActive(false);
+                
+                // Initialize Polychora if needed
+                if (window.initializePolychora) await window.initializePolychora();
+                if (window.polychoraSystem) window.polychoraSystem.start();
+            }
+            
+            console.log(`✅ Switched to ${system} system successfully`);
+        }
+        
+        // Make other essential functions globally accessible
+        window.selectGeometry = function(index) {
+            document.querySelectorAll('.geom-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.index == index);
+            });
+            
+            if (window.updateParameter) {
+                window.updateParameter('geometry', index);
+            }
+        }
+        
+        // Global flag to indicate module readiness
+        window.moduleReady = false;
+        window.currentSystem = 'faceted';
+        
+        // Mobile optimization system (no debug overlay)
+        window.mobileOptimization = {
+            log: function(message) {
+                // Silent logging for production - only to console
+                console.log(`[Mobile] ${message}`);
+            }
+        };
+        
+        // MOBILE OPTIMIZATION: Initialize only active system (5 canvases instead of 20)
+        document.addEventListener('DOMContentLoaded', function() {
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                window.mobileOptimization.log('📱 MOBILE: Optimized single-system initialization');
+                
+                // Define canvas groups per system
+                const systemCanvases = {
+                    faceted: ['background-canvas', 'shadow-canvas', 'content-canvas', 'highlight-canvas', 'accent-canvas'],
+                    quantum: ['quantum-background-canvas', 'quantum-shadow-canvas', 'quantum-content-canvas', 'quantum-highlight-canvas', 'quantum-accent-canvas'],
+                    holographic: ['holo-background-canvas', 'holo-shadow-canvas', 'holo-content-canvas', 'holo-highlight-canvas', 'holo-accent-canvas'],
+                    polychora: ['polychora-background-canvas', 'polychora-shadow-canvas', 'polychora-content-canvas', 'polychora-highlight-canvas', 'polychora-accent-canvas']
+                };
+                
+                // Determine active system (gallery preview or default)
+                const activeSystem = window.galleryPreviewData ? window.galleryPreviewData.system : 'faceted';
+                window.mobileOptimization.log(`📱 Active system: ${activeSystem}`);
+                
+                // Only fix canvases for the active system
+                const fixActiveCanvases = () => {
+                    const activeCanvases = systemCanvases[activeSystem];
+                    const viewWidth = window.innerWidth || screen.width;
+                    const viewHeight = window.innerHeight || screen.height;
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    let fixedCount = 0;
+                    
+                    activeCanvases.forEach(canvasId => {
+                        const canvas = document.getElementById(canvasId);
+                        if (canvas) {
+                            // Force immediate style
+                            canvas.style.cssText = `
+                                position: absolute !important;
+                                top: 0 !important;
+                                left: 0 !important;
+                                width: 100% !important;
+                                height: 100% !important;
+                                min-width: ${viewWidth}px !important;
+                                min-height: ${viewHeight}px !important;
+                            `;
+                            
+                            // Force canvas buffer size
+                            canvas.width = viewWidth * dpr;
+                            canvas.height = viewHeight * dpr;
+                            fixedCount++;
+                            
+                            window.mobileOptimization.log(`📱 Fixed ${canvasId}: ${canvas.width}x${canvas.height}`);
+                        }
+                    });
+                    
+                    // Hide inactive system canvases to prevent WebGL context creation
+                    Object.keys(systemCanvases).forEach(system => {
+                        if (system !== activeSystem) {
+                            systemCanvases[system].forEach(canvasId => {
+                                const canvas = document.getElementById(canvasId);
+                                if (canvas) {
+                                    canvas.style.display = 'none';
+                                }
+                            });
+                        }
+                    });
+                    
+                    return fixedCount;
+                };
+                
+                // Run mobile optimization passes
+                const count1 = fixActiveCanvases();
+                window.mobileOptimization.log(`📱 Pass 1: Fixed ${count1}/${systemCanvases[activeSystem].length} canvases for ${activeSystem} system`);
+                
+                setTimeout(() => {
+                    const count2 = fixActiveCanvases();
+                    window.mobileOptimization.log(`📱 Pass 2: Fixed ${count2} canvases`);
+                }, 250);
+                
+                setTimeout(() => {
+                    const count3 = fixActiveCanvases();
+                    window.mobileOptimization.log(`📱 Pass 3: Fixed ${count3} canvases - optimization complete`);
+                    
+                    // Test canvas existence (WITHOUT creating 2D context that would block WebGL)
+                    const testCanvasId = systemCanvases[activeSystem][0];
+                    const testCanvas = document.getElementById(testCanvasId);
+                    if (testCanvas) {
+                        const canvasRect = testCanvas.getBoundingClientRect();
+                        window.mobileOptimization.log(`✅ Mobile optimization successful - ${activeSystem} system ready, canvas ${testCanvasId}: ${canvasRect.width}x${canvasRect.height}`);
+                    } else {
+                        window.mobileOptimization.log(`❌ Test canvas ${testCanvasId} not found after optimization`);
+                    }
+                }, 500);
+            }
+        });
+    </script>
+    
+    <script type="module">
+        // Import VIB34D modules
+        import { VIB34DIntegratedEngine } from './src/core/Engine.js';
+        import { QuantumEngine } from './src/quantum/QuantumEngine.js';
+        import { RealHolographicSystem } from './src/holograms/RealHolographicSystem.js';
+        import { CollectionManager } from './src/features/CollectionManager.js';
+        import { UnifiedSaveManager } from './src/core/UnifiedSaveManager.js';
+        import { ParameterMapper } from './src/core/ParameterMapper.js';
+        import { TradingCardGenerator } from './src/export/TradingCardGenerator.js';
+        import universalReactivity from './src/interactions/UniversalReactivitySystem.js';
+        
+        // Global state - CRITICAL FIX: Check for gallery preview data FIRST
+        let currentSystem = window.galleryPreviewData ? window.galleryPreviewData.system : 'faceted';
+        window.currentSystem = currentSystem;
+        console.log(`🚀 Initial system determined: ${currentSystem} (gallery preview: ${!!window.galleryPreviewData})`);
+        let audioEnabled = false;
+        let interactivityVisible = false;
+        let engine = null;
+        let quantumEngine = null;
+        let holographicSystem = null;
+        let polychoraSystem = null;
+        let collectionManager = null;
+        let unifiedSaveManager = null;
+        let parameterMapper = null;
+        let savedVariationsCount = 0;
+        
+        // Geometry configurations
+        const geometries = {
+            faceted: [
+                'Tetra', 'Cube', 'Sphere',
+                'Torus', 'Klein', 'Fractal',
+                'Wave', 'Crystal'
+            ],
+            quantum: [
+                'Quantum Tetra', 'Quantum Cube', 'Quantum Sphere',
+                'Quantum Torus', 'Quantum Klein', 'Quantum Fractal',
+                'Quantum Wave', 'Quantum Crystal'
+            ],
+            polychora: [
+                '5-Cell', 'Tesseract', '16-Cell',
+                '24-Cell', '600-Cell', '120-Cell'
+            ]
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // CRITICAL TIMING FIX: Run mobile canvas fix FIRST before engine initialization
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                // Wait for any other mobile fixes to complete first
+                await new Promise(resolve => setTimeout(resolve, 100));
+                window.mobileOptimization.log(`⚡ Engine initialization starting after mobile canvas fix`);
+            }
+            
+            // URL parameters already parsed outside the module
+            
+            setupGeometry('faceted');
+            const success = await initializeEngine();
+            
+            // CRITICAL: Make engines globally accessible for switchSystem function
+            window.engine = engine;
+            window.quantumEngine = quantumEngine;
+            window.holographicSystem = holographicSystem;
+            window.polychoraSystem = polychoraSystem;
+            window.unifiedSaveManager = unifiedSaveManager;
+            window.parameterMapper = parameterMapper;
+            window.geometries = geometries;
+            window.initializePolychora = initializePolychora;
+            window.updateParameter = updateParameter;
+            
+            // Module ready flag already set earlier for performance
+            
+            console.log('🚀 VIB34D Clean Interface Ready - All systems initialized');
+            
+            // Mobile debug system auto-hide on successful initialization
+            if (window.mobileOptimization) {
+                window.mobileOptimization.log('🚀 VIB34D Clean Interface Ready - All systems initialized');
+            }
+        });
+        
+        // URL parameters already parsed outside the ES6 module
+        
+        // Mobile WebGL diagnostic function
+        function checkMobileWebGL() {
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            window.mobileOptimization.log(`📱 Device check: Mobile=${isMobile}, UserAgent=${navigator.userAgent}`);
+            
+            if (isMobile) {
+                // Test WebGL availability on mobile
+                const testCanvas = document.createElement('canvas');
+                const contextOptions = {
+                    alpha: true,
+                    depth: false,
+                    stencil: false,
+                    antialias: false,
+                    premultipliedAlpha: false,
+                    preserveDrawingBuffer: false,
+                    powerPreference: 'default',
+                    failIfMajorPerformanceCaveat: false
+                };
+                
+                const testGL = testCanvas.getContext('webgl2', contextOptions) ||
+                              testCanvas.getContext('webgl', contextOptions) ||
+                              testCanvas.getContext('experimental-webgl', contextOptions);
+                
+                if (!testGL) {
+                    window.mobileOptimization.log('❌ CRITICAL: WebGL not available on mobile device');
+                    return false;
+                } else {
+                    const renderer = testGL.getParameter(testGL.RENDERER);
+                    const vendor = testGL.getParameter(testGL.VENDOR);
+                    const version = testGL.getParameter(testGL.VERSION);
+                    
+                    window.mobileOptimization.log(`✅ Mobile WebGL OK: ${version}`);
+                    window.mobileOptimization.log(`🎮 GPU: ${renderer} (${vendor})`);
+                    
+                    // Check for common mobile WebGL issues
+                    const maxTextureSize = testGL.getParameter(testGL.MAX_TEXTURE_SIZE);
+                    const maxViewport = testGL.getParameter(testGL.MAX_VIEWPORT_DIMS);
+                    
+                    window.mobileOptimization.log(`📊 Max texture: ${maxTextureSize}, Max viewport: ${maxViewport[0]}x${maxViewport[1]}`);
+                    
+                    return true;
+                }
+            }
+            return true;
+        }
+        
+        // Initialize VIB34D Engine
+        async function initializeEngine() {
+            try {
+                // Check mobile WebGL before initializing engines
+                if (!checkMobileWebGL()) {
+                    throw new Error('Mobile WebGL not available');
+                }
+                
+                // CRITICAL ANDROID FIX: Only initialize active system canvases to avoid WebGL context limit
+                const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                    // Determine active system first
+                    const activeSystem = window.galleryPreviewData?.system || window.currentSystem || 'faceted';
+                    const activeLayerId = activeSystem === 'faceted' ? 'vib34dLayers' : `${activeSystem}Layers`;
+                    
+                    // Show only the active system layers
+                    const activeLayers = document.getElementById(activeLayerId);
+                    if (activeLayers) {
+                        activeLayers.style.display = 'block';
+                        activeLayers.style.visibility = 'visible';
+                        activeLayers.style.opacity = '1';
+                        
+                        const activeCanvases = activeLayers.querySelectorAll('canvas');
+                        const viewWidth = window.innerWidth;
+                        const viewHeight = window.innerHeight;
+                        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                        
+                        activeCanvases.forEach(canvas => {
+                            // Force canvas style dimensions first
+                            canvas.style.width = '100%';
+                            canvas.style.height = '100%';
+                            canvas.style.position = 'absolute';
+                            canvas.style.top = '0';
+                            canvas.style.left = '0';
+                            
+                            // Then force actual canvas dimensions
+                            canvas.width = viewWidth * dpr;
+                            canvas.height = viewHeight * dpr;
+                            
+                            window.mobileOptimization.log(`🚀 Pre-init canvas ${canvas.id}: ${canvas.width}x${canvas.height}`);
+                        });
+                        
+                        window.mobileOptimization.log(`📱 Mobile optimized: Only ${activeCanvases.length} canvas contexts (${activeSystem} system)`);
+                    }
+                }
+                
+                // Create all engines for both mobile and desktop
+                // Mobile WebGL proven to work - let users choose their system
+                engine = new VIB34DIntegratedEngine();
+                quantumEngine = new QuantumEngine();
+                holographicSystem = new RealHolographicSystem();
+                
+                if (isMobile) {
+                    window.mobileOptimization.log(`📱 Mobile: All engines created (faceted, quantum, holographic)`);
+                    window.mobileOptimization.log(`📱 Faceted: ${engine.visualizers ? engine.visualizers.length : 0} visualizers`);
+                    window.mobileOptimization.log(`📱 Quantum: ${quantumEngine.visualizers ? quantumEngine.visualizers.length : 0} visualizers`);
+                } else {
+                    console.log('✅ All engines initialized for desktop');
+                }
+                
+                // Ensure all engines exist with stubs if needed for compatibility
+                if (!engine) {
+                    engine = { visualizers: [], updateParameter: () => {}, startRenderLoop: () => {}, updateVisualizers: () => {} };
+                }
+                if (!quantumEngine) {
+                    quantumEngine = { visualizers: [], setActive: () => {}, updateParameter: () => {}, isActive: false };
+                }
+                if (!holographicSystem) {
+                    if (isMobile && activeSystem !== 'holographic') {
+                        // Stub holographic system for mobile when not active
+                        holographicSystem = { setActive: () => {}, updateParameter: () => {}, ensureRunning: () => {}, isActive: false };
+                    } else {
+                        holographicSystem = new RealHolographicSystem();
+                        console.log('✅ Holographic System ready');
+                    }
+                }
+                
+                // CRITICAL PERFORMANCE FIX: Set moduleReady flag immediately after core engines
+                // This prevents 500ms+ delays when switching systems
+                window.moduleReady = true;
+                console.log('⚡ Core engines ready - system switching enabled');
+                
+                // CRITICAL FIX: If gallery preview, don't activate default system yet
+                if (window.galleryPreviewData) {
+                    console.log(`🎯 Gallery preview detected - skipping default system activation`);
+                    console.log(`🎯 Will activate ${window.galleryPreviewData.system} system in applyGalleryPreviewData()`);
+                }
+                
+                // Initialize Collection Manager for portfolio
+                collectionManager = new CollectionManager();
+                console.log('✅ Collection Manager ready');
+                
+                // Initialize unified save system
+                unifiedSaveManager = new UnifiedSaveManager(engine);
+                parameterMapper = new ParameterMapper();
+                
+                // Make save manager globally accessible
+                window.unifiedSaveManager = unifiedSaveManager;
+                engine.unifiedSaveManager = unifiedSaveManager;
+                engine.parameterMapper = parameterMapper;
+                console.log('✅ Unified Save System ready');
+                
+                // Connect systems to universal reactivity
+                universalReactivity.connectSystem(engine, 'faceted');
+                universalReactivity.connectSystem(quantumEngine, 'quantum');
+                // Note: holographic system already has its own reactivity, so we don't connect it
+                universalReactivity.setupUniversalInteractions();
+                console.log('🎵 Universal Reactivity System connected to all systems');
+                
+                // Apply gallery preview parameters if present
+                console.log('🔍 Checking for gallery preview data...');
+                console.log('🔍 window.galleryPreviewData:', window.galleryPreviewData);
+                
+                if (window.galleryPreviewData) {
+                    console.log('✅ Gallery preview data found, calling applyGalleryPreviewData...');
+                    await applyGalleryPreviewData();
+                } else {
+                    console.log('ℹ️ No gallery preview data found - normal index.html usage');
+                    
+                    // CRITICAL MOBILE FIX: Use the active system determined by mobile optimization  
+                    let targetSystem = 'faceted';
+                    if (isMobile) {
+                        // Use the SAME system that mobile engine initialization used
+                        targetSystem = activeSystem; // This was already determined above
+                    }
+                    console.log(`📱 Mobile system switch: ${targetSystem} (isMobile: ${isMobile})`);
+                    if (window.mobileOptimization) {
+                        window.mobileOptimization.log(`📱 Switching to ${targetSystem} system for mobile optimization`);
+                    }
+                    
+                    await switchSystem(targetSystem);
+                    
+                    // MOBILE DEBUGGING: Verify system switch worked and engine is rendering
+                    if (isMobile) {
+                        window.mobileOptimization.log(`🔍 Post-switch verification: currentSystem=${window.currentSystem}`);
+                        
+                        // Check which engine should be active and if it's working
+                        if (targetSystem === 'faceted' && window.engine) {
+                            const engine = window.engine;
+                            const hasRealVisualizers = engine.visualizers && engine.visualizers.length > 0 && engine.visualizers[0].canvas;
+                            window.mobileOptimization.log(`🔍 Faceted engine: visualizers=${engine.visualizers?.length}, hasRealVisualizers=${hasRealVisualizers}, animationId=${!!engine.animationId}`);
+                        } else if (targetSystem === 'quantum' && window.quantumEngine) {
+                            const engine = window.quantumEngine;
+                            const hasRealVisualizers = engine.visualizers && engine.visualizers.length > 0 && engine.visualizers[0].canvas;
+                            window.mobileOptimization.log(`🔍 Quantum engine: visualizers=${engine.visualizers?.length}, hasRealVisualizers=${hasRealVisualizers}, isActive=${engine.isActive}`);
+                        } else if (targetSystem === 'holographic' && window.holographicSystem) {
+                            const engine = window.holographicSystem;
+                            const hasRealEngine = engine.isRunning !== undefined; // Check if it's real vs stub
+                            window.mobileOptimization.log(`🔍 Holographic system: hasRealEngine=${hasRealEngine}, isRunning=${engine.isRunning}, isActive=${engine.isActive}`);
+                        }
+                        
+                        // Check which canvas layers are visible and their dimensions
+                        const layerInfo = {};
+                        const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                        systems.forEach(sys => {
+                            const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
+                            const layers = document.getElementById(layerId);
+                            if (layers) {
+                                const rect = layers.getBoundingClientRect();
+                                layerInfo[sys] = {
+                                    display: layers.style.display,
+                                    visibility: layers.style.visibility,
+                                    opacity: layers.style.opacity,
+                                    rect: `${rect.width}x${rect.height}`,
+                                    position: `${rect.top},${rect.left}`
+                                };
+                            } else {
+                                layerInfo[sys] = 'missing';
+                            }
+                        });
+                        window.mobileOptimization.log(`🔍 Layer info: ${JSON.stringify(layerInfo, null, 2)}`);
+                        
+                        // CRITICAL MOBILE DEBUG: Check canvas container positioning
+                        const canvasContainer = document.getElementById('canvasContainer');
+                        if (canvasContainer) {
+                            const containerRect = canvasContainer.getBoundingClientRect();
+                            const containerStyle = window.getComputedStyle(canvasContainer);
+                            window.mobileOptimization.log(`📦 Canvas Container: ${containerRect.width}x${containerRect.height} at ${containerRect.top},${containerRect.left}`);
+                            window.mobileOptimization.log(`📦 Container CSS: top=${containerStyle.top}, left=${containerStyle.left}, right=${containerStyle.right}, bottom=${containerStyle.bottom}`);
+                            
+                            if (containerRect.width === 0 || containerRect.height === 0) {
+                                window.mobileOptimization.log(`❌ CRITICAL: Canvas container has ZERO dimensions - canvases will be invisible!`);
+                            }
+                        } else {
+                            window.mobileOptimization.log(`❌ CRITICAL: Canvas container #canvasContainer not found!`);
+                        }
+                    }
+                }
+                
+                // SURGICAL FIX: Force gallery preview to start animating immediately
+                if (window.isGalleryPreview) {
+                    console.log('🎬 GALLERY PREVIEW MODE: Forcing immediate animation start');
+                    
+                    // Force the active system to start rendering immediately
+                    const activeSystem = window.currentSystem || 'faceted';
+                    const engines = {
+                        faceted: window.engine,
+                        quantum: window.quantumEngine,
+                        holographic: window.holographicSystem,
+                        polychora: window.polychoraSystem
+                    };
+                    
+                    const engine = engines[activeSystem];
+                    if (engine) {
+                        // Force start rendering for gallery preview
+                        if (engine.startRenderLoop && typeof engine.startRenderLoop === 'function') {
+                            console.log(`🎬 Starting render loop for ${activeSystem} in gallery preview`);
+                            engine.startRenderLoop();
+                        }
+                        
+                        // For holographic system, ensure it's actually running
+                        if (activeSystem === 'holographic' && engine.ensureRunning) {
+                            engine.ensureRunning();
+                        }
+                        
+                        // Force immediate parameter update to ensure visuals show
+                        if (engine.updateVisualizers) {
+                            engine.updateVisualizers();
+                        } else if (engine.render) {
+                            engine.render();
+                        }
+                    }
+                    
+                    // Gallery iframe reactivity - listen for mouse/click data
+                    window.addEventListener('message', (event) => {
+                        if (event.data && event.data.type === 'mouseMove') {
+                            const engine = engines[activeSystem];
+                            if (engine && engine.updateMouseState) {
+                                engine.updateMouseState(event.data.x, event.data.y, event.data.intensity);
+                            }
+                        } else if (event.data && event.data.type === 'click') {
+                            const engine = engines[activeSystem];
+                            if (engine && engine.triggerClick) {
+                                engine.triggerClick(event.data.intensity);
+                            }
+                        }
+                    });
+                    console.log('🎯 Gallery iframe reactivity enabled');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to initialize engine:', error);
+                return false;
+            }
+        }
+        
+        // Apply gallery preview data after all systems are initialized
+        async function applyGalleryPreviewData() {
+            console.log('🚀 applyGalleryPreviewData CALLED');
+            
+            const previewData = window.galleryPreviewData;
+            console.log('🔍 previewData from window.galleryPreviewData:', previewData);
+            
+            if (!previewData) {
+                console.log('❌ No previewData found, returning early');
+                return;
+            }
+            
+            console.log('🎯 Applying gallery preview parameters:', previewData);
+            
+            // SIMPLIFIED FIX: Switch system if needed with standard timing
+            if (previewData.system !== window.currentSystem) {
+                console.log(`🔄 Switching from ${window.currentSystem} to ${previewData.system} for gallery preview`);
+                await switchSystem(previewData.system);
+                // Minimal wait for system switch
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // CRITICAL FIX: Force canvas layer visibility for gallery previews WITH verification
+            const systems = ['faceted', 'quantum', 'holographic'];
+            systems.forEach(sys => {
+                const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
+                const layers = document.getElementById(layerId);
+                if (layers) {
+                    const shouldShow = sys === previewData.system;
+                    layers.style.display = shouldShow ? 'block' : 'none';
+                    layers.style.visibility = shouldShow ? 'visible' : 'hidden';
+                    layers.style.opacity = shouldShow ? '1' : '0';
+                    console.log(`🎯 GALLERY PREVIEW: ${sys} layers → ${shouldShow ? 'VISIBLE' : 'HIDDEN'} (${layers.children.length} canvases)`);
+                } else {
+                    console.warn(`⚠️ GALLERY PREVIEW: Missing layer container: ${layerId}`);
+                }
+            });
+            
+            // Quick render wait
+            await new Promise(resolve => setTimeout(resolve, 50)); // Minimal render time
+            console.log(`✅ GALLERY PREVIEW: ${previewData.system} system should now be fully active`);
+            
+            // CRITICAL: Double-check system switch was successful
+            if (window.currentSystem !== previewData.system) {
+                console.error(`🚨 SYSTEM SWITCH FAILED! Expected: ${previewData.system}, Got: ${window.currentSystem}`);
+                console.log('🔧 Forcing direct system switch for gallery preview...');
+                
+                // Force canvas visibility directly
+                const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                systems.forEach(sys => {
+                    const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
+                    const layers = document.getElementById(layerId);
+                    if (layers) {
+                        layers.style.display = sys === previewData.system ? 'block' : 'none';
+                        console.log(`🎯 ${sys} layers: ${layers.style.display}`);
+                    }
+                });
+                
+                // Force engine activation
+                if (previewData.system === 'quantum' && window.quantumEngine) {
+                    window.quantumEngine.setActive(true);
+                    console.log('🎯 Quantum engine force-activated');
+                } else if (previewData.system === 'holographic' && window.holographicSystem) {
+                    window.holographicSystem.setActive(true);
+                    console.log('🎯 Holographic system force-activated');
+                }
+                
+                // Update currentSystem AND the ES6 module variable
+                window.currentSystem = previewData.system;
+                currentSystem = previewData.system; // Update ES6 module variable too
+                console.log(`🎯 Forced system switch to: ${previewData.system} (both global and module scope)`);
+            } else {
+                console.log(`✅ System switch successful: ${previewData.system}`);
+            }
+            
+            // CRITICAL: Apply all parameters from URL with aggressive timing and retries
+            console.log('🔧 FORCING parameter application for gallery preview:', previewData.parameters);
+            
+            // Apply parameters multiple times to ensure they stick in iframe mode
+            for (let attempt = 0; attempt < 2; attempt++) {
+                Object.entries(previewData.parameters).forEach(([param, value]) => {
+                    if (param === 'geometry' || param === 'geometryType' || param === 'polytope') {
+                        // Handle geometry selection
+                        const geometryIndex = parseInt(value);
+                        if (!isNaN(geometryIndex)) {
+                            selectGeometry(geometryIndex);
+                            console.log(`✅ Attempt ${attempt + 1}: Geometry set to ${geometryIndex}`);
+                        }
+                    } else {
+                        // Parameter name mapping for gallery preview
+                        const parameterMapping = {
+                            'geometryType': 'geometry',
+                            'density': 'gridDensity', 
+                            'morph': 'morphFactor'
+                        };
+                    
+                        const actualParam = parameterMapping[param] || param;
+                        
+                        // Handle slider parameters with immediate application
+                        const slider = document.getElementById(actualParam);
+                        if (slider) {
+                            slider.value = value;
+                            // IMMEDIATE application for iframe preview
+                            updateParameter(actualParam, value);
+                            console.log(`✅ Attempt ${attempt + 1}: ${actualParam} = ${value}`);
+                        } else {
+                            console.warn(`⚠️ Slider not found for parameter: ${actualParam}`);
+                        }
+                    }
+                });
+                
+                // Force render after each parameter batch
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            // FINAL FORCE: Ensure the active system is actually rendering
+            const engines = {
+                faceted: window.engine,
+                quantum: window.quantumEngine,
+                holographic: window.holographicSystem,
+                polychora: window.polychoraSystem
+            };
+            
+            const finalEngine = engines[previewData.system];
+            if (finalEngine) {
+                if (typeof finalEngine.startRenderLoop === 'function') {
+                    finalEngine.startRenderLoop();
+                    console.log(`🎬 FINAL: Started render loop for ${previewData.system}`);
+                } else if (typeof finalEngine.render === 'function') {
+                    // Call render multiple times to ensure animation starts
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => finalEngine.render(), i * 10);
+                    }
+                    console.log(`🎬 FINAL: Triggered multiple renders for ${previewData.system}`);
+                }
+            }
+            
+            console.log('✅ Gallery preview parameters applied with FORCED ANIMATION');
+            
+            // Immediate engine activation for gallery previews
+            setTimeout(() => {
+                console.log('🚀 FORCING engine activation for gallery preview');
+                if (previewData.system === 'quantum' && window.quantumEngine) {
+                    console.log('🔮 FORCING quantum engine full activation for gallery preview');
+                    window.quantumEngine.isActive = true;
+                    
+                    // CRITICAL: Force all quantum visualizers to start rendering
+                    if (window.quantumEngine.visualizers) {
+                        window.quantumEngine.visualizers.forEach(visualizer => {
+                            if (visualizer && visualizer.gl) {
+                                visualizer.isActive = true;
+                                console.log('✅ Activated quantum visualizer:', visualizer.layerType);
+                            }
+                        });
+                    }
+                    
+                    // Force render loop restart
+                    if (window.quantumEngine.startRenderLoop) {
+                        window.quantumEngine.startRenderLoop();
+                        console.log('✅ Quantum render loop restarted');
+                    }
+                    
+                    // Force update all parameters AFTER activation
+                    Object.entries(previewData.parameters).forEach(([param, value]) => {
+                        if (param !== 'geometry' && param !== 'geometryType') {
+                            try {
+                                window.quantumEngine.updateParameter(param, parseFloat(value));
+                            } catch (e) {
+                                console.log('🔄 Parameter queued for quantum engine:', param, value);
+                            }
+                        }
+                    });
+                } else if (previewData.system === 'holographic' && window.holographicSystem) {
+                    console.log('✨ FORCING holographic engine full activation for gallery preview');
+                    window.holographicSystem.isActive = true;
+                    
+                    // CRITICAL: Force all holographic visualizers to start rendering
+                    if (window.holographicSystem.visualizers) {
+                        window.holographicSystem.visualizers.forEach(visualizer => {
+                            if (visualizer && visualizer.gl) {
+                                visualizer.isActive = true;
+                                console.log('✅ Activated holographic visualizer:', visualizer.layerType);
+                            }
+                        });
+                    }
+                    
+                    // Force render loop restart
+                    if (window.holographicSystem.startRenderLoop) {
+                        window.holographicSystem.startRenderLoop();
+                        console.log('✅ Holographic render loop restarted');
+                    }
+                    
+                    // Force update all parameters AFTER activation
+                    Object.entries(previewData.parameters).forEach(([param, value]) => {
+                        if (param !== 'geometry' && param !== 'geometryType') {
+                            try {
+                                window.holographicSystem.updateParameter(param, parseFloat(value));
+                            } catch (e) {
+                                console.log('🔄 Parameter queued for holographic system:', param, value);
+                            }
+                        }
+                    });
+                } else if (previewData.system === 'faceted' && window.engine) {
+                    console.log('🔷 FORCING faceted engine full activation for gallery preview');
+                    window.engine.isActive = true;
+                    
+                    // Force all faceted visualizers to start rendering
+                    if (window.engine.visualizers) {
+                        window.engine.visualizers.forEach(visualizer => {
+                            if (visualizer && visualizer.gl) {
+                                visualizer.isActive = true;
+                                console.log('✅ Activated faceted visualizer:', visualizer.layerType);
+                            }
+                        });
+                    }
+                    
+                    // Force render loop restart
+                    if (window.engine.startRenderLoop) {
+                        window.engine.startRenderLoop();
+                        console.log('✅ Faceted render loop restarted');
+                    }
+                }
+                console.log('✅ Engine activation complete for gallery preview');
+            }, 10); // Immediate activation
+        }
+        
+        // Initialize Polychora when needed
+        async function initializePolychora() {
+            if (polychoraSystem) return true;
+            
+            try {
+                const { PolychoraSystem } = await import('./src/core/PolychoraSystem.js');
+                polychoraSystem = new PolychoraSystem();
+                
+                // Temporarily show polychora layers for WebGL initialization
+                const polychoraLayers = document.getElementById('polychoraLayers');
+                const wasHidden = polychoraLayers.style.display === 'none';
+                if (wasHidden) {
+                    polychoraLayers.style.display = 'block';
+                }
+                
+                const success = polychoraSystem.initialize();
+                
+                // Hide again if it was hidden
+                if (wasHidden) {
+                    polychoraLayers.style.display = 'none';
+                }
+                
+                if (success) {
+                    console.log('✅ Polychora System initialized');
+                    return true;
+                } else {
+                    console.error('❌ Polychora System initialization failed');
+                    polychoraSystem = null;
+                }
+            } catch (error) {
+                console.error('❌ Failed to initialize Polychora:', error);
+                polychoraSystem = null;
+            }
+            return false;
+        }
+        
+        // REMOVED: switchSystem function moved outside ES6 module for global access
+        
+        // Setup geometry buttons - make globally accessible
+        window.setupGeometry = function(system) {
+            const grid = document.getElementById('geometryGrid');
+            if (!grid) return;
+            
+            const geoList = window.geometries?.[system] || window.geometries?.faceted || [
+                'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
+                'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'
+            ];
+            
+            grid.innerHTML = geoList.map((name, i) => 
+                `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
+                         data-index="${i}" onclick="selectGeometry(${i})">
+                    ${name}
+                </button>`
+            ).join('');
+        }
+        
+        // REMOVED: Duplicate function - updateParameter is defined below
+        
+        // Update parameter with enhanced error handling and system integration
+        window.updateParameter = function(param, value) {
+            const displays = {
+                rot4dXW: 'xwValue',
+                rot4dYW: 'ywValue', 
+                rot4dZW: 'zwValue',
+                gridDensity: 'densityValue',
+                morphFactor: 'morphValue',
+                chaos: 'chaosValue',
+                speed: 'speedValue',
+                hue: 'hueValue',
+                intensity: 'intensityValue',
+                saturation: 'saturationValue'
+            };
+            
+            const display = document.getElementById(displays[param]);
+            if (display) {
+                if (param === 'hue') {
+                    display.textContent = value + '°';
+                } else if (param.startsWith('rot4d')) {
+                    display.textContent = parseFloat(value).toFixed(2);
+                } else {
+                    display.textContent = parseFloat(value).toFixed(1);
+                }
+            }
+            
+            // SURGICAL FIX: Unified parameter router - eliminates scope confusion
+            try {
+                const activeSystem = window.currentSystem || 'faceted';
+                const engines = {
+                    faceted: window.engine,
+                    quantum: window.quantumEngine,
+                    holographic: window.holographicSystem,
+                    polychora: window.polychoraSystem
+                };
+                
+                const engine = engines[activeSystem];
+                if (!engine) {
+                    console.warn(`⚠️ System ${activeSystem} not available - engines:`, Object.keys(engines).map(k => `${k}:${!!engines[k]}`).join(', '));
+                    
+                    // RETRY: Gallery previews might call this before engines are ready
+                    setTimeout(() => {
+                        console.log(`🔄 Retrying parameter ${param} = ${value} for ${activeSystem} (attempt 2)`);
+                        window.updateParameter(param, value);
+                    }, 100); // Quick retry
+                    return;
+                }
+                
+                // Route to appropriate engine method
+                if (activeSystem === 'faceted') {
+                    engine.parameterManager.setParameter(param, parseFloat(value));
+                    engine.updateVisualizers();
+                } else if (activeSystem === 'quantum') {
+                    engine.updateParameter(param, parseFloat(value));
+                } else if (activeSystem === 'holographic') {
+                    engine.updateParameter(param, parseFloat(value));
+                } else if (activeSystem === 'polychora') {
+                    engine.updateParameters({ [param]: parseFloat(value) });
+                }
+                
+                console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${value}`);
+                
+            } catch (error) {
+                console.error(`❌ Parameter update error in ${window.currentSystem || 'unknown'} for ${param}:`, error);
+                // Don't break the UI, just log the error
+            }
+        }
+        
+        // Old updateVariation function removed - holographic now uses parameters directly
+        
+        // Action functions
+        window.openGallery = function() {
+            console.log('🖼️ Navigating to gallery...');
+            // MEMORY OPTIMIZATION: Navigate in same tab instead of opening new window
+            window.location.href = './gallery.html';
+            
+            // Listen for gallery window close
+            if (window.galleryWindow) {
+                const checkClosed = setInterval(() => {
+                    if (window.galleryWindow.closed) {
+                        window.galleryWindow = null;
+                        clearInterval(checkClosed);
+                        console.log('🖼️ Gallery window closed');
+                    }
+                }, 1000);
+            }
+        }
+        
+        window.toggleAudio = async function() {
+            audioEnabled = !audioEnabled;
+            
+            if (audioEnabled && holographicSystem) {
+                await holographicSystem.initAudio();
+            }
+            
+            console.log(`🎵 Audio: ${audioEnabled ? 'ON' : 'OFF'}`);
+        }
+        
+        window.showLLMInterface = async function() {
+            console.log('🤖 Opening AI parameter interface');
+            try {
+                // Import LLM modules dynamically
+                const { LLMParameterInterface } = await import('./src/llm/LLMParameterInterface.js');
+                const { LLMParameterUI } = await import('./src/llm/LLMParameterUI.js');
+                
+                // Initialize LLM system if not already done
+                if (!window.llmInterface) {
+                    window.llmInterface = new LLMParameterInterface();
+                    window.llmUI = new LLMParameterUI(window.llmInterface);
+                    
+                    // Set parameter callback to update VIB34D
+                    window.llmInterface.setParameterCallback((parameters) => {
+                        console.log('🤖 Applying AI-generated parameters:', parameters);
+                        
+                        // Smart system selection based on visual characteristics
+                        let targetSystem = window.currentSystem || 'faceted';
+                        
+                        // Choose system based on parameter values for maximum visual impact
+                        if (parameters.chaos > 0.7 && parameters.speed > 2.0) {
+                            targetSystem = 'quantum'; // High chaos + speed = complex quantum effects
+                        } else if (parameters.intensity > 0.8 && parameters.saturation > 0.8) {
+                            targetSystem = 'holographic'; // High intensity = holographic effects
+                        } else if (parameters.chaos < 0.3 && parameters.gridDensity > 60) {
+                            targetSystem = 'faceted'; // Low chaos + high detail = clean faceted patterns
+                        }
+                        
+                        // Switch system if needed for maximum visual change
+                        if (targetSystem !== window.currentSystem) {
+                            console.log(`🎯 AI switching from ${window.currentSystem} to ${targetSystem} for optimal visual effect`);
+                            if (window.switchSystem) {
+                                window.switchSystem(targetSystem);
+                            }
+                        }
+                        
+                        // Apply each parameter with a small delay for smooth visual effect
+                        Object.entries(parameters).forEach(([param, value], index) => {
+                            setTimeout(() => {
+                                // Use the existing updateParameter function that handles all systems
+                                if (window.updateParameter) {
+                                    console.log(`🤖 Applying ${param} = ${value} to ${targetSystem} system`);
+                                    window.updateParameter(param, value);
+                                } else {
+                                    console.error('❌ window.updateParameter not available');
+                                }
+                            }, index * 50);
+                        });
+                    });
+                }
+                
+                // Show the LLM interface
+                window.llmUI.show();
+                
+            } catch (error) {
+                console.error('❌ Error loading LLM interface:', error);
+                alert('Error loading AI parameter interface. Please check console for details.');
+            }
+        }
+        
+        window.toggleInteractivity = async function() {
+            console.log(`🎛️ Universal Interactivity System currently disabled - requires repair before use`);
+            console.log(`🔧 This system needs to be fixed before it can work with the existing visualization engines`);
+        }
+        
+        // Helper function to update UI sliders when LLM sets parameters
+        function updateUIParameter(param, value) {
+            const slider = document.getElementById(param);
+            if (slider) {
+                slider.value = value;
+                // Trigger change event to update display value
+                const event = new Event('input', { bubbles: true });
+                slider.dispatchEvent(event);
+            }
+        }
+        
+        function showInteractivityOverlay() {
+            // Create floating overlay for interactivity status
+            if (!document.getElementById('interactivity-overlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'interactivity-overlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 60px;
+                    left: 20px;
+                    background: rgba(0, 255, 255, 0.1);
+                    border: 2px solid rgba(0, 255, 255, 0.5);
+                    padding: 15px;
+                    border-radius: 10px;
+                    backdrop-filter: blur(10px);
+                    color: #00ffff;
+                    font-family: 'Orbitron', monospace;
+                    font-size: 0.9rem;
+                    z-index: 999;
+                    max-width: 250px;
+                `;
+                overlay.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 8px;">🎛️ UNIVERSAL INTERACTIVITY</div>
+                    <div style="font-size: 0.8rem; opacity: 0.8;">
+                        Active for ALL systems<br>
+                        Audio: <span id="audio-status">OFF</span><br>
+                        Mouse: <span id="mouse-status">TRACKED</span><br>
+                        Gamepad: <span id="gamepad-status">OFF</span><br>
+                        Wearable: <span id="wearable-status">OFF</span>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.7rem; opacity: 0.6;">
+                        Press I to toggle
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+        }
+        
+        function hideInteractivityOverlay() {
+            const overlay = document.getElementById('interactivity-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        
+        window.randomizeAll = function() {
+            // Randomize ONLY parameters (NO hue, NO geometry)
+            randomizeParameters();
+        }
+        
+        window.randomizeEverything = function() {
+            // Full randomization: parameters + geometry + hue
+            randomizeParameters();
+            setTimeout(() => randomizeGeometryAndHue(), 10);
+        }
+        
+        function randomizeParameters() {
+            // Randomize all parameters EXCEPT hue and geometry
+            const skipParams = ['hue'];
+            
+            document.querySelectorAll('.control-slider').forEach(slider => {
+                const paramName = slider.id;
+                if (!skipParams.includes(paramName)) {
+                    const min = parseFloat(slider.min);
+                    const max = parseFloat(slider.max);
+                    const value = Math.random() * (max - min) + min;
+                    slider.value = value;
+                    slider.oninput();
+                }
+            });
+            console.log('🎲 Parameters randomized (NO hue, NO geometry)');
+        }
+        
+        function randomizeGeometryAndHue() {
+            // Randomize geometry selection
+            if (currentSystem !== 'holographic') {
+                const geometryCount = geometries[currentSystem]?.length || 8;
+                const randomGeometry = Math.floor(Math.random() * geometryCount);
+                selectGeometry(randomGeometry);
+            }
+            
+            // Randomize hue
+            const hueSlider = document.getElementById('hue');
+            if (hueSlider) {
+                const randomHue = Math.random() * 360;
+                hueSlider.value = randomHue;
+                hueSlider.oninput();
+            }
+            
+            console.log('🎲 Stage 2: Randomized geometry and hue');
+        }
+        
+        window.resetAll = function() {
+            // Reset all sliders to defaults
+            const defaults = {
+                rot4dXW: 0,
+                rot4dYW: 0,
+                rot4dZW: 0,
+                gridDensity: 15,
+                morphFactor: 1,
+                chaos: 0.2,
+                speed: 1,
+                hue: 200,
+                intensity: 0.5,
+                saturation: 0.8
+            };
+            
+            Object.entries(defaults).forEach(([id, value]) => {
+                const slider = document.getElementById(id);
+                if (slider) {
+                    slider.value = value;
+                    slider.oninput();
+                }
+            });
+            console.log('🔄 Reset all parameters');
+        }
+        
+        // Mobile panel toggle
+        window.toggleMobilePanel = function() {
+            const panel = document.getElementById('controlPanel');
+            const btn = document.getElementById('mobileCollapseBtn');
+            
+            panel.classList.toggle('collapsed');
+            btn.textContent = panel.classList.contains('collapsed') ? '▲' : '▼';
+        }
+        
+        // Mobile detection and setup
+        function setupMobileInterface() {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                // Start with panel collapsed on mobile
+                const panel = document.getElementById('controlPanel');
+                const btn = document.getElementById('mobileCollapseBtn');
+                panel.classList.add('collapsed');
+                btn.textContent = '▲';
+                btn.style.display = 'block';
+                
+                // Add touch-friendly event listeners
+                document.addEventListener('touchstart', function(e) {
+                    // Improve touch responsiveness
+                    e.target.classList.add('touch-active');
+                }, { passive: true });
+                
+                document.addEventListener('touchend', function(e) {
+                    setTimeout(() => {
+                        e.target.classList.remove('touch-active');
+                    }, 150);
+                }, { passive: true });
+            }
+        }
+        
+        // Initialize mobile interface on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setupMobileInterface();
+        });
+        
+        // Listen for mouse events from gallery iframe for visualizer interactivity
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type) {
+                if (event.data.type === 'mouseMove') {
+                    // Update all visualizers with mouse position
+                    const updateMouseForSystem = (system) => {
+                        if (system && system.visualizers) {
+                            system.visualizers.forEach(vis => {
+                                if (vis) {
+                                    vis.mouseX = event.data.x;
+                                    vis.mouseY = event.data.y;
+                                    vis.mouseIntensity = event.data.intensity || 0.5;
+                                }
+                            });
+                        }
+                    };
+                    
+                    // Update the active system's visualizers
+                    if (window.currentSystem === 'faceted' && window.engine) {
+                        updateMouseForSystem(window.engine);
+                    } else if (window.currentSystem === 'quantum' && window.quantumEngine) {
+                        updateMouseForSystem(window.quantumEngine);
+                    } else if (window.currentSystem === 'holographic' && window.holographicSystem) {
+                        updateMouseForSystem(window.holographicSystem);
+                    }
+                } else if (event.data.type === 'mouseClick') {
+                    // Trigger click effects on all visualizers
+                    const triggerClickForSystem = (system) => {
+                        if (system && system.visualizers) {
+                            system.visualizers.forEach(vis => {
+                                if (vis) {
+                                    vis.clickIntensity = event.data.intensity || 1.0;
+                                }
+                            });
+                        }
+                    };
+                    
+                    // Trigger click on active system
+                    if (window.currentSystem === 'faceted' && window.engine) {
+                        triggerClickForSystem(window.engine);
+                    } else if (window.currentSystem === 'quantum' && window.quantumEngine) {
+                        triggerClickForSystem(window.quantumEngine);
+                    } else if (window.currentSystem === 'holographic' && window.holographicSystem) {
+                        triggerClickForSystem(window.holographicSystem);
+                    }
+                }
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'i' || e.key === 'I') {
+                toggleInteractivity();
+            }
+        });
+        
+        // UNIFIED GALLERY PARAMETER LOADING SYSTEM
+        // Listen for parameters loaded from advanced gallery via localStorage
+        function checkGalleryParameters() {
+            const savedParams = localStorage.getItem('vib34d-load-params');
+            if (savedParams) {
+                try {
+                    const data = JSON.parse(savedParams);
+                    console.log('🔗 Received parameters from gallery:', data);
+                    
+                    // Clear the stored parameters to prevent repeated loading
+                    localStorage.removeItem('vib34d-load-params');
+                    
+                    // Switch to the appropriate system
+                    if (data.system && data.system !== currentSystem) {
+                        switchSystem(data.system);
+                        // Wait for system switch to complete
+                        setTimeout(() => loadGalleryParameters(data), 20);
+                    } else {
+                        loadGalleryParameters(data);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to parse gallery parameters:', error);
+                    localStorage.removeItem('vib34d-load-params');
+                }
+            }
+        }
+        
+        function loadGalleryParameters(data) {
+            const { system, parameters, globalId } = data;
+            console.log(`🎯 Loading ${system} variation #${globalId} from gallery`);
+            
+            if (system === 'faceted' && engine) {
+                // Load VIB34D parameters
+                Object.entries(parameters).forEach(([param, value]) => {
+                    if (param === 'geometry' && typeof value === 'number') {
+                        selectGeometry(value);
+                    } else {
+                        const slider = document.getElementById(param);
+                        if (slider) {
+                            slider.value = value;
+                            updateParameter(param, value);
+                        }
+                    }
+                });
+            } else if (system === 'holographic' && holographicSystem) {
+                // Load Holographic variation
+                if (parameters.variation !== undefined) {
+                    document.getElementById('variationSlider').value = parameters.variation;
+                    updateVariation(parameters.variation);
+                }
+            } else if (system === 'polychora' && polychoraSystem) {
+                // Load Polychora parameters
+                console.log('🔮 Loading Polychora parameters:', parameters);
+                polychoraSystem.updateParameters(parameters);
+                
+                // Update UI sliders if they exist
+                Object.entries(parameters).forEach(([param, value]) => {
+                    const slider = document.getElementById(param);
+                    if (slider) {
+                        slider.value = value;
+                        // Trigger parameter update event if needed
+                    }
+                });
+            }
+            
+            console.log(`✅ Successfully loaded variation #${globalId} from gallery`);
+        }
+        
+        // Check for gallery parameters on page load and periodically
+        setInterval(checkGalleryParameters, 500);
+        
+        // Also check when page gains focus (user returns from gallery)
+        window.addEventListener('focus', checkGalleryParameters);
+        
+        // SAVE TO PORTFOLIO FUNCTIONALITY
+        // REMOVED: saveToPortfolio function - Using unified saveToGallery instead
+        
+        function getCurrentSystemState() {
+            const state = {
+                system: currentSystem,
+                parameters: {},
+                geometryName: ''
+            };
+            
+            if (currentSystem === 'faceted') {
+                // Get VIB34D Faceted parameters
+                state.parameters = {
+                    geometry: getActiveGeometryIndex(),
+                    geometryType: getActiveGeometryIndex(),
+                    rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
+                    rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
+                    rot4dZW: parseFloat(document.getElementById('rot4dZW').value),
+                    gridDensity: parseFloat(document.getElementById('gridDensity').value),
+                    morphFactor: parseFloat(document.getElementById('morphFactor').value),
+                    chaos: parseFloat(document.getElementById('chaos').value),
+                    speed: parseFloat(document.getElementById('speed').value),
+                    hue: parseFloat(document.getElementById('hue').value),
+                    intensity: parseFloat(document.getElementById('intensity').value),
+                    saturation: parseFloat(document.getElementById('saturation').value)
+                };
+                state.geometryName = geometries.faceted[getActiveGeometryIndex()];
+                
+            } else if (currentSystem === 'quantum') {
+                // Get Quantum system parameters (same as faceted but with quantum names)
+                state.parameters = {
+                    geometry: getActiveGeometryIndex(),
+                    geometryType: getActiveGeometryIndex(),
+                    rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
+                    rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
+                    rot4dZW: parseFloat(document.getElementById('rot4dZW').value),
+                    gridDensity: parseFloat(document.getElementById('gridDensity').value),
+                    morphFactor: parseFloat(document.getElementById('morphFactor').value),
+                    chaos: parseFloat(document.getElementById('chaos').value),
+                    speed: parseFloat(document.getElementById('speed').value),
+                    hue: parseFloat(document.getElementById('hue').value),
+                    intensity: parseFloat(document.getElementById('intensity').value),
+                    saturation: parseFloat(document.getElementById('saturation').value)
+                };
+                state.geometryName = geometries.quantum[getActiveGeometryIndex()];
+                
+            } else if (currentSystem === 'holographic') {
+                // Get Holographic system parameters
+                const holoInfo = holographicSystem.getCurrentVariantInfo();
+                state.parameters = {
+                    geometryType: holoInfo.geometryType,
+                    density: parseFloat(document.getElementById('gridDensity').value) / 15.0, // Convert for holographic
+                    morph: parseFloat(document.getElementById('morphFactor').value),
+                    speed: parseFloat(document.getElementById('speed').value),
+                    chaos: parseFloat(document.getElementById('chaos').value),
+                    hue: parseFloat(document.getElementById('hue').value),
+                    intensity: parseFloat(document.getElementById('intensity').value),
+                    saturation: parseFloat(document.getElementById('saturation').value),
+                    rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
+                    rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
+                    rot4dZW: parseFloat(document.getElementById('rot4dZW').value)
+                };
+                state.geometryName = holoInfo.name;
+                
+            } else if (currentSystem === 'polychora') {
+                // Get Polychora system parameters
+                state.parameters = {
+                    polytope: getActiveGeometryIndex(),
+                    geometryType: getActiveGeometryIndex(),
+                    gridDensity: parseFloat(document.getElementById('gridDensity').value),
+                    morphFactor: parseFloat(document.getElementById('morphFactor').value),
+                    chaos: parseFloat(document.getElementById('chaos').value),
+                    speed: parseFloat(document.getElementById('speed').value),
+                    hue: parseFloat(document.getElementById('hue').value),
+                    intensity: parseFloat(document.getElementById('intensity').value),
+                    saturation: parseFloat(document.getElementById('saturation').value),
+                    rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
+                    rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
+                    rot4dZW: parseFloat(document.getElementById('rot4dZW').value)
+                };
+                state.geometryName = geometries.polychora ? geometries.polychora[getActiveGeometryIndex()] : 'Polytope';
+            }
+            
+            return state;
+        }
+        
+        function getActiveGeometryIndex() {
+            const activeBtn = document.querySelector('.geom-btn.active');
+            return activeBtn ? parseInt(activeBtn.dataset.index) : 0;
+        }
+        
+        function showSaveConfirmation(message, id) {
+            // Handle both old format (variationName, filename) and new format (message, id)
+            let displayMessage, displayId;
+            
+            if (typeof message === 'string' && !message.includes('Variation saved')) {
+                // Old format: showSaveConfirmation(variationName, filename)
+                displayMessage = `✅ Saved to Portfolio!<br><small>"${message}"</small>`;
+                displayId = id;
+            } else {
+                // New format: showSaveConfirmation(message, id)
+                displayMessage = `✅ ${message}`;
+                displayId = id;
+            }
+            
+            // Create temporary notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: rgba(0, 255, 0, 0.9);
+                color: black;
+                padding: 15px 20px;
+                border-radius: 10px;
+                font-family: 'Orbitron', monospace;
+                font-weight: bold;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `
+                ${displayMessage}<br>
+                <small style="opacity: 0.8;">ID: ${displayId}</small>
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+        
+        function showSaveError(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: rgba(255, 0, 0, 0.9);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                font-family: 'Orbitron', monospace;
+                z-index: 10000;
+            `;
+            notification.innerHTML = `❌ Save Failed: ${message}`;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Create Trading Card function - now uses modular system
+        window.createTradingCard = async function(format = 'classic') {
+            console.log(`🎴 Creating ${format} trading card for ${window.currentSystem} system...`);
+            
+            try {
+                // Dynamic import of TradingCardManager
+                const { TradingCardManager } = await import('./src/export/TradingCardManager.js');
+                
+                // Get current parameters
+                const parameters = {
+                    system: window.currentSystem || 'faceted',
+                    geometry: getActiveGeometryIndex(),
+                    rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
+                    rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
+                    rot4dZW: parseFloat(document.getElementById('rot4dZW').value),
+                    gridDensity: parseFloat(document.getElementById('gridDensity').value),
+                    morphFactor: parseFloat(document.getElementById('morphFactor').value),
+                    chaos: parseFloat(document.getElementById('chaos').value),
+                    speed: parseFloat(document.getElementById('speed').value),
+                    hue: parseFloat(document.getElementById('hue').value),
+                    intensity: parseFloat(document.getElementById('intensity').value),
+                    saturation: parseFloat(document.getElementById('saturation').value)
+                };
+                
+                // Generate system-specific trading card
+                const result = await TradingCardManager.createCard(
+                    window.currentSystem || 'faceted',
+                    format,
+                    parameters
+                );
+                
+                if (result.success) {
+                    console.log(`✅ ${result.system} trading card created: ${result.filename}`);
+                    
+                    // Show success notification
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 70px;
+                        right: 20px;
+                        background: rgba(0, 255, 0, 0.9);
+                        color: black;
+                        padding: 15px 20px;
+                        border-radius: 10px;
+                        font-family: 'Orbitron', monospace;
+                        font-weight: bold;
+                        z-index: 10000;
+                        animation: slideIn 0.3s ease-out;
+                    `;
+                    notification.innerHTML = `
+                        🎴 ${result.system.toUpperCase()} Trading Card Created!<br>
+                        <small style="opacity: 0.8;">${result.filename}</small>
+                    `;
+                    
+                    document.body.appendChild(notification);
+                    setTimeout(() => notification.remove(), 4000);
+                    
+                } else {
+                    throw new Error(result.error || 'Trading card generation failed');
+                }
+            } catch (error) {
+                console.error('❌ Failed to create trading card:', error);
+                
+                // Show error notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 70px;
+                    right: 20px;
+                    background: rgba(255, 0, 0, 0.9);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    font-family: 'Orbitron', monospace;
+                    z-index: 10000;
+                `;
+                notification.innerHTML = `❌ Trading Card Failed: ${error.message}`;
+                
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            }
+        }
+        
+        // Save to Gallery function - uses UnifiedSaveManager
+        window.saveToGallery = async function() {
+            console.log('🔵 Save to Gallery button clicked');
+            
+            try {
+                // Check if engine is initialized
+                if (!engine) {
+                    throw new Error('Engine not initialized yet - please wait a moment');
+                }
+                
+                // CRITICAL FIX: Initialize UnifiedSaveManager if needed
+                if (!unifiedSaveManager) {
+                    console.log('🔧 Initializing UnifiedSaveManager...');
+                    unifiedSaveManager = new UnifiedSaveManager(engine);
+                }
+                
+                // Ensure currentSystem is properly set
+                if (!window.currentSystem) {
+                    window.currentSystem = currentSystem || 'faceted';
+                    console.log('🔧 Fixed window.currentSystem:', window.currentSystem);
+                }
+                
+                console.log('🔵 Starting save process...');
+                
+                // Use the UnifiedSaveManager for all saves
+                const result = await unifiedSaveManager.save({ target: 'gallery' });
+                
+                console.log('🔵 Save result:', result);
+                
+                if (result && result.success) {
+                    console.log('✅ Saved to gallery:', result.id);
+                    
+                    // Show success message
+                    showSaveConfirmation('Variation saved to gallery!', result.id);
+                    
+                    // CRITICAL FIX: Multiple real-time gallery update methods
+                    
+                    // Method 1: Local event (same window)
+                    const event = new CustomEvent('gallery-refresh-needed');
+                    window.dispatchEvent(event);
+                    
+                    // Method 2: Cross-window message (for gallery in new window)
+                    try {
+                        // Try to find gallery window and send message
+                        if (window.galleryWindow && !window.galleryWindow.closed) {
+                            window.galleryWindow.postMessage({
+                                type: 'vib34d-variation-saved',
+                                variationId: result.id,
+                                timestamp: Date.now()
+                            }, '*');
+                            console.log('📤 Sent gallery update message to gallery window');
+                        }
+                    } catch (e) {
+                        console.log('📤 No gallery window to notify');
+                    }
+                    
+                    // Method 3: Force localStorage event (for cross-tab communication)
+                    // This triggers storage event listeners in other tabs/windows
+                    localStorage.setItem('vib34d-gallery-update-trigger', Date.now().toString());
+                } else {
+                    throw new Error(result?.error || 'Save failed - no result returned');
+                }
+            } catch (error) {
+                console.error('❌ Failed to save to gallery:', error);
+                showSaveError(error.message || 'Gallery save failed');
+            }
+        }
+        
+        // 🎯 SMOOTH MOUSE PARAMETER UPDATES: Throttled for performance
+        let lastMouseUpdate = 0;
+        let pendingMouseData = null;
+        let mouseUpdateRAF = null;
+        
+        // Store base parameter values for smooth mouse interpolation
+        window.baseHue = 200;
+        window.baseDensity = 15; 
+        window.baseMorph = 1;
+        
+        function applyMouseParameters() {
+            if (!pendingMouseData || !window.updateParameter || !window.moduleReady) return;
+            
+            const { mouseX, mouseY, intensity } = pendingMouseData;
+            
+            // Convert mouse position to parameter changes with smooth interpolation
+            const hueShift = (mouseX - 0.5) * 60; // ±30° hue shift
+            const densityShift = (mouseY - 0.5) * 10; // ±5 density shift  
+            const morphShift = intensity * 0.3; // 0-0.3 morph factor
+            
+            // Apply parameter updates smoothly
+            updateParameter('hue', (window.baseHue || 200) + hueShift);
+            updateParameter('gridDensity', Math.max(5, (window.baseDensity || 15) + densityShift));
+            updateParameter('morphFactor', Math.max(0, Math.min(2, (window.baseMorph || 1) + morphShift)));
+            updateParameter('intensity', Math.max(0, Math.min(1, intensity)));
+            
+            pendingMouseData = null;
+        }
+        
+        // Listen for mouse events from parent gallery/viewer for smooth parameter updates
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'mouseMove') {
+                const now = performance.now();
+                
+                // Store the latest mouse data
+                pendingMouseData = {
+                    mouseX: event.data.x,
+                    mouseY: event.data.y, 
+                    intensity: event.data.intensity || 0.5
+                };
+                
+                // Throttle updates to 60fps max (16.67ms intervals)
+                if (now - lastMouseUpdate > 16) {
+                    lastMouseUpdate = now;
+                    
+                    // Cancel any pending update
+                    if (mouseUpdateRAF) {
+                        cancelAnimationFrame(mouseUpdateRAF);
+                    }
+                    
+                    // Schedule update on next animation frame
+                    mouseUpdateRAF = requestAnimationFrame(applyMouseParameters);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

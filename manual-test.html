@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIB34D Manual System Test</title>
+    <style>
+        body { 
+            background: #000; color: #0ff; font-family: monospace; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        .container { max-width: 800px; text-align: center; }
+        h1 { color: #ff0; margin-bottom: 30px; text-shadow: 0 0 10px #ff0; }
+        .test-section { 
+            margin: 25px 0; padding: 20px; border: 2px solid #333; border-radius: 10px;
+            background: rgba(0,255,255,0.1);
+        }
+        .test-title { color: #0ff; font-size: 18px; margin-bottom: 15px; }
+        button { 
+            background: linear-gradient(45deg, #0ff, #00f); color: #000; 
+            border: none; padding: 15px 25px; margin: 10px; 
+            cursor: pointer; border-radius: 8px; font-weight: bold;
+            font-size: 16px; transition: all 0.3s ease;
+        }
+        button:hover { 
+            transform: scale(1.05); 
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+        }
+        .success { color: #0f0; font-weight: bold; }
+        .error { color: #f00; font-weight: bold; }
+        .info { color: #ff0; }
+        .result { 
+            margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.5); 
+            border-radius: 5px; text-align: left; max-height: 200px; overflow-y: auto;
+        }
+        .step { margin: 10px 0; padding: 10px; border-left: 3px solid #0ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 VIB34D System Test Suite</h1>
+        
+        <div class="test-section">
+            <div class="test-title">Step 1: Inject Test Data</div>
+            <button onclick="injectTestData()">💾 Create Test Variations</button>
+            <div id="step1Result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Step 2: Open Applications</div>
+            <button onclick="openMainApp()">🏠 Open Main App</button>
+            <button onclick="openGallery()">🖼️ Open Gallery</button>
+            <button onclick="openDebugTool()">🔍 Open Debug Tool</button>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Step 3: Verify System</div>
+            <button onclick="verifyLocalStorage()">📊 Check localStorage</button>
+            <button onclick="runFullTest()">🚀 Run Complete Test</button>
+            <div id="verifyResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Test Instructions</div>
+            <div class="step">
+                <div class="info">1. Click "Create Test Variations" to inject sample data</div>
+                <div class="info">2. Click "Open Gallery" - should show test collections</div>
+                <div class="info">3. Click "Open Main App" - try saving a real variation</div>
+                <div class="info">4. Refresh Gallery - should show new saved data</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function injectTestData() {
+            const result = document.getElementById('step1Result');
+            
+            try {
+                // Clear existing data
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('vib34d')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                // Create test variations
+                const testVariations = [
+                    {
+                        id: 'test-1-' + Date.now(),
+                        name: 'Test Faceted Variation',
+                        system: 'faceted',
+                        timestamp: Date.now() - 86400000, // Yesterday
+                        created: new Date(Date.now() - 86400000).toISOString(),
+                        parameters: {
+                            geometry: 2,
+                            rot4dXW: 1.5,
+                            rot4dYW: -0.8,
+                            rot4dZW: 2.1,
+                            gridDensity: 45,
+                            morphFactor: 0.7,
+                            chaos: 0.3,
+                            speed: 1.8,
+                            hue: 180,
+                            intensity: 0.9,
+                            saturation: 0.85
+                        }
+                    },
+                    {
+                        id: 'test-2-' + Date.now(),
+                        name: 'Test Quantum Variation',
+                        system: 'quantum',
+                        timestamp: Date.now() - 43200000, // 12 hours ago
+                        created: new Date(Date.now() - 43200000).toISOString(),
+                        parameters: {
+                            geometry: 5,
+                            rot4dXW: -2.1,
+                            rot4dYW: 1.2,
+                            rot4dZW: -0.5,
+                            gridDensity: 75,
+                            morphFactor: 1.2,
+                            chaos: 0.8,
+                            speed: 2.5,
+                            hue: 320,
+                            intensity: 0.7,
+                            saturation: 0.95
+                        }
+                    },
+                    {
+                        id: 'test-3-' + Date.now(),
+                        name: 'Test Holographic Variation',
+                        system: 'holographic',
+                        timestamp: Date.now() - 3600000, // 1 hour ago
+                        created: new Date(Date.now() - 3600000).toISOString(),
+                        parameters: {
+                            geometry: 3,
+                            rot4dXW: 0.5,
+                            rot4dYW: -1.8,
+                            rot4dZW: 1.1,
+                            gridDensity: 35,
+                            morphFactor: 0.4,
+                            chaos: 0.15,
+                            speed: 0.8,
+                            hue: 280,
+                            intensity: 0.65,
+                            saturation: 0.7
+                        }
+                    }
+                ];
+                
+                // Save to localStorage
+                localStorage.setItem('vib34d-unified-variations', JSON.stringify(testVariations));
+                
+                // Create a test collection
+                const testCollection = new Map([
+                    ['daily-test-collection', {
+                        name: 'Test Collection - Today',
+                        description: 'Automated test collection',
+                        created: new Date().toISOString(),
+                        variations: testVariations.slice(0, 2)
+                    }]
+                ]);
+                
+                localStorage.setItem('vib34d-unified-collections', JSON.stringify(Array.from(testCollection)));
+                
+                result.innerHTML = `
+                    <div class="success">✅ Test data injected successfully!</div>
+                    <div class="info">Created ${testVariations.length} test variations</div>
+                    <div class="info">Created 1 test collection</div>
+                    <div class="info">Data saved to localStorage with keys:</div>
+                    <div>• vib34d-unified-variations</div>
+                    <div>• vib34d-unified-collections</div>
+                `;
+                
+                console.log('🧪 Test data injected:', { variations: testVariations.length, collections: 1 });
+                
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Error injecting test data: ${error.message}</div>`;
+                console.error('Test data injection failed:', error);
+            }
+        }
+        
+        function openMainApp() {
+            window.open('./index.html', '_blank');
+        }
+        
+        function openGallery() {
+            window.open('./gallery.html', '_blank');
+        }
+        
+        function openDebugTool() {
+            window.open('./debug-gallery.html', '_blank');
+        }
+        
+        function verifyLocalStorage() {
+            const result = document.getElementById('verifyResult');
+            
+            try {
+                const keys = Object.keys(localStorage).filter(k => k.includes('vib34d'));
+                const data = {};
+                
+                keys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    if (value) {
+                        try {
+                            const parsed = JSON.parse(value);
+                            data[key] = {
+                                length: value.length,
+                                type: Array.isArray(parsed) ? 'array' : 'object',
+                                count: Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length
+                            };
+                        } catch (e) {
+                            data[key] = { length: value.length, type: 'string', error: e.message };
+                        }
+                    }
+                });
+                
+                result.innerHTML = `
+                    <div class="success">📊 localStorage Analysis:</div>
+                    <div class="info">Found ${keys.length} VIB34D keys:</div>
+                    ${Object.entries(data).map(([key, info]) => `
+                        <div>• <strong>${key}</strong>: ${info.type} (${info.count || 'N/A'} items, ${info.length} chars)</div>
+                    `).join('')}
+                `;
+                
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Verification failed: ${error.message}</div>`;
+            }
+        }
+        
+        function runFullTest() {
+            const result = document.getElementById('verifyResult');
+            result.innerHTML = '<div class="info">🚀 Running complete test...</div>';
+            
+            // Step 1: Inject data
+            injectTestData();
+            
+            // Step 2: Wait and verify
+            setTimeout(() => {
+                verifyLocalStorage();
+                
+                // Step 3: Open gallery
+                setTimeout(() => {
+                    openGallery();
+                    
+                    result.innerHTML += `
+                        <div class="success">✅ Full test sequence completed!</div>
+                        <div class="info">Gallery should now show test collections</div>
+                        <div class="info">If gallery still shows "No Collections", check browser console for errors</div>
+                    `;
+                }, 1000);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Debug - Clean Architecture</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #0f0; 
+            font-family: monospace; 
+            padding: 20px; 
+            font-size: 14px;
+        }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+        .warning { color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 VIB34D Clean Architecture Debug</h1>
+    <div id="debug-log"></div>
+
+    <script>
+        const log = document.getElementById('debug-log');
+        
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `${new Date().toISOString()}: ${message}`;
+            log.appendChild(div);
+            console.log(message);
+        }
+
+        addLog('🚀 Starting debug test...');
+        
+        // Test 1: Check if basic files load
+        Promise.all([
+            fetch('js/core/app.js'),
+            fetch('js/audio/audio-engine.js'),
+            fetch('js/controls/ui-handlers.js'),
+            fetch('js/gallery/gallery-manager.js'),
+            fetch('styles/base.css')
+        ]).then(responses => {
+            responses.forEach((response, index) => {
+                const files = ['app.js', 'audio-engine.js', 'ui-handlers.js', 'gallery-manager.js', 'base.css'];
+                if (response.ok) {
+                    addLog(`✅ ${files[index]} loaded successfully`, 'success');
+                } else {
+                    addLog(`❌ ${files[index]} failed to load (${response.status})`, 'error');
+                }
+            });
+        }).catch(error => {
+            addLog(`❌ File loading failed: ${error.message}`, 'error');
+        });
+
+        // Test 2: Try to import modules
+        addLog('🧪 Testing module imports...');
+        
+        (async function testImports() {
+            try {
+                addLog('📦 Importing app.js...');
+                const VIB34DApp = (await import('./js/core/app.js')).default;
+                addLog('✅ app.js imported successfully', 'success');
+                
+                addLog('🔧 Creating VIB34DApp instance...');
+                const app = new VIB34DApp();
+                addLog('✅ VIB34DApp instance created', 'success');
+                
+                addLog('🔍 Checking window globals...');
+                setTimeout(() => {
+                    const globals = ['switchSystem', 'selectGeometry', 'updateParameter', 'randomizeAll', 'resetAll'];
+                    globals.forEach(global => {
+                        if (typeof window[global] === 'function') {
+                            addLog(`✅ window.${global} available`, 'success');
+                        } else {
+                            addLog(`❌ window.${global} missing`, 'error');
+                        }
+                    });
+                }, 100);
+                
+            } catch (error) {
+                addLog(`❌ Module import failed: ${error.message}`, 'error');
+                addLog(`❌ Stack: ${error.stack}`, 'error');
+            }
+        })();
+
+        // Test 3: Check if core system files exist
+        addLog('📁 Checking core system files...');
+        
+        Promise.all([
+            fetch('src/core/Engine.js'),
+            fetch('src/quantum/QuantumEngine.js'),
+            fetch('src/holograms/RealHolographicSystem.js'),
+            fetch('src/core/PolychoraSystem.js')
+        ]).then(responses => {
+            const systems = ['Engine.js', 'QuantumEngine.js', 'RealHolographicSystem.js', 'PolychoraSystem.js'];
+            responses.forEach((response, index) => {
+                if (response.ok) {
+                    addLog(`✅ ${systems[index]} exists`, 'success');
+                } else {
+                    addLog(`❌ ${systems[index]} missing (${response.status})`, 'error');
+                }
+            });
+        });
+        
+    </script>
+</body>
+</html>

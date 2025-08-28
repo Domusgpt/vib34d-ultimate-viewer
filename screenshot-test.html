@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Screenshot Test Results</title>
+    <style>
+        body { background: #000; color: #0ff; font-family: monospace; padding: 20px; }
+        .result { margin: 20px 0; padding: 15px; border: 1px solid #333; }
+        img { max-width: 100%; border: 2px solid #0ff; margin: 10px 0; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        button { background: #333; color: #0ff; border: 1px solid #0ff; padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>📸 VIB34D Screenshot Test Results</h1>
+    
+    <button onclick="testGallery()">🖼️ Test Gallery</button>
+    <button onclick="testMainApp()">🏠 Test Main App</button>
+    <button onclick="runCompleteTest()">🚀 Complete Test</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testGallery() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="result">🖼️ Testing Gallery...</div>';
+            
+            try {
+                // Open gallery in iframe for testing
+                const iframe = document.createElement('iframe');
+                iframe.src = './gallery.html';
+                iframe.style.width = '800px';
+                iframe.style.height = '600px';
+                iframe.style.border = '2px solid #0ff';
+                
+                const result = document.createElement('div');
+                result.className = 'result';
+                result.innerHTML = '<div class="success">✅ Gallery iframe loaded</div>';
+                result.appendChild(iframe);
+                
+                results.appendChild(result);
+                
+                // Check iframe content after loading
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            const statusText = iframeDoc.getElementById('statusText');
+                            const errorState = iframeDoc.querySelector('.error-state');
+                            const collections = iframeDoc.querySelectorAll('.collection-card');
+                            
+                            const status = document.createElement('div');
+                            status.innerHTML = `
+                                <div class="success">📊 Gallery Status:</div>
+                                <div>Status: ${statusText ? statusText.textContent : 'Not found'}</div>
+                                <div>Error State: ${errorState ? 'YES' : 'NO'}</div>
+                                <div>Collections Found: ${collections.length}</div>
+                            `;
+                            result.appendChild(status);
+                            
+                        } catch (e) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.innerHTML = `<div class="error">❌ Cross-origin error - gallery in separate window</div>`;
+                            result.appendChild(errorDiv);
+                        }
+                    }, 3000);
+                };
+                
+            } catch (error) {
+                results.innerHTML = `<div class="result"><div class="error">❌ Gallery test failed: ${error.message}</div></div>`;
+            }
+        }
+        
+        async function testMainApp() {
+            const results = document.getElementById('results');
+            const existingResults = results.innerHTML;
+            results.innerHTML = existingResults + '<div class="result">🏠 Testing Main App...</div>';
+            
+            try {
+                // Open main app in iframe
+                const iframe = document.createElement('iframe');
+                iframe.src = './index.html';
+                iframe.style.width = '800px';
+                iframe.style.height = '600px';
+                iframe.style.border = '2px solid #0ff';
+                
+                const result = document.createElement('div');
+                result.className = 'result';
+                result.innerHTML = '<div class="success">✅ Main App iframe loaded</div>';
+                result.appendChild(iframe);
+                
+                results.appendChild(result);
+                
+            } catch (error) {
+                results.innerHTML += `<div class="result"><div class="error">❌ Main App test failed: ${error.message}</div></div>`;
+            }
+        }
+        
+        async function runCompleteTest() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="result">🚀 Running Complete System Test...</div>';
+            
+            // First inject test data
+            try {
+                // Clear and inject test data
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('vib34d')) localStorage.removeItem(key);
+                });
+                
+                const testVariations = [{
+                    id: 'screenshot-test-' + Date.now(),
+                    name: 'Screenshot Test Variation',
+                    system: 'faceted',
+                    timestamp: Date.now(),
+                    created: new Date().toISOString(),
+                    parameters: {
+                        geometry: 1, rot4dXW: 1.0, rot4dYW: 0.5, rot4dZW: -0.3,
+                        gridDensity: 35, morphFactor: 0.6, chaos: 0.25, speed: 1.5,
+                        hue: 240, intensity: 0.8, saturation: 0.9
+                    }
+                }];
+                
+                localStorage.setItem('vib34d-unified-variations', JSON.stringify(testVariations));
+                
+                results.innerHTML += '<div class="result"><div class="success">✅ Test data injected</div></div>';
+                
+                // Then test both apps
+                setTimeout(() => {
+                    testGallery();
+                    setTimeout(() => {
+                        testMainApp();
+                        
+                        // Final instructions
+                        setTimeout(() => {
+                            results.innerHTML += `
+                                <div class="result">
+                                    <div class="success">🏁 Complete Test Finished!</div>
+                                    <div>Check the iframes above to see if:</div>
+                                    <div>• Gallery shows collections (not "No Collections Found")</div>
+                                    <div>• Main app loads correctly with all systems</div>
+                                    <div>• Save button works in main app</div>
+                                </div>
+                            `;
+                        }, 2000);
+                    }, 3000);
+                }, 2000);
+                
+            } catch (error) {
+                results.innerHTML += `<div class="result"><div class="error">❌ Complete test failed: ${error.message}</div></div>`;
+            }
+        }
+    </script>
+</body>
+</html>

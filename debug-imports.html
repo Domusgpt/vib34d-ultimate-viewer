@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Import Debug Test</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 20px; }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <h1>Import Debug Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        async function testImports() {
+            log('🧪 Testing core imports...');
+            
+            // Test VIB34DIntegratedEngine
+            try {
+                const engineModule = await import('./src/core/Engine.js');
+                if (engineModule.VIB34DIntegratedEngine) {
+                    log('✅ VIB34DIntegratedEngine imported successfully', 'success');
+                } else {
+                    log('❌ VIB34DIntegratedEngine not found in module', 'error');
+                }
+            } catch (error) {
+                log(`❌ VIB34DIntegratedEngine import failed: ${error.message}`, 'error');
+            }
+            
+            // Test QuantumEngine
+            try {
+                const quantumModule = await import('./src/quantum/QuantumEngine.js');
+                if (quantumModule.QuantumEngine) {
+                    log('✅ QuantumEngine imported successfully', 'success');
+                } else {
+                    log('❌ QuantumEngine not found in module', 'error');
+                }
+            } catch (error) {
+                log(`❌ QuantumEngine import failed: ${error.message}`, 'error');
+            }
+            
+            // Test RealHolographicSystem
+            try {
+                const holoModule = await import('./src/holograms/RealHolographicSystem.js');
+                if (holoModule.RealHolographicSystem) {
+                    log('✅ RealHolographicSystem imported successfully', 'success');
+                } else {
+                    log('❌ RealHolographicSystem not found in module', 'error');
+                }
+            } catch (error) {
+                log(`❌ RealHolographicSystem import failed: ${error.message}`, 'error');
+            }
+            
+            // Test PolychoraSystem
+            try {
+                const polyModule = await import('./src/core/PolychoraSystem.js');
+                if (polyModule.PolychoraSystem) {
+                    log('✅ PolychoraSystem imported successfully', 'success');
+                } else {
+                    log('❌ PolychoraSystem not found in module', 'error');
+                }
+            } catch (error) {
+                log(`❌ PolychoraSystem import failed: ${error.message}`, 'error');
+            }
+            
+            // Test CanvasManager
+            try {
+                const canvasModule = await import('./src/core/CanvasManager.js');
+                if (canvasModule.CanvasManager) {
+                    log('✅ CanvasManager imported successfully', 'success');
+                } else {
+                    log('❌ CanvasManager not found in module', 'error');
+                }
+            } catch (error) {
+                log(`❌ CanvasManager import failed: ${error.message}`, 'error');
+            }
+            
+            log('🧪 Import tests completed');
+        }
+        
+        testImports();
+    </script>
+</body>
+</html>

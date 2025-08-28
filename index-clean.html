@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Engine - Clean Architecture</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" onerror="console.warn('Google Fonts failed to load - using fallback')">
+    
+    <!-- Organized CSS Architecture -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/controls.css">
+    <link rel="stylesheet" href="styles/reactivity.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body class="loading">
+    <!-- Top Navigation Bar -->
+    <div class="top-bar">
+        <div class="logo">VIB34D ENGINE</div>
+        
+        <div class="system-selector">
+            <button class="system-btn active" data-system="faceted" onclick="switchSystem('faceted')">
+                🔷 FACETED
+            </button>
+            <button class="system-btn" data-system="quantum" onclick="switchSystem('quantum')">
+                🌌 QUANTUM
+            </button>
+            <button class="system-btn" data-system="holographic" onclick="switchSystem('holographic')">
+                ✨ HOLOGRAPHIC
+            </button>
+            <button class="system-btn" data-system="polychora" onclick="switchSystem('polychora')">
+                🔮 POLYCHORA
+            </button>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="action-btn" onclick="openGallery()" title="Gallery">🖼️</button>
+            <button class="action-btn" onclick="toggleAudio()" title="Audio">🎵</button>
+            <button class="action-btn" onclick="toggleDeviceTilt()" title="Device Tilt (4D Rotation)" id="tiltBtn">📱</button>
+            <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters">🤖</button>
+            <button class="action-btn" onclick="toggleInteractivity()" title="Interactivity Menu (Press I)">I</button>
+        </div>
+    </div>
+
+    <!-- Main Canvas Container -->
+    <div class="canvas-container" id="canvasContainer">
+        <!-- Dynamic Canvas Containers - Canvases created/destroyed per system -->
+        <div class="holographic-layers" id="vib34dLayers" style="display: block;"></div>
+        <div class="holographic-layers" id="quantumLayers" style="display: none;"></div>
+        <div class="holographic-layers" id="holographicLayers" style="display: none;"></div>
+        <div class="holographic-layers" id="polychoraLayers" style="display: none;"></div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel" id="controlPanel">
+        <div class="panel-header" id="panelHeader">
+            <span>FACETED SYSTEM</span>
+            <button class="mobile-collapse-btn" onclick="toggleMobilePanel()" style="display: none;">▼</button>
+        </div>
+
+        <!-- Geometry Selection -->
+        <div class="control-section" id="geometrySection">
+            <div class="section-title">Geometry</div>
+            <div class="geometry-grid" id="geometryGrid">
+                <!-- Geometry buttons populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Parameter Controls -->
+        <div class="control-section">
+            <div class="section-title">4D Rotations</div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>X-W Rotation</span>
+                    <span class="control-value" id="rot4dXW-display">0.00</span>
+                </div>
+                <input type="range" id="rot4dXW" class="control-slider" min="-6.28" max="6.28" step="0.01" value="0"
+                       oninput="updateParameter('rot4dXW', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Y-W Rotation</span>
+                    <span class="control-value" id="rot4dYW-display">0.00</span>
+                </div>
+                <input type="range" id="rot4dYW" class="control-slider" min="-6.28" max="6.28" step="0.01" value="0"
+                       oninput="updateParameter('rot4dYW', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Z-W Rotation</span>
+                    <span class="control-value" id="rot4dZW-display">0.00</span>
+                </div>
+                <input type="range" id="rot4dZW" class="control-slider" min="-6.28" max="6.28" step="0.01" value="0"
+                       oninput="updateParameter('rot4dZW', this.value)">
+            </div>
+        </div>
+
+        <!-- Visual Parameters -->
+        <div class="control-section">
+            <div class="section-title">Visual Parameters</div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Grid Density</span>
+                    <span class="control-value" id="gridDensity-display">15</span>
+                </div>
+                <input type="range" id="gridDensity" class="control-slider" min="5" max="100" step="1" value="15"
+                       oninput="updateParameter('gridDensity', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Morph Factor</span>
+                    <span class="control-value" id="morphFactor-display">1.00</span>
+                </div>
+                <input type="range" id="morphFactor" class="control-slider" min="0" max="2" step="0.01" value="1"
+                       oninput="updateParameter('morphFactor', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Chaos</span>
+                    <span class="control-value" id="chaos-display">0.20</span>
+                </div>
+                <input type="range" id="chaos" class="control-slider" min="0" max="1" step="0.01" value="0.2"
+                       oninput="updateParameter('chaos', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Speed</span>
+                    <span class="control-value" id="speed-display">1.00</span>
+                </div>
+                <input type="range" id="speed" class="control-slider" min="0.1" max="3" step="0.01" value="1"
+                       oninput="updateParameter('speed', this.value)">
+            </div>
+        </div>
+
+        <!-- Color Parameters -->
+        <div class="control-section">
+            <div class="section-title">Color Parameters</div>
+            
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Hue</span>
+                    <span class="control-value" id="hue-display">200</span>
+                </div>
+                <input type="range" id="hue" class="control-slider" min="0" max="360" step="1" value="200"
+                       oninput="updateParameter('hue', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Intensity</span>
+                    <span class="control-value" id="intensity-display">0.50</span>
+                </div>
+                <input type="range" id="intensity" class="control-slider" min="0" max="1" step="0.01" value="0.5"
+                       oninput="updateParameter('intensity', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Saturation</span>
+                    <span class="control-value" id="saturation-display">0.80</span>
+                </div>
+                <input type="range" id="saturation" class="control-slider" min="0" max="1" step="0.01" value="0.8"
+                       oninput="updateParameter('saturation', this.value)">
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="control-section">
+            <button class="panel-btn" onclick="randomizeAll()">🎲 Randomize Parameters</button>
+            <button class="panel-btn" onclick="randomizeEverything()">🎯 Full Random</button>
+            <button class="panel-btn" onclick="resetAll()">🔄 Reset All</button>
+            <button class="panel-btn" onclick="saveToGallery()">💾 Save to Gallery</button>
+            <button class="panel-btn" onclick="createTradingCard()">🎴 Trading Card</button>
+        </div>
+    </div>
+
+    <!-- URL Parameter Handler (runs first) -->
+    <script type="module" src="js/core/url-params.js"></script>
+
+    <!-- Gallery Preview Fix (runs early for gallery previews) -->
+    <script type="module" src="js/core/gallery-preview-fix.js"></script>
+
+    <!-- Core JavaScript Modules (NEW CLEAN ARCHITECTURE) - Order matters for globals -->
+    <script type="module" src="js/audio/audio-engine.js"></script>
+    <script type="module" src="js/controls/ui-handlers.js"></script>
+    <script type="module" src="js/gallery/gallery-manager.js"></script>
+    <script type="module" src="js/interactions/device-tilt.js"></script>
+    
+    <!-- Initialize globals and user parameter state BEFORE main app -->
+    <script>
+        // Initialize global state that modules need
+        window.userParameterState = {};
+        // CRITICAL FIX: Don't overwrite currentSystem if URL parameters already set it
+        if (!window.currentSystem) {
+            window.currentSystem = 'faceted';
+            console.log('🔧 Global: Set currentSystem to default faceted');
+        } else {
+            console.log(`🔧 Global: Preserving existing currentSystem = '${window.currentSystem}'`);
+        }
+        window.moduleReady = false;
+        
+        // Initialize geometries data
+        window.geometries = {
+            faceted: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'],
+            quantum: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'],
+            holographic: ['HOLOGRAPHIC'], // Single holographic mode
+            polychora: ['5-CELL', 'TESSERACT', '16-CELL', '24-CELL', '600-CELL', '120-CELL']
+        };
+        
+        console.log('🔧 Global state initialized for clean architecture');
+    </script>
+
+    <!-- Main Application Module -->
+    <script type="module">
+        (async function() {
+            try {
+                console.log('📦 Starting system imports...');
+                
+                // Import the main app first
+                const VIB34DApp = (await import('./js/core/app.js')).default;
+                console.log('✅ VIB34DApp imported');
+                
+                // Try to import system engines - make them optional for clean architecture demo
+                let VIB34DIntegratedEngine, QuantumEngine, RealHolographicSystem, PolychoraSystem;
+                let CollectionManager, UnifiedSaveManager, ParameterMapper, CanvasManager, TradingCardGenerator, ReactivityManager;
+                
+                try {
+                    const coreEngine = await import('./src/core/Engine.js');
+                    VIB34DIntegratedEngine = coreEngine.VIB34DIntegratedEngine;
+                    console.log('✅ VIB34DIntegratedEngine imported');
+                } catch (e) {
+                    console.warn('⚠️ VIB34DIntegratedEngine not available:', e.message);
+                }
+                
+                try {
+                    const quantumEngine = await import('./src/quantum/QuantumEngine.js');
+                    QuantumEngine = quantumEngine.QuantumEngine;
+                    console.log('✅ QuantumEngine imported');
+                } catch (e) {
+                    console.warn('⚠️ QuantumEngine not available:', e.message);
+                }
+                
+                try {
+                    const holoSystem = await import('./src/holograms/RealHolographicSystem.js');
+                    RealHolographicSystem = holoSystem.RealHolographicSystem;
+                    console.log('✅ RealHolographicSystem imported');
+                } catch (e) {
+                    console.warn('⚠️ RealHolographicSystem not available:', e.message);
+                }
+                
+                try {
+                    const polySystem = await import('./src/core/PolychoraSystem.js');
+                    PolychoraSystem = polySystem.PolychoraSystem;
+                    console.log('✅ PolychoraSystem imported');
+                } catch (e) {
+                    console.warn('⚠️ PolychoraSystem not available:', e.message);
+                }
+                
+                // Import other components with fallbacks
+                try {
+                    const canvasManager = await import('./src/core/CanvasManager.js');
+                    CanvasManager = canvasManager.CanvasManager;
+                } catch (e) {
+                    console.warn('⚠️ CanvasManager not available - using stub');
+                }
+                
+                try {
+                    const reactivityManager = await import('./src/core/ReactivityManager.js');
+                    ReactivityManager = reactivityManager.ReactivityManager;
+                } catch (e) {
+                    console.warn('⚠️ ReactivityManager not available - using stub');
+                }
+
+                // Store engine classes globally for system switching
+                window.engineClasses = {
+                    VIB34DIntegratedEngine,
+                    QuantumEngine,
+                    RealHolographicSystem,
+                    PolychoraSystem
+                };
+                
+                console.log('📦 Engine classes stored:', Object.keys(window.engineClasses).filter(k => window.engineClasses[k]));
+
+                // Initialize VIB34D Application
+                const app = new VIB34DApp();
+                window.vib34dApp = app;
+                
+                // CRITICAL FIX: Ensure global functions are available IMMEDIATELY for gallery previews
+                await app.initialize();
+                
+                // Force check that essential functions are global
+                if (!window.syncVisualizerToUI) {
+                    console.error('🚨 CRITICAL: syncVisualizerToUI not available globally after app init');
+                } else {
+                    console.log('✅ Essential functions available globally');
+                }
+
+                // Initialize default system
+                const initialSystem = window.currentSystem || 'faceted';
+                if (window.switchSystem) {
+                    await window.switchSystem(initialSystem);
+                }
+                
+                if (window.setupGeometry) {
+                    window.setupGeometry(initialSystem);
+                }
+
+                window.moduleReady = true;
+                document.body.classList.remove('loading');
+
+                console.log('🚀 VIB34D Clean Architecture System Loaded');
+                
+                // TESTING MODE: Run architecture tests if requested
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('testing-mode')) {
+                    console.log('🧪 TESTING MODE: Running architecture validation...');
+                    
+                    // Add test results overlay
+                    const testOverlay = document.createElement('div');
+                    testOverlay.id = 'test-overlay';
+                    testOverlay.style.cssText = `
+                        position: fixed;
+                        top: 60px;
+                        left: 20px;
+                        width: 400px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        background: rgba(0, 0, 0, 0.95);
+                        border: 2px solid #00ffff;
+                        border-radius: 10px;
+                        padding: 15px;
+                        font-family: 'Orbitron', monospace;
+                        font-size: 0.8rem;
+                        color: #fff;
+                        z-index: 9999;
+                    `;
+                    testOverlay.innerHTML = `
+                        <h3 style="color: #00ffff; margin-bottom: 10px;">🧪 ARCHITECTURE TEST</h3>
+                        <div id="test-results"></div>
+                    `;
+                    document.body.appendChild(testOverlay);
+                    
+                    // Run tests  
+                    setTimeout(runArchitectureTests, 1000);
+                    
+                    function runArchitectureTests() {
+                    const results = document.getElementById('test-results');
+                    let passedTests = 0;
+                    let totalTests = 0;
+                    
+                    function logTest(message, passed) {
+                        totalTests++;
+                        if (passed) passedTests++;
+                        
+                        const div = document.createElement('div');
+                        div.style.cssText = `color: ${passed ? '#00ff00' : '#ff4444'}; margin: 2px 0;`;
+                        div.innerHTML = `${passed ? '✅' : '❌'} ${message}`;
+                        results.appendChild(div);
+                    }
+                    
+                    // Test essential functions
+                    logTest('window.switchSystem available', typeof window.switchSystem === 'function');
+                    logTest('window.selectGeometry available', typeof window.selectGeometry === 'function');
+                    logTest('window.updateParameter available', typeof window.updateParameter === 'function');
+                    logTest('window.randomizeAll available', typeof window.randomizeAll === 'function');
+                    logTest('window.resetAll available', typeof window.resetAll === 'function');
+                    
+                    // Test DOM elements
+                    logTest('Canvas Container exists', !!document.getElementById('canvasContainer'));
+                    logTest('Control Panel exists', !!document.getElementById('controlPanel'));
+                    logTest('Panel Header exists', !!document.getElementById('panelHeader'));
+                    logTest('Faceted Layers exist', !!document.getElementById('vib34dLayers'));
+                    
+                    // Test parameter controls
+                    const params = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
+                    params.forEach(param => {
+                        const slider = document.getElementById(param);
+                        logTest(`${param} slider exists`, !!slider);
+                    });
+                    
+                    // Test system buttons
+                    const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                    systems.forEach(system => {
+                        const btn = document.querySelector(`[data-system="${system}"]`);
+                        logTest(`${system} button exists`, !!btn);
+                    });
+                    
+                    // Final results
+                    const passRate = ((passedTests / totalTests) * 100).toFixed(1);
+                    const finalDiv = document.createElement('div');
+                    finalDiv.style.cssText = `
+                        color: ${passRate >= 90 ? '#00ff00' : passRate >= 70 ? '#ffff00' : '#ff4444'};
+                        font-weight: bold;
+                        margin-top: 10px;
+                        padding: 10px;
+                        border-top: 1px solid #333;
+                    `;
+                    finalDiv.innerHTML = `
+                        <div>📊 RESULT: ${passedTests}/${totalTests} (${passRate}%)</div>
+                        <div>${passRate >= 90 ? '✅ ARCHITECTURE READY' : passRate >= 70 ? '⚠️ NEEDS FIXES' : '❌ CRITICAL ISSUES'}</div>
+                    `;
+                    results.appendChild(finalDiv);
+                    
+                    console.log(`🧪 Architecture test complete: ${passedTests}/${totalTests} passed (${passRate}%)`);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize VIB34D system:', error);
+                document.body.classList.remove('loading');
+                
+                // Show error overlay
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 0, 0, 0.9);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    font-family: 'Orbitron', monospace;
+                    z-index: 10000;
+                    max-width: 80vw;
+                `;
+                errorDiv.innerHTML = `
+                    <h3>❌ VIB34D Initialization Failed</h3>
+                    <p>${error.message}</p>
+                    <small>Check console for details</small>
+                `;
+                document.body.appendChild(errorDiv);
+            }
+        })();
+    </script>
+</body>
+</html>

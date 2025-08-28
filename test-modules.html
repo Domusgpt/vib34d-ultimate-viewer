@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Module Loading</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        .error { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>Module Loading Test</h1>
+    <div id="log"></div>
+    
+    <script type="module">
+        const log = document.getElementById('log');
+        
+        function addLog(msg, isError = false) {
+            const div = document.createElement('div');
+            if (isError) div.className = 'error';
+            div.textContent = msg;
+            log.appendChild(div);
+            console.log(msg);
+        }
+        
+        addLog('Testing module imports...');
+        
+        try {
+            // Test 1: Import VIB34DApp
+            addLog('1. Importing VIB34DApp...');
+            const VIB34DApp = (await import('./js/core/app.js')).default;
+            addLog('✅ VIB34DApp imported');
+            
+            // Test 2: Create instance
+            addLog('2. Creating VIB34DApp instance...');
+            const app = new VIB34DApp();
+            addLog('✅ VIB34DApp instance created');
+            
+            // Test 3: Check if global functions exist
+            addLog('3. Checking global functions...');
+            addLog(`window.switchSystem: ${typeof window.switchSystem}`);
+            addLog(`window.selectGeometry: ${typeof window.selectGeometry}`);
+            addLog(`window.updateParameter: ${typeof window.updateParameter}`);
+            
+            // Test 4: Try to initialize
+            addLog('4. Calling app.initialize()...');
+            await app.initialize();
+            addLog('✅ app.initialize() completed');
+            
+            // Test 5: Check window.vib34dApp
+            window.vib34dApp = app;
+            addLog(`window.vib34dApp: ${!!window.vib34dApp}`);
+            
+            // Final check
+            addLog('--- FINAL STATE ---');
+            addLog(`switchSystem: ${typeof window.switchSystem === 'function' ? '✅' : '❌'}`);
+            addLog(`selectGeometry: ${typeof window.selectGeometry === 'function' ? '✅' : '❌'}`);
+            addLog(`updateParameter: ${typeof window.updateParameter === 'function' ? '✅' : '❌'}`);
+            addLog(`canvasManager: ${!!window.canvasManager ? '✅' : '❌'}`);
+            addLog(`reactivityManager: ${!!window.reactivityManager ? '✅' : '❌'}`);
+            
+        } catch (error) {
+            addLog(`❌ ERROR: ${error.message}`, true);
+            addLog(`Stack: ${error.stack}`, true);
+        }
+    </script>
+</body>
+</html>

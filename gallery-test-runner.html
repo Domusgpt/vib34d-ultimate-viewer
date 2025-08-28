@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Gallery System Test Runner</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        
+        h1 {
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .test-output {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+        
+        .critical { color: #ff0000; }
+        .pass { color: #00ff00; }
+        .fail { color: #ff6600; }
+        .warning { color: #ffff00; }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        
+        button:hover {
+            background: rgba(0, 255, 0, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .summary {
+            background: rgba(0, 100, 0, 0.2);
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        
+        .summary.critical {
+            background: rgba(100, 0, 0, 0.2);
+            border-color: #ff0000;
+        }
+        
+        .summary.warning {
+            background: rgba(100, 100, 0, 0.2);
+            border-color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 VIB34D GALLERY SYSTEM - RED TEAM TESTING 🚨</h1>
+    
+    <div class="status" id="loadingStatus">
+        <strong>🔄 LOADING VIB34D SYSTEM...</strong>
+        <div>Initializing engines and preparing comprehensive test suite...</div>
+    </div>
+    
+    <div class="controls">
+        <button id="runTestBtn" onclick="runTest()" disabled>🚀 RUN COMPREHENSIVE TESTS</button>
+        <button id="saveTestBtn" onclick="testSave()" disabled>💾 TEST SAVE ONLY</button>
+        <button id="galleryTestBtn" onclick="openGallery()" disabled>🖼️ OPEN GALLERY</button>
+        <button onclick="clearResults()">🗑️ CLEAR RESULTS</button>
+    </div>
+    
+    <div id="testSummary" style="display: none;"></div>
+    
+    <div class="test-output" id="testOutput">
+🎯 RED TEAM TESTING MODE INITIALIZED
+📋 Ready to test all gallery save/load functionality
+⚠️ Assuming everything is broken until proven working
+
+Waiting for VIB34D system to load...
+    </div>
+
+    <!-- Load VIB34D System -->
+    <script type="module">
+        // Import all the VIB34D modules needed for testing
+        import { VIB34DApp } from './js/core/app.js';
+        import { GalleryTestFramework } from './comprehensive-gallery-test.js';
+        
+        let app;
+        let testFramework;
+        let systemReady = false;
+        
+        const output = document.getElementById('testOutput');
+        const status = document.getElementById('loadingStatus');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '💥' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '🔍';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Override console.log to capture test output
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            log(args.join(' '), 'info');
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            log(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            log(args.join(' '), 'warning');
+        };
+        
+        async function initializeSystem() {
+            try {
+                log('🚀 Initializing VIB34D Application...');
+                
+                // Initialize main app
+                app = new VIB34DApp();
+                await app.initialize();
+                window.app = app;
+                
+                log('✅ VIB34D Application initialized');
+                
+                // Wait for system to stabilize
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Initialize test framework
+                testFramework = new GalleryTestFramework();
+                window.testFramework = testFramework;
+                
+                systemReady = true;
+                
+                // Update UI
+                status.innerHTML = '<strong class="pass">✅ VIB34D SYSTEM READY</strong><div>All engines loaded. Ready for comprehensive testing.</div>';
+                document.getElementById('runTestBtn').disabled = false;
+                document.getElementById('saveTestBtn').disabled = false;
+                document.getElementById('galleryTestBtn').disabled = false;
+                
+                log('🎯 System ready for testing! Click "RUN COMPREHENSIVE TESTS" to begin.', 'success');
+                
+            } catch (error) {
+                log(`💥 System initialization failed: ${error.message}`, 'error');
+                status.innerHTML = '<strong class="critical">💥 SYSTEM INITIALIZATION FAILED</strong><div>Check console for details.</div>';
+            }
+        }
+        
+        window.runTest = async function() {
+            if (!systemReady || !testFramework) {
+                log('⚠️ System not ready for testing', 'warning');
+                return;
+            }
+            
+            log('🚨 STARTING COMPREHENSIVE RED TEAM TESTING...', 'info');
+            document.getElementById('runTestBtn').disabled = true;
+            
+            try {
+                await testFramework.runComprehensiveTests();
+                
+                // Display summary
+                const results = window.galleryTestResults;
+                if (results) {
+                    displayTestSummary(results);
+                }
+                
+            } catch (error) {
+                log(`💥 Test execution failed: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('runTestBtn').disabled = false;
+            }
+        };
+        
+        window.testSave = async function() {
+            if (!systemReady) return;
+            
+            log('💾 Testing save functionality only...', 'info');
+            
+            try {
+                if (typeof window.saveToGallery === 'function') {
+                    await window.saveToGallery();
+                    log('✅ Save test completed', 'success');
+                } else {
+                    log('❌ saveToGallery function not available', 'error');
+                }
+            } catch (error) {
+                log(`💥 Save test failed: ${error.message}`, 'error');
+            }
+        };
+        
+        window.openGallery = function() {
+            window.open('gallery.html', '_blank', 'width=1200,height=800');
+            log('🖼️ Gallery opened in new window', 'info');
+        };
+        
+        window.clearResults = function() {
+            output.textContent = '🎯 Results cleared. Ready for new tests.\n';
+            document.getElementById('testSummary').style.display = 'none';
+        };
+        
+        function displayTestSummary(results) {
+            const summaryDiv = document.getElementById('testSummary');
+            const successRate = ((results.passed / (results.passed + results.failed)) * 100).toFixed(1);
+            
+            let summaryClass = 'summary';
+            let conclusion = '';
+            
+            if (results.criticalIssues.length === 0 && results.failed === 0) {
+                summaryClass += '';
+                conclusion = '✅ SYSTEM FULLY FUNCTIONAL - All tests passed';
+            } else if (results.criticalIssues.length === 0 && results.failed < 5) {
+                summaryClass += ' warning';
+                conclusion = '⚠️ SYSTEM MOSTLY FUNCTIONAL - Minor issues detected';
+            } else if (results.criticalIssues.length < 3) {
+                summaryClass += ' critical';
+                conclusion = '🚨 SYSTEM PARTIALLY BROKEN - Critical issues found';
+            } else {
+                summaryClass += ' critical';
+                conclusion = '💥 SYSTEM SEVERELY BROKEN - Multiple critical failures';
+            }
+            
+            summaryDiv.className = summaryClass;
+            summaryDiv.innerHTML = `
+                <h2>📊 RED TEAM ANALYSIS RESULTS</h2>
+                <div><strong>Tests Passed:</strong> ${results.passed}</div>
+                <div><strong>Tests Failed:</strong> ${results.failed}</div>
+                <div><strong>Success Rate:</strong> ${successRate}%</div>
+                <div><strong>Critical Issues:</strong> ${results.criticalIssues.length}</div>
+                <div><strong>Minor Issues:</strong> ${results.minorIssues.length}</div>
+                <div style="margin-top: 15px;"><strong>${conclusion}</strong></div>
+            `;
+            summaryDiv.style.display = 'block';
+        }
+        
+        // Start initialization
+        log('🔄 Starting VIB34D system initialization...');
+        initializeSystem();
+        
+    </script>
+    
+    <!-- Include necessary VIB34D dependencies -->
+    <canvas id="background-canvas" width="100" height="100" style="display: none;"></canvas>
+    <canvas id="quantum-background-canvas" width="100" height="100" style="display: none;"></canvas>
+    <canvas id="holo-background-canvas" width="100" height="100" style="display: none;"></canvas>
+    <canvas id="polychora-background-canvas" width="100" height="100" style="display: none;"></canvas>
+    
+    <!-- Hidden UI elements for testing -->
+    <div style="display: none;">
+        <input type="range" id="gridDensity" min="5" max="100" value="15">
+        <input type="range" id="morphFactor" min="0" max="2" value="1" step="0.01">
+        <input type="range" id="hue" min="0" max="360" value="200">
+        <input type="range" id="speed" min="0.1" max="3" value="1" step="0.01">
+        <input type="range" id="chaos" min="0" max="1" value="0.2" step="0.01">
+        <input type="range" id="intensity" min="0" max="1" value="0.5" step="0.01">
+        <input type="range" id="saturation" min="0" max="1" value="0.8" step="0.01">
+        
+        <button class="geom-btn active" data-index="0">Tetrahedron</button>
+        <button class="geom-btn" data-index="1">Hypercube</button>
+        <button class="geom-btn" data-index="2">Sphere</button>
+        <button class="geom-btn" data-index="3">Torus</button>
+        <button class="geom-btn" data-index="4">Klein</button>
+        <button class="geom-btn" data-index="5">Fractal</button>
+        <button class="geom-btn" data-index="6">Wave</button>
+        <button class="geom-btn" data-index="7">Crystal</button>
+    </div>
+    
+</body>
+</html>

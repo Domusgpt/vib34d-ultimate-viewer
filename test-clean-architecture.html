@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Architecture Test Suite</title>
+    <style>
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #000;
+            color: #fff;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success { background: rgba(0, 255, 0, 0.2); color: #00ff00; }
+        .error { background: rgba(255, 0, 0, 0.2); color: #ff4444; }
+        .info { background: rgba(0, 255, 255, 0.2); color: #00ffff; }
+        .warning { background: rgba(255, 255, 0, 0.2); color: #ffff44; }
+    </style>
+</head>
+<body>
+    <h1>🧪 VIB34D Clean Architecture Test Suite</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        let testCount = 0;
+        let passedTests = 0;
+        
+        function addSection(title) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = `<h2>${title}</h2><div class="section-content"></div>`;
+            results.appendChild(section);
+            return section.querySelector('.section-content');
+        }
+        
+        function logResult(section, type, message) {
+            testCount++;
+            if (type === 'success') passedTests++;
+            
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            div.innerHTML = `${icon} ${message}`;
+            section.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        async function runTests() {
+            console.log('🧪 Starting Clean Architecture Test Suite...');
+            
+            // CRITICAL: First check if we should redirect to test the actual clean architecture
+            const url = new URL(window.location.href);
+            if (!url.searchParams.has('testing-mode')) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 255, 0, 0.9);
+                    color: black;
+                    padding: 20px;
+                    border-radius: 10px;
+                    font-family: 'Orbitron', monospace;
+                    z-index: 10000;
+                    max-width: 80vw;
+                    text-align: center;
+                `;
+                notification.innerHTML = `
+                    <h3>⚠️ Testing Clean Architecture</h3>
+                    <p>This test needs to run against the actual clean architecture.</p>
+                    <p>Opening <strong>index-clean.html</strong> for functional testing...</p>
+                    <button onclick="window.location.href='index-clean.html?testing-mode=true'" 
+                            style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">
+                        🧪 Test Clean Architecture
+                    </button>
+                `;
+                document.body.appendChild(notification);
+                return;
+            }
+            
+            // Test 1: CSS Architecture
+            const cssSection = addSection('📋 CSS Architecture Tests');
+            logResult(cssSection, 'info', 'Testing CSS file organization...');
+            
+            try {
+                // Test if CSS files can be loaded
+                const cssFiles = ['base.css', 'header.css', 'controls.css', 'reactivity.css', 'mobile.css', 'animations.css'];
+                let cssLoaded = 0;
+                
+                for (const file of cssFiles) {
+                    try {
+                        const response = await fetch(`styles/${file}`);
+                        if (response.ok) {
+                            cssLoaded++;
+                            logResult(cssSection, 'success', `CSS file loaded: styles/${file}`);
+                        } else {
+                            logResult(cssSection, 'error', `CSS file failed: styles/${file} (${response.status})`);
+                        }
+                    } catch (error) {
+                        logResult(cssSection, 'error', `CSS file error: styles/${file} - ${error.message}`);
+                    }
+                }
+                
+                if (cssLoaded === cssFiles.length) {
+                    logResult(cssSection, 'success', `All ${cssFiles.length} CSS files loaded successfully`);
+                } else {
+                    logResult(cssSection, 'warning', `${cssLoaded}/${cssFiles.length} CSS files loaded`);
+                }
+            } catch (error) {
+                logResult(cssSection, 'error', `CSS architecture test failed: ${error.message}`);
+            }
+            
+            // Test 2: JavaScript Module Architecture
+            const jsSection = addSection('🔧 JavaScript Module Tests');
+            logResult(jsSection, 'info', 'Testing JavaScript module organization...');
+            
+            try {
+                // Test if core modules can be loaded
+                const jsFiles = [
+                    'js/core/url-params.js',
+                    'js/core/app.js'
+                ];
+                
+                for (const file of jsFiles) {
+                    try {
+                        const response = await fetch(file);
+                        if (response.ok) {
+                            logResult(jsSection, 'success', `JS module available: ${file}`);
+                        } else {
+                            logResult(jsSection, 'error', `JS module failed: ${file} (${response.status})`);
+                        }
+                    } catch (error) {
+                        logResult(jsSection, 'error', `JS module error: ${file} - ${error.message}`);
+                    }
+                }
+                
+                // Test URL parameter handler
+                if (typeof window.URLParameterHandler !== 'undefined') {
+                    logResult(jsSection, 'success', 'URLParameterHandler module loaded');
+                } else {
+                    logResult(jsSection, 'warning', 'URLParameterHandler not in global scope (expected in modular architecture)');
+                }
+                
+                // Test main app
+                if (typeof window.VIB34DApp !== 'undefined') {
+                    logResult(jsSection, 'success', 'VIB34DApp module loaded');
+                } else {
+                    logResult(jsSection, 'warning', 'VIB34DApp not in global scope (expected in modular architecture)');
+                }
+                
+            } catch (error) {
+                logResult(jsSection, 'error', `JavaScript architecture test failed: ${error.message}`);
+            }
+            
+            // Test 3: Essential Functions
+            const functionsSection = addSection('⚙️ Essential Functions Tests');
+            logResult(functionsSection, 'info', 'Testing essential global functions...');
+            
+            const essentialFunctions = [
+                'switchSystem',
+                'selectGeometry', 
+                'getCurrentUIParameterState',
+                'syncSlidersToStoredValues',
+                'syncVisualizerToUI'
+            ];
+            
+            essentialFunctions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    logResult(functionsSection, 'success', `✓ window.${funcName} is available`);
+                } else {
+                    logResult(functionsSection, 'error', `✗ window.${funcName} is missing`);
+                }
+            });
+            
+            // Test 4: DOM Structure
+            const domSection = addSection('🏗️ DOM Structure Tests');
+            logResult(domSection, 'info', 'Testing critical DOM elements...');
+            
+            const essentialElements = [
+                { id: 'canvasContainer', name: 'Canvas Container' },
+                { id: 'controlPanel', name: 'Control Panel' },
+                { id: 'panelHeader', name: 'Panel Header' },
+                { id: 'vib34dLayers', name: 'Faceted Canvas Layers' },
+                { id: 'quantumLayers', name: 'Quantum Canvas Layers' },
+                { id: 'holographicLayers', name: 'Holographic Canvas Layers' },
+                { id: 'polychoraLayers', name: 'Polychora Canvas Layers' }
+            ];
+            
+            essentialElements.forEach(({ id, name }) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    logResult(domSection, 'success', `✓ ${name} element found (#${id})`);
+                } else {
+                    logResult(domSection, 'error', `✗ ${name} element missing (#${id})`);
+                }
+            });
+            
+            // Test 5: Parameter Controls
+            const controlsSection = addSection('🎛️ Parameter Controls Tests');
+            logResult(controlsSection, 'info', 'Testing parameter control sliders...');
+            
+            const parameterIds = [
+                'rot4dXW', 'rot4dYW', 'rot4dZW',
+                'gridDensity', 'morphFactor', 'chaos',
+                'speed', 'hue', 'intensity', 'saturation'
+            ];
+            
+            parameterIds.forEach(paramId => {
+                const slider = document.getElementById(paramId);
+                const display = document.getElementById(`${paramId}-display`);
+                
+                if (slider && display) {
+                    logResult(controlsSection, 'success', `✓ ${paramId} control complete (slider + display)`);
+                } else if (slider && !display) {
+                    logResult(controlsSection, 'warning', `⚠ ${paramId} slider exists but display missing`);
+                } else if (!slider && display) {
+                    logResult(controlsSection, 'warning', `⚠ ${paramId} display exists but slider missing`);
+                } else {
+                    logResult(controlsSection, 'error', `✗ ${paramId} control completely missing`);
+                }
+            });
+            
+            // Test 6: System Buttons
+            const buttonsSection = addSection('🔘 System Buttons Tests');
+            logResult(buttonsSection, 'info', 'Testing system selector buttons...');
+            
+            const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+            systems.forEach(system => {
+                const button = document.querySelector(`[data-system="${system}"]`);
+                if (button) {
+                    logResult(buttonsSection, 'success', `✓ ${system} system button found`);
+                } else {
+                    logResult(buttonsSection, 'error', `✗ ${system} system button missing`);
+                }
+            });
+            
+            // Test 7: Mobile Responsiveness
+            const mobileSection = addSection('📱 Mobile Responsiveness Tests');
+            logResult(mobileSection, 'info', 'Testing mobile-optimized elements...');
+            
+            const mobileElements = [
+                { selector: '.mobile-collapse-btn', name: 'Mobile Collapse Button' },
+                { selector: '.touch-active', name: 'Touch Feedback Classes', optional: true },
+                { selector: '@media (max-width: 768px)', name: 'Mobile Media Queries', checkCSS: true }
+            ];
+            
+            mobileElements.forEach(({ selector, name, optional, checkCSS }) => {
+                if (checkCSS) {
+                    // CSS media queries are harder to test, so we'll just check if mobile.css exists
+                    logResult(mobileSection, 'info', `📱 ${name} should be in mobile.css`);
+                } else {
+                    const elements = document.querySelectorAll(selector);
+                    if (elements.length > 0) {
+                        logResult(mobileSection, 'success', `✓ ${name} found (${elements.length} elements)`);
+                    } else if (optional) {
+                        logResult(mobileSection, 'info', `ℹ ${name} not found (optional)`);
+                    } else {
+                        logResult(mobileSection, 'warning', `⚠ ${name} not found`);
+                    }
+                }
+            });
+            
+            // Final Results
+            const summarySection = addSection('📊 Test Summary');
+            const passRate = ((passedTests / testCount) * 100).toFixed(1);
+            
+            if (passRate >= 90) {
+                logResult(summarySection, 'success', `🎉 Architecture Test PASSED: ${passedTests}/${testCount} tests (${passRate}%)`);
+                logResult(summarySection, 'success', `✅ Clean architecture is ready for deployment`);
+            } else if (passRate >= 75) {
+                logResult(summarySection, 'warning', `⚠️ Architecture Test PARTIAL: ${passedTests}/${testCount} tests (${passRate}%)`);
+                logResult(summarySection, 'warning', `🔧 Some issues need to be addressed before deployment`);
+            } else {
+                logResult(summarySection, 'error', `❌ Architecture Test FAILED: ${passedTests}/${testCount} tests (${passRate}%)`);
+                logResult(summarySection, 'error', `🚫 Architecture needs significant fixes before deployment`);
+            }
+            
+            console.log(`🧪 Test Suite Complete: ${passedTests}/${testCount} passed (${passRate}%)`);
+        }
+        
+        // Run tests when page loads
+        runTests();
+    </script>
+</body>
+</html>

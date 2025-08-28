@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gallery Debug Tool</title>
+    <style>
+        body { background: #000; color: #0ff; font-family: monospace; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 5px; }
+        .key { color: #ff6; font-weight: bold; }
+        .value { color: #6f6; word-break: break-all; }
+        .error { color: #f66; }
+        .success { color: #6f6; }
+        button { 
+            background: #333; color: #0ff; border: 1px solid #0ff; 
+            padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 3px;
+        }
+        button:hover { background: #555; }
+        pre { background: #111; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 VIB34D Gallery Debug Tool</h1>
+    
+    <button onclick="analyzeStorage()">🔍 Analyze localStorage</button>
+    <button onclick="testSave()">💾 Test Save</button>
+    <button onclick="clearStorage()">🗑️ Clear All Storage</button>
+    <button onclick="loadGallery()">🖼️ Open Gallery</button>
+    <button onclick="loadMain()">🏠 Open Main App</button>
+    <button onclick="testFlow()">🧪 Test Full Flow</button>
+    
+    <div id="results"></div>
+
+    <script>
+        function analyzeStorage() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            const keys = ['vib34d-unified-variations', 'vib34d-unified-collections', 'vib34d-gallery-update-trigger'];
+            
+            keys.forEach(key => {
+                const section = document.createElement('div');
+                section.className = 'section';
+                
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        section.innerHTML = `
+                            <div class="key">${key}:</div>
+                            <div class="success">✅ Found ${data.length} characters</div>
+                            <pre class="value">${JSON.stringify(parsed, null, 2).substring(0, 1000)}${data.length > 1000 ? '...' : ''}</pre>
+                        `;
+                    } catch (e) {
+                        section.innerHTML = `
+                            <div class="key">${key}:</div>
+                            <div class="error">❌ Parse error: ${e.message}</div>
+                            <div class="value">${data.substring(0, 500)}...</div>
+                        `;
+                    }
+                } else {
+                    section.innerHTML = `
+                        <div class="key">${key}:</div>
+                        <div class="error">❌ Not found</div>
+                    `;
+                }
+                results.appendChild(section);
+            });
+            
+            // Check all localStorage keys
+            const allSection = document.createElement('div');
+            allSection.className = 'section';
+            const allKeys = Object.keys(localStorage).filter(k => k.includes('vib34d'));
+            allSection.innerHTML = `
+                <div class="key">All VIB34D keys:</div>
+                <div class="value">${allKeys.join(', ') || 'None found'}</div>
+            `;
+            results.appendChild(allSection);
+        }
+        
+        function testSave() {
+            const testVariation = {
+                id: 'test-' + Date.now(),
+                name: 'Test Variation',
+                system: 'faceted',
+                timestamp: Date.now(),
+                created: new Date().toISOString(),
+                parameters: {
+                    geometry: 1,
+                    rot4dXW: 1.0,
+                    rot4dYW: 0.5,
+                    rot4dZW: -0.3,
+                    gridDensity: 25,
+                    morphFactor: 0.7,
+                    chaos: 0.2,
+                    speed: 1.2,
+                    hue: 240,
+                    intensity: 0.8,
+                    saturation: 0.9
+                }
+            };
+            
+            try {
+                const existing = localStorage.getItem('vib34d-unified-variations');
+                const variations = existing ? JSON.parse(existing) : [];
+                variations.push(testVariation);
+                localStorage.setItem('vib34d-unified-variations', JSON.stringify(variations));
+                
+                alert('✅ Test variation saved! Check storage analysis.');
+                analyzeStorage();
+            } catch (e) {
+                alert('❌ Save failed: ' + e.message);
+            }
+        }
+        
+        function clearStorage() {
+            if (confirm('Clear all VIB34D storage data?')) {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('vib34d')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                alert('🗑️ Storage cleared!');
+                analyzeStorage();
+            }
+        }
+        
+        function loadGallery() {
+            window.open('./gallery.html', '_blank');
+        }
+        
+        function loadMain() {
+            window.open('./index.html', '_blank');
+        }
+        
+        async function testFlow() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="section"><h3>🧪 Testing Complete Flow...</h3></div>';
+            
+            // Step 1: Clear and test save
+            testSave();
+            
+            // Step 2: Wait and analyze
+            setTimeout(() => {
+                analyzeStorage();
+                
+                // Step 3: Give instructions
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.innerHTML = `
+                    <div class="key">Test Flow Instructions:</div>
+                    <div class="success">
+                        1. ✅ Test variation saved to localStorage<br>
+                        2. 🖼️ Open Gallery to check if it shows up<br>
+                        3. 🏠 Open Main App and try saving a real variation<br>
+                        4. 🔄 Refresh Gallery to see real data
+                    </div>
+                `;
+                results.appendChild(section);
+                
+            }, 1000);
+        }
+        
+        // Auto-analyze on load
+        window.onload = analyzeStorage;
+    </script>
+</body>
+</html>

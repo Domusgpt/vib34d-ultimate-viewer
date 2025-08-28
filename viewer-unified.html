@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Unified Viewer - Single Context</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: 
+                radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.05) 0%, transparent 60%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0f1419 100%);
+            animation: background-pulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes background-pulse {
+            0%, 100% { 
+                background: 
+                    radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 85%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                    radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.05) 0%, transparent 60%),
+                    linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0f1419 100%);
+            }
+            50% { 
+                background: 
+                    radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.25) 0%, transparent 50%),
+                    radial-gradient(circle at 75% 75%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.1) 0%, transparent 70%),
+                    linear-gradient(135deg, #0f0f0f 0%, #2a2a3e 40%, #26314e 70%, #1f2429 100%);
+            }
+        }
+        
+        /* UNIFIED ARCHITECTURE BADGE */
+        .architecture-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0, 255, 255, 0); }
+        }
+        
+        /* UNIFIED VIEWER CONTAINER */
+        .viewer-container {
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 800px;
+            background: 
+                linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(10, 10, 30, 0.9) 50%, rgba(20, 20, 40, 0.85) 100%),
+                radial-gradient(circle at top left, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.6),
+                0 0 40px rgba(0, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* VIEWER HEADER */
+        .viewer-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .viewer-title {
+            color: #fff;
+            font-size: 1.4rem;
+            margin: 0;
+        }
+        
+        .viewer-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .system-tag {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 255, 255, 0.4);
+        }
+        
+        .viewer-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .control-btn.primary {
+            background: #00ffff;
+            color: #000;
+        }
+        
+        /* UNIFIED CANVAS AREA */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: 
+                radial-gradient(circle at center, rgba(0, 20, 40, 0.3) 0%, rgba(0, 0, 0, 0.8) 70%);
+        }
+        
+        .unified-canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* SYSTEM CONTAINERS FOR UNIFIED ARCHITECTURE */
+        .system-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .system-container.active {
+            opacity: 1;
+        }
+        
+        /* PARAMETER OVERLAY */
+        .parameter-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            max-height: 200px;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .parameter-overlay.visible {
+            transform: translateY(0);
+        }
+        
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .parameter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .parameter-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        
+        .parameter-value {
+            color: #00ffff;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        /* LOADING STATE */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(0, 255, 255, 0.2);
+            border-top: 3px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #00ffff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .loading-details {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        /* PERFORMANCE MONITOR */
+        .performance-monitor {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 0.7rem;
+            color: #00ffff;
+            z-index: 1100;
+            min-width: 120px;
+        }
+        
+        .perf-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .perf-value {
+            color: #0f0;
+            font-weight: bold;
+        }
+        
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .viewer-container {
+                width: 95vw;
+                height: 95vh;
+            }
+            
+            .viewer-header {
+                padding: 10px 15px;
+            }
+            
+            .viewer-title {
+                font-size: 1.2rem;
+            }
+            
+            .viewer-controls {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .parameter-overlay {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 15px;
+                max-height: 150px;
+            }
+            
+            .parameters-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            
+            .architecture-badge {
+                top: 10px;
+                left: 10px;
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+            
+            .performance-monitor {
+                top: 60px;
+                right: 10px;
+                font-size: 0.6rem;
+                padding: 8px;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- UNIFIED ARCHITECTURE BADGE -->
+    <div class="architecture-badge">1 WebGL Context</div>
+    
+    <!-- PERFORMANCE MONITOR -->
+    <div class="performance-monitor">
+        <div class="perf-item">
+            <span>WebGL:</span>
+            <span class="perf-value" id="webgl-contexts">1</span>
+        </div>
+        <div class="perf-item">
+            <span>FPS:</span>
+            <span class="perf-value" id="fps-monitor">--</span>
+        </div>
+        <div class="perf-item">
+            <span>Memory:</span>
+            <span class="perf-value" id="memory-usage">--</span>
+        </div>
+        <div class="perf-item">
+            <span>System:</span>
+            <span class="perf-value" id="active-system">--</span>
+        </div>
+    </div>
+    
+    <!-- MAIN VIEWER CONTAINER -->
+    <div class="viewer-container">
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Initializing Unified Viewer</div>
+            <div class="loading-details">
+                Loading visualization with single WebGL context architecture.<br>
+                Canvas explosion eliminated • Mobile optimized
+            </div>
+        </div>
+        
+        <!-- VIEWER HEADER -->
+        <div class="viewer-header">
+            <div>
+                <h2 class="viewer-title" id="variation-title">VIB34D Variation</h2>
+                <div class="viewer-meta">
+                    <span class="system-tag" id="system-tag">faceted</span>
+                    <span id="variation-id">Loading...</span>
+                </div>
+            </div>
+            <div class="viewer-controls">
+                <button class="control-btn" onclick="toggleParameters()">📊 Parameters</button>
+                <button class="control-btn" onclick="saveVariation()">💾 Save</button>
+                <button class="control-btn" onclick="shareVariation()">🔗 Share</button>
+                <button class="control-btn primary" onclick="openInMainEngine()">🎮 Edit</button>
+                <button class="control-btn" onclick="window.close()">✕ Close</button>
+            </div>
+        </div>
+        
+        <!-- CANVAS AREA -->
+        <div class="canvas-area">
+            <div class="unified-canvas-container">
+                <!-- System containers for unified architecture -->
+                <div id="faceted-container" class="system-container active"></div>
+                <div id="quantum-container" class="system-container"></div>
+                <div id="holographic-container" class="system-container"></div>
+                <div id="polychora-container" class="system-container"></div>
+            </div>
+        </div>
+        
+        <!-- PARAMETER OVERLAY -->
+        <div id="parameter-overlay" class="parameter-overlay">
+            <div class="parameters-grid" id="parameters-grid">
+                <!-- Parameters will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- UNIFIED VIEWER SCRIPT -->
+    <script type="module">
+        // Import unified architecture
+        import { VIB34DUnifiedEngine } from './src/core/UnifiedEngine.js';
+        
+        // Global state
+        let unifiedEngine = null;
+        let currentVariation = null;
+        let currentSystem = 'faceted';
+        let parametersVisible = false;
+        
+        // URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPreviewMode = urlParams.has('preview');
+        
+        // Initialize unified viewer
+        async function initializeUnifiedViewer() {
+            try {
+                console.log('🔍 Initializing Unified Viewer with single WebGL context...');
+                
+                // Parse variation parameters from URL
+                currentVariation = parseVariationFromURL();
+                currentSystem = currentVariation.system || 'faceted';
+                
+                console.log('📊 Loading variation:', currentVariation);
+                
+                // Create unified engine (1 WebGL context)
+                unifiedEngine = new VIB34DUnifiedEngine({
+                    useSingleContext: true,
+                    enableMobileOptimizations: true,
+                    enableTouchControls: !isPreviewMode, // Disable in preview mode
+                    viewerMode: true // Special mode for viewer
+                });
+                
+                // Update UI with variation info
+                updateViewerUI();
+                
+                // Load the variation
+                await loadVariation();
+                
+                // Setup performance monitoring
+                setupPerformanceMonitoring();
+                
+                // Hide loading overlay
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 1000);
+                
+                console.log('✅ Unified Viewer ready - Canvas explosion eliminated!');
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize unified viewer:', error);
+                showError('Failed to initialize viewer: ' + error.message);
+            }
+        }
+        
+        function parseVariationFromURL() {
+            const variation = {
+                id: urlParams.get('id') || 'preview',
+                name: urlParams.get('name') || 'VIB34D Variation',
+                system: urlParams.get('system') || 'faceted',
+                parameters: {}
+            };
+            
+            // Parse all parameter values from URL
+            const parameterNames = [
+                'geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW',
+                'gridDensity', 'morphFactor', 'chaos', 'speed',
+                'hue', 'intensity', 'saturation'
+            ];
+            
+            parameterNames.forEach(name => {
+                const value = urlParams.get(name);
+                if (value !== null) {
+                    // Parse appropriate type
+                    if (name === 'geometry' || name === 'gridDensity' || name === 'hue') {
+                        variation.parameters[name] = parseInt(value);
+                    } else {
+                        variation.parameters[name] = parseFloat(value);
+                    }
+                }
+            });
+            
+            // Set defaults for missing parameters
+            const defaults = {
+                geometry: 0,
+                rot4dXW: 0,
+                rot4dYW: 0,
+                rot4dZW: 0,
+                gridDensity: 15,
+                morphFactor: 1.0,
+                chaos: 0.3,
+                speed: 1.0,
+                hue: 200,
+                intensity: 0.8,
+                saturation: 0.7
+            };
+            
+            Object.entries(defaults).forEach(([key, value]) => {
+                if (!(key in variation.parameters)) {
+                    variation.parameters[key] = value;
+                }
+            });
+            
+            return variation;
+        }
+        
+        function updateViewerUI() {
+            document.getElementById('variation-title').textContent = currentVariation.name;
+            document.getElementById('system-tag').textContent = currentVariation.system;
+            document.getElementById('variation-id').textContent = currentVariation.id;
+            
+            // Update active system container
+            document.querySelectorAll('.system-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            document.getElementById(`${currentVariation.system}-container`).classList.add('active');
+        }
+        
+        async function loadVariation() {
+            if (!unifiedEngine) return;
+            
+            console.log(`🔄 Loading ${currentVariation.system} variation with parameters:`, currentVariation.parameters);
+            
+            // Switch to the correct system
+            const success = unifiedEngine.switchSystem(currentVariation.system);
+            if (!success) {
+                console.warn(`Failed to switch to system: ${currentVariation.system}`);
+                return;
+            }
+            
+            // Apply all parameters
+            Object.entries(currentVariation.parameters).forEach(([name, value]) => {
+                if (unifiedEngine.updateParameter) {
+                    unifiedEngine.updateParameter(name, value);
+                }
+                
+                // Also apply to the active system directly
+                const activeSystem = unifiedEngine.systems.get(currentVariation.system);
+                if (activeSystem && activeSystem.renderer && activeSystem.renderer.updateParameter) {
+                    activeSystem.renderer.updateParameter(name, value);
+                }
+            });
+            
+            // Update parameters display
+            updateParametersDisplay();
+            
+            console.log('✅ Variation loaded successfully');
+        }
+        
+        function updateParametersDisplay() {
+            const container = document.getElementById('parameters-grid');
+            container.innerHTML = '';
+            
+            Object.entries(currentVariation.parameters).forEach(([name, value]) => {
+                const item = document.createElement('div');
+                item.className = 'parameter-item';
+                
+                const displayValue = typeof value === 'number' 
+                    ? (value % 1 === 0 ? value.toString() : value.toFixed(2))
+                    : value;
+                
+                item.innerHTML = `
+                    <span class="parameter-label">${name}</span>
+                    <span class="parameter-value">${displayValue}</span>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        function setupPerformanceMonitoring() {
+            setInterval(() => {
+                if (unifiedEngine) {
+                    const stats = unifiedEngine.getPerformanceStats();
+                    document.getElementById('webgl-contexts').textContent = stats.canvasContexts;
+                    document.getElementById('fps-monitor').textContent = stats.fps.toFixed(0);
+                    document.getElementById('memory-usage').textContent = stats.memoryStats.usage;
+                    document.getElementById('active-system').textContent = stats.activeSystems[0] || '--';
+                }
+            }, 1000);
+        }
+        
+        function toggleParameters() {
+            parametersVisible = !parametersVisible;
+            const overlay = document.getElementById('parameter-overlay');
+            
+            if (parametersVisible) {
+                overlay.classList.add('visible');
+            } else {
+                overlay.classList.remove('visible');
+            }
+        }
+        
+        function saveVariation() {
+            if (isPreviewMode) {
+                alert('Preview mode - saving not available');
+                return;
+            }
+            
+            // TODO: Implement save functionality with unified save manager
+            console.log('💾 Save variation:', currentVariation);
+            alert('Save functionality coming soon!');
+        }
+        
+        function shareVariation() {
+            const url = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: currentVariation.name,
+                    text: `Check out this ${currentVariation.system} visualization!`,
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('URL copied to clipboard!');
+                }).catch(() => {
+                    prompt('Copy this URL:', url);
+                });
+            }
+        }
+        
+        function openInMainEngine() {
+            const params = new URLSearchParams();
+            params.set('system', currentVariation.system);
+            
+            Object.entries(currentVariation.parameters).forEach(([key, value]) => {
+                params.set(key, value);
+            });
+            
+            const url = `index-unified.html?${params.toString()}`;
+            if (isPreviewMode) {
+                window.top.location.href = url;
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+        
+        function showError(message) {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.innerHTML = `
+                <div style="text-align: center; color: #ff6b6b;">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                    <button class="control-btn" onclick="window.location.reload()" style="margin-top: 20px;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Global exports
+        window.toggleParameters = toggleParameters;
+        window.saveVariation = saveVariation;
+        window.shareVariation = shareVariation;
+        window.openInMainEngine = openInMainEngine;
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initializeUnifiedViewer);
+        
+        // Handle preview mode resize
+        if (isPreviewMode) {
+            window.addEventListener('resize', () => {
+                if (unifiedEngine) {
+                    // Handle resize for preview mode
+                    unifiedEngine.handleResize();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

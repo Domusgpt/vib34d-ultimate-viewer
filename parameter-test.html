@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Parameter Test Agent 4</title>
+    <style>
+        body {
+            background: #000;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            margin: 20px;
+        }
+        
+        .test-section {
+            border: 1px solid #00ffff;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 255, 255, 0.05);
+        }
+        
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .test-fail {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .test-warn {
+            border-left-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        .parameter-test {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #333;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .slider-test {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-slider {
+            flex: 1;
+            height: 30px;
+        }
+        
+        .value-display {
+            min-width: 80px;
+            text-align: right;
+            color: #ffff00;
+        }
+        
+        #testResults {
+            white-space: pre-wrap;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 20px;
+            border: 1px solid #00ffff;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            font-family: inherit;
+        }
+        
+        button:hover {
+            background: rgba(0, 255, 255, 0.3);
+        }
+        
+        iframe {
+            width: 800px;
+            height: 400px;
+            border: 2px solid #00ffff;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 VIB34D PARAMETER TEST AGENT 4</h1>
+    <p>Testing parameter slider responsiveness and real-time updates across all systems</p>
+
+    <div class="test-section">
+        <h2>🎯 Test Configuration</h2>
+        <div>
+            <label>Test System:</label>
+            <select id="testSystem">
+                <option value="faceted">Faceted</option>
+                <option value="quantum">Quantum</option>
+                <option value="holographic">Holographic</option>
+                <option value="polychora">Polychora</option>
+            </select>
+            
+            <label>Test Duration (ms):</label>
+            <input type="number" id="testDuration" value="2000" min="1000" max="10000">
+            
+            <button onclick="startParameterTest()">🔥 START PARAMETER TEST</button>
+            <button onclick="runFullSystemTest()">🌟 FULL SYSTEM TEST</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎮 Manual Parameter Testing</h2>
+        <div class="parameter-test">
+            <h3>Speed Parameter</h3>
+            <div class="slider-test">
+                <input type="range" id="speedTest" class="test-slider" 
+                       min="0.1" max="3" step="0.1" value="1" 
+                       oninput="testParameterUpdate('speed', this.value)">
+                <span class="value-display" id="speedValue">1.0</span>
+            </div>
+        </div>
+
+        <div class="parameter-test">
+            <h3>Geometry Selector</h3>
+            <div>
+                <button onclick="testGeometrySwitch(0)">Tetrahedron</button>
+                <button onclick="testGeometrySwitch(1)">Hypercube</button>
+                <button onclick="testGeometrySwitch(2)">Sphere</button>
+                <button onclick="testGeometrySwitch(3)">Torus</button>
+                <span class="value-display" id="geometryValue">0</span>
+            </div>
+        </div>
+
+        <div class="parameter-test">
+            <h3>Grid Density</h3>
+            <div class="slider-test">
+                <input type="range" id="densityTest" class="test-slider" 
+                       min="5" max="100" value="15" 
+                       oninput="testParameterUpdate('gridDensity', this.value)">
+                <span class="value-display" id="densityValue">15</span>
+            </div>
+        </div>
+
+        <div class="parameter-test">
+            <h3>Color Parameters</h3>
+            <div class="slider-test">
+                <label>Hue:</label>
+                <input type="range" id="hueTest" class="test-slider" 
+                       min="0" max="360" value="200" 
+                       oninput="testParameterUpdate('hue', this.value)">
+                <span class="value-display" id="hueValue">200°</span>
+            </div>
+            <div class="slider-test">
+                <label>Intensity:</label>
+                <input type="range" id="intensityTest" class="test-slider" 
+                       min="0" max="1" step="0.01" value="0.5" 
+                       oninput="testParameterUpdate('intensity', this.value)">
+                <span class="value-display" id="intensityValue">0.5</span>
+            </div>
+            <div class="slider-test">
+                <label>Saturation:</label>
+                <input type="range" id="saturationTest" class="test-slider" 
+                       min="0" max="1" step="0.01" value="0.8" 
+                       oninput="testParameterUpdate('saturation', this.value)">
+                <span class="value-display" id="saturationValue">0.8</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="testResults">Waiting for tests...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎮 Live VIB34D Instance</h2>
+        <iframe id="vib34dFrame" src="http://localhost:8145/index.html?system=faceted&hideui=true"></iframe>
+    </div>
+
+    <script>
+        let testResults = [];
+        let currentTestSystem = 'faceted';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : '✅';
+            const result = `[${timestamp}] ${prefix} ${message}`;
+            testResults.push(result);
+            document.getElementById('testResults').textContent = testResults.join('\n');
+            console.log(result);
+        }
+
+        function testParameterUpdate(param, value) {
+            const startTime = performance.now();
+            
+            // Update our display
+            const displayId = param + 'Value';
+            const display = document.getElementById(displayId);
+            if (display) {
+                if (param === 'hue') {
+                    display.textContent = value + '°';
+                } else {
+                    display.textContent = parseFloat(value).toFixed(param.includes('rot4d') ? 2 : 1);
+                }
+            }
+
+            // Try to update the main VIB34D system through iframe
+            const iframe = document.getElementById('vib34dFrame');
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.postMessage({
+                        type: 'parameterUpdate',
+                        parameter: param,
+                        value: parseFloat(value),
+                        timestamp: Date.now()
+                    }, '*');
+                    
+                    const duration = performance.now() - startTime;
+                    log(`Parameter ${param} = ${value} sent in ${duration.toFixed(2)}ms`, 'info');
+                } catch (error) {
+                    log(`Failed to update ${param}: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function testGeometrySwitch(index) {
+            const startTime = performance.now();
+            document.getElementById('geometryValue').textContent = index;
+            
+            const iframe = document.getElementById('vib34dFrame');
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.postMessage({
+                        type: 'geometryUpdate',
+                        geometry: index,
+                        timestamp: Date.now()
+                    }, '*');
+                    
+                    const duration = performance.now() - startTime;
+                    log(`Geometry switched to ${index} in ${duration.toFixed(2)}ms`, 'info');
+                } catch (error) {
+                    log(`Failed to switch geometry: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function startParameterTest() {
+            const system = document.getElementById('testSystem').value;
+            const duration = parseInt(document.getElementById('testDuration').value);
+            
+            log(`🔥 Starting parameter test for ${system} system (${duration}ms)`, 'info');
+            
+            // Switch iframe to the test system
+            const iframe = document.getElementById('vib34dFrame');
+            iframe.src = `http://localhost:8145/index.html?system=${system}&hideui=true`;
+            currentTestSystem = system;
+            
+            // Wait for iframe to load, then run tests
+            setTimeout(() => {
+                runParameterBatteryTest(duration);
+            }, 2000);
+        }
+
+        function runParameterBatteryTest(duration) {
+            log('🧪 Starting parameter battery test...', 'info');
+            
+            const testParams = [
+                { name: 'speed', min: 0.1, max: 3, step: 0.2 },
+                { name: 'gridDensity', min: 5, max: 100, step: 10 },
+                { name: 'hue', min: 0, max: 360, step: 45 },
+                { name: 'intensity', min: 0, max: 1, step: 0.1 },
+                { name: 'morphFactor', min: 0, max: 2, step: 0.2 },
+                { name: 'chaos', min: 0, max: 1, step: 0.1 }
+            ];
+            
+            let testIndex = 0;
+            const testInterval = 300; // ms between parameter changes
+            
+            const testTimer = setInterval(() => {
+                if (testIndex >= testParams.length) {
+                    clearInterval(testTimer);
+                    log('🎯 Parameter battery test completed', 'info');
+                    analyzeParameterResponsiveness();
+                    return;
+                }
+                
+                const param = testParams[testIndex];
+                const randomValue = param.min + Math.random() * (param.max - param.min);
+                const quantizedValue = Math.round(randomValue / param.step) * param.step;
+                
+                testParameterUpdate(param.name, quantizedValue);
+                testIndex++;
+                
+            }, testInterval);
+            
+            // Stop test after duration
+            setTimeout(() => {
+                clearInterval(testTimer);
+                log('⏱️ Parameter test timeout reached', 'warn');
+            }, duration);
+        }
+
+        function runFullSystemTest() {
+            const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+            let systemIndex = 0;
+            
+            log('🌟 Starting full system parameter test...', 'info');
+            
+            const systemTest = () => {
+                if (systemIndex >= systems.length) {
+                    log('🏁 Full system test completed', 'info');
+                    return;
+                }
+                
+                const system = systems[systemIndex];
+                document.getElementById('testSystem').value = system;
+                
+                log(`🔄 Testing system: ${system}`, 'info');
+                
+                // Switch system and test
+                const iframe = document.getElementById('vib34dFrame');
+                iframe.src = `http://localhost:8145/index.html?system=${system}&hideui=true`;
+                
+                setTimeout(() => {
+                    // Test a few key parameters on each system
+                    testParameterUpdate('speed', 0.5 + Math.random() * 1.5);
+                    setTimeout(() => testParameterUpdate('hue', Math.random() * 360), 200);
+                    setTimeout(() => testParameterUpdate('intensity', Math.random()), 400);
+                    setTimeout(() => testGeometrySwitch(Math.floor(Math.random() * 4)), 600);
+                    
+                    systemIndex++;
+                    setTimeout(systemTest, 2000);
+                }, 1500);
+            };
+            
+            systemTest();
+        }
+
+        function analyzeParameterResponsiveness() {
+            log('📊 Parameter Responsiveness Analysis:', 'info');
+            log(`- Total parameter updates: ${testResults.filter(r => r.includes('Parameter')).length}`, 'info');
+            log(`- Failed updates: ${testResults.filter(r => r.includes('Failed')).length}`, 'warn');
+            log(`- Average update time: calculating...`, 'info');
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'parameterConfirmed') {
+                log(`✅ Parameter confirmed: ${event.data.parameter} = ${event.data.value}`, 'info');
+            }
+        });
+
+        // Initialize
+        log('🚀 Parameter Test Agent 4 initialized', 'info');
+        log('Ready to test parameter responsiveness across all VIB34D systems', 'info');
+    </script>
+</body>
+</html>
