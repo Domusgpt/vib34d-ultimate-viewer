@@ -87,20 +87,19 @@
         .variation-card:hover {
             border-image: linear-gradient(45deg, #00ffff, #ff64ff, #64ff96, #ff9600, #00ffff) 1;
             box-shadow: 
-                0 40px 100px rgba(0, 255, 255, 0.4),
-                0 20px 80px rgba(255, 0, 255, 0.3),
-                inset 0 2px 0 rgba(255, 255, 255, 0.3),
-                0 0 60px rgba(255, 150, 0, 0.2);
+                0 30px 60px rgba(0, 255, 255, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(255, 0, 255, 0.4);
             transform: 
                 perspective(1200px)
-                rotateY(calc((var(--mouse-x) - 50) * 0.4deg * var(--bend-intensity)))
-                rotateX(calc((var(--mouse-y) - 50) * 0.2deg * var(--bend-intensity)))
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * 8deg))
+                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * 8deg))
                 translateZ(calc(var(--bend-intensity) * 40px))
                 translateY(-15px)
                 scale(1.02);
-            transition: all 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
-            backdrop-filter: blur(30px);
+            backdrop-filter: blur(20px);
             z-index: 10;
+            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
             background: 
                 linear-gradient(135deg, rgba(10, 10, 40, 0.95) 0%, rgba(20, 20, 50, 0.9) 50%, rgba(30, 30, 60, 0.85) 100%),
                 radial-gradient(circle at top left, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
@@ -165,6 +164,50 @@
         /* Add edge bending class for enhanced effects */
         .variation-card.edge-bend {
             filter: brightness(1.3) contrast(1.1) saturate(1.2) hue-rotate(10deg);
+        }
+        
+        /* Default desktop tilt intensity - EXACT MATCH to gallery */
+        .variation-card {
+            --tilt-intensity-y: 1.2deg;
+            --tilt-intensity-x: 0.6deg;
+            --accel-x: 0;
+            --accel-y: 0;
+        }
+        
+        /* Mobile optimization: Reduced tilt intensity by 50% - EXACT MATCH to gallery */
+        @media (max-width: 768px), (pointer: coarse) {
+            .variation-card {
+                --tilt-intensity-y: 0.6deg;
+                --tilt-intensity-x: 0.3deg;
+            }
+        }
+        
+        /* Tilt active state */
+        .variation-card.tilt-active {
+            border-image: linear-gradient(45deg, #00ff00, #00ffff, #00ff00) 1;
+        }
+        
+        .variation-card.tilt-active::after {
+            content: '📱 TILT ACTIVE';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 0, 0.9);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 1000;
+            animation: tilt-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes tilt-pulse {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.7; transform: translateX(-50%) scale(0.95); }
         }
         
         /* Canvas visualization container inside preview - FILLS SPACE */
@@ -510,6 +553,7 @@
         
         <div class="card-controls">
             <button class="card-btn" onclick="randomizeVisualization()">🎲 Randomize</button>
+            <button class="card-btn" onclick="toggleViewerTilt()">📱 Device Tilt</button>
             <button class="card-btn primary" onclick="loadIntoEngine()">🎛️ Load Engine</button>
             <button class="card-btn" onclick="generateTradingCard()">🎴 Trading Card</button>
         </div>
@@ -570,14 +614,16 @@
             // Update title
             document.getElementById('cardTitle').textContent = `${name} #${globalId}`;
             
-            // Update parameters display
+            // Enhanced parameter display matching gallery style
             const paramsText = [
-                `System: ${sysInfo.name}`,
-                `Geometry: ${getGeometryName(params)}`,
-                `Hue: ${Math.round(params.hue || 0)}°`,
-                `Grid Density: ${params.gridDensity || 15}`,
-                `Morph Factor: ${(params.morphFactor || 1.0).toFixed(1)}`,
-                `Speed: ${(params.speed || 1.0).toFixed(1)}x`
+                `<strong>System:</strong> <span style="color: ${sysInfo.color}">${sysInfo.name}</span>`,
+                `<strong>Geometry:</strong> ${getGeometryName(params)}`,
+                `<strong>Hue:</strong> <span style="color: hsl(${params.hue || 0}, 70%, 60%)">${Math.round(params.hue || 0)}°</span>`,
+                `<strong>Grid Density:</strong> ${params.gridDensity || 15}`,
+                `<strong>Morph Factor:</strong> ${(params.morphFactor || 1.0).toFixed(1)}`,
+                `<strong>4D Rotations:</strong> XW:${(params.rot4dXW || 0).toFixed(2)} YW:${(params.rot4dYW || 0).toFixed(2)} ZW:${(params.rot4dZW || 0).toFixed(2)}`,
+                `<strong>Speed:</strong> ${(params.speed || 1.0).toFixed(1)}x | <strong>Chaos:</strong> ${((params.chaos || 0.2) * 100).toFixed(0)}%`,
+                `<strong>Intensity:</strong> ${((params.intensity || 0.5) * 100).toFixed(0)}% | <strong>Saturation:</strong> ${((params.saturation || 0.8) * 100).toFixed(0)}%`
             ].join('<br>');
             
             document.getElementById('cardParams').innerHTML = paramsText;
@@ -597,6 +643,25 @@
             const geomType = params.geometryType !== undefined ? params.geometryType : params.geometry;
             return geometryNames[geomType] || 'GEOMETRY';
         }
+        
+        // Enhanced navigation functions matching gallery
+        window.navigateToGallery = function() {
+            window.location.href = 'gallery.html';
+        };
+        
+        window.navigateToEngine = function() {
+            const params = parseURLParameters();
+            const engineUrl = new URL('index.html', window.location.origin);
+            
+            // Copy all non-UI parameters
+            Object.entries(params).forEach(([key, value]) => {
+                if (!['name', 'id', 'hideui'].includes(key) && value !== undefined) {
+                    engineUrl.searchParams.set(key, value);
+                }
+            });
+            
+            window.location.href = engineUrl.toString();
+        };
         
         async function loadVisualization(params) {
             const container = document.getElementById('visualizationContainer');
@@ -673,18 +738,25 @@
                 card.style.setProperty('--mouse-y', cardY);
                 card.style.setProperty('--bend-intensity', bendIntensity);
                 
-                // CRITICAL FIX: Send mouse data to iframe visualization (MATCH GALLERY)
+                        // ENHANCED FIX: Send mouse data to iframe visualization with device tilt support
                 const iframe = card.querySelector('iframe');
                 if (iframe && iframe.contentWindow) {
                     try {
+                        // Send comprehensive interaction data
                         iframe.contentWindow.postMessage({
-                            type: 'mouseMove',
-                            x: cardX / 100, // Normalize to 0-1
-                            y: cardY / 100,
-                            intensity: bendIntensity
+                            type: 'viewerInteraction',
+                            mouse: {
+                                x: cardX / 100, // Normalize to 0-1
+                                y: cardY / 100,
+                                intensity: bendIntensity,
+                                isHovering: true
+                            },
+                            tilt: window.deviceTiltHandler ? window.deviceTiltHandler.getStatus() : null,
+                            timestamp: Date.now()
                         }, '*');
                     } catch (e) {
-                        // Cross-origin restriction - expected
+                        // Cross-origin may block, but iframe should receive if same origin
+                        console.log('🌌 Cross-origin iframe message blocked (expected for external URLs)');
                     }
                 }
                 
@@ -702,10 +774,38 @@
             console.log('✅ Individual viewer holographic effects initialized');
         }
         
-        // Action functions
+        // Enhanced parameter randomization matching gallery system
         window.randomizeVisualization = function() {
-            // Reload with randomized parameters
-            window.location.reload();
+            console.log('🎲 Randomizing visualization parameters...');
+            
+            // Generate random parameters matching the main engine
+            const randomParams = {
+                system: ['faceted', 'quantum', 'holographic', 'polychora'][Math.floor(Math.random() * 4)],
+                geometry: Math.floor(Math.random() * 8),
+                rot4dXW: (Math.random() - 0.5) * 8, // -4 to +4
+                rot4dYW: (Math.random() - 0.5) * 8,
+                rot4dZW: (Math.random() - 0.5) * 8,
+                gridDensity: Math.floor(Math.random() * 80) + 10, // 10-90
+                morphFactor: Math.random() * 1.8 + 0.2, // 0.2-2.0
+                chaos: Math.random(), // 0-1
+                speed: Math.random() * 2.5 + 0.5, // 0.5-3.0
+                hue: Math.floor(Math.random() * 360), // 0-360
+                intensity: Math.random() * 0.8 + 0.2, // 0.2-1.0
+                saturation: Math.random() * 0.6 + 0.4, // 0.4-1.0
+                name: `Random-${Math.floor(Math.random() * 9999)}`,
+                id: Date.now()
+            };
+            
+            // Build new URL with randomized parameters
+            const newUrl = new URL(window.location);
+            newUrl.search = ''; // Clear existing params
+            
+            Object.entries(randomParams).forEach(([key, value]) => {
+                newUrl.searchParams.set(key, value);
+            });
+            
+            console.log('🎲 Randomized to:', randomParams.system, 'system with', Object.keys(randomParams).length, 'parameters');
+            window.location.href = newUrl.toString();
         };
         
         window.loadIntoEngine = function() {
@@ -758,12 +858,145 @@
             }
         };
         
+        // Message handler for iframe responses
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'visualizationReady') {
+                console.log('🎯 Iframe visualization ready, sending initial parameters');
+                
+                // Send current mouse position to newly loaded iframe
+                const card = document.getElementById('viewerCard');
+                if (card) {
+                    const iframe = card.querySelector('iframe');
+                    if (iframe && iframe.contentWindow && event.source === iframe.contentWindow) {
+                        const rect = card.getBoundingClientRect();
+                        iframe.contentWindow.postMessage({
+                            type: 'viewerInteraction',
+                            mouse: {
+                                x: 0.5, // Center initially
+                                y: 0.5,
+                                intensity: 0,
+                                isHovering: false
+                            },
+                            tilt: window.deviceTiltHandler ? window.deviceTiltHandler.getStatus() : null,
+                            timestamp: Date.now()
+                        }, '*');
+                    }
+                }
+            }
+        });
+        
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
             initializeViewer();
+            initializeDeviceTilt();
         });
         
-        console.log('🎬 VIB34D Individual Viewer ready');
+        // Initialize device tilt system for viewer
+        async function initializeDeviceTilt() {
+            try {
+                // Import device tilt handler
+                const { DeviceTiltHandler } = await import('./js/interactions/device-tilt.js');
+                
+                if (!window.deviceTiltHandler) {
+                    window.deviceTiltHandler = new DeviceTiltHandler();
+                    
+                    // Add global toggle function for viewer
+                    window.toggleViewerTilt = async () => {
+                        const card = document.getElementById('viewerCard');
+                        
+                        if (window.deviceTiltHandler.isEnabled) {
+                            window.deviceTiltHandler.disable();
+                            if (card) card.classList.remove('tilt-active');
+                            console.log('🎯 Viewer tilt disabled');
+                        } else {
+                            const enabled = await window.deviceTiltHandler.enable();
+                            if (enabled) {
+                                if (card) card.classList.add('tilt-active');
+                                console.log('🎯 Viewer tilt enabled - tilt device for 4D effects!');
+                            } else {
+                                console.warn('🎯 Device tilt not available or permission denied');
+                            }
+                        }
+                    };
+                    
+                    console.log('🎯 Device tilt system initialized for viewer');
+                }
+            } catch (error) {
+                console.warn('🎯 Device tilt system not available:', error.message);
+            }
+        }
+        
+        // 📱 MOBILE ACCELEROMETER TILT SYSTEM - EXACT MATCH to gallery
+        class MobileAccelerometerTilt {
+            constructor() {
+                this.isActive = false;
+                this.sensitivity = 0.3; // Reduced sensitivity for viewer
+                this.smoothing = 0.15;
+                this.currentAccel = { x: 0, y: 0 };
+                this.targetAccel = { x: 0, y: 0 };
+                this.animationFrame = null;
+                
+                this.init();
+            }
+            
+            async init() {
+                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                    console.log('🎯 iOS device detected - requesting motion permission for viewer');
+                    try {
+                        const permission = await DeviceMotionEvent.requestPermission();
+                        if (permission === 'granted') {
+                            this.startListening();
+                        }
+                    } catch (e) {
+                        console.log('🎯 Motion permission not granted for viewer');
+                    }
+                } else if (window.DeviceMotionEvent) {
+                    this.startListening();
+                }
+            }
+            
+            startListening() {
+                window.addEventListener('devicemotion', this.handleDeviceMotion.bind(this));
+                this.isActive = true;
+                this.animate();
+                console.log('🎯 Mobile accelerometer tilt active for viewer');
+            }
+            
+            handleDeviceMotion(event) {
+                if (!this.isActive || !event.accelerationIncludingGravity) return;
+                
+                const accel = event.accelerationIncludingGravity;
+                
+                // Map acceleration to tilt with reduced sensitivity for viewer
+                this.targetAccel.x = Math.max(-1, Math.min(1, accel.x * this.sensitivity));
+                this.targetAccel.y = Math.max(-1, Math.min(1, accel.y * this.sensitivity));
+            }
+            
+            animate() {
+                // Smooth interpolation
+                this.currentAccel.x += (this.targetAccel.x - this.currentAccel.x) * this.smoothing;
+                this.currentAccel.y += (this.targetAccel.y - this.currentAccel.y) * this.smoothing;
+                
+                // Apply to viewer card
+                const card = document.getElementById('viewerCard');
+                if (card) {
+                    card.style.setProperty('--accel-x', this.currentAccel.x);
+                    card.style.setProperty('--accel-y', this.currentAccel.y);
+                }
+                
+                this.animationFrame = requestAnimationFrame(() => this.animate());
+            }
+        }
+        
+        // Initialize mobile accelerometer for viewer
+        let mobileAccelerometer = null;
+        
+        // Small delay to ensure viewer card is rendered
+        setTimeout(() => {
+            mobileAccelerometer = new MobileAccelerometerTilt();
+        }, 100);
+        
+        console.log('🎬 VIB34D Ultimate Individual Viewer ready');
     </script>
 </body>
 </html>
