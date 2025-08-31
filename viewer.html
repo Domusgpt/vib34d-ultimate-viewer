@@ -177,11 +177,8 @@
             border-radius: 18px;
         }
 
-        /* Audio Toggle (Top Right) */
+        /* Audio Toggle Buttons (Inside Control Panel) */
         .audio-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
             background: rgba(0, 0, 0, 0.7);
             border: 2px solid rgba(0, 255, 255, 0.3);
             color: #00ffff;
@@ -191,7 +188,8 @@
             font-family: 'Orbitron', monospace;
             font-size: 14px;
             transition: all 0.3s ease;
-            z-index: 100;
+            width: 100%;
+            text-align: center;
         }
 
         .audio-toggle:hover {
@@ -281,6 +279,115 @@
             z-index: 10;
         }
 
+        /* Share Modal */
+        .share-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        }
+
+        .share-modal-content {
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            font-family: 'Orbitron', monospace;
+            position: relative;
+        }
+
+        .share-modal h2 {
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .share-button {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .share-button:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .embed-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .embed-section h3 {
+            color: #00ffff;
+            margin-bottom: 15px;
+        }
+
+        .embed-code {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #ccc;
+            word-break: break-all;
+            margin-bottom: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #ff0080;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .copy-button {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            color: #00ffff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .copy-button:hover {
+            background: rgba(0, 255, 255, 0.3);
+        }
+
         .loading::after {
             content: '';
             display: inline-block;
@@ -321,6 +428,10 @@
         <button class="audio-toggle active" id="tiltToggle">📱 Device Tilt</button>
         <button class="audio-toggle" id="audioToggle">🎵 Audio Reactive</button>
         <button class="audio-toggle active" id="enhancedToggle">✨ Enhanced FX</button>
+        <hr style="border: 1px solid rgba(0, 255, 255, 0.3); margin: 10px 0;">
+        <button class="audio-toggle" id="backToPortfolio">📁 Back to Portfolio</button>
+        <button class="audio-toggle" id="openInEngine">🚀 Open in Engine</button>
+        <button class="audio-toggle" id="sharePortal">📤 Share Portal</button>
     </div>
     
     <div class="info-display" id="infoDisplay">
@@ -607,6 +718,26 @@
                 
                 document.getElementById('enhancedToggle').addEventListener('click', () => {
                     this.toggleInteractivity('enhanced');
+                });
+
+                // Navigation buttons
+                document.getElementById('backToPortfolio').addEventListener('click', () => {
+                    window.location.href = 'gallery.html';
+                });
+
+                document.getElementById('openInEngine').addEventListener('click', () => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const configData = urlParams.get('config');
+                    if (configData) {
+                        // Pass the current configuration to the main engine
+                        window.location.href = `index-clean.html?config=${encodeURIComponent(configData)}`;
+                    } else {
+                        window.location.href = 'index-clean.html';
+                    }
+                });
+
+                document.getElementById('sharePortal').addEventListener('click', () => {
+                    this.showShareModal();
                 });
                 
                 // Window resize
@@ -923,6 +1054,153 @@
                 }
             }
             
+            showShareModal() {
+                // Create and show the share modal
+                const modal = document.createElement('div');
+                modal.className = 'share-modal';
+                modal.innerHTML = `
+                    <div class="share-modal-content">
+                        <button class="close-modal" onclick="this.parentElement.parentElement.remove()">&times;</button>
+                        <h2>🚀 Share VIB34D Portal</h2>
+                        
+                        <div class="share-options">
+                            <button class="share-button" onclick="window.portalEngine.shareToTwitter()">
+                                🐦 Twitter
+                            </button>
+                            <button class="share-button" onclick="window.portalEngine.shareToFacebook()">
+                                📘 Facebook
+                            </button>
+                            <button class="share-button" onclick="window.portalEngine.shareToReddit()">
+                                📧 Reddit
+                            </button>
+                            <button class="share-button" onclick="window.portalEngine.copyShareLink()">
+                                🔗 Copy Link
+                            </button>
+                        </div>
+                        
+                        <div class="embed-section">
+                            <h3>📋 Embed Code (iframe)</h3>
+                            <div class="embed-code" id="embedCode">${this.generateEmbedCode()}</div>
+                            <button class="copy-button" onclick="window.portalEngine.copyEmbedCode()">Copy Embed Code</button>
+                            
+                            <h3 style="margin-top: 20px;">🎯 Direct Link</h3>
+                            <div class="embed-code" id="directLink">${window.location.href}</div>
+                            <button class="copy-button" onclick="window.portalEngine.copyDirectLink()">Copy Link</button>
+                            
+                            <h3 style="margin-top: 20px;">🚀 Open in VIB34D Engine</h3>
+                            <div class="embed-code" id="engineLink">${this.generateEngineLink()}</div>
+                            <button class="copy-button" onclick="window.portalEngine.copyEngineLink()">Copy Engine Link</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close modal when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
+            
+            generateEmbedCode() {
+                const width = 800;
+                const height = 600;
+                return `<iframe src="${window.location.href}" width="${width}" height="${height}" frameborder="0" allowfullscreen style="border-radius: 15px; border: 2px solid rgba(0, 255, 255, 0.3);"></iframe>`;
+            }
+            
+            generateEngineLink() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const configData = urlParams.get('config');
+                const baseURL = `${window.location.origin}${window.location.pathname.replace('viewer.html', 'index-clean.html')}`;
+                return configData ? `${baseURL}?config=${encodeURIComponent(configData)}` : baseURL;
+            }
+            
+            shareToTwitter() {
+                const text = `🚀 Check out this incredible VIB34D holographic visualization! #VIB34D #4D #Holographic #WebGL`;
+                const url = window.location.href;
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+            }
+            
+            shareToFacebook() {
+                const url = window.location.href;
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+            }
+            
+            shareToReddit() {
+                const title = 'Amazing VIB34D 4D Holographic Visualization';
+                const url = window.location.href;
+                window.open(`https://reddit.com/submit?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+            }
+            
+            copyShareLink() {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    this.showCopyFeedback('Share link copied!');
+                });
+            }
+            
+            copyEmbedCode() {
+                const embedCode = this.generateEmbedCode();
+                navigator.clipboard.writeText(embedCode).then(() => {
+                    this.showCopyFeedback('Embed code copied!');
+                });
+            }
+            
+            copyDirectLink() {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    this.showCopyFeedback('Direct link copied!');
+                });
+            }
+            
+            copyEngineLink() {
+                const engineLink = this.generateEngineLink();
+                navigator.clipboard.writeText(engineLink).then(() => {
+                    this.showCopyFeedback('Engine link copied!');
+                });
+            }
+            
+            showCopyFeedback(message) {
+                // Create temporary feedback element
+                const feedback = document.createElement('div');
+                feedback.textContent = message;
+                feedback.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 255, 255, 0.9);
+                    color: #000;
+                    padding: 10px 20px;
+                    border-radius: 20px;
+                    font-family: 'Orbitron', monospace;
+                    font-weight: bold;
+                    z-index: 20000;
+                    animation: fadeInOut 2s ease-in-out forwards;
+                `;
+                
+                document.body.appendChild(feedback);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    feedback.remove();
+                }, 2000);
+                
+                // Add CSS animation if not already present
+                if (!document.getElementById('copyFeedbackStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'copyFeedbackStyle';
+                    style.textContent = `
+                        @keyframes fadeInOut {
+                            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                            20%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            
             render() {
                 // Get audio level if available
                 let audioLevel = 0;
@@ -987,7 +1265,7 @@
         
         // Initialize portal engine when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new PortalEngine();
+            window.portalEngine = new PortalEngine();
         });
     </script>
 </body>
