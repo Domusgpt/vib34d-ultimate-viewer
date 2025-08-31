@@ -157,10 +157,10 @@ export class UnifiedSaveManager {
                     break;
                     
                 case 'holographic':
-                    // Holographic system parameter capture
-                    if (window.holographicSystem?.parameters?.getAllParameters) {
-                        parameters = window.holographicSystem.parameters.getAllParameters();
-                        captureMethod = 'window.holographicSystem.parameters.getAllParameters()';
+                    // Holographic system parameter capture - use getParameters() method directly
+                    if (window.holographicSystem?.getParameters) {
+                        parameters = window.holographicSystem.getParameters();
+                        captureMethod = 'window.holographicSystem.getParameters()';
                     }
                     break;
                     
