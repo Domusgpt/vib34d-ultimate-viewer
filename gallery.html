@@ -2124,12 +2124,39 @@
                 // Initialize mobile accelerometer tilt system
                 mobileAccelerometer = new MobileAccelerometerTilt();
                 
-                // 🌐 Add device orientation listener for 4D perspective (matching viewer)
+                // 🌐 Add device orientation listener for 4D perspective (with iOS permission handling)
                 if (window.DeviceOrientationEvent) {
-                    window.addEventListener('deviceorientation', (e) => {
-                        InteractivityManager.handleDeviceOrientation(e);
-                    });
-                    console.log('🌐 Device orientation listener added for 4D perspective');
+                    // Check for iOS 13+ permission requirement
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        console.log('📱 iOS device detected - requesting device orientation permission for gyroscope tilt...');
+                        
+                        // Add permission request button or try automatic permission
+                        const requestPermission = async () => {
+                            try {
+                                const permission = await DeviceOrientationEvent.requestPermission();
+                                if (permission === 'granted') {
+                                    window.addEventListener('deviceorientation', (e) => {
+                                        InteractivityManager.handleDeviceOrientation(e);
+                                    });
+                                    console.log('✅ iOS device orientation permission granted - gyroscope tilt active!');
+                                } else {
+                                    console.warn('❌ iOS device orientation permission denied - gyroscope tilt disabled');
+                                }
+                            } catch (error) {
+                                console.error('📱 iOS permission request failed:', error);
+                            }
+                        };
+                        
+                        // Try to request permission (may need user interaction)
+                        setTimeout(requestPermission, 1000);
+                        
+                    } else {
+                        // Non-iOS devices don't need permission
+                        window.addEventListener('deviceorientation', (e) => {
+                            InteractivityManager.handleDeviceOrientation(e);
+                        });
+                        console.log('🌐 Device orientation listener added for 4D perspective');
+                    }
                 } else {
                     console.log('⚠️ Device orientation not supported');
                 }
