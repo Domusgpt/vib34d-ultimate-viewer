@@ -8,629 +8,373 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            background: #0a0a0a; 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
             color: #fff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Orbitron', monospace;
             overflow: hidden;
             perspective: 2000px;
+            position: relative;
         }
 
-        /* Dark Silicon Glass Background */
+        /* Dark Silicon Glass Background with Grid */
         .silicon-background {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: 
-                radial-gradient(circle at 20% 20%, rgba(100, 100, 100, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(150, 150, 150, 0.08) 0%, transparent 50%),
-                linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95));
-            backdrop-filter: blur(20px);
-            z-index: -3;
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.03) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2a 30%, #0f0f1f 70%, #0a0a0a 100%);
+            backdrop-filter: blur(1px);
+            z-index: -2;
         }
 
         .silicon-background::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                repeating-linear-gradient(
-                    0deg,
-                    transparent 0px,
-                    rgba(255, 255, 255, 0.02) 1px,
-                    transparent 2px
-                ),
-                repeating-linear-gradient(
-                    90deg,
-                    transparent 0px,
-                    rgba(255, 255, 255, 0.02) 1px,
-                    transparent 2px
-                );
-            background-size: 100px 100px;
-            opacity: 0.3;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridShift 20s linear infinite;
+            z-index: -1;
         }
 
-        /* Background Mirror Effect */
-        .background-mirror {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            opacity: 0.15;
-            filter: blur(4px) brightness(0.3);
-            transform: scale(1.2) rotateX(5deg);
+        @keyframes gridShift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
 
-        .mirror-canvas {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Main Container */
-        .portal-container {
+        /* Main Portal Container */
+        .portal-viewer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 2rem;
-            position: relative;
+            transform-style: preserve-3d;
         }
 
-        /* Portal Viewer */
-        .portal-viewer {
-            position: relative;
-            width: 100%;
-            max-width: 1200px;
-            height: 80vh;
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        /* Visualization Portal */
+        /* Portal Window */
         .visualization-portal {
             position: relative;
-            height: 100%;
-            background: rgba(20, 20, 20, 0.8);
+            width: 80vw;
+            height: 80vh;
+            max-width: 1000px;
+            max-height: 700px;
             border-radius: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 255, 255, 0.3);
             box-shadow: 
-                0 0 40px rgba(0, 0, 0, 0.8),
-                inset 0 0 20px rgba(255, 255, 255, 0.05);
+                0 0 50px rgba(0, 255, 255, 0.2),
+                0 0 100px rgba(255, 0, 255, 0.1),
+                inset 0 0 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-style: preserve-3d;
             overflow: hidden;
-            transition: all 0.5s ease;
-            cursor: none;
+            cursor: pointer;
         }
 
         .visualization-portal:hover {
-            transform: scale(1.05) translateZ(50px);
-            border-color: rgba(255, 0, 128, 0.3);
+            transform: scale(1.05) translateZ(20px);
+            border-color: rgba(0, 255, 255, 0.6);
             box-shadow: 
-                0 0 80px rgba(255, 0, 128, 0.2),
-                inset 0 0 40px rgba(255, 255, 255, 0.1);
+                0 0 80px rgba(0, 255, 255, 0.4),
+                0 0 150px rgba(255, 0, 255, 0.2),
+                inset 0 0 30px rgba(0, 0, 0, 0.3);
         }
 
-        .visualization-portal.expanded {
-            position: fixed;
-            top: 5%;
-            left: 5%;
-            right: 5%;
-            bottom: 5%;
-            max-width: none;
-            height: auto;
-            z-index: 1000;
-            transform: scale(1) translateZ(100px);
-            border-color: rgba(64, 224, 208, 0.5);
-            box-shadow: 
-                0 0 200px rgba(64, 224, 208, 0.3),
-                inset 0 0 60px rgba(255, 255, 255, 0.15);
-        }
-
-        /* Main Canvas */
-        .portal-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 18px;
-            transition: all 0.3s ease;
-        }
-
-        /* Tilt Indicator */
-        .tilt-indicator {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 80px;
-            height: 80px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            backdrop-filter: blur(10px);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .portal-viewer:hover .tilt-indicator {
-            opacity: 1;
-        }
-
-        .tilt-dot {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 8px;
-            height: 8px;
-            background: #ff0080;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
-            transition: all 0.1s ease;
-        }
-
-        /* Info Panel */
-        .info-panel {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem;
-            height: fit-content;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .creation-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #ff0080, #40e0d0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .creation-id {
-            font-size: 0.9rem;
-            opacity: 0.6;
-            margin-bottom: 2rem;
-            font-family: monospace;
-        }
-
-        .param-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .param-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .param-label {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-bottom: 0.3rem;
-        }
-
-        .param-value {
-            font-weight: bold;
-            color: #40e0d0;
-        }
-
-        /* Audio Control */
-        .audio-control {
-            background: rgba(255, 0, 128, 0.1);
-            border: 1px solid rgba(255, 0, 128, 0.3);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .audio-toggle {
-            background: linear-gradient(135deg, #ff0080, #ff8c00);
-            border: none;
-            padding: 0.8rem 2rem;
-            border-radius: 25px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-
-        .audio-toggle:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(255, 0, 128, 0.3);
-        }
-
-        .audio-toggle.inactive {
-            background: rgba(255, 255, 255, 0.1);
-            color: #999;
-        }
-
-        /* Control Buttons */
-        .control-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .control-btn {
-            flex: 1;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .control-btn.primary {
-            background: linear-gradient(135deg, #40e0d0, #ff0080);
-            border: none;
-        }
-
-        /* Portal Depth Effect */
-        .portal-depth {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.3) 70%),
-                linear-gradient(45deg, rgba(255, 0, 128, 0.05), rgba(64, 224, 208, 0.05));
-            border-radius: 18px;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            /* CSS variables for mouse tracking */
-            --mouse-x: 50%;
-            --mouse-y: 50%;
-        }
-
-        .visualization-portal:hover .portal-depth {
-            opacity: 0.7;
-        }
-
-        /* Holographic Flash Sweep Effect - RGB based on tilt direction */
+        /* RGB Flash Effect */
         .visualization-portal::after {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(
-                calc(45deg + (var(--mouse-x) - 50) * 0.8deg),
+                calc(45deg + (var(--mouse-x, 50) - 50) * 0.8deg),
                 transparent 20%,
                 rgba(0, 255, 255, 0.15) 45%,
                 rgba(255, 0, 255, 0.2) 50%,
                 rgba(255, 100, 0, 0.15) 55%,
                 transparent 80%
             );
-            transform: translateX(calc(-120% + (var(--mouse-x) - 50) * 1%)) 
-                       translateY(calc(-50% + (var(--mouse-y) - 50) * 0.5%))
-                       rotate(calc(45deg + (var(--mouse-x) - 50) * 0.5deg));
-            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
-            pointer-events: none;
             opacity: 0;
-            border-radius: 20px;
-            z-index: 10;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            border-radius: 18px;
         }
 
         .visualization-portal:hover::after {
-            transform: translateX(calc(120% - (var(--mouse-x) - 50) * 1%)) 
-                       translateY(calc(50% - (var(--mouse-y) - 50) * 0.5%))
-                       rotate(calc(45deg + (var(--mouse-x) - 50) * 0.5deg));
             opacity: 1;
         }
 
-        /* Enhanced flash for expanded mode */
-        .visualization-portal.expanded::after {
-            background: linear-gradient(
-                calc(45deg + (var(--mouse-x) - 50) * 1.2deg),
-                transparent 10%,
-                rgba(0, 255, 255, 0.25) 40%,
-                rgba(255, 0, 255, 0.3) 50%,
-                rgba(64, 224, 208, 0.25) 60%,
-                transparent 90%
-            );
+        /* Canvas Container */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            overflow: hidden;
         }
 
-        /* Exit Button for Expanded Mode */
-        .exit-expanded {
+        /* Main Visualization Canvas */
+        #mainCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            transition: all 0.5s ease;
+        }
+
+        /* Mirror Canvas (Background Effect) */
+        #mirrorCanvas {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 120%;
+            height: 120%;
+            transform: translate(-50%, -50%) scale(0.8) rotateX(180deg);
+            opacity: 0.1;
+            filter: blur(2px) brightness(0.3);
+            border-radius: 18px;
+            z-index: -1;
+        }
+
+        /* Audio Toggle (Top Right) */
+        .audio-toggle {
             position: fixed;
             top: 20px;
             right: 20px;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 0, 0, 0.2);
-            border: 2px solid rgba(255, 0, 0, 0.5);
-            border-radius: 50%;
-            color: white;
-            font-size: 1.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 12px 20px;
+            border-radius: 25px;
             cursor: pointer;
-            z-index: 1001;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
             transition: all 0.3s ease;
+            z-index: 100;
         }
 
-        .exit-expanded:hover {
-            background: rgba(255, 0, 0, 0.4);
-            transform: scale(1.1);
+        .audio-toggle:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
         }
 
-        .visualization-portal.expanded ~ .exit-expanded {
-            display: flex;
+        .audio-toggle.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: rgba(0, 255, 255, 0.8);
+            color: #ffffff;
         }
 
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .portal-viewer {
-                grid-template-columns: 1fr;
-                height: auto;
-                gap: 1rem;
-            }
-            
-            .visualization-portal {
-                height: 60vh;
-            }
-            
-            .info-panel {
-                order: -1;
-            }
-            
-            .param-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Cursor Glow */
-        .custom-cursor {
+        /* Minimal Info Display */
+        .info-display {
             position: fixed;
-            top: 0;
-            left: 0;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .info-display h3 {
+            margin: 0 0 8px 0;
+            color: #00ffff;
+            font-size: 14px;
+        }
+
+        .info-display p {
+            margin: 3px 0;
+            color: #ccc;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .visualization-portal {
+                width: 95vw;
+                height: 85vh;
+                border-radius: 15px;
+            }
+            
+            .audio-toggle {
+                top: 15px;
+                right: 15px;
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+            
+            .info-display {
+                bottom: 15px;
+                left: 15px;
+                padding: 12px 15px;
+                font-size: 11px;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ffff;
+            font-size: 18px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
             width: 20px;
             height: 20px;
-            background: radial-gradient(circle, rgba(255, 0, 128, 0.8), transparent);
+            margin-left: 10px;
+            border: 2px solid transparent;
+            border-top: 2px solid #00ffff;
             border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            animation: spin 1s linear infinite;
         }
 
-        .visualization-portal:hover ~ .custom-cursor {
-            opacity: 1;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <!-- Dark Silicon Background -->
     <div class="silicon-background"></div>
     
-    <!-- Background Mirror Effect -->
-    <div class="background-mirror">
-        <canvas class="mirror-canvas" id="mirror-canvas"></canvas>
-    </div>
-
-    <!-- Main Portal Container -->
-    <div class="portal-container">
-        <div class="portal-viewer">
-            <!-- Visualization Portal -->
-            <div class="visualization-portal" id="visualization-portal">
-                <canvas class="portal-canvas" id="portal-canvas"></canvas>
-                <div class="portal-depth"></div>
-                
-                <!-- Tilt Indicator -->
-                <div class="tilt-indicator">
-                    <div class="tilt-dot" id="tilt-dot"></div>
-                </div>
-            </div>
-
-            <!-- Info Panel -->
-            <div class="info-panel">
-                <div class="creation-title" id="creation-title">QUANTUM PORTAL</div>
-                <div class="creation-id" id="creation-id">#VQ2847391-M8X4P3</div>
-                
-                <!-- Audio Control -->
-                <div class="audio-control">
-                    <button class="audio-toggle" id="audio-toggle">🎵 Audio Reactive ON</button>
-                </div>
-                
-                <!-- Parameters -->
-                <div class="param-grid">
-                    <div class="param-item">
-                        <div class="param-label">System</div>
-                        <div class="param-value" id="system-type">QUANTUM</div>
-                    </div>
-                    <div class="param-item">
-                        <div class="param-label">Geometry</div>
-                        <div class="param-value" id="geometry-type">LATTICE</div>
-                    </div>
-                    <div class="param-item">
-                        <div class="param-label">Hue</div>
-                        <div class="param-value" id="hue-value">280°</div>
-                    </div>
-                    <div class="param-item">
-                        <div class="param-label">Chaos</div>
-                        <div class="param-value" id="chaos-value">0.8</div>
-                    </div>
-                    <div class="param-item">
-                        <div class="param-label">Intensity</div>
-                        <div class="param-value" id="intensity-value">0.95</div>
-                    </div>
-                    <div class="param-item">
-                        <div class="param-label">Speed</div>
-                        <div class="param-value" id="speed-value">1.2x</div>
-                    </div>
-                </div>
-
-                <!-- Control Buttons -->
-                <div class="control-buttons">
-                    <button class="control-btn" onclick="saveToGallery()">💾 Save</button>
-                    <button class="control-btn" onclick="sharePortal()">📤 Share</button>
-                    <button class="control-btn primary" onclick="openInEngine()">⚡ Edit</button>
-                </div>
+    <div class="portal-viewer">
+        <div class="visualization-portal" id="portalWindow">
+            <div class="canvas-container">
+                <canvas id="mirrorCanvas"></canvas>
+                <canvas id="mainCanvas"></canvas>
+                <div class="loading" id="loadingIndicator">Initializing Portal...</div>
             </div>
         </div>
     </div>
 
-    <!-- Exit Expanded Mode -->
-    <div class="exit-expanded" id="exit-expanded" onclick="exitExpandedMode()">✕</div>
+    <button class="audio-toggle" id="audioToggle">🎵 Audio Reactive</button>
     
-    <!-- Custom Cursor -->
-    <div class="custom-cursor" id="custom-cursor"></div>
+    <div class="info-display" id="infoDisplay">
+        <h3>Portal Parameters</h3>
+        <p id="systemType">System: Loading...</p>
+        <p id="geometryInfo">Geometry: Loading...</p>
+        <p id="configInfo">Configuration: Loading...</p>
+    </div>
 
-    <script>
-        // Enhanced Portal Renderer with tilt and rotation effects
-        class PortalRenderer {
-            constructor(canvas, mirrorCanvas) {
-                this.canvas = canvas;
-                this.mirrorCanvas = mirrorCanvas;
-                this.gl = canvas.getContext('webgl2');
-                this.mirrorGl = mirrorCanvas.getContext('webgl2');
-                this.time = 0;
-                this.tilt = { x: 0, y: 0 };
-                this.targetTilt = { x: 0, y: 0 };
-                this.rotation = { x: 0, y: 0, z: 0 };
-                this.audioReactive = true;
-                this.audioData = { bass: 0.5, mid: 0.3, high: 0.2 };
+    <script type="module">
+        class PortalViewer {
+            constructor() {
+                this.mainCanvas = document.getElementById('mainCanvas');
+                this.mirrorCanvas = document.getElementById('mirrorCanvas');
+                this.portalWindow = document.getElementById('portalWindow');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
                 
-                this.parameters = {
-                    hue: 280,
-                    intensity: 0.95,
-                    chaos: 0.8,
-                    speed: 1.2,
-                    system: 'quantum'
-                };
+                this.gl = null;
+                this.mirrorGl = null;
+                this.program = null;
+                this.mirrorProgram = null;
+                
+                this.mouseX = 0.5;
+                this.mouseY = 0.5;
+                this.audioReactive = false;
+                this.audioData = null;
+                
+                // Parameters from URL
+                this.params = this.parseUrlParameters();
+                this.updateInfoDisplay();
                 
                 this.init();
-                this.setupInteractions();
             }
-
-            init() {
-                console.log('PortalRenderer init called');
-                console.log('WebGL contexts:', this.gl ? 'main OK' : 'main FAILED', this.mirrorGl ? 'mirror OK' : 'mirror FAILED');
-                
-                if (!this.gl || !this.mirrorGl) {
-                    console.error('WebGL not supported');
-                    return;
+            
+            async init() {
+                try {
+                    await this.setupCanvases();
+                    await this.initWebGL();
+                    await this.setupEventHandlers();
+                    
+                    this.loadingIndicator.style.display = 'none';
+                    this.startRenderLoop();
+                    
+                    console.log('🎨 Portal viewer initialized successfully');
+                } catch (error) {
+                    console.error('❌ Portal viewer initialization failed:', error);
+                    this.loadingIndicator.textContent = 'Failed to initialize portal';
                 }
-                
-                this.setupShaders();
-                this.setupMirrorShaders();
-                this.resize();
-                this.startAnimation();
-                
-                window.addEventListener('resize', () => this.resize());
-                console.log('PortalRenderer initialization complete');
             }
-
-            setupInteractions() {
-                const portal = document.getElementById('visualization-portal');
-                const tiltDot = document.getElementById('tilt-dot');
-                const cursor = document.getElementById('custom-cursor');
+            
+            async setupCanvases() {
+                const rect = this.portalWindow.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 
-                // Enhanced tilt with rotation effects + flash tracking
-                portal.addEventListener('mousemove', (e) => {
-                    const rect = portal.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / rect.width;
-                    const y = (e.clientY - rect.top) / rect.height;
-                    
-                    // Less dramatic tilt but more rotation
-                    this.targetTilt.x = (x - 0.5) * 0.2;
-                    this.targetTilt.y = (y - 0.5) * 0.2;
-                    
-                    // Update CSS variables for flash effect
-                    const mouseX = x * 100;
-                    const mouseY = y * 100;
-                    portal.style.setProperty('--mouse-x', mouseX + '%');
-                    portal.style.setProperty('--mouse-y', mouseY + '%');
-                    
-                    // Update tilt indicator
-                    const dotX = x * 64 - 32;
-                    const dotY = y * 64 - 32;
-                    tiltDot.style.transform = `translate(${dotX}px, ${dotY}px)`;
-                    
-                    // Custom cursor
-                    cursor.style.left = (e.clientX - 10) + 'px';
-                    cursor.style.top = (e.clientY - 10) + 'px';
-                });
-
-                portal.addEventListener('mouseleave', () => {
-                    this.targetTilt.x = 0;
-                    this.targetTilt.y = 0;
-                    tiltDot.style.transform = 'translate(-50%, -50%)';
-                    
-                    // Reset flash effect position
-                    portal.style.setProperty('--mouse-x', '50%');
-                    portal.style.setProperty('--mouse-y', '50%');
-                });
-
-                // Expand on click
-                portal.addEventListener('click', () => {
-                    portal.classList.toggle('expanded');
-                });
-
-                // Touch support
-                portal.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    const rect = portal.getBoundingClientRect();
-                    const x = (touch.clientX - rect.left) / rect.width;
-                    const y = (touch.clientY - rect.top) / rect.height;
-                    
-                    this.targetTilt.x = (x - 0.5) * 0.15;
-                    this.targetTilt.y = (y - 0.5) * 0.15;
-                });
+                // Main canvas
+                this.mainCanvas.width = rect.width * dpr;
+                this.mainCanvas.height = rect.height * dpr;
+                this.mainCanvas.style.width = rect.width + 'px';
+                this.mainCanvas.style.height = rect.height + 'px';
+                
+                // Mirror canvas (same size)
+                this.mirrorCanvas.width = rect.width * dpr;
+                this.mirrorCanvas.height = rect.height * dpr;
+                this.mirrorCanvas.style.width = rect.width + 'px';
+                this.mirrorCanvas.style.height = rect.height + 'px';
             }
-
-            setupShaders() {
-                const vertexSource = `#version 300 es
-                    in vec2 position;
-                    out vec2 uv;
+            
+            async initWebGL() {
+                // Main canvas WebGL
+                this.gl = this.mainCanvas.getContext('webgl2') || this.mainCanvas.getContext('webgl');
+                if (!this.gl) throw new Error('WebGL not supported');
+                
+                // Mirror canvas WebGL  
+                this.mirrorGl = this.mirrorCanvas.getContext('webgl2') || this.mirrorCanvas.getContext('webgl');
+                if (!this.mirrorGl) throw new Error('Mirror WebGL not supported');
+                
+                // Create shader programs
+                this.program = this.createShaderProgram(this.gl);
+                this.mirrorProgram = this.createShaderProgram(this.mirrorGl);
+                
+                // Setup geometry for both canvases
+                this.setupGeometry(this.gl, this.program);
+                this.setupGeometry(this.mirrorGl, this.mirrorProgram);
+                
+                console.log('✅ WebGL initialized for both canvases');
+            }
+            
+            createShaderProgram(gl) {
+                // Simple but effective vertex shader
+                const vertexShaderSource = `
+                    attribute vec2 position;
+                    varying vec2 vUv;
                     void main() {
+                        vUv = position * 0.5 + 0.5;
                         gl_Position = vec4(position, 0.0, 1.0);
-                        uv = position * 0.5 + 0.5;
-                    }`;
-
-                const fragmentSource = `#version 300 es
-                    precision highp float;
-                    in vec2 uv;
-                    out vec4 fragColor;
-                    
+                    }
+                `;
+                
+                // Enhanced fragment shader with holographic effects
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    varying vec2 vUv;
                     uniform float time;
-                    uniform vec2 tilt;
-                    uniform vec3 rotation;
-                    uniform float hue;
-                    uniform float intensity;
-                    uniform float chaos;
+                    uniform vec2 mouse;
+                    uniform vec2 resolution;
+                    uniform float geometryType;
+                    uniform float density;
                     uniform float speed;
-                    uniform vec3 audioData;
-                    uniform bool audioReactive;
+                    uniform float chaos;
+                    uniform float morph;
+                    uniform float hue;
+                    uniform float saturation;
+                    uniform float intensity;
+                    uniform float audioLevel;
                     
                     vec3 hsv2rgb(vec3 c) {
                         vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
@@ -638,395 +382,248 @@
                         return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
                     }
                     
-                    // 3D rotation matrices
-                    mat3 rotateX(float angle) {
-                        float c = cos(angle);
-                        float s = sin(angle);
-                        return mat3(1, 0, 0, 0, c, -s, 0, s, c);
-                    }
-                    
-                    mat3 rotateY(float angle) {
-                        float c = cos(angle);
-                        float s = sin(angle);
-                        return mat3(c, 0, s, 0, 1, 0, -s, 0, c);
-                    }
-                    
-                    mat3 rotateZ(float angle) {
-                        float c = cos(angle);
-                        float s = sin(angle);
-                        return mat3(c, -s, 0, s, c, 0, 0, 0, 1);
+                    float lattice(vec3 p) {
+                        vec3 q = fract(p * density) - 0.5;
+                        float d = length(q);
+                        return smoothstep(0.3, 0.1, d) * (1.0 + sin(time * speed + d * 10.0) * chaos);
                     }
                     
                     void main() {
-                        vec2 p = (uv - 0.5) * 2.0;
+                        vec2 uv = (vUv - 0.5) * 2.0;
+                        uv.x *= resolution.x / resolution.y;
                         
-                        // Apply tilt with 3D rotation effect
-                        vec3 pos = vec3(p, 0.5);
-                        pos *= rotateX(tilt.y * 2.0) * rotateY(tilt.x * 2.0) * rotateZ(time * 0.1);
+                        float t = time * speed * 0.1;
+                        vec3 p = vec3(uv, sin(t) * morph);
                         
-                        vec2 q = pos.xy + tilt * 1.5;
-                        float t = time * speed;
+                        // Mouse interaction with tilt effect
+                        vec2 mouseOffset = (mouse - 0.5) * 2.0;
+                        p.xy += mouseOffset * 0.3;
+                        p.z += cos(mouseOffset.x) * sin(mouseOffset.y) * 0.5;
                         
-                        // Audio reactive modifications
-                        if (audioReactive) {
-                            t += audioData.x * 2.0;
-                            chaos = mix(chaos, chaos * 1.5, audioData.y);
-                            intensity = mix(intensity, intensity * 1.2, audioData.z);
-                        }
+                        // Create holographic lattice
+                        float pattern = lattice(p);
+                        pattern += lattice(p * 1.5 + vec3(t, -t, t * 0.5)) * 0.7;
+                        pattern += lattice(p * 0.7 + vec3(-t * 0.3, t * 0.7, -t)) * 0.5;
                         
-                        // Enhanced quantum lattice with depth
-                        float complexity = 0.0;
-                        vec2 lattice = q * 1.2;
+                        // Audio reactive enhancement
+                        pattern *= (1.0 + audioLevel * 0.5);
                         
-                        for(int i = 0; i < 6; i++) {
-                            lattice = abs(lattice) / dot(lattice, lattice) - vec2(0.4 + chaos * 0.3);
-                            
-                            // Rotation with tilt influence
-                            float angle = t * 0.3 + float(i) + tilt.x * 3.0 + rotation.z;
-                            lattice *= mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-                            
-                            complexity += length(lattice) * pow(0.7, float(i));
-                        }
+                        // Color with HSV control
+                        float hueShift = hue / 360.0 + t * 0.1;
+                        vec3 color = hsv2rgb(vec3(hueShift + pattern * 0.1, saturation, intensity));
                         
-                        // Portal depth effect
-                        float depth = 1.0 - length(tilt) * 2.0;
-                        complexity *= depth;
+                        // RGB flash effect based on mouse position
+                        vec3 flash = vec3(
+                            sin(mouseOffset.x * 3.14159) * 0.3,
+                            cos(mouseOffset.y * 3.14159) * 0.3,
+                            sin(mouseOffset.x + mouseOffset.y) * 0.3
+                        );
+                        color += flash * pattern;
                         
-                        // Enhanced shimmer with rotation
-                        float shimmer = sin(complexity * 10.0 + t * 5.0 + tilt.x * 8.0) * 0.4;
-                        shimmer += cos(complexity * 15.0 - t * 4.0 + tilt.y * 6.0) * 0.3;
+                        // Holographic shimmer
+                        float shimmer = sin(uv.x * 10.0 + t * 5.0) * sin(uv.y * 8.0 + t * 3.0) * 0.1;
+                        color += vec3(shimmer);
                         
-                        // RGB channel separation with depth
-                        vec3 offset = vec3(0.02, 0.0, -0.02) * sin(t * 2.0 + tilt.x * 4.0) * depth;
-                        float r = sin(complexity * 8.0 + t * 2.5 + offset.x + rotation.x);
-                        float g = sin(complexity * 8.0 + t * 2.5 + offset.y + rotation.y);
-                        float b = sin(complexity * 8.0 + t * 2.5 + offset.z + rotation.z);
-                        
-                        // Dynamic color with tilt influence
-                        vec3 baseColor = hsv2rgb(vec3(
-                            (hue + complexity * 40.0 + t * 20.0 + tilt.x * 100.0) / 360.0, 
-                            0.85 + shimmer * 0.15, 
-                            intensity * (complexity * 0.4 + 0.8) * depth
-                        ));
-                        
-                        // Enhanced RGB effects
-                        baseColor.r += r * 0.3 * depth;
-                        baseColor.g += g * 0.3 * depth;
-                        baseColor.b += b * 0.3 * depth;
-                        
-                        // Portal glow effect
-                        float glow = 1.0 / (complexity + 0.2) * intensity * depth;
-                        baseColor += vec3(glow * 0.5, glow * 0.4, glow * 0.6);
-                        
-                        // Vignette for portal effect
-                        float vignette = 1.0 - length(p) * 0.3;
-                        baseColor *= vignette;
-                        
-                        fragColor = vec4(baseColor, 1.0);
-                    }`;
-
-                this.program = this.createProgram(this.gl, vertexSource, fragmentSource);
-                this.setupGeometry(this.gl);
-            }
-
-            setupMirrorShaders() {
-                // Same shaders but with inverted and dimmed effect
-                const vertexSource = `#version 300 es
-                    in vec2 position;
-                    out vec2 uv;
-                    void main() {
-                        gl_Position = vec4(position, 0.0, 1.0);
-                        uv = position * 0.5 + 0.5;
-                        uv.y = 1.0 - uv.y; // Flip for mirror effect
-                    }`;
-
-                const fragmentSource = `#version 300 es
-                    precision highp float;
-                    in vec2 uv;
-                    out vec4 fragColor;
-                    
-                    uniform float time;
-                    uniform vec2 tilt;
-                    uniform float hue;
-                    uniform float intensity;
-                    uniform float chaos;
-                    uniform float speed;
-                    
-                    vec3 hsv2rgb(vec3 c) {
-                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                        gl_FragColor = vec4(color, pattern * 0.8 + 0.2);
                     }
-                    
-                    void main() {
-                        vec2 p = (uv - 0.5) * 2.0;
-                        vec2 q = p - tilt * 0.5; // Inverted tilt
-                        float t = time * speed * 0.8; // Slower for mirror
-                        
-                        // Simplified version for background
-                        float pattern = sin(q.x * 6.0 + t) * sin(q.y * 6.0 + t * 0.7);
-                        pattern = mix(pattern, sin(length(q) * 8.0 + t * 1.5), chaos * 0.3);
-                        
-                        vec3 color = hsv2rgb(vec3(
-                            (hue + 180.0 + pattern * 20.0) / 360.0, // Inverted hue
-                            0.4, 
-                            intensity * 0.3 * (pattern * 0.2 + 0.3) // Much dimmer
-                        ));
-                        
-                        fragColor = vec4(color, 1.0);
-                    }`;
-
-                this.mirrorProgram = this.createProgram(this.mirrorGl, vertexSource, fragmentSource);
-                this.setupGeometry(this.mirrorGl);
-            }
-
-            createProgram(gl, vertexSource, fragmentSource) {
-                const vertexShader = this.createShader(gl, gl.VERTEX_SHADER, vertexSource);
-                const fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+                `;
+                
+                const vertexShader = this.compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = this.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
                 
                 const program = gl.createProgram();
                 gl.attachShader(program, vertexShader);
                 gl.attachShader(program, fragmentShader);
                 gl.linkProgram(program);
                 
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    throw new Error('Shader program failed to link: ' + gl.getProgramInfoLog(program));
+                }
+                
                 return program;
             }
-
-            createShader(gl, type, source) {
+            
+            compileShader(gl, type, source) {
                 const shader = gl.createShader(type);
                 gl.shaderSource(shader, source);
                 gl.compileShader(shader);
+                
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    throw new Error('Shader compilation error: ' + gl.getShaderInfoLog(shader));
+                }
+                
                 return shader;
             }
-
-            setupGeometry(gl) {
-                const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+            
+            setupGeometry(gl, program) {
+                const vertices = new Float32Array([
+                    -1, -1, 1, -1, -1, 1,
+                    -1, 1, 1, -1, 1, 1
+                ]);
+                
                 const buffer = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
                 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
                 
-                const positionLocation = gl.getAttribLocation(this.program || this.mirrorProgram, 'position');
+                const positionLocation = gl.getAttribLocation(program, 'position');
                 gl.enableVertexAttribArray(positionLocation);
                 gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
             }
-
-            resize() {
-                const rect = this.canvas.getBoundingClientRect();
-                this.canvas.width = rect.width * devicePixelRatio;
-                this.canvas.height = rect.height * devicePixelRatio;
+            
+            setupEventHandlers() {
+                // Mouse tracking for tilt effect
+                this.portalWindow.addEventListener('mousemove', (e) => {
+                    const rect = this.portalWindow.getBoundingClientRect();
+                    this.mouseX = (e.clientX - rect.left) / rect.width;
+                    this.mouseY = 1 - (e.clientY - rect.top) / rect.height;
+                    
+                    // Update CSS custom properties for RGB flash
+                    document.documentElement.style.setProperty('--mouse-x', this.mouseX * 100);
+                    document.documentElement.style.setProperty('--mouse-y', this.mouseY * 100);
+                });
                 
-                this.mirrorCanvas.width = window.innerWidth * devicePixelRatio;
-                this.mirrorCanvas.height = window.innerHeight * devicePixelRatio;
+                // Audio toggle
+                document.getElementById('audioToggle').addEventListener('click', () => {
+                    this.toggleAudio();
+                });
+                
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.setupCanvases();
+                });
             }
-
-            render() {
-                // Smooth tilt interpolation
-                this.tilt.x += (this.targetTilt.x - this.tilt.x) * 0.08;
-                this.tilt.y += (this.targetTilt.y - this.tilt.y) * 0.08;
+            
+            toggleAudio() {
+                const button = document.getElementById('audioToggle');
+                this.audioReactive = !this.audioReactive;
                 
-                // Update rotation based on tilt
-                this.rotation.x = this.tilt.y * 3.0 + this.time * 0.1;
-                this.rotation.y = this.tilt.x * 3.0 + this.time * 0.08;
-                this.rotation.z = this.time * 0.05;
-                
-                // Simulate audio data if reactive
                 if (this.audioReactive) {
-                    this.audioData.bass = 0.5 + 0.3 * Math.sin(this.time * 2.0);
-                    this.audioData.mid = 0.3 + 0.2 * Math.sin(this.time * 3.0);
-                    this.audioData.high = 0.2 + 0.1 * Math.sin(this.time * 5.0);
+                    button.classList.add('active');
+                    button.textContent = '🎵 Audio ON';
+                    this.initAudio();
+                } else {
+                    button.classList.remove('active');
+                    button.textContent = '🎵 Audio OFF';
                 }
-
-                // Render main canvas
-                this.renderCanvas(this.gl, this.program, this.canvas.width, this.canvas.height);
-                
-                // Render mirror canvas
-                this.renderCanvas(this.mirrorGl, this.mirrorProgram, this.mirrorCanvas.width, this.mirrorCanvas.height);
-                
-                this.time += 0.016;
             }
-
-            renderCanvas(gl, program, width, height) {
-                gl.viewport(0, 0, width, height);
-                gl.clearColor(0, 0, 0, 1);
+            
+            async initAudio() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const audioContext = new AudioContext();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    const analyser = audioContext.createAnalyser();
+                    
+                    analyser.fftSize = 256;
+                    source.connect(analyser);
+                    
+                    this.audioData = new Uint8Array(analyser.frequencyBinCount);
+                    this.audioAnalyser = analyser;
+                    
+                    console.log('🎵 Audio reactive mode enabled');
+                } catch (error) {
+                    console.warn('Audio access denied:', error);
+                    this.audioReactive = false;
+                    document.getElementById('audioToggle').classList.remove('active');
+                }
+            }
+            
+            render() {
+                const currentTime = Date.now() * 0.001;
+                
+                // Get audio level if available
+                let audioLevel = 0;
+                if (this.audioReactive && this.audioAnalyser && this.audioData) {
+                    this.audioAnalyser.getByteFrequencyData(this.audioData);
+                    audioLevel = Array.from(this.audioData).reduce((a, b) => a + b, 0) / (this.audioData.length * 255);
+                }
+                
+                // Render main canvas
+                this.renderCanvas(this.gl, this.program, currentTime, audioLevel, false);
+                
+                // Render mirror canvas (dimmed and inverted)
+                this.renderCanvas(this.mirrorGl, this.mirrorProgram, currentTime, audioLevel * 0.3, true);
+            }
+            
+            renderCanvas(gl, program, time, audioLevel, isMirror) {
+                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+                gl.clearColor(0, 0, 0, isMirror ? 0.1 : 0.0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
                 
                 gl.useProgram(program);
                 
                 // Set uniforms
-                gl.uniform1f(gl.getUniformLocation(program, 'time'), this.time);
-                gl.uniform2f(gl.getUniformLocation(program, 'tilt'), this.tilt.x, this.tilt.y);
-                gl.uniform3f(gl.getUniformLocation(program, 'rotation'), this.rotation.x, this.rotation.y, this.rotation.z);
-                gl.uniform1f(gl.getUniformLocation(program, 'hue'), this.parameters.hue);
-                gl.uniform1f(gl.getUniformLocation(program, 'intensity'), this.parameters.intensity);
-                gl.uniform1f(gl.getUniformLocation(program, 'chaos'), this.parameters.chaos);
-                gl.uniform1f(gl.getUniformLocation(program, 'speed'), this.parameters.speed);
-                gl.uniform3f(gl.getUniformLocation(program, 'audioData'), this.audioData.bass, this.audioData.mid, this.audioData.high);
-                gl.uniform1i(gl.getUniformLocation(program, 'audioReactive'), this.audioReactive);
+                const timeLocation = gl.getUniformLocation(program, 'time');
+                const mouseLocation = gl.getUniformLocation(program, 'mouse');
+                const resolutionLocation = gl.getUniformLocation(program, 'resolution');
+                const geometryTypeLocation = gl.getUniformLocation(program, 'geometryType');
+                const densityLocation = gl.getUniformLocation(program, 'density');
+                const speedLocation = gl.getUniformLocation(program, 'speed');
+                const chaosLocation = gl.getUniformLocation(program, 'chaos');
+                const morphLocation = gl.getUniformLocation(program, 'morph');
+                const hueLocation = gl.getUniformLocation(program, 'hue');
+                const saturationLocation = gl.getUniformLocation(program, 'saturation');
+                const intensityLocation = gl.getUniformLocation(program, 'intensity');
+                const audioLevelLocation = gl.getUniformLocation(program, 'audioLevel');
                 
-                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                gl.uniform1f(timeLocation, time);
+                gl.uniform2f(mouseLocation, this.mouseX, this.mouseY);
+                gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+                gl.uniform1f(geometryTypeLocation, this.params.geometryType || 0);
+                gl.uniform1f(densityLocation, this.params.density || 15);
+                gl.uniform1f(speedLocation, this.params.speed || 1);
+                gl.uniform1f(chaosLocation, this.params.chaos || 0.2);
+                gl.uniform1f(morphLocation, this.params.morph || 1);
+                gl.uniform1f(hueLocation, this.params.hue || 200);
+                gl.uniform1f(saturationLocation, this.params.saturation || 0.8);
+                gl.uniform1f(intensityLocation, (this.params.intensity || 0.8) * (isMirror ? 0.3 : 1));
+                gl.uniform1f(audioLevelLocation, audioLevel);
+                
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
             }
-
-            startAnimation() {
-                const animate = () => {
+            
+            startRenderLoop() {
+                const renderFrame = () => {
                     this.render();
-                    requestAnimationFrame(animate);
+                    requestAnimationFrame(renderFrame);
                 };
-                animate();
+                renderFrame();
             }
-
-            toggleAudio() {
-                this.audioReactive = !this.audioReactive;
-                const toggle = document.getElementById('audio-toggle');
-                if (this.audioReactive) {
-                    toggle.textContent = '🎵 Audio Reactive ON';
-                    toggle.classList.remove('inactive');
-                } else {
-                    toggle.textContent = '🔇 Audio Reactive OFF';
-                    toggle.classList.add('inactive');
-                }
-            }
-
-            updateFromUrlParams(urlParams) {
-                // Update renderer parameters from URL
-                const paramMap = {
-                    'hue': 'hue',
-                    'intensity': 'intensity', 
-                    'chaos': 'chaos',
-                    'speed': 'speed',
-                    'system': 'system'
+            
+            parseUrlParameters() {
+                const params = new URLSearchParams(window.location.search);
+                return {
+                    system: params.get('system') || 'quantum',
+                    name: params.get('name') || 'Portal View',
+                    geometryType: parseInt(params.get('geometryType')) || 0,
+                    density: parseFloat(params.get('density')) || 15,
+                    speed: parseFloat(params.get('speed')) || 1,
+                    chaos: parseFloat(params.get('chaos')) || 0.2,
+                    morph: parseFloat(params.get('morph')) || 1,
+                    hue: parseFloat(params.get('hue')) || 200,
+                    saturation: parseFloat(params.get('saturation')) || 0.8,
+                    intensity: parseFloat(params.get('intensity')) || 0.8,
+                    rot4dXW: parseFloat(params.get('rot4dXW')) || 0,
+                    rot4dYW: parseFloat(params.get('rot4dYW')) || 0,
+                    rot4dZW: parseFloat(params.get('rot4dZW')) || 0,
+                    dimension: parseFloat(params.get('dimension')) || 3.5
                 };
-
-                Object.entries(paramMap).forEach(([urlParam, rendererParam]) => {
-                    const value = urlParams.get(urlParam);
-                    if (value !== null) {
-                        if (rendererParam === 'system') {
-                            this.parameters[rendererParam] = value.toLowerCase();
-                        } else {
-                            this.parameters[rendererParam] = parseFloat(value);
-                        }
-                    }
-                });
-
-                console.log('Portal renderer updated with URL parameters:', this.parameters);
-            }
-        }
-
-        // Initialize Portal Renderer
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('Initializing portal renderer...');
-            const canvas = document.getElementById('portal-canvas');
-            const mirrorCanvas = document.getElementById('mirror-canvas');
-            
-            if (!canvas || !mirrorCanvas) {
-                console.error('Canvas elements not found');
-                return;
             }
             
-            try {
-                window.portalRenderer = new PortalRenderer(canvas, mirrorCanvas);
-                console.log('Portal renderer initialized successfully');
-            } catch (error) {
-                console.error('Failed to initialize portal renderer:', error);
-                // Fallback - show something
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.fillStyle = '#ff0080';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = 'white';
-                    ctx.font = '24px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Loading Portal...', canvas.width/2, canvas.height/2);
-                }
+            updateInfoDisplay() {
+                const geometryNames = ['Tetrahedron', 'Hypercube', 'Sphere', 'Torus', 'Klein Bottle', 'Fractal', 'Wave', 'Crystal'];
+                
+                document.getElementById('systemType').textContent = `System: ${this.params.system.toUpperCase()}`;
+                document.getElementById('geometryInfo').textContent = `Geometry: ${geometryNames[this.params.geometryType] || 'Unknown'}`;
+                document.getElementById('configInfo').textContent = `Config: ${this.params.name}`;
             }
-        });
-
-        // Control Functions
-        function exitExpandedMode() {
-            document.getElementById('visualization-portal').classList.remove('expanded');
-        }
-
-        function toggleAudio() {
-            if (window.portalRenderer) {
-                window.portalRenderer.toggleAudio();
-            }
-        }
-
-        function saveToGallery() {
-            console.log('Saving to gallery...');
-        }
-
-        function sharePortal() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Check out this quantum portal!',
-                    url: window.location.href
-                });
-            }
-        }
-
-        function openInEngine() {
-            window.location.href = 'index-clean.html?system=quantum';
-        }
-
-        // Audio toggle click handler
-        document.getElementById('audio-toggle').addEventListener('click', toggleAudio);
-
-        // Complete URL parameter handling for gallery integration
-        function loadParametersFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            // Update UI with URL parameters
-            if (urlParams.get('system')) {
-                const systemType = urlParams.get('system').toUpperCase();
-                document.getElementById('system-type').textContent = systemType;
-                document.getElementById('creation-title').textContent = systemType + ' PORTAL';
-            }
-            
-            if (urlParams.get('name')) {
-                document.getElementById('creation-title').textContent = urlParams.get('name');
-            }
-            
-            if (urlParams.get('id')) {
-                document.getElementById('creation-id').textContent = '#' + urlParams.get('id');
-            }
-            
-            // Update parameter display values
-            const paramMappings = {
-                'hue': 'hue-value',
-                'chaos': 'chaos-value', 
-                'intensity': 'intensity-value',
-                'speed': 'speed-value',
-                'geometryType': 'geometry-type'
-            };
-            
-            Object.entries(paramMappings).forEach(([urlParam, elementId]) => {
-                const value = urlParams.get(urlParam);
-                const element = document.getElementById(elementId);
-                if (value && element) {
-                    if (urlParam === 'hue') {
-                        element.textContent = Math.round(value) + '°';
-                    } else if (urlParam === 'speed') {
-                        element.textContent = parseFloat(value).toFixed(1) + 'x';
-                    } else if (urlParam === 'geometryType') {
-                        const geometryNames = ['TETRA', 'CUBE', 'OCTA', 'ICOSA', 'DODECA', 'LATTICE', 'WAVE', 'CRYSTAL'];
-                        element.textContent = geometryNames[parseInt(value)] || 'LATTICE';
-                    } else {
-                        element.textContent = parseFloat(value).toFixed(2);
-                    }
-                }
-            });
-            
-            // Apply parameters to renderer if it exists
-            if (window.portalRenderer) {
-                window.portalRenderer.updateFromUrlParams(urlParams);
-            }
-            
-            return urlParams;
         }
         
-        // Load parameters when page loads
+        // Initialize portal viewer when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            loadParametersFromUrl();
+            new PortalViewer();
         });
     </script>
 </body>
