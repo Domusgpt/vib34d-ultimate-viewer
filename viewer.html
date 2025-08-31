@@ -59,10 +59,10 @@
         /* Portal Window */
         .visualization-portal {
             position: relative;
-            width: 80vw;
-            height: 80vh;
-            max-width: 1000px;
-            max-height: 700px;
+            width: 85vw;
+            height: 85vh;
+            max-width: 1200px;
+            max-height: 800px;
             border-radius: 20px;
             background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
@@ -78,7 +78,7 @@
         }
 
         .visualization-portal:hover {
-            transform: scale(1.05) translateZ(20px);
+            transform: scale(1.08) translateZ(30px);
             border-color: rgba(0, 255, 255, 0.6);
             box-shadow: 
                 0 0 80px rgba(0, 255, 255, 0.4),
@@ -92,17 +92,18 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(
-                calc(45deg + (var(--mouse-x, 50) - 50) * 0.8deg),
-                transparent 20%,
-                rgba(0, 255, 255, 0.15) 45%,
-                rgba(255, 0, 255, 0.2) 50%,
-                rgba(255, 100, 0, 0.15) 55%,
-                transparent 80%
+                calc(45deg + (var(--mouse-x, 50) - 50) * 1.2deg),
+                transparent 15%,
+                rgba(0, 255, 255, 0.2) 40%,
+                rgba(255, 0, 255, 0.25) 50%,
+                rgba(255, 100, 0, 0.2) 60%,
+                transparent 85%
             );
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
             border-radius: 18px;
+            mix-blend-mode: screen;
         }
 
         .visualization-portal:hover::after {
@@ -118,27 +119,13 @@
             overflow: hidden;
         }
 
-        /* Main Visualization Canvas */
-        #mainCanvas {
+        /* VIB34D Engine Canvases */
+        .engine-canvas {
             position: absolute;
             top: 0; left: 0;
             width: 100%;
             height: 100%;
             border-radius: 18px;
-            transition: all 0.5s ease;
-        }
-
-        /* Mirror Canvas (Background Effect) */
-        #mirrorCanvas {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 120%;
-            height: 120%;
-            transform: translate(-50%, -50%) scale(0.8) rotateX(180deg);
-            opacity: 0.1;
-            filter: blur(2px) brightness(0.3);
-            border-radius: 18px;
-            z-index: -1;
         }
 
         /* Audio Toggle (Top Right) */
@@ -254,9 +241,13 @@
     <div class="portal-viewer">
         <div class="visualization-portal" id="portalWindow">
             <div class="canvas-container">
-                <canvas id="mirrorCanvas"></canvas>
-                <canvas id="mainCanvas"></canvas>
-                <div class="loading" id="loadingIndicator">Initializing Portal...</div>
+                <!-- VIB34D Engine Canvas Layers -->
+                <canvas id="background-canvas" class="engine-canvas"></canvas>
+                <canvas id="shadow-canvas" class="engine-canvas"></canvas>
+                <canvas id="content-canvas" class="engine-canvas"></canvas>
+                <canvas id="highlight-canvas" class="engine-canvas"></canvas>
+                <canvas id="accent-canvas" class="engine-canvas"></canvas>
+                <div class="loading" id="loadingIndicator">Initializing Portal Engine...</div>
             </div>
         </div>
     </div>
@@ -271,22 +262,26 @@
     </div>
 
     <script type="module">
-        class PortalViewer {
+        // Import the actual VIB34D engine components
+        import { IntegratedHolographicVisualizer } from './src/core/Visualizer.js';
+        
+        class PortalEngine {
             constructor() {
-                this.mainCanvas = document.getElementById('mainCanvas');
-                this.mirrorCanvas = document.getElementById('mirrorCanvas');
                 this.portalWindow = document.getElementById('portalWindow');
                 this.loadingIndicator = document.getElementById('loadingIndicator');
                 
-                this.gl = null;
-                this.mirrorGl = null;
-                this.program = null;
-                this.mirrorProgram = null;
-                
+                this.visualizers = [];
                 this.mouseX = 0.5;
                 this.mouseY = 0.5;
+                this.mouseIntensity = 0.0;
+                this.clickIntensity = 0.0;
                 this.audioReactive = false;
                 this.audioData = null;
+                
+                // Portal expansion state
+                this.isExpanded = false;
+                this.tiltX = 0;
+                this.tiltY = 0;
                 
                 // Parameters from URL
                 this.params = this.parseUrlParameters();
@@ -298,16 +293,17 @@
             async init() {
                 try {
                     await this.setupCanvases();
-                    await this.initWebGL();
-                    await this.setupEventHandlers();
+                    await this.createEngineVisualizers();
+                    this.setupPortalInteractions();
+                    this.setupEventHandlers();
                     
                     this.loadingIndicator.style.display = 'none';
                     this.startRenderLoop();
                     
-                    console.log('🎨 Portal viewer initialized successfully');
+                    console.log('🎨 Portal engine initialized with VIB34D visualizers');
                 } catch (error) {
-                    console.error('❌ Portal viewer initialization failed:', error);
-                    this.loadingIndicator.textContent = 'Failed to initialize portal';
+                    console.error('❌ Portal engine initialization failed:', error);
+                    this.loadingIndicator.textContent = 'Failed to initialize portal engine';
                 }
             }
             
@@ -315,173 +311,155 @@
                 const rect = this.portalWindow.getBoundingClientRect();
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 
-                // Main canvas
-                this.mainCanvas.width = rect.width * dpr;
-                this.mainCanvas.height = rect.height * dpr;
-                this.mainCanvas.style.width = rect.width + 'px';
-                this.mainCanvas.style.height = rect.height + 'px';
+                const canvases = ['background-canvas', 'shadow-canvas', 'content-canvas', 'highlight-canvas', 'accent-canvas'];
                 
-                // Mirror canvas (same size)
-                this.mirrorCanvas.width = rect.width * dpr;
-                this.mirrorCanvas.height = rect.height * dpr;
-                this.mirrorCanvas.style.width = rect.width + 'px';
-                this.mirrorCanvas.style.height = rect.height + 'px';
+                canvases.forEach(canvasId => {
+                    const canvas = document.getElementById(canvasId);
+                    if (canvas) {
+                        canvas.width = rect.width * dpr;
+                        canvas.height = rect.height * dpr;
+                        canvas.style.width = rect.width + 'px';
+                        canvas.style.height = rect.height + 'px';
+                    }
+                });
             }
             
-            async initWebGL() {
-                // Main canvas WebGL
-                this.gl = this.mainCanvas.getContext('webgl2') || this.mainCanvas.getContext('webgl');
-                if (!this.gl) throw new Error('WebGL not supported');
+            async createEngineVisualizers() {
+                // Create the 5-layer VIB34D visualization system using actual engine visualizers
+                const layers = [
+                    { id: 'background-canvas', role: 'background', reactivity: 0.5, variant: 0 },
+                    { id: 'shadow-canvas', role: 'shadow', reactivity: 0.7, variant: 1 },
+                    { id: 'content-canvas', role: 'content', reactivity: 0.9, variant: 2 },
+                    { id: 'highlight-canvas', role: 'highlight', reactivity: 1.1, variant: 3 },
+                    { id: 'accent-canvas', role: 'accent', reactivity: 1.5, variant: 4 }
+                ];
                 
-                // Mirror canvas WebGL  
-                this.mirrorGl = this.mirrorCanvas.getContext('webgl2') || this.mirrorCanvas.getContext('webgl');
-                if (!this.mirrorGl) throw new Error('Mirror WebGL not supported');
+                let successfulLayers = 0;
                 
-                // Create shader programs
-                this.program = this.createShaderProgram(this.gl);
-                this.mirrorProgram = this.createShaderProgram(this.mirrorGl);
-                
-                // Setup geometry for both canvases
-                this.setupGeometry(this.gl, this.program);
-                this.setupGeometry(this.mirrorGl, this.mirrorProgram);
-                
-                console.log('✅ WebGL initialized for both canvases');
-            }
-            
-            createShaderProgram(gl) {
-                // Simple but effective vertex shader
-                const vertexShaderSource = `
-                    attribute vec2 position;
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = position * 0.5 + 0.5;
-                        gl_Position = vec4(position, 0.0, 1.0);
+                for (const layer of layers) {
+                    try {
+                        const canvas = document.getElementById(layer.id);
+                        if (!canvas) {
+                            console.error(`❌ Canvas not found: ${layer.id}`);
+                            continue;
+                        }
+                        
+                        console.log(`🔍 Creating VIB34D visualizer for: ${layer.id}`);
+                        const visualizer = new IntegratedHolographicVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
+                        
+                        if (visualizer.gl) {
+                            // Apply current parameters to visualizer
+                            this.applyParametersToVisualizer(visualizer);
+                            
+                            this.visualizers.push(visualizer);
+                            successfulLayers++;
+                            console.log(`✅ Created VIB34D layer: ${layer.role} (${layer.id})`);
+                        } else {
+                            console.error(`❌ No WebGL context for: ${layer.id}`);
+                        }
+                    } catch (error) {
+                        console.error(`❌ Failed to create VIB34D layer ${layer.id}:`, error);
                     }
-                `;
-                
-                // Enhanced fragment shader with holographic effects
-                const fragmentShaderSource = `
-                    precision mediump float;
-                    varying vec2 vUv;
-                    uniform float time;
-                    uniform vec2 mouse;
-                    uniform vec2 resolution;
-                    uniform float geometryType;
-                    uniform float density;
-                    uniform float speed;
-                    uniform float chaos;
-                    uniform float morph;
-                    uniform float hue;
-                    uniform float saturation;
-                    uniform float intensity;
-                    uniform float audioLevel;
-                    
-                    vec3 hsv2rgb(vec3 c) {
-                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-                    }
-                    
-                    float lattice(vec3 p) {
-                        vec3 q = fract(p * density) - 0.5;
-                        float d = length(q);
-                        return smoothstep(0.3, 0.1, d) * (1.0 + sin(time * speed + d * 10.0) * chaos);
-                    }
-                    
-                    void main() {
-                        vec2 uv = (vUv - 0.5) * 2.0;
-                        uv.x *= resolution.x / resolution.y;
-                        
-                        float t = time * speed * 0.1;
-                        vec3 p = vec3(uv, sin(t) * morph);
-                        
-                        // Mouse interaction with tilt effect
-                        vec2 mouseOffset = (mouse - 0.5) * 2.0;
-                        p.xy += mouseOffset * 0.3;
-                        p.z += cos(mouseOffset.x) * sin(mouseOffset.y) * 0.5;
-                        
-                        // Create holographic lattice
-                        float pattern = lattice(p);
-                        pattern += lattice(p * 1.5 + vec3(t, -t, t * 0.5)) * 0.7;
-                        pattern += lattice(p * 0.7 + vec3(-t * 0.3, t * 0.7, -t)) * 0.5;
-                        
-                        // Audio reactive enhancement
-                        pattern *= (1.0 + audioLevel * 0.5);
-                        
-                        // Color with HSV control
-                        float hueShift = hue / 360.0 + t * 0.1;
-                        vec3 color = hsv2rgb(vec3(hueShift + pattern * 0.1, saturation, intensity));
-                        
-                        // RGB flash effect based on mouse position
-                        vec3 flash = vec3(
-                            sin(mouseOffset.x * 3.14159) * 0.3,
-                            cos(mouseOffset.y * 3.14159) * 0.3,
-                            sin(mouseOffset.x + mouseOffset.y) * 0.3
-                        );
-                        color += flash * pattern;
-                        
-                        // Holographic shimmer
-                        float shimmer = sin(uv.x * 10.0 + t * 5.0) * sin(uv.y * 8.0 + t * 3.0) * 0.1;
-                        color += vec3(shimmer);
-                        
-                        gl_FragColor = vec4(color, pattern * 0.8 + 0.2);
-                    }
-                `;
-                
-                const vertexShader = this.compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-                const fragmentShader = this.compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-                
-                const program = gl.createProgram();
-                gl.attachShader(program, vertexShader);
-                gl.attachShader(program, fragmentShader);
-                gl.linkProgram(program);
-                
-                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-                    throw new Error('Shader program failed to link: ' + gl.getProgramInfoLog(program));
                 }
                 
-                return program;
+                console.log(`✅ Created ${successfulLayers}/5 VIB34D engine layers`);
             }
             
-            compileShader(gl, type, source) {
-                const shader = gl.createShader(type);
-                gl.shaderSource(shader, source);
-                gl.compileShader(shader);
-                
-                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                    throw new Error('Shader compilation error: ' + gl.getShaderInfoLog(shader));
+            applyParametersToVisualizer(visualizer) {
+                // Apply URL parameters to the visualizer
+                if (visualizer.updateParameters) {
+                    visualizer.updateParameters({
+                        geometry: this.params.geometryType || 0,
+                        gridDensity: this.params.density || 15,
+                        morphFactor: this.params.morph || 1.0,
+                        chaos: this.params.chaos || 0.2,
+                        speed: this.params.speed || 1.0,
+                        hue: this.params.hue || 200,
+                        intensity: this.params.intensity || 0.8,
+                        saturation: this.params.saturation || 0.8,
+                        rot4dXW: this.params.rot4dXW || 0,
+                        rot4dYW: this.params.rot4dYW || 0,
+                        rot4dZW: this.params.rot4dZW || 0
+                    });
                 }
-                
-                return shader;
             }
             
-            setupGeometry(gl, program) {
-                const vertices = new Float32Array([
-                    -1, -1, 1, -1, -1, 1,
-                    -1, 1, 1, -1, 1, 1
-                ]);
-                
-                const buffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-                
-                const positionLocation = gl.getAttribLocation(program, 'position');
-                gl.enableVertexAttribArray(positionLocation);
-                gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-            }
-            
-            setupEventHandlers() {
-                // Mouse tracking for tilt effect
+            setupPortalInteractions() {
+                // Enhanced mouse tracking for portal expansion and tilt effects
                 this.portalWindow.addEventListener('mousemove', (e) => {
                     const rect = this.portalWindow.getBoundingClientRect();
                     this.mouseX = (e.clientX - rect.left) / rect.width;
                     this.mouseY = 1 - (e.clientY - rect.top) / rect.height;
                     
+                    // Calculate tilt based on mouse position (more dramatic when expanded)
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const maxTilt = this.isExpanded ? 25 : 10; // More tilt when expanded
+                    
+                    this.tiltX = ((e.clientX - rect.left - centerX) / centerX) * maxTilt;
+                    this.tiltY = ((e.clientY - rect.top - centerY) / centerY) * -maxTilt;
+                    
+                    // Update portal visual tilt
+                    this.updatePortalTilt();
+                    
                     // Update CSS custom properties for RGB flash
                     document.documentElement.style.setProperty('--mouse-x', this.mouseX * 100);
                     document.documentElement.style.setProperty('--mouse-y', this.mouseY * 100);
+                    
+                    // Update engine mouse reactivity
+                    this.updateEngineReactivity();
                 });
                 
+                // Portal expansion on hover
+                this.portalWindow.addEventListener('mouseenter', () => {
+                    this.isExpanded = true;
+                    this.mouseIntensity = 1.0;
+                });
+                
+                this.portalWindow.addEventListener('mouseleave', () => {
+                    this.isExpanded = false;
+                    this.mouseIntensity = 0.0;
+                    this.tiltX = 0;
+                    this.tiltY = 0;
+                    this.updatePortalTilt();
+                });
+                
+                // Click effects
+                this.portalWindow.addEventListener('mousedown', () => {
+                    this.clickIntensity = 1.0;
+                });
+                
+                this.portalWindow.addEventListener('mouseup', () => {
+                    this.clickIntensity = 0.0;
+                });
+            }
+            
+            updatePortalTilt() {
+                const portal = this.portalWindow;
+                const scaleValue = this.isExpanded ? 1.08 : 1.0;
+                const zValue = this.isExpanded ? 30 : 0;
+                
+                portal.style.transform = `
+                    scale(${scaleValue}) 
+                    translateZ(${zValue}px) 
+                    rotateX(${this.tiltY}deg) 
+                    rotateY(${this.tiltX}deg)
+                `;
+            }
+            
+            updateEngineReactivity() {
+                // Update all visualizers with current mouse state
+                this.visualizers.forEach(visualizer => {
+                    if (visualizer.updateMouse) {
+                        visualizer.updateMouse(this.mouseX, this.mouseY, this.mouseIntensity);
+                    }
+                    if (visualizer.updateClick) {
+                        visualizer.updateClick(this.clickIntensity);
+                    }
+                });
+            }
+            
+            setupEventHandlers() {
                 // Audio toggle
                 document.getElementById('audioToggle').addEventListener('click', () => {
                     this.toggleAudio();
@@ -490,6 +468,13 @@
                 // Window resize
                 window.addEventListener('resize', () => {
                     this.setupCanvases();
+                });
+                
+                // Keyboard shortcuts
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'f' || e.key === 'F') {
+                        this.toggleFullscreen();
+                    }
                 });
             }
             
@@ -528,9 +513,15 @@
                 }
             }
             
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
             render() {
-                const currentTime = Date.now() * 0.001;
-                
                 // Get audio level if available
                 let audioLevel = 0;
                 if (this.audioReactive && this.audioAnalyser && this.audioData) {
@@ -538,50 +529,12 @@
                     audioLevel = Array.from(this.audioData).reduce((a, b) => a + b, 0) / (this.audioData.length * 255);
                 }
                 
-                // Render main canvas
-                this.renderCanvas(this.gl, this.program, currentTime, audioLevel, false);
-                
-                // Render mirror canvas (dimmed and inverted)
-                this.renderCanvas(this.mirrorGl, this.mirrorProgram, currentTime, audioLevel * 0.3, true);
-            }
-            
-            renderCanvas(gl, program, time, audioLevel, isMirror) {
-                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-                gl.clearColor(0, 0, 0, isMirror ? 0.1 : 0.0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                gl.enable(gl.BLEND);
-                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-                
-                gl.useProgram(program);
-                
-                // Set uniforms
-                const timeLocation = gl.getUniformLocation(program, 'time');
-                const mouseLocation = gl.getUniformLocation(program, 'mouse');
-                const resolutionLocation = gl.getUniformLocation(program, 'resolution');
-                const geometryTypeLocation = gl.getUniformLocation(program, 'geometryType');
-                const densityLocation = gl.getUniformLocation(program, 'density');
-                const speedLocation = gl.getUniformLocation(program, 'speed');
-                const chaosLocation = gl.getUniformLocation(program, 'chaos');
-                const morphLocation = gl.getUniformLocation(program, 'morph');
-                const hueLocation = gl.getUniformLocation(program, 'hue');
-                const saturationLocation = gl.getUniformLocation(program, 'saturation');
-                const intensityLocation = gl.getUniformLocation(program, 'intensity');
-                const audioLevelLocation = gl.getUniformLocation(program, 'audioLevel');
-                
-                gl.uniform1f(timeLocation, time);
-                gl.uniform2f(mouseLocation, this.mouseX, this.mouseY);
-                gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-                gl.uniform1f(geometryTypeLocation, this.params.geometryType || 0);
-                gl.uniform1f(densityLocation, this.params.density || 15);
-                gl.uniform1f(speedLocation, this.params.speed || 1);
-                gl.uniform1f(chaosLocation, this.params.chaos || 0.2);
-                gl.uniform1f(morphLocation, this.params.morph || 1);
-                gl.uniform1f(hueLocation, this.params.hue || 200);
-                gl.uniform1f(saturationLocation, this.params.saturation || 0.8);
-                gl.uniform1f(intensityLocation, (this.params.intensity || 0.8) * (isMirror ? 0.3 : 1));
-                gl.uniform1f(audioLevelLocation, audioLevel);
-                
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
+                // Render all VIB34D engine layers
+                this.visualizers.forEach(visualizer => {
+                    if (visualizer.render) {
+                        visualizer.render();
+                    }
+                });
             }
             
             startRenderLoop() {
@@ -621,9 +574,9 @@
             }
         }
         
-        // Initialize portal viewer when page loads
+        // Initialize portal engine when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new PortalViewer();
+            new PortalEngine();
         });
     </script>
 </body>
