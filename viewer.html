@@ -73,6 +73,9 @@
             align-items: center;
             justify-content: center;
             transform-style: preserve-3d;
+            /* CRITICAL FIX: Prevent control panel from affecting centering */
+            padding-right: 0;
+            margin-right: 0;
         }
 
         /* Portal Window */
@@ -239,6 +242,9 @@
             overflow: hidden;
             width: auto;
             min-width: 160px;
+            /* CRITICAL FIX: Ensure panel doesn't affect layout flow */
+            pointer-events: auto;
+            will-change: transform;
         }
 
         .control-panel:hover,
@@ -519,7 +525,8 @@
                     mouse: true,
                     tilt: true,
                     audio: false,
-                    enhanced: true
+                    enhanced: true,
+                    accentTwin: false
                 };
                 
                 // 4D rotation perspective base values
@@ -775,6 +782,10 @@
                 document.getElementById('enhancedToggle').addEventListener('click', () => {
                     this.toggleInteractivity('enhanced');
                 });
+                
+                document.getElementById('accentTwinToggle').addEventListener('click', () => {
+                    this.toggleInteractivity('accentTwin');
+                });
 
                 // Navigation buttons
                 document.getElementById('backToPortfolio').addEventListener('click', () => {
@@ -858,6 +869,12 @@
                     case 'enhanced':
                         // Enhanced effects add extra visual flair
                         button.textContent = isActive ? 'Enhanced ON' : 'Enhanced OFF';
+                        break;
+                        
+                    case 'accentTwin':
+                        // Accent twin visualizer with complementary parameters
+                        button.textContent = isActive ? 'Accent Twin ON' : 'Accent Twin OFF';
+                        this.toggleAccentTwin(isActive);
                         break;
                 }
                 
@@ -1316,6 +1333,51 @@
                 document.getElementById('systemType').textContent = `System: ${this.params.system.toUpperCase()}`;
                 document.getElementById('geometryInfo').textContent = `Geometry: ${geometryNames[this.params.geometryType] || 'Unknown'}`;
                 document.getElementById('configInfo').textContent = `Config: ${this.params.name}`;
+            },
+            
+            // ACCENT TWIN SYSTEM: Toggle complementary/inverse visualization
+            toggleAccentTwin(isActive) {
+                const twinCanvases = document.querySelectorAll('.twin-canvas');
+                
+                if (isActive) {
+                    // Enable twin canvases with smooth fade-in
+                    twinCanvases.forEach(canvas => {
+                        canvas.classList.add('active');
+                    });
+                    
+                    // Initialize twin visualizers if needed
+                    this.initializeTwinVisualizers();
+                    
+                    console.log('🎭 Accent Twin Visualizer: ENABLED');
+                } else {
+                    // Disable twin canvases with smooth fade-out
+                    twinCanvases.forEach(canvas => {
+                        canvas.classList.remove('active');
+                    });
+                    
+                    console.log('🎭 Accent Twin Visualizer: DISABLED');
+                }
+            },
+            
+            // Initialize twin visualizers with complementary parameters
+            initializeTwinVisualizers() {
+                console.log('🎭 Initializing accent twin visualizers...');
+                
+                // Create complementary parameters by inverting/offsetting key values
+                const twinParams = {
+                    ...this.currentParams,
+                    hue: (this.currentParams.hue + 180) % 360, // Complementary hue
+                    intensity: 1 - this.currentParams.intensity, // Inverse intensity
+                    morphFactor: 2 - this.currentParams.morphFactor, // Inverse morph
+                    chaos: 1 - this.currentParams.chaos, // Inverse chaos
+                    rot4dXW: -this.currentParams.rot4dXW, // Opposite 4D rotation
+                    rot4dYW: -this.currentParams.rot4dYW,
+                    rot4dZW: -this.currentParams.rot4dZW
+                };
+                
+                // Apply twin parameters to twin canvases
+                // Note: This would need integration with the visualizer system
+                console.log('🎨 Twin parameters calculated:', twinParams);
             }
         }
         

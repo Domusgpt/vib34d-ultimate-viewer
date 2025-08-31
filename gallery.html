@@ -1323,12 +1323,12 @@
                 clearTimeout(previewTimeouts.get(cardId));
             }
             
-            // Set delayed preview with 800ms delay to prevent accidental loads
+            // Set optimized preview with 400ms delay for better responsiveness
             const timeout = setTimeout(() => {
-                console.log('🎬 Delayed preview activating for card:', cardId);
+                console.log('🎬 Optimized preview activating for card:', cardId);
                 startPreview(card, params);
                 previewTimeouts.delete(cardId);
-            }, 800);
+            }, 400); // Reduced from 800ms to 400ms
             
             previewTimeouts.set(cardId, timeout);
         };
@@ -1405,7 +1405,7 @@
                         } catch (e) {
                             console.log('Could not post message to iframe:', e);
                         }
-                    }, 30); // Much faster loading - 1/10 of previous delay
+                    }, 15); // Optimized loading - 15ms for faster response
                     // INSTANT LOADING: Show animated canvas immediately
                     setTimeout(() => {
                         const staticPreview = container.querySelector('.static-preview');
@@ -1413,7 +1413,7 @@
                             staticPreview.classList.remove('loading');
                             staticPreview.style.opacity = '0';
                             staticPreview.style.transition = 'opacity 0.15s ease';
-                            setTimeout(() => staticPreview.style.display = 'none', 50);
+                            setTimeout(() => staticPreview.style.display = 'none', 25); // Faster cleanup
                         }
                         
                         // Force iframe to start animation immediately
@@ -2381,7 +2381,7 @@
         let mobileAccelerometer = null;
         
         document.addEventListener('DOMContentLoaded', () => {
-            // Small delay to ensure cards are rendered
+            // Optimized delay for card initialization
             setTimeout(() => {
                 // Initialize enhanced interactivity system
                 InteractivityManager.init();
