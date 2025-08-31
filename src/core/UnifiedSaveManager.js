@@ -614,22 +614,22 @@ export class UnifiedSaveManager {
     }
     
     /**
-     * Normalize parameters across different systems
+     * ✅ FIXED: Keep original parameter names for gallery/viewer compatibility
      */
     normalizeParameters(params) {
         const normalized = {};
         
-        // Map common parameters
-        normalized.geometryType = params.geometry || params.geometryType || 0;
-        normalized.density = params.gridDensity || params.density || 10;
-        normalized.morph = params.morphFactor || params.morph || 0;
+        // ✅ CRITICAL FIX: Don't rename parameters - keep original names for viewer compatibility
+        normalized.geometry = params.geometry || params.geometryType || 0;
+        normalized.gridDensity = params.gridDensity || params.density || 10;
+        normalized.morphFactor = params.morphFactor || params.morph || 0;
         normalized.speed = params.speed || 1.0;
         normalized.chaos = params.chaos || 0;
         normalized.hue = params.hue || 200;
         normalized.saturation = params.saturation || 0.8;
         normalized.intensity = params.intensity || 0.5;
         
-        // 4D rotation parameters
+        // 4D rotation parameters (keep original names)
         normalized.rot4dXW = params.rot4dXW || 0;
         normalized.rot4dYW = params.rot4dYW || 0;
         normalized.rot4dZW = params.rot4dZW || 0;
@@ -639,6 +639,11 @@ export class UnifiedSaveManager {
         normalized.rot4dXY = params.rot4dXY || 0;
         normalized.rot4dXZ = params.rot4dXZ || 0;
         normalized.rot4dYZ = params.rot4dYZ || 0;
+        
+        // ✅ ALSO ADD: Both normalized AND original names for compatibility
+        normalized.geometryType = normalized.geometry;
+        normalized.density = normalized.gridDensity;
+        normalized.morph = normalized.morphFactor;
         
         return normalized;
     }

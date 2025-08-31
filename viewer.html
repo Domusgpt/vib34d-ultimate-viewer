@@ -262,8 +262,10 @@
     </div>
 
     <script type="module">
-        // Import the actual VIB34D engine components
+        // Import system-specific visualizers from VIB34D engine
         import { IntegratedHolographicVisualizer } from './src/core/Visualizer.js';
+        import { QuantumVisualizer } from './src/quantum/QuantumVisualizer.js';
+        import { HolographicVisualizer } from './src/holograms/HolographicVisualizer.js';
         
         class PortalEngine {
             constructor() {
@@ -325,7 +327,9 @@
             }
             
             async createEngineVisualizers() {
-                // Create the 5-layer VIB34D visualization system using actual engine visualizers
+                // Create system-specific visualizers based on URL system parameter
+                console.log(`🔍 Creating visualizers for system: ${this.params.system}`);
+                
                 const layers = [
                     { id: 'background-canvas', role: 'background', reactivity: 0.5, variant: 0 },
                     { id: 'shadow-canvas', role: 'shadow', reactivity: 0.7, variant: 1 },
@@ -344,43 +348,74 @@
                             continue;
                         }
                         
-                        console.log(`🔍 Creating VIB34D visualizer for: ${layer.id}`);
-                        const visualizer = new IntegratedHolographicVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
+                        console.log(`🔍 Creating ${this.params.system} visualizer for: ${layer.id}`);
+                        let visualizer;
                         
-                        if (visualizer.gl) {
+                        // Create system-specific visualizer
+                        switch (this.params.system) {
+                            case 'quantum':
+                                visualizer = new QuantumVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
+                                break;
+                            case 'holographic':
+                                visualizer = new HolographicVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
+                                break;
+                            case 'faceted':
+                            default:
+                                visualizer = new IntegratedHolographicVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
+                                break;
+                        }
+                        
+                        if (visualizer && visualizer.gl) {
                             // Apply current parameters to visualizer
                             this.applyParametersToVisualizer(visualizer);
                             
                             this.visualizers.push(visualizer);
                             successfulLayers++;
-                            console.log(`✅ Created VIB34D layer: ${layer.role} (${layer.id})`);
+                            console.log(`✅ Created ${this.params.system} layer: ${layer.role} (${layer.id})`);
                         } else {
                             console.error(`❌ No WebGL context for: ${layer.id}`);
                         }
                     } catch (error) {
-                        console.error(`❌ Failed to create VIB34D layer ${layer.id}:`, error);
+                        console.error(`❌ Failed to create ${this.params.system} layer ${layer.id}:`, error);
                     }
                 }
                 
-                console.log(`✅ Created ${successfulLayers}/5 VIB34D engine layers`);
+                console.log(`✅ Created ${successfulLayers}/5 ${this.params.system} engine layers`);
             }
             
             applyParametersToVisualizer(visualizer) {
-                // Apply URL parameters to the visualizer
+                // Apply URL parameters to the visualizer using consistent parameter names
                 if (visualizer.updateParameters) {
-                    visualizer.updateParameters({
-                        geometry: this.params.geometryType || 0,
-                        gridDensity: this.params.density || 15,
-                        morphFactor: this.params.morph || 1.0,
-                        chaos: this.params.chaos || 0.2,
-                        speed: this.params.speed || 1.0,
-                        hue: this.params.hue || 200,
-                        intensity: this.params.intensity || 0.8,
-                        saturation: this.params.saturation || 0.8,
-                        rot4dXW: this.params.rot4dXW || 0,
-                        rot4dYW: this.params.rot4dYW || 0,
-                        rot4dZW: this.params.rot4dZW || 0
+                    const standardParams = {
+                        geometry: this.params.geometryType,
+                        gridDensity: this.params.density,
+                        morphFactor: this.params.morph,
+                        chaos: this.params.chaos,
+                        speed: this.params.speed,
+                        hue: this.params.hue,
+                        intensity: this.params.intensity,
+                        saturation: this.params.saturation,
+                        rot4dXW: this.params.rot4dXW,
+                        rot4dYW: this.params.rot4dYW,
+                        rot4dZW: this.params.rot4dZW
+                    };
+                    
+                    console.log(`🔧 Applying parameters to ${this.params.system} visualizer:`, standardParams);
+                    visualizer.updateParameters(standardParams);
+                } else if (visualizer.setParameters) {
+                    // Alternative parameter setting method
+                    visualizer.setParameters({
+                        geometry: this.params.geometryType,
+                        gridDensity: this.params.density,
+                        morphFactor: this.params.morph,
+                        chaos: this.params.chaos,
+                        speed: this.params.speed,
+                        hue: this.params.hue,
+                        intensity: this.params.intensity,
+                        saturation: this.params.saturation
                     });
+                } else {
+                    console.warn(`⚠️ No parameter setting method found for ${this.params.system} visualizer`);
                 }
             }
             
@@ -547,22 +582,31 @@
             
             parseUrlParameters() {
                 const params = new URLSearchParams(window.location.search);
-                return {
-                    system: params.get('system') || 'quantum',
+                
+                // Enhanced parameter parsing with better fallbacks and normalized names
+                const parsedParams = {
+                    system: params.get('system') || 'faceted', // Default to faceted, not quantum
                     name: params.get('name') || 'Portal View',
-                    geometryType: parseInt(params.get('geometryType')) || 0,
-                    density: parseFloat(params.get('density')) || 15,
+                    
+                    // Support both normalized (saved) and original parameter names
+                    geometryType: parseInt(params.get('geometryType') || params.get('geometry')) || 0,
+                    density: parseFloat(params.get('density') || params.get('gridDensity')) || 15,
+                    morph: parseFloat(params.get('morph') || params.get('morphFactor')) || 1,
                     speed: parseFloat(params.get('speed')) || 1,
                     chaos: parseFloat(params.get('chaos')) || 0.2,
-                    morph: parseFloat(params.get('morph')) || 1,
                     hue: parseFloat(params.get('hue')) || 200,
                     saturation: parseFloat(params.get('saturation')) || 0.8,
                     intensity: parseFloat(params.get('intensity')) || 0.8,
+                    
+                    // 4D rotation parameters
                     rot4dXW: parseFloat(params.get('rot4dXW')) || 0,
                     rot4dYW: parseFloat(params.get('rot4dYW')) || 0,
                     rot4dZW: parseFloat(params.get('rot4dZW')) || 0,
                     dimension: parseFloat(params.get('dimension')) || 3.5
                 };
+                
+                console.log('🔍 Parsed URL parameters:', parsedParams);
+                return parsedParams;
             }
             
             updateInfoDisplay() {
