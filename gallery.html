@@ -1035,11 +1035,15 @@
                     </div>
                     
                     <div class="card-info">
-                        <h3>${escapeHtml(variation.name)} <span style="color: rgba(255,255,255,0.4); font-size: 0.8em;">#${globalId}</span></h3>
-                        <div class="card-params">
-                            System: ${sysInfo.name}<br>
-                            Geometry: ${getGeometryName(variation.parameters)}<br>
-                            Hue: ${Math.round(hue)}° | Global ID: ${globalId}
+                        <h3>${escapeHtml(variation.name)} <span style="color: rgba(0,255,255,0.6); font-size: 0.8em; text-shadow: 0 0 5px rgba(0,255,255,0.3);">#${globalId}</span></h3>
+                        <div class="card-params" style="line-height: 1.4; font-size: 0.85em;">
+                            <div style="color: ${sysInfo.color}; font-weight: bold; text-shadow: 0 0 5px ${sysInfo.color}50;">⚡ ${sysInfo.name} SYSTEM</div>
+                            <div style="color: hsl(${hue}, ${saturation}%, 70%); text-shadow: 0 0 3px hsl(${hue}, ${saturation}%, 50%);">🔮 ${getGeometryName(variation.parameters)}</div>
+                            <div style="color: rgba(255,255,255,0.6); font-size: 0.75em; margin-top: 4px;">
+                                <span style="color: hsl(${hue}, ${saturation}%, 60%);">🎨 ${Math.round(hue)}°</span> • 
+                                <span style="color: rgba(0,255,255,0.7);">⚡ ${Math.round((variation.parameters.intensity || 0.5) * 100)}%</span> • 
+                                <span style="color: rgba(255,100,255,0.7);">🌊 ${Math.round((variation.parameters.chaos || 0.2) * 100)}%</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -1059,15 +1063,59 @@
         }
         
         function getGeometryName(params) {
-            const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'];
-            const polytopeNames = ['5-CELL', 'TESSERACT', '16-CELL', '24-CELL', '600-CELL', '120-CELL'];
+            // Enhanced descriptive geometry names with mystical/scientific flair
+            const geometryNames = [
+                'TETRAHEDRON NEXUS', 
+                'HYPERCUBE MATRIX', 
+                'SPHERE QUANTUM', 
+                'TORUS FIELD', 
+                'KLEIN MANIFOLD', 
+                'FRACTAL CASCADE', 
+                'WAVE RESONANCE', 
+                'CRYSTAL LATTICE'
+            ];
+            
+            const polytopeNames = [
+                '5-CELL SIMPLEX', 
+                'TESSERACT CUBE', 
+                '16-CELL CROSS', 
+                '24-CELL DIAMOND', 
+                '600-CELL ICOSA', 
+                '120-CELL DODECA'
+            ];
             
             if (params.polytope !== undefined) {
-                return polytopeNames[params.polytope] || 'POLYTOPE';
+                return polytopeNames[params.polytope] || 'POLYTOPE SPACE';
             }
             
             const geomType = params.geometryType !== undefined ? params.geometryType : params.geometry;
-            return geometryNames[geomType] || 'GEOMETRY';
+            let baseName = geometryNames[geomType] || 'QUANTUM GEOMETRY';
+            
+            // Add parameter-based modifiers for more descriptive names
+            const chaos = params.chaos || 0;
+            const morphFactor = params.morphFactor || params.morph || 1;
+            const intensity = params.intensity || 0.5;
+            
+            // Add descriptive modifiers based on parameter values
+            if (chaos > 0.7) {
+                baseName = `CHAOTIC ${baseName}`;
+            } else if (chaos > 0.4) {
+                baseName = `TURBULENT ${baseName}`;
+            }
+            
+            if (morphFactor > 1.5) {
+                baseName = `MORPHED ${baseName}`;
+            } else if (morphFactor < 0.3) {
+                baseName = `STABLE ${baseName}`;
+            }
+            
+            if (intensity > 0.8) {
+                baseName = `RADIANT ${baseName}`;
+            } else if (intensity < 0.2) {
+                baseName = `SUBTLE ${baseName}`;
+            }
+            
+            return baseName;
         }
         
         function escapeHtml(text) {
@@ -1421,9 +1469,49 @@
             }
         });
         
-        // 🌟 HOLOGRAPHIC CARD BENDING SYSTEM
+        // 🌟 HOLOGRAPHIC CARD BENDING SYSTEM + MICRO REACTIONS
         function initializeHolographicCardEffects() {
             console.log('🌟 Initializing holographic card bending effects...');
+            
+            // 🎵 DISCRETE MICRO SOUND SYSTEM
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            let audioContext = null;
+            
+            const playMicroSound = (type) => {
+                if (!InteractivityManager.state.audio) return;
+                
+                try {
+                    if (!audioContext) {
+                        audioContext = new AudioContext();
+                    }
+                    
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Different micro sounds for different interactions
+                    switch (type) {
+                        case 'hover':
+                            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                            oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+                            gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                            break;
+                        case 'click':
+                            oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+                            gainNode.gain.setValueAtTime(0.03, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+                            break;
+                    }
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                } catch (e) {
+                    // Audio context may be blocked - ignore
+                }
+            };
             
             const cards = document.querySelectorAll('.variation-card');
             
@@ -1434,6 +1522,15 @@
                 card.addEventListener('mouseenter', (e) => {
                     isHovering = true;
                     card.style.setProperty('--bend-intensity', '0.8');
+                    
+                    // 🎵 Discrete micro reaction - subtle audio feedback
+                    playMicroSound('hover');
+                    
+                    // 📱 Haptic feedback on mobile
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(10); // Very brief haptic pulse
+                    }
+                    
                     console.log('🌌 Holographic card activated');
                 });
                 
@@ -1573,6 +1670,14 @@
                     card.style.setProperty('--mouse-x', cardX);
                     card.style.setProperty('--mouse-y', cardY);
                     card.style.setProperty('--bend-intensity', '1.5');
+                    
+                    // 🎵 Discrete micro reaction - click sound
+                    playMicroSound('click');
+                    
+                    // 📱 Enhanced haptic feedback for clicks
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate([20, 10, 20]); // Double pulse for clicks
+                    }
                     
                     card.classList.add('holographic-explosion');
                     
