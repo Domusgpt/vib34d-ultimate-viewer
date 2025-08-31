@@ -110,14 +110,10 @@
             --gallery-pulse-speed: 2s;
         }
         
-        /* DRAMATIC background parallax during tilting */
+        /* Background without layout-breaking transforms */
         body {
             background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
-            transform: 
-                translate(var(--gallery-bg-offset-x), var(--gallery-bg-offset-y))
-                scale(var(--gallery-bg-scale))
-                rotate(var(--gallery-bg-rotation));
-            transition: transform 0.1s ease-out;
+            /* Removed body transform - was breaking mobile layout */
         }
         
         /* DRAMATIC enhanced effects for cards */
@@ -1959,8 +1955,8 @@
                     }
                 });
                 
-                // 🌟 DRAMATIC VISUAL FEEDBACK EFFECTS
-                document.documentElement.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 15); // 50% more intense
+                // 🌟 DRAMATIC VISUAL FEEDBACK EFFECTS  
+                document.documentElement.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 5); // Reduced from 15 to stop mobile chaos
                 
                 // Dramatic glow effects during extreme tilts
                 if (extremeTilt) {
