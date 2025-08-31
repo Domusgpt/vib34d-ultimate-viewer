@@ -3,279 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIB34D Premium Viewer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>VIB34D Portal Viewer</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        body {
-            background: #000;
-            color: #fff;
-            font-family: 'Orbitron', monospace;
+        body { 
+            background: #0a0a0a; 
+            color: #fff; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: 
-                radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 85% 85%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.05) 0%, transparent 60%),
-                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0f1419 100%);
-            animation: background-pulse 8s ease-in-out infinite;
+            perspective: 2000px;
         }
-        
-        @keyframes background-pulse {
-            0%, 100% { 
-                background: 
-                    radial-gradient(circle at 15% 15%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
-                    radial-gradient(circle at 85% 85%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
-                    radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.05) 0%, transparent 60%),
-                    linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0f1419 100%);
-            }
-            50% { 
-                background: 
-                    radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.25) 0%, transparent 50%),
-                    radial-gradient(circle at 75% 75%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.1) 0%, transparent 70%),
-                    linear-gradient(135deg, #0f0f0f 0%, #2a2a3e 40%, #26314e 70%, #1f2429 100%);
-            }
-        }
-        
-        /* PREMIUM ENHANCED viewer card styling with METALLIC FOIL */
-        .variation-card {
-            background: 
-                linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(10, 10, 30, 0.9) 50%, rgba(20, 20, 40, 0.85) 100%),
-                radial-gradient(circle at top left, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
-            border: 4px solid;
-            border-image: linear-gradient(
-                45deg,
-                #fff 0%,
-                #00ffff 10%,
-                #fff 20%,
-                #ff64ff 35%,
-                #fff 45%,
-                #ff9600 60%,
-                #fff 70%,
-                #64ff96 85%,
-                #fff 95%,
-                #00ffff 100%
-            ) 1;
-            animation: border-metallic-rotate 8s linear infinite;
-            border-radius: 20px;
-            padding: 25px;
-            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            cursor: pointer;
-            position: relative;
-            overflow: visible;
-            transform-style: preserve-3d;
-            transform-origin: 50% 50%;
-            will-change: transform;
-            width: 500px; /* Larger for premium standalone viewing */
-            box-shadow: 
-                0 20px 60px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                0 0 40px rgba(0, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            /* CSS variables for mouse tracking */
-            --mouse-x: 50%;
-            --mouse-y: 50%;
-            --bend-intensity: 0;
-        }
-        
-        .variation-card:hover {
-            border-image: linear-gradient(45deg, #00ffff, #ff64ff, #64ff96, #ff9600, #00ffff) 1;
-            box-shadow: 
-                0 30px 60px rgba(0, 255, 255, 0.3),
-                inset 0 2px 0 rgba(255, 255, 255, 0.2),
-                0 0 40px rgba(255, 0, 255, 0.4);
-            transform: 
-                perspective(1200px)
-                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * 8deg))
-                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * 8deg))
-                translateZ(calc(var(--bend-intensity) * 40px))
-                translateY(-15px)
-                scale(1.02);
-            backdrop-filter: blur(20px);
-            z-index: 10;
-            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
-            background: 
-                linear-gradient(135deg, rgba(10, 10, 40, 0.95) 0%, rgba(20, 20, 50, 0.9) 50%, rgba(30, 30, 60, 0.85) 100%),
-                radial-gradient(circle at top left, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at bottom right, rgba(255, 0, 255, 0.2) 0%, transparent 50%);
-        }
-        
-        .variation-card::before {
-            content: '';
-            position: absolute;
+
+        /* Dark Silicon Glass Background */
+        .silicon-background {
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #00ffff, #ff64ff, #ff9600);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .variation-card:hover::before {
-            opacity: 1;
-        }
-        
-        .card-preview {
             width: 100%;
-            height: 380px; /* Much larger for premium viewing */
-            aspect-ratio: 1 / 1;
-            border-radius: 16px;
-            overflow: visible; /* Allow expansion beyond boundaries */
-            margin-bottom: 20px;
+            height: 100%;
             background: 
-                linear-gradient(135deg, #111 0%, #1a1a2e 50%, #16213e 100%);
-            position: relative;
-            border: 2px solid rgba(0, 255, 255, 0.4);
-            transform-style: preserve-3d;
-            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 
-                inset 0 0 40px rgba(0, 255, 255, 0.1),
-                0 0 20px rgba(0, 0, 0, 0.5);
+                radial-gradient(circle at 20% 20%, rgba(100, 100, 100, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(150, 150, 150, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95));
+            backdrop-filter: blur(20px);
+            z-index: -3;
         }
-        
-        /* EXACT MATCH to portfolio cards: Proper X/Y position-based tilting with smooth animation */
-        .variation-card:hover .card-preview {
-            /* Host card responds to mouse position with subtle counter-tilt */
-            transform: 
-                perspective(1000px)
-                translateZ(30px)
-                scale(1.05)
-                rotateY(calc((var(--mouse-x) - 50) * -0.15deg))
-                rotateX(calc((50 - var(--mouse-y)) * 0.1deg));
-            box-shadow: 
-                0 0 50px rgba(0, 255, 255, 0.6),
-                0 0 100px rgba(255, 0, 255, 0.4),
-                inset 0 0 20px rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            background: rgba(17, 17, 17, 0.7);
-            backdrop-filter: blur(15px);
-            filter: brightness(1.2) contrast(1.05) saturate(1.1);
-            overflow: visible;
-            transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
-        }
-        
-        /* Add edge bending class for enhanced effects */
-        .variation-card.edge-bend {
-            filter: brightness(1.3) contrast(1.1) saturate(1.2) hue-rotate(10deg);
-        }
-        
-        /* Default desktop tilt intensity - EXACT MATCH to gallery */
-        .variation-card {
-            --tilt-intensity-y: 1.2deg;
-            --tilt-intensity-x: 0.6deg;
-            --accel-x: 0;
-            --accel-y: 0;
-        }
-        
-        /* Mobile optimization: Reduced tilt intensity by 50% - EXACT MATCH to gallery */
-        @media (max-width: 768px), (pointer: coarse) {
-            .variation-card {
-                --tilt-intensity-y: 0.6deg;
-                --tilt-intensity-x: 0.3deg;
-            }
-        }
-        
-        /* Tilt active state */
-        .variation-card.tilt-active {
-            border-image: linear-gradient(45deg, #00ff00, #00ffff, #00ff00) 1;
-        }
-        
-        .variation-card.tilt-active::after {
-            content: '📱 TILT ACTIVE';
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 255, 0, 0.9);
-            color: #000;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            z-index: 1000;
-            animation: tilt-pulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes tilt-pulse {
-            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
-            50% { opacity: 0.7; transform: translateX(-50%) scale(0.95); }
-        }
-        
-        /* Canvas visualization container inside preview - FILLS SPACE */
-        .visualization-container {
-            width: 100%; /* Fill entire preview */
-            height: 100%;
-            position: absolute;
-            left: 0;
-            top: 0;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.5));
-            transition: all 0.6s ease;
-        }
-        
-        .variation-card:hover .visualization-container {
-            width: 100%; /* Keep full size */
-            height: 100%;
-            left: 0;
-            top: 0;
-            transform: scale(1.02); /* Slight expansion on hover */
-            filter: 
-                drop-shadow(0 0 50px rgba(0, 255, 255, 0.8))
-                drop-shadow(5px 5px 0 rgba(255, 0, 0, 0.3))
-                drop-shadow(-5px -5px 0 rgba(0, 255, 0, 0.3))
-                drop-shadow(0 0 100px rgba(255, 0, 255, 0.4));
-        }
-        
-        /* RGB Moire Offset Effect */
-        .visualization-container::before,
-        .visualization-container::after {
+
+        .silicon-background::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            pointer-events: none;
-            mix-blend-mode: screen;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    rgba(255, 255, 255, 0.02) 1px,
+                    transparent 2px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    rgba(255, 255, 255, 0.02) 1px,
+                    transparent 2px
+                );
+            background-size: 100px 100px;
+            opacity: 0.3;
+        }
+
+        /* Background Mirror Effect */
+        .background-mirror {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
             opacity: 0.15;
-            border-radius: 12px;
+            filter: blur(4px) brightness(0.3);
+            transform: scale(1.2) rotateX(5deg);
         }
-        
-        .visualization-container::before {
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 2px,
-                rgba(255, 0, 0, 0.3) 2px,
-                rgba(255, 0, 0, 0.3) 4px
-            );
-            transform: translate(2px, -2px);
+
+        .mirror-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        
-        .visualization-container::after {
-            background: repeating-linear-gradient(
-                -45deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 255, 255, 0.3) 2px,
-                rgba(0, 255, 255, 0.3) 4px
-            );
-            transform: translate(-2px, 2px);
+
+        /* Main Container */
+        .portal-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
         }
-        
-        /* Holographic shimmer effect overlay - DIRECTIONAL BASED ON MOUSE */
-        .card-preview::after {
+
+        /* Portal Viewer */
+        .portal-viewer {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        /* Visualization Portal */
+        .visualization-portal {
+            position: relative;
+            height: 100%;
+            background: rgba(20, 20, 20, 0.8);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 0 40px rgba(0, 0, 0, 0.8),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            transition: all 0.5s ease;
+            cursor: none;
+        }
+
+        .visualization-portal:hover {
+            transform: scale(1.05) translateZ(50px);
+            border-color: rgba(255, 0, 128, 0.3);
+            box-shadow: 
+                0 0 80px rgba(255, 0, 128, 0.2),
+                inset 0 0 40px rgba(255, 255, 255, 0.1);
+        }
+
+        .visualization-portal.expanded {
+            position: fixed;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            max-width: none;
+            height: auto;
+            z-index: 1000;
+            transform: scale(1) translateZ(100px);
+            border-color: rgba(64, 224, 208, 0.5);
+            box-shadow: 
+                0 0 200px rgba(64, 224, 208, 0.3),
+                inset 0 0 60px rgba(255, 255, 255, 0.15);
+        }
+
+        /* Main Canvas */
+        .portal-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 18px;
+            transition: all 0.3s ease;
+        }
+
+        /* Tilt Indicator */
+        .tilt-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .portal-viewer:hover .tilt-indicator {
+            opacity: 1;
+        }
+
+        .tilt-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #ff0080;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+            transition: all 0.1s ease;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            height: fit-content;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .creation-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ff0080, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .creation-id {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            margin-bottom: 2rem;
+            font-family: monospace;
+        }
+
+        .param-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .param-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .param-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 0.3rem;
+        }
+
+        .param-value {
+            font-weight: bold;
+            color: #40e0d0;
+        }
+
+        /* Audio Control */
+        .audio-control {
+            background: rgba(255, 0, 128, 0.1);
+            border: 1px solid rgba(255, 0, 128, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .audio-toggle {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .audio-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 0, 128, 0.3);
+        }
+
+        .audio-toggle.inactive {
+            background: rgba(255, 255, 255, 0.1);
+            color: #999;
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, #40e0d0, #ff0080);
+            border: none;
+        }
+
+        /* Portal Depth Effect */
+        .portal-depth {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.3) 70%),
+                linear-gradient(45deg, rgba(255, 0, 128, 0.05), rgba(64, 224, 208, 0.05));
+            border-radius: 18px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            /* CSS variables for mouse tracking */
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+        }
+
+        .visualization-portal:hover .portal-depth {
+            opacity: 0.7;
+        }
+
+        /* Holographic Flash Sweep Effect - RGB based on tilt direction */
+        .visualization-portal::after {
             content: '';
             position: absolute;
             top: -50%;
@@ -283,720 +320,714 @@
             width: 200%;
             height: 200%;
             background: linear-gradient(
-                calc(45deg + (var(--mouse-x) - 50) * 0.5deg),
-                transparent 30%,
-                rgba(0, 255, 255, 0.1) 50%,
-                rgba(255, 0, 255, 0.1) 52%,
-                transparent 70%
+                calc(45deg + (var(--mouse-x) - 50) * 0.8deg),
+                transparent 20%,
+                rgba(0, 255, 255, 0.15) 45%,
+                rgba(255, 0, 255, 0.2) 50%,
+                rgba(255, 100, 0, 0.15) 55%,
+                transparent 80%
             );
-            transform: translateX(calc(-100% + (var(--mouse-x) - 50) * 0.5%)) rotate(calc(45deg + (var(--mouse-x) - 50) * 0.3deg));
-            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform: translateX(calc(-120% + (var(--mouse-x) - 50) * 1%)) 
+                       translateY(calc(-50% + (var(--mouse-y) - 50) * 0.5%))
+                       rotate(calc(45deg + (var(--mouse-x) - 50) * 0.5deg));
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
             pointer-events: none;
             opacity: 0;
+            border-radius: 20px;
+            z-index: 10;
         }
-        
-        .variation-card:hover .card-preview::after {
-            transform: translateX(calc(100% - (var(--mouse-x) - 50) * 0.5%)) rotate(calc(45deg + (var(--mouse-x) - 50) * 0.3deg));
+
+        .visualization-portal:hover::after {
+            transform: translateX(calc(120% - (var(--mouse-x) - 50) * 1%)) 
+                       translateY(calc(50% - (var(--mouse-y) - 50) * 0.5%))
+                       rotate(calc(45deg + (var(--mouse-x) - 50) * 0.5deg));
             opacity: 1;
         }
-        
-        .system-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .system-badge.faceted {
-            background: rgba(0, 255, 255, 0.2);
-            border: 1px solid #00ffff;
-            color: #00ffff;
-        }
-        
-        .system-badge.holographic {
-            background: rgba(255, 100, 255, 0.2);
-            border: 1px solid #ff64ff;
-            color: #ff64ff;
-        }
-        
-        .system-badge.quantum {
-            background: rgba(100, 255, 150, 0.2);
-            border: 1px solid #64ff96;
-            color: #64ff96;
-        }
-        
-        .system-badge.polychora {
-            background: rgba(255, 150, 0, 0.2);
-            border: 1px solid #ff9600;
-            color: #ff9600;
-        }
-        
-        .card-info h3 {
+
+        /* Enhanced flash for expanded mode */
+        .visualization-portal.expanded::after {
             background: linear-gradient(
-                125deg,
-                #fff 0%,
-                #00ffff 20%,
-                #fff 25%,
-                #64ff96 45%,
-                #fff 50%,
-                #ff64ff 70%,
-                #fff 75%,
-                #ff9600 90%,
-                #fff 100%
+                calc(45deg + (var(--mouse-x) - 50) * 1.2deg),
+                transparent 10%,
+                rgba(0, 255, 255, 0.25) 40%,
+                rgba(255, 0, 255, 0.3) 50%,
+                rgba(64, 224, 208, 0.25) 60%,
+                transparent 90%
             );
-            background-size: 200% 200%;
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 1.5rem;
-            margin-bottom: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 
-                0 0 30px rgba(0, 255, 255, 0.5),
-                0 2px 4px rgba(0, 0, 0, 0.5);
-            animation: metallic-shine 4s ease-in-out infinite;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
-        
-        @keyframes metallic-shine {
-            0%, 100% { 
-                background-position: 0% 50%;
-                text-shadow: 
-                    0 0 30px rgba(0, 255, 255, 0.5),
-                    0 2px 4px rgba(0, 0, 0, 0.5);
-            }
-            50% { 
-                background-position: 100% 50%;
-                text-shadow: 
-                    0 0 40px rgba(255, 100, 255, 0.7),
-                    0 2px 6px rgba(0, 0, 0, 0.7);
-            }
-        }
-        
-        @keyframes title-glow {
-            0%, 100% { text-shadow: 0 0 30px rgba(0, 255, 255, 0.5); }
-            50% { text-shadow: 0 0 40px rgba(255, 100, 255, 0.7); }
-        }
-        
-        @keyframes border-metallic-rotate {
-            0% {
-                border-image: linear-gradient(
-                    45deg,
-                    #fff, #00ffff, #fff, #ff64ff, #fff, #ff9600, #fff, #64ff96, #fff
-                ) 1;
-            }
-            25% {
-                border-image: linear-gradient(
-                    90deg,
-                    #fff, #ff64ff, #fff, #ff9600, #fff, #64ff96, #fff, #00ffff, #fff
-                ) 1;
-            }
-            50% {
-                border-image: linear-gradient(
-                    135deg,
-                    #fff, #ff9600, #fff, #64ff96, #fff, #00ffff, #fff, #ff64ff, #fff
-                ) 1;
-            }
-            75% {
-                border-image: linear-gradient(
-                    180deg,
-                    #fff, #64ff96, #fff, #00ffff, #fff, #ff64ff, #fff, #ff9600, #fff
-                ) 1;
-            }
-            100% {
-                border-image: linear-gradient(
-                    45deg,
-                    #fff, #00ffff, #fff, #ff64ff, #fff, #ff9600, #fff, #64ff96, #fff
-                ) 1;
-            }
-        }
-        
-        .card-params {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 20px;
-            line-height: 1.6;
-            background: 
-                linear-gradient(135deg, rgba(0, 255, 255, 0.05) 0%, rgba(255, 0, 255, 0.05) 100%);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-        }
-        
-        .card-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        
-        .card-btn {
-            background: 
-                linear-gradient(135deg, rgba(0, 255, 255, 0.15) 0%, rgba(0, 200, 255, 0.25) 100%);
-            border: 2px solid;
-            border-image: linear-gradient(45deg, #00ffff, #0080ff) 1;
-            color: #00ffff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            text-decoration: none;
-            display: inline-block;
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            box-shadow: 
-                0 8px 20px rgba(0, 255, 255, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-        
-        .card-btn:hover {
-            background: 
-                linear-gradient(135deg, rgba(0, 255, 255, 0.35) 0%, rgba(0, 200, 255, 0.45) 100%);
-            border-image: linear-gradient(45deg, #00ffff, #64ff96, #0080ff) 1;
-            box-shadow: 
-                0 12px 30px rgba(0, 255, 255, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                0 0 20px rgba(0, 255, 255, 0.4);
-            transform: translateY(-2px) scale(1.05);
-        }
-        
-        .card-btn.primary {
-            background: 
-                linear-gradient(135deg, rgba(255, 150, 0, 0.2) 0%, rgba(255, 100, 50, 0.35) 100%);
-            border-image: linear-gradient(45deg, #ff9600, #ff6432) 1;
-            color: #ff9600;
-            box-shadow: 
-                0 8px 20px rgba(255, 150, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-        
-        .card-btn.primary:hover {
-            background: 
-                linear-gradient(135deg, rgba(255, 150, 0, 0.4) 0%, rgba(255, 100, 50, 0.55) 100%);
-            border-image: linear-gradient(45deg, #ff9600, #ff64ff, #ff6432) 1;
-            box-shadow: 
-                0 12px 30px rgba(255, 150, 0, 0.7),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                0 0 25px rgba(255, 150, 0, 0.5);
-            transform: translateY(-2px) scale(1.05);
-        }
-        
-        /* Navigation buttons */
-        .nav-controls {
-            position: absolute;
+
+        /* Exit Button for Expanded Mode */
+        .exit-expanded {
+            position: fixed;
             top: 20px;
             right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 100;
-        }
-        
-        .nav-btn {
-            background: rgba(0, 255, 255, 0.2);
-            border: 1px solid #00ffff;
-            color: #00ffff;
-            padding: 8px 15px;
-            border-radius: 8px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
             cursor: pointer;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.7rem;
+            z-index: 1001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
-            text-decoration: none;
         }
-        
-        .nav-btn:hover {
-            background: rgba(0, 255, 255, 0.4);
-            box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+
+        .exit-expanded:hover {
+            background: rgba(255, 0, 0, 0.4);
+            transform: scale(1.1);
         }
-        
-        /* Perspective container for entire viewer */
-        body {
-            perspective: 2000px;
-            perspective-origin: center center;
+
+        .visualization-portal.expanded ~ .exit-expanded {
+            display: flex;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .portal-viewer {
+                grid-template-columns: 1fr;
+                height: auto;
+                gap: 1rem;
+            }
+            
+            .visualization-portal {
+                height: 60vh;
+            }
+            
+            .info-panel {
+                order: -1;
+            }
+            
+            .param-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cursor Glow */
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(255, 0, 128, 0.8), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .visualization-portal:hover ~ .custom-cursor {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <div class="nav-controls">
-        <a href="gallery.html" class="nav-btn">← Back to Portfolio</a>
-        <a href="index.html" class="nav-btn">Open in Engine</a>
-    </div>
+    <!-- Dark Silicon Background -->
+    <div class="silicon-background"></div>
     
-    <div class="variation-card" id="viewerCard">
-        <div class="system-badge" id="systemBadge">SYSTEM</div>
-        
-        <div class="card-preview" data-preview-container>
-            <div class="visualization-container" id="visualizationContainer">
-                <!-- Visualization will be loaded here -->
+    <!-- Background Mirror Effect -->
+    <div class="background-mirror">
+        <canvas class="mirror-canvas" id="mirror-canvas"></canvas>
+    </div>
+
+    <!-- Main Portal Container -->
+    <div class="portal-container">
+        <div class="portal-viewer">
+            <!-- Visualization Portal -->
+            <div class="visualization-portal" id="visualization-portal">
+                <canvas class="portal-canvas" id="portal-canvas"></canvas>
+                <div class="portal-depth"></div>
+                
+                <!-- Tilt Indicator -->
+                <div class="tilt-indicator">
+                    <div class="tilt-dot" id="tilt-dot"></div>
+                </div>
             </div>
-        </div>
-        
-        <div class="card-info">
-            <h3 id="cardTitle">Loading...</h3>
-            <div class="card-params" id="cardParams">
-                Loading parameters...
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <div class="creation-title" id="creation-title">QUANTUM PORTAL</div>
+                <div class="creation-id" id="creation-id">#VQ2847391-M8X4P3</div>
+                
+                <!-- Audio Control -->
+                <div class="audio-control">
+                    <button class="audio-toggle" id="audio-toggle">🎵 Audio Reactive ON</button>
+                </div>
+                
+                <!-- Parameters -->
+                <div class="param-grid">
+                    <div class="param-item">
+                        <div class="param-label">System</div>
+                        <div class="param-value" id="system-type">QUANTUM</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Geometry</div>
+                        <div class="param-value" id="geometry-type">LATTICE</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Hue</div>
+                        <div class="param-value" id="hue-value">280°</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Chaos</div>
+                        <div class="param-value" id="chaos-value">0.8</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Intensity</div>
+                        <div class="param-value" id="intensity-value">0.95</div>
+                    </div>
+                    <div class="param-item">
+                        <div class="param-label">Speed</div>
+                        <div class="param-value" id="speed-value">1.2x</div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="saveToGallery()">💾 Save</button>
+                    <button class="control-btn" onclick="sharePortal()">📤 Share</button>
+                    <button class="control-btn primary" onclick="openInEngine()">⚡ Edit</button>
+                </div>
             </div>
-        </div>
-        
-        <div class="card-controls">
-            <button class="card-btn" onclick="randomizeVisualization()">🎲 Randomize</button>
-            <button class="card-btn" onclick="toggleViewerTilt()">📱 Device Tilt</button>
-            <button class="card-btn primary" onclick="loadIntoEngine()">🎛️ Load Engine</button>
-            <button class="card-btn" onclick="generateTradingCard()">🎴 Trading Card</button>
         </div>
     </div>
 
-    <script type="module">
-        // Parse URL parameters
-        function parseURLParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const params = {};
-            
-            urlParams.forEach((value, key) => {
-                if (key === 'name' || key === 'id') {
-                    params[key] = value;
-                } else {
-                    params[key] = parseFloat(value) || value;
-                }
-            });
-            
-            return params;
-        }
-        
-        // Initialize viewer
-        async function initializeViewer() {
-            const params = parseURLParameters();
-            console.log('🎬 VIB34D Individual Viewer - Loading parameters:', params);
-            
-            // Update UI with parameter info
-            updateCardInfo(params);
-            
-            // Load the visualization engine for the specified system
-            await loadVisualization(params);
-            
-            // Initialize mouse tracking effects
-            initializeHolographicCardEffects();
-            
-            console.log('✅ Individual viewer initialized');
-        }
-        
-        function updateCardInfo(params) {
-            const systemInfo = {
-                faceted: { color: '#00ffff', name: 'FACETED' },
-                holographic: { color: '#ff64ff', name: 'HOLOGRAPHIC' },
-                quantum: { color: '#64ff96', name: 'QUANTUM' },
-                polychora: { color: '#ff9600', name: 'POLYCHORA' }
-            };
-            
-            const system = params.system || 'faceted';
-            const sysInfo = systemInfo[system] || systemInfo.faceted;
-            const name = params.name || 'VIB34D Variation';
-            const globalId = params.id || '???';
-            
-            // Update system badge
-            const badge = document.getElementById('systemBadge');
-            badge.textContent = sysInfo.name;
-            badge.className = `system-badge ${system}`;
-            
-            // Update title
-            document.getElementById('cardTitle').textContent = `${name} #${globalId}`;
-            
-            // Enhanced parameter display matching gallery style
-            const paramsText = [
-                `<strong>System:</strong> <span style="color: ${sysInfo.color}">${sysInfo.name}</span>`,
-                `<strong>Geometry:</strong> ${getGeometryName(params)}`,
-                `<strong>Hue:</strong> <span style="color: hsl(${params.hue || 0}, 70%, 60%)">${Math.round(params.hue || 0)}°</span>`,
-                `<strong>Grid Density:</strong> ${params.gridDensity || 15}`,
-                `<strong>Morph Factor:</strong> ${(params.morphFactor || 1.0).toFixed(1)}`,
-                `<strong>4D Rotations:</strong> XW:${(params.rot4dXW || 0).toFixed(2)} YW:${(params.rot4dYW || 0).toFixed(2)} ZW:${(params.rot4dZW || 0).toFixed(2)}`,
-                `<strong>Speed:</strong> ${(params.speed || 1.0).toFixed(1)}x | <strong>Chaos:</strong> ${((params.chaos || 0.2) * 100).toFixed(0)}%`,
-                `<strong>Intensity:</strong> ${((params.intensity || 0.5) * 100).toFixed(0)}% | <strong>Saturation:</strong> ${((params.saturation || 0.8) * 100).toFixed(0)}%`
-            ].join('<br>');
-            
-            document.getElementById('cardParams').innerHTML = paramsText;
-            
-            // Update page title
-            document.title = `VIB34D ${sysInfo.name} - ${name}`;
-        }
-        
-        function getGeometryName(params) {
-            const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'];
-            const polytopeNames = ['5-CELL', 'TESSERACT', '16-CELL', '24-CELL', '600-CELL', '120-CELL'];
-            
-            if (params.polytope !== undefined) {
-                return polytopeNames[params.polytope] || 'POLYTOPE';
-            }
-            
-            const geomType = params.geometryType !== undefined ? params.geometryType : params.geometry;
-            return geometryNames[geomType] || 'GEOMETRY';
-        }
-        
-        // Enhanced navigation functions matching gallery
-        window.navigateToGallery = function() {
-            window.location.href = 'gallery.html';
-        };
-        
-        window.navigateToEngine = function() {
-            const params = parseURLParameters();
-            const engineUrl = new URL('index.html', window.location.origin);
-            
-            // Copy all non-UI parameters
-            Object.entries(params).forEach(([key, value]) => {
-                if (!['name', 'id', 'hideui'].includes(key) && value !== undefined) {
-                    engineUrl.searchParams.set(key, value);
-                }
-            });
-            
-            window.location.href = engineUrl.toString();
-        };
-        
-        async function loadVisualization(params) {
-            const container = document.getElementById('visualizationContainer');
-            const system = params.system || 'faceted';
-            
-            // Create iframe with the same system and parameters, but in hideui mode
-            const iframe = document.createElement('iframe');
-            iframe.style.cssText = `
-                width: 100%;
-                height: 100%;
-                border: none;
-                border-radius: 12px;
-                background: #000;
-                transform-origin: center center;
-            `;
-            
-            // Build parameter string
-            const paramString = Object.entries(params)
-                .filter(([key]) => !['name', 'id'].includes(key))
-                .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-                .join('&');
-            
-            iframe.src = `index.html?system=${system}&hideui=true&${paramString}`;
-            console.log(`🎯 Loading visualization: ${iframe.src}`);
-            
-            container.appendChild(iframe);
-        }
-        
-        // EXACT COPY from gallery.html - Mouse tracking for individual viewer
-        function initializeHolographicCardEffects() {
-            console.log('🌟 Initializing individual viewer holographic effects...');
-            
-            const card = document.getElementById('viewerCard');
-            if (!card) return;
-            
-            let isHovering = false;
-            
-            // Mouse enter - start holographic effect
-            card.addEventListener('mouseenter', (e) => {
-                isHovering = true;
-                card.style.setProperty('--bend-intensity', '0.8');
-                console.log('🌌 Viewer card holographic effect activated');
-            });
-            
-            // Mouse leave - end holographic effect
-            card.addEventListener('mouseleave', (e) => {
-                isHovering = false;
-                card.style.setProperty('--bend-intensity', '0');
-                card.style.setProperty('--mouse-x', '50%');
-                card.style.setProperty('--mouse-y', '50%');
-                console.log('🌌 Viewer card holographic effect deactivated');
-            });
-            
-            // Mouse move - track position for card bending + iframe parameter updates
-            function handleCardMouseMove(e) {
-                if (!isHovering) return;
+    <!-- Exit Expanded Mode -->
+    <div class="exit-expanded" id="exit-expanded" onclick="exitExpandedMode()">✕</div>
+    
+    <!-- Custom Cursor -->
+    <div class="custom-cursor" id="custom-cursor"></div>
+
+    <script>
+        // Enhanced Portal Renderer with tilt and rotation effects
+        class PortalRenderer {
+            constructor(canvas, mirrorCanvas) {
+                this.canvas = canvas;
+                this.mirrorCanvas = mirrorCanvas;
+                this.gl = canvas.getContext('webgl2');
+                this.mirrorGl = mirrorCanvas.getContext('webgl2');
+                this.time = 0;
+                this.tilt = { x: 0, y: 0 };
+                this.targetTilt = { x: 0, y: 0 };
+                this.rotation = { x: 0, y: 0, z: 0 };
+                this.audioReactive = true;
+                this.audioData = { bass: 0.5, mid: 0.3, high: 0.2 };
                 
-                const rect = card.getBoundingClientRect();
-                const cardX = ((e.clientX - rect.left) / rect.width) * 100;
-                const cardY = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                // Calculate distance from center for bend intensity
-                const centerX = 50;
-                const centerY = 50;
-                const distanceFromCenter = Math.sqrt(
-                    Math.pow(cardX - centerX, 2) + Math.pow(cardY - centerY, 2)
-                );
-                
-                // Dynamic bend intensity based on mouse position
-                const bendIntensity = Math.min(1, (distanceFromCenter / 70) + 0.3);
-                
-                // Update CSS variables for real-time transformation
-                card.style.setProperty('--mouse-x', cardX);
-                card.style.setProperty('--mouse-y', cardY);
-                card.style.setProperty('--bend-intensity', bendIntensity);
-                
-                        // ENHANCED FIX: Send mouse data to iframe visualization with device tilt support
-                const iframe = card.querySelector('iframe');
-                if (iframe && iframe.contentWindow) {
-                    try {
-                        // Send comprehensive interaction data
-                        iframe.contentWindow.postMessage({
-                            type: 'viewerInteraction',
-                            mouse: {
-                                x: cardX / 100, // Normalize to 0-1
-                                y: cardY / 100,
-                                intensity: bendIntensity,
-                                isHovering: true
-                            },
-                            tilt: window.deviceTiltHandler ? window.deviceTiltHandler.getStatus() : null,
-                            timestamp: Date.now()
-                        }, '*');
-                    } catch (e) {
-                        // Cross-origin may block, but iframe should receive if same origin
-                        console.log('🌌 Cross-origin iframe message blocked (expected for external URLs)');
-                    }
-                }
-                
-                // Add extra class for edge effects
-                if (cardX < 20 || cardX > 80 || cardY < 20 || cardY > 80) {
-                    card.classList.add('edge-bend');
-                } else {
-                    card.classList.remove('edge-bend');
-                }
-            }
-            
-            // Attach mousemove to card with optimized event handling
-            card.addEventListener('mousemove', handleCardMouseMove);
-            
-            console.log('✅ Individual viewer holographic effects initialized');
-        }
-        
-        // Enhanced parameter randomization matching gallery system
-        window.randomizeVisualization = function() {
-            console.log('🎲 Randomizing visualization parameters...');
-            
-            // Generate random parameters matching the main engine
-            const randomParams = {
-                system: ['faceted', 'quantum', 'holographic', 'polychora'][Math.floor(Math.random() * 4)],
-                geometry: Math.floor(Math.random() * 8),
-                rot4dXW: (Math.random() - 0.5) * 8, // -4 to +4
-                rot4dYW: (Math.random() - 0.5) * 8,
-                rot4dZW: (Math.random() - 0.5) * 8,
-                gridDensity: Math.floor(Math.random() * 80) + 10, // 10-90
-                morphFactor: Math.random() * 1.8 + 0.2, // 0.2-2.0
-                chaos: Math.random(), // 0-1
-                speed: Math.random() * 2.5 + 0.5, // 0.5-3.0
-                hue: Math.floor(Math.random() * 360), // 0-360
-                intensity: Math.random() * 0.8 + 0.2, // 0.2-1.0
-                saturation: Math.random() * 0.6 + 0.4, // 0.4-1.0
-                name: `Random-${Math.floor(Math.random() * 9999)}`,
-                id: Date.now()
-            };
-            
-            // Build new URL with randomized parameters
-            const newUrl = new URL(window.location);
-            newUrl.search = ''; // Clear existing params
-            
-            Object.entries(randomParams).forEach(([key, value]) => {
-                newUrl.searchParams.set(key, value);
-            });
-            
-            console.log('🎲 Randomized to:', randomParams.system, 'system with', Object.keys(randomParams).length, 'parameters');
-            window.location.href = newUrl.toString();
-        };
-        
-        window.loadIntoEngine = function() {
-            // Load into main engine with current parameters
-            const currentUrl = new URL(window.location.href);
-            const engineUrl = new URL('index.html', window.location.origin);
-            
-            // Copy all parameters except name and id
-            for (const [key, value] of currentUrl.searchParams) {
-                if (!['name', 'id'].includes(key)) {
-                    engineUrl.searchParams.set(key, value);
-                }
-            }
-            
-            window.location.href = engineUrl.toString();
-        };
-        
-        window.generateTradingCard = async function() {
-            try {
-                // Import trading card generator
-                const { TradingCardGenerator } = await import('./src/export/TradingCardGenerator.js');
-                
-                const params = parseURLParameters();
-                const mockEngine = {
-                    parameterManager: {
-                        getAllParameters: () => params
-                    }
+                this.parameters = {
+                    hue: 280,
+                    intensity: 0.95,
+                    chaos: 0.8,
+                    speed: 1.2,
+                    system: 'quantum'
                 };
                 
-                window.currentSystem = params.system || 'faceted';
-                
-                const generator = new TradingCardGenerator(mockEngine);
-                const result = await generator.generateCardHTML('classic');
-                
-                if (result.success) {
-                    // Navigate to the trading card (same tab)
-                    const blob = new Blob([result.html], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    // Navigate to trading card in same tab
-                    window.location.href = url;
-                    
-                    console.log('✅ Trading card generated and navigating');
-                } else {
-                    throw new Error(result.error || 'Generation failed');
-                }
-            } catch (error) {
-                console.error('❌ Trading card generation failed:', error);
-                alert('Trading card generation failed. Please try again.');
-            }
-        };
-        
-        // Message handler for iframe responses
-        window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'visualizationReady') {
-                console.log('🎯 Iframe visualization ready, sending initial parameters');
-                
-                // Send current mouse position to newly loaded iframe
-                const card = document.getElementById('viewerCard');
-                if (card) {
-                    const iframe = card.querySelector('iframe');
-                    if (iframe && iframe.contentWindow && event.source === iframe.contentWindow) {
-                        const rect = card.getBoundingClientRect();
-                        iframe.contentWindow.postMessage({
-                            type: 'viewerInteraction',
-                            mouse: {
-                                x: 0.5, // Center initially
-                                y: 0.5,
-                                intensity: 0,
-                                isHovering: false
-                            },
-                            tilt: window.deviceTiltHandler ? window.deviceTiltHandler.getStatus() : null,
-                            timestamp: Date.now()
-                        }, '*');
-                    }
-                }
-            }
-        });
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeViewer();
-            initializeDeviceTilt();
-        });
-        
-        // Initialize device tilt system for viewer
-        async function initializeDeviceTilt() {
-            try {
-                // Import device tilt handler
-                const { DeviceTiltHandler } = await import('./js/interactions/device-tilt.js');
-                
-                if (!window.deviceTiltHandler) {
-                    window.deviceTiltHandler = new DeviceTiltHandler();
-                    
-                    // Add global toggle function for viewer
-                    window.toggleViewerTilt = async () => {
-                        const card = document.getElementById('viewerCard');
-                        
-                        if (window.deviceTiltHandler.isEnabled) {
-                            window.deviceTiltHandler.disable();
-                            if (card) card.classList.remove('tilt-active');
-                            console.log('🎯 Viewer tilt disabled');
-                        } else {
-                            const enabled = await window.deviceTiltHandler.enable();
-                            if (enabled) {
-                                if (card) card.classList.add('tilt-active');
-                                console.log('🎯 Viewer tilt enabled - tilt device for 4D effects!');
-                            } else {
-                                console.warn('🎯 Device tilt not available or permission denied');
-                            }
-                        }
-                    };
-                    
-                    console.log('🎯 Device tilt system initialized for viewer');
-                }
-            } catch (error) {
-                console.warn('🎯 Device tilt system not available:', error.message);
-            }
-        }
-        
-        // 📱 MOBILE ACCELEROMETER TILT SYSTEM - EXACT MATCH to gallery
-        class MobileAccelerometerTilt {
-            constructor() {
-                this.isActive = false;
-                this.sensitivity = 0.3; // Reduced sensitivity for viewer
-                this.smoothing = 0.15;
-                this.currentAccel = { x: 0, y: 0 };
-                this.targetAccel = { x: 0, y: 0 };
-                this.animationFrame = null;
-                
                 this.init();
+                this.setupInteractions();
             }
-            
-            async init() {
-                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                    console.log('🎯 iOS device detected - requesting motion permission for viewer');
-                    try {
-                        const permission = await DeviceMotionEvent.requestPermission();
-                        if (permission === 'granted') {
-                            this.startListening();
-                        }
-                    } catch (e) {
-                        console.log('🎯 Motion permission not granted for viewer');
+
+            init() {
+                console.log('PortalRenderer init called');
+                console.log('WebGL contexts:', this.gl ? 'main OK' : 'main FAILED', this.mirrorGl ? 'mirror OK' : 'mirror FAILED');
+                
+                if (!this.gl || !this.mirrorGl) {
+                    console.error('WebGL not supported');
+                    return;
+                }
+                
+                this.setupShaders();
+                this.setupMirrorShaders();
+                this.resize();
+                this.startAnimation();
+                
+                window.addEventListener('resize', () => this.resize());
+                console.log('PortalRenderer initialization complete');
+            }
+
+            setupInteractions() {
+                const portal = document.getElementById('visualization-portal');
+                const tiltDot = document.getElementById('tilt-dot');
+                const cursor = document.getElementById('custom-cursor');
+                
+                // Enhanced tilt with rotation effects + flash tracking
+                portal.addEventListener('mousemove', (e) => {
+                    const rect = portal.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width;
+                    const y = (e.clientY - rect.top) / rect.height;
+                    
+                    // Less dramatic tilt but more rotation
+                    this.targetTilt.x = (x - 0.5) * 0.2;
+                    this.targetTilt.y = (y - 0.5) * 0.2;
+                    
+                    // Update CSS variables for flash effect
+                    const mouseX = x * 100;
+                    const mouseY = y * 100;
+                    portal.style.setProperty('--mouse-x', mouseX + '%');
+                    portal.style.setProperty('--mouse-y', mouseY + '%');
+                    
+                    // Update tilt indicator
+                    const dotX = x * 64 - 32;
+                    const dotY = y * 64 - 32;
+                    tiltDot.style.transform = `translate(${dotX}px, ${dotY}px)`;
+                    
+                    // Custom cursor
+                    cursor.style.left = (e.clientX - 10) + 'px';
+                    cursor.style.top = (e.clientY - 10) + 'px';
+                });
+
+                portal.addEventListener('mouseleave', () => {
+                    this.targetTilt.x = 0;
+                    this.targetTilt.y = 0;
+                    tiltDot.style.transform = 'translate(-50%, -50%)';
+                    
+                    // Reset flash effect position
+                    portal.style.setProperty('--mouse-x', '50%');
+                    portal.style.setProperty('--mouse-y', '50%');
+                });
+
+                // Expand on click
+                portal.addEventListener('click', () => {
+                    portal.classList.toggle('expanded');
+                });
+
+                // Touch support
+                portal.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const rect = portal.getBoundingClientRect();
+                    const x = (touch.clientX - rect.left) / rect.width;
+                    const y = (touch.clientY - rect.top) / rect.height;
+                    
+                    this.targetTilt.x = (x - 0.5) * 0.15;
+                    this.targetTilt.y = (y - 0.5) * 0.15;
+                });
+            }
+
+            setupShaders() {
+                const vertexSource = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        uv = position * 0.5 + 0.5;
+                    }`;
+
+                const fragmentSource = `#version 300 es
+                    precision highp float;
+                    in vec2 uv;
+                    out vec4 fragColor;
+                    
+                    uniform float time;
+                    uniform vec2 tilt;
+                    uniform vec3 rotation;
+                    uniform float hue;
+                    uniform float intensity;
+                    uniform float chaos;
+                    uniform float speed;
+                    uniform vec3 audioData;
+                    uniform bool audioReactive;
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
                     }
-                } else if (window.DeviceMotionEvent) {
-                    this.startListening();
+                    
+                    // 3D rotation matrices
+                    mat3 rotateX(float angle) {
+                        float c = cos(angle);
+                        float s = sin(angle);
+                        return mat3(1, 0, 0, 0, c, -s, 0, s, c);
+                    }
+                    
+                    mat3 rotateY(float angle) {
+                        float c = cos(angle);
+                        float s = sin(angle);
+                        return mat3(c, 0, s, 0, 1, 0, -s, 0, c);
+                    }
+                    
+                    mat3 rotateZ(float angle) {
+                        float c = cos(angle);
+                        float s = sin(angle);
+                        return mat3(c, -s, 0, s, c, 0, 0, 0, 1);
+                    }
+                    
+                    void main() {
+                        vec2 p = (uv - 0.5) * 2.0;
+                        
+                        // Apply tilt with 3D rotation effect
+                        vec3 pos = vec3(p, 0.5);
+                        pos *= rotateX(tilt.y * 2.0) * rotateY(tilt.x * 2.0) * rotateZ(time * 0.1);
+                        
+                        vec2 q = pos.xy + tilt * 1.5;
+                        float t = time * speed;
+                        
+                        // Audio reactive modifications
+                        if (audioReactive) {
+                            t += audioData.x * 2.0;
+                            chaos = mix(chaos, chaos * 1.5, audioData.y);
+                            intensity = mix(intensity, intensity * 1.2, audioData.z);
+                        }
+                        
+                        // Enhanced quantum lattice with depth
+                        float complexity = 0.0;
+                        vec2 lattice = q * 1.2;
+                        
+                        for(int i = 0; i < 6; i++) {
+                            lattice = abs(lattice) / dot(lattice, lattice) - vec2(0.4 + chaos * 0.3);
+                            
+                            // Rotation with tilt influence
+                            float angle = t * 0.3 + float(i) + tilt.x * 3.0 + rotation.z;
+                            lattice *= mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+                            
+                            complexity += length(lattice) * pow(0.7, float(i));
+                        }
+                        
+                        // Portal depth effect
+                        float depth = 1.0 - length(tilt) * 2.0;
+                        complexity *= depth;
+                        
+                        // Enhanced shimmer with rotation
+                        float shimmer = sin(complexity * 10.0 + t * 5.0 + tilt.x * 8.0) * 0.4;
+                        shimmer += cos(complexity * 15.0 - t * 4.0 + tilt.y * 6.0) * 0.3;
+                        
+                        // RGB channel separation with depth
+                        vec3 offset = vec3(0.02, 0.0, -0.02) * sin(t * 2.0 + tilt.x * 4.0) * depth;
+                        float r = sin(complexity * 8.0 + t * 2.5 + offset.x + rotation.x);
+                        float g = sin(complexity * 8.0 + t * 2.5 + offset.y + rotation.y);
+                        float b = sin(complexity * 8.0 + t * 2.5 + offset.z + rotation.z);
+                        
+                        // Dynamic color with tilt influence
+                        vec3 baseColor = hsv2rgb(vec3(
+                            (hue + complexity * 40.0 + t * 20.0 + tilt.x * 100.0) / 360.0, 
+                            0.85 + shimmer * 0.15, 
+                            intensity * (complexity * 0.4 + 0.8) * depth
+                        ));
+                        
+                        // Enhanced RGB effects
+                        baseColor.r += r * 0.3 * depth;
+                        baseColor.g += g * 0.3 * depth;
+                        baseColor.b += b * 0.3 * depth;
+                        
+                        // Portal glow effect
+                        float glow = 1.0 / (complexity + 0.2) * intensity * depth;
+                        baseColor += vec3(glow * 0.5, glow * 0.4, glow * 0.6);
+                        
+                        // Vignette for portal effect
+                        float vignette = 1.0 - length(p) * 0.3;
+                        baseColor *= vignette;
+                        
+                        fragColor = vec4(baseColor, 1.0);
+                    }`;
+
+                this.program = this.createProgram(this.gl, vertexSource, fragmentSource);
+                this.setupGeometry(this.gl);
+            }
+
+            setupMirrorShaders() {
+                // Same shaders but with inverted and dimmed effect
+                const vertexSource = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        uv = position * 0.5 + 0.5;
+                        uv.y = 1.0 - uv.y; // Flip for mirror effect
+                    }`;
+
+                const fragmentSource = `#version 300 es
+                    precision highp float;
+                    in vec2 uv;
+                    out vec4 fragColor;
+                    
+                    uniform float time;
+                    uniform vec2 tilt;
+                    uniform float hue;
+                    uniform float intensity;
+                    uniform float chaos;
+                    uniform float speed;
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 p = (uv - 0.5) * 2.0;
+                        vec2 q = p - tilt * 0.5; // Inverted tilt
+                        float t = time * speed * 0.8; // Slower for mirror
+                        
+                        // Simplified version for background
+                        float pattern = sin(q.x * 6.0 + t) * sin(q.y * 6.0 + t * 0.7);
+                        pattern = mix(pattern, sin(length(q) * 8.0 + t * 1.5), chaos * 0.3);
+                        
+                        vec3 color = hsv2rgb(vec3(
+                            (hue + 180.0 + pattern * 20.0) / 360.0, // Inverted hue
+                            0.4, 
+                            intensity * 0.3 * (pattern * 0.2 + 0.3) // Much dimmer
+                        ));
+                        
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                this.mirrorProgram = this.createProgram(this.mirrorGl, vertexSource, fragmentSource);
+                this.setupGeometry(this.mirrorGl);
+            }
+
+            createProgram(gl, vertexSource, fragmentSource) {
+                const vertexShader = this.createShader(gl, gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                return program;
+            }
+
+            createShader(gl, type, source) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            }
+
+            setupGeometry(gl) {
+                const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                const buffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+                
+                const positionLocation = gl.getAttribLocation(this.program || this.mirrorProgram, 'position');
+                gl.enableVertexAttribArray(positionLocation);
+                gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            }
+
+            resize() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width * devicePixelRatio;
+                this.canvas.height = rect.height * devicePixelRatio;
+                
+                this.mirrorCanvas.width = window.innerWidth * devicePixelRatio;
+                this.mirrorCanvas.height = window.innerHeight * devicePixelRatio;
+            }
+
+            render() {
+                // Smooth tilt interpolation
+                this.tilt.x += (this.targetTilt.x - this.tilt.x) * 0.08;
+                this.tilt.y += (this.targetTilt.y - this.tilt.y) * 0.08;
+                
+                // Update rotation based on tilt
+                this.rotation.x = this.tilt.y * 3.0 + this.time * 0.1;
+                this.rotation.y = this.tilt.x * 3.0 + this.time * 0.08;
+                this.rotation.z = this.time * 0.05;
+                
+                // Simulate audio data if reactive
+                if (this.audioReactive) {
+                    this.audioData.bass = 0.5 + 0.3 * Math.sin(this.time * 2.0);
+                    this.audioData.mid = 0.3 + 0.2 * Math.sin(this.time * 3.0);
+                    this.audioData.high = 0.2 + 0.1 * Math.sin(this.time * 5.0);
+                }
+
+                // Render main canvas
+                this.renderCanvas(this.gl, this.program, this.canvas.width, this.canvas.height);
+                
+                // Render mirror canvas
+                this.renderCanvas(this.mirrorGl, this.mirrorProgram, this.mirrorCanvas.width, this.mirrorCanvas.height);
+                
+                this.time += 0.016;
+            }
+
+            renderCanvas(gl, program, width, height) {
+                gl.viewport(0, 0, width, height);
+                gl.clearColor(0, 0, 0, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                gl.useProgram(program);
+                
+                // Set uniforms
+                gl.uniform1f(gl.getUniformLocation(program, 'time'), this.time);
+                gl.uniform2f(gl.getUniformLocation(program, 'tilt'), this.tilt.x, this.tilt.y);
+                gl.uniform3f(gl.getUniformLocation(program, 'rotation'), this.rotation.x, this.rotation.y, this.rotation.z);
+                gl.uniform1f(gl.getUniformLocation(program, 'hue'), this.parameters.hue);
+                gl.uniform1f(gl.getUniformLocation(program, 'intensity'), this.parameters.intensity);
+                gl.uniform1f(gl.getUniformLocation(program, 'chaos'), this.parameters.chaos);
+                gl.uniform1f(gl.getUniformLocation(program, 'speed'), this.parameters.speed);
+                gl.uniform3f(gl.getUniformLocation(program, 'audioData'), this.audioData.bass, this.audioData.mid, this.audioData.high);
+                gl.uniform1i(gl.getUniformLocation(program, 'audioReactive'), this.audioReactive);
+                
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    this.render();
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+
+            toggleAudio() {
+                this.audioReactive = !this.audioReactive;
+                const toggle = document.getElementById('audio-toggle');
+                if (this.audioReactive) {
+                    toggle.textContent = '🎵 Audio Reactive ON';
+                    toggle.classList.remove('inactive');
+                } else {
+                    toggle.textContent = '🔇 Audio Reactive OFF';
+                    toggle.classList.add('inactive');
                 }
             }
-            
-            startListening() {
-                window.addEventListener('devicemotion', this.handleDeviceMotion.bind(this));
-                this.isActive = true;
-                this.animate();
-                console.log('🎯 Mobile accelerometer tilt active for viewer');
-            }
-            
-            handleDeviceMotion(event) {
-                if (!this.isActive || !event.accelerationIncludingGravity) return;
-                
-                const accel = event.accelerationIncludingGravity;
-                
-                // Map acceleration to tilt with reduced sensitivity for viewer
-                this.targetAccel.x = Math.max(-1, Math.min(1, accel.x * this.sensitivity));
-                this.targetAccel.y = Math.max(-1, Math.min(1, accel.y * this.sensitivity));
-            }
-            
-            animate() {
-                // Smooth interpolation
-                this.currentAccel.x += (this.targetAccel.x - this.currentAccel.x) * this.smoothing;
-                this.currentAccel.y += (this.targetAccel.y - this.currentAccel.y) * this.smoothing;
-                
-                // Apply to viewer card
-                const card = document.getElementById('viewerCard');
-                if (card) {
-                    card.style.setProperty('--accel-x', this.currentAccel.x);
-                    card.style.setProperty('--accel-y', this.currentAccel.y);
-                }
-                
-                this.animationFrame = requestAnimationFrame(() => this.animate());
+
+            updateFromUrlParams(urlParams) {
+                // Update renderer parameters from URL
+                const paramMap = {
+                    'hue': 'hue',
+                    'intensity': 'intensity', 
+                    'chaos': 'chaos',
+                    'speed': 'speed',
+                    'system': 'system'
+                };
+
+                Object.entries(paramMap).forEach(([urlParam, rendererParam]) => {
+                    const value = urlParams.get(urlParam);
+                    if (value !== null) {
+                        if (rendererParam === 'system') {
+                            this.parameters[rendererParam] = value.toLowerCase();
+                        } else {
+                            this.parameters[rendererParam] = parseFloat(value);
+                        }
+                    }
+                });
+
+                console.log('Portal renderer updated with URL parameters:', this.parameters);
             }
         }
+
+        // Initialize Portal Renderer
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Initializing portal renderer...');
+            const canvas = document.getElementById('portal-canvas');
+            const mirrorCanvas = document.getElementById('mirror-canvas');
+            
+            if (!canvas || !mirrorCanvas) {
+                console.error('Canvas elements not found');
+                return;
+            }
+            
+            try {
+                window.portalRenderer = new PortalRenderer(canvas, mirrorCanvas);
+                console.log('Portal renderer initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize portal renderer:', error);
+                // Fallback - show something
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = '#ff0080';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Loading Portal...', canvas.width/2, canvas.height/2);
+                }
+            }
+        });
+
+        // Control Functions
+        function exitExpandedMode() {
+            document.getElementById('visualization-portal').classList.remove('expanded');
+        }
+
+        function toggleAudio() {
+            if (window.portalRenderer) {
+                window.portalRenderer.toggleAudio();
+            }
+        }
+
+        function saveToGallery() {
+            console.log('Saving to gallery...');
+        }
+
+        function sharePortal() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Check out this quantum portal!',
+                    url: window.location.href
+                });
+            }
+        }
+
+        function openInEngine() {
+            window.location.href = 'index-clean.html?system=quantum';
+        }
+
+        // Audio toggle click handler
+        document.getElementById('audio-toggle').addEventListener('click', toggleAudio);
+
+        // Complete URL parameter handling for gallery integration
+        function loadParametersFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Update UI with URL parameters
+            if (urlParams.get('system')) {
+                const systemType = urlParams.get('system').toUpperCase();
+                document.getElementById('system-type').textContent = systemType;
+                document.getElementById('creation-title').textContent = systemType + ' PORTAL';
+            }
+            
+            if (urlParams.get('name')) {
+                document.getElementById('creation-title').textContent = urlParams.get('name');
+            }
+            
+            if (urlParams.get('id')) {
+                document.getElementById('creation-id').textContent = '#' + urlParams.get('id');
+            }
+            
+            // Update parameter display values
+            const paramMappings = {
+                'hue': 'hue-value',
+                'chaos': 'chaos-value', 
+                'intensity': 'intensity-value',
+                'speed': 'speed-value',
+                'geometryType': 'geometry-type'
+            };
+            
+            Object.entries(paramMappings).forEach(([urlParam, elementId]) => {
+                const value = urlParams.get(urlParam);
+                const element = document.getElementById(elementId);
+                if (value && element) {
+                    if (urlParam === 'hue') {
+                        element.textContent = Math.round(value) + '°';
+                    } else if (urlParam === 'speed') {
+                        element.textContent = parseFloat(value).toFixed(1) + 'x';
+                    } else if (urlParam === 'geometryType') {
+                        const geometryNames = ['TETRA', 'CUBE', 'OCTA', 'ICOSA', 'DODECA', 'LATTICE', 'WAVE', 'CRYSTAL'];
+                        element.textContent = geometryNames[parseInt(value)] || 'LATTICE';
+                    } else {
+                        element.textContent = parseFloat(value).toFixed(2);
+                    }
+                }
+            });
+            
+            // Apply parameters to renderer if it exists
+            if (window.portalRenderer) {
+                window.portalRenderer.updateFromUrlParams(urlParams);
+            }
+            
+            return urlParams;
+        }
         
-        // Initialize mobile accelerometer for viewer
-        let mobileAccelerometer = null;
-        
-        // Small delay to ensure viewer card is rendered
-        setTimeout(() => {
-            mobileAccelerometer = new MobileAccelerometerTilt();
-        }, 100);
-        
-        console.log('🎬 VIB34D Ultimate Individual Viewer ready');
+        // Load parameters when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadParametersFromUrl();
+        });
     </script>
 </body>
 </html>
