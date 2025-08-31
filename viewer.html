@@ -264,7 +264,7 @@
     <script type="module">
         // Import system-specific visualizers from VIB34D engine
         import { IntegratedHolographicVisualizer } from './src/core/Visualizer.js';
-        import { QuantumVisualizer } from './src/quantum/QuantumVisualizer.js';
+        import { QuantumHolographicVisualizer } from './src/quantum/QuantumVisualizer.js';
         import { HolographicVisualizer } from './src/holograms/HolographicVisualizer.js';
         
         class PortalEngine {
@@ -354,7 +354,7 @@
                         // Create system-specific visualizer
                         switch (this.params.system) {
                             case 'quantum':
-                                visualizer = new QuantumVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
+                                visualizer = new QuantumHolographicVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
                                 break;
                             case 'holographic':
                                 visualizer = new HolographicVisualizer(layer.id, layer.role, layer.reactivity, layer.variant);
