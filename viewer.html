@@ -156,6 +156,21 @@
             border-color: rgba(0, 255, 255, 0.8);
             color: #ffffff;
         }
+        
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
 
         /* Minimal Info Display */
         .info-display {
@@ -252,7 +267,12 @@
         </div>
     </div>
 
-    <button class="audio-toggle" id="audioToggle">🎵 Audio Reactive</button>
+    <div class="control-panel">
+        <button class="audio-toggle active" id="mouseToggle">🖱️ Mouse Reactive</button>
+        <button class="audio-toggle active" id="tiltToggle">📱 Device Tilt</button>
+        <button class="audio-toggle" id="audioToggle">🎵 Audio Reactive</button>
+        <button class="audio-toggle active" id="enhancedToggle">✨ Enhanced FX</button>
+    </div>
     
     <div class="info-display" id="infoDisplay">
         <h3>Portal Parameters</h3>
@@ -277,6 +297,28 @@
                 this.mouseY = 0.5;
                 this.mouseIntensity = 0.0;
                 this.clickIntensity = 0.0;
+                
+                // Enhanced Interactivity State with 4D perspective mapping
+                this.interactivityState = {
+                    mouse: true,
+                    tilt: true,
+                    audio: false,
+                    enhanced: true
+                };
+                
+                // 4D rotation perspective base values
+                this.baseRotations = {
+                    rot4dXW: 0,
+                    rot4dYW: 0,
+                    rot4dZW: 0
+                };
+                
+                // Device orientation tracking for realistic 4D perspective
+                this.deviceOrientation = {
+                    alpha: 0,   // Z-axis rotation (compass)
+                    beta: 0,    // X-axis rotation (front-to-back tilt)  
+                    gamma: 0    // Y-axis rotation (left-to-right tilt)
+                };
                 this.audioReactive = false;
                 this.audioData = null;
                 
@@ -287,6 +329,12 @@
                 
                 // Parameters from URL
                 this.params = this.parseUrlParameters();
+                
+                // Store base 4D rotations from URL parameters
+                this.baseRotations.rot4dXW = this.params.rot4dXW;
+                this.baseRotations.rot4dYW = this.params.rot4dYW;
+                this.baseRotations.rot4dZW = this.params.rot4dZW;
+                
                 this.updateInfoDisplay();
                 
                 this.init();
@@ -443,6 +491,11 @@
                     
                     // Update engine mouse reactivity
                     this.updateEngineReactivity();
+                    
+                    // Enhanced: Mouse movement affects 4D perspective like looking around
+                    if (this.interactivityState.mouse && this.interactivityState.enhanced) {
+                        this.updateMouse4DPerspective();
+                    }
                 });
                 
                 // Portal expansion on hover
@@ -495,9 +548,21 @@
             }
             
             setupEventHandlers() {
-                // Audio toggle
+                // Enhanced interactivity toggles
+                document.getElementById('mouseToggle').addEventListener('click', () => {
+                    this.toggleInteractivity('mouse');
+                });
+                
+                document.getElementById('tiltToggle').addEventListener('click', () => {
+                    this.toggleInteractivity('tilt');
+                });
+                
                 document.getElementById('audioToggle').addEventListener('click', () => {
-                    this.toggleAudio();
+                    this.toggleInteractivity('audio');
+                });
+                
+                document.getElementById('enhancedToggle').addEventListener('click', () => {
+                    this.toggleInteractivity('enhanced');
                 });
                 
                 // Window resize
@@ -511,20 +576,61 @@
                         this.toggleFullscreen();
                     }
                 });
+                
+                // Device orientation for mobile tilt
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', (e) => {
+                        if (this.interactivityState.tilt) {
+                            this.handleDeviceOrientation(e);
+                        }
+                    });
+                }
             }
             
-            toggleAudio() {
-                const button = document.getElementById('audioToggle');
-                this.audioReactive = !this.audioReactive;
+            toggleInteractivity(type) {
+                this.interactivityState[type] = !this.interactivityState[type];
+                const button = document.getElementById(`${type}Toggle`);
+                const isActive = this.interactivityState[type];
                 
-                if (this.audioReactive) {
+                if (isActive) {
                     button.classList.add('active');
-                    button.textContent = '🎵 Audio ON';
-                    this.initAudio();
                 } else {
                     button.classList.remove('active');
-                    button.textContent = '🎵 Audio OFF';
                 }
+                
+                // Handle specific interactivity types
+                switch (type) {
+                    case 'audio':
+                        if (isActive) {
+                            button.textContent = '🎵 Audio ON';
+                            this.initAudio();
+                        } else {
+                            button.textContent = '🎵 Audio OFF';
+                            this.audioReactive = false;
+                        }
+                        break;
+                        
+                    case 'mouse':
+                        // Mouse reactivity affects portal tilt and visualizer interaction
+                        button.textContent = isActive ? '🖱️ Mouse ON' : '🖱️ Mouse OFF';
+                        break;
+                        
+                    case 'tilt':
+                        // Device tilt affects 4D rotation perspective
+                        button.textContent = isActive ? '📱 Tilt ON' : '📱 Tilt OFF';
+                        if (!isActive) {
+                            // Reset to base rotations when tilt is disabled
+                            this.update4DPerspective(0, 0, 0);
+                        }
+                        break;
+                        
+                    case 'enhanced':
+                        // Enhanced effects add extra visual flair
+                        button.textContent = isActive ? '✨ Enhanced ON' : '✨ Enhanced OFF';
+                        break;
+                }
+                
+                console.log(`🎮 ${type} interactivity: ${isActive ? 'ON' : 'OFF'}`);
             }
             
             async initAudio() {
@@ -546,6 +652,95 @@
                     this.audioReactive = false;
                     document.getElementById('audioToggle').classList.remove('active');
                 }
+            }
+            
+            handleDeviceOrientation(event) {
+                // Update device orientation tracking
+                this.deviceOrientation.alpha = event.alpha || 0;  // Z-axis (compass)
+                this.deviceOrientation.beta = event.beta || 0;    // X-axis (front-back tilt)
+                this.deviceOrientation.gamma = event.gamma || 0;  // Y-axis (left-right tilt)
+                
+                // Map device orientation to 4D perspective changes
+                this.update4DPerspective(
+                    this.deviceOrientation.alpha,
+                    this.deviceOrientation.beta,
+                    this.deviceOrientation.gamma
+                );
+            }
+            
+            update4DPerspective(alpha, beta, gamma) {
+                if (!this.interactivityState.tilt) return;
+                
+                // Convert degrees to radians and scale for subtle but noticeable effect
+                const alphaRad = (alpha * Math.PI / 180) * 0.3;   // Compass rotation -> rot4dZW
+                const betaRad = (beta * Math.PI / 180) * 0.5;     // Front-back tilt -> rot4dXW  
+                const gammaRad = (gamma * Math.PI / 180) * 0.5;   // Left-right tilt -> rot4dYW
+                
+                // Calculate new 4D rotations that give convincing perspective shifts
+                const new4DRotations = {
+                    // XW rotation: Front-back tilt affects the 4D depth perspective
+                    rot4dXW: this.baseRotations.rot4dXW + betaRad,
+                    
+                    // YW rotation: Left-right tilt affects the 4D horizontal perspective
+                    rot4dYW: this.baseRotations.rot4dYW + gammaRad,
+                    
+                    // ZW rotation: Compass rotation affects the 4D rotational perspective
+                    rot4dZW: this.baseRotations.rot4dZW + alphaRad
+                };
+                
+                // Apply the new 4D rotations to all visualizers
+                this.visualizers.forEach(visualizer => {
+                    if (visualizer.updateParameters) {
+                        visualizer.updateParameters(new4DRotations);
+                    }
+                });
+                
+                // Also update portal CSS transform for enhanced visual feedback
+                const tiltIntensity = Math.sqrt(betaRad*betaRad + gammaRad*gammaRad) * 10;
+                document.documentElement.style.setProperty('--tilt-intensity', tiltIntensity);
+                
+                console.log(`🌐 4D Perspective: XW=${new4DRotations.rot4dXW.toFixed(2)}, YW=${new4DRotations.rot4dYW.toFixed(2)}, ZW=${new4DRotations.rot4dZW.toFixed(2)}`);
+            }
+            
+            updateMouse4DPerspective() {
+                // Map mouse position to 4D viewing angle changes
+                // This creates the effect of "looking around" the 4D object
+                const mouseOffsetX = (this.mouseX - 0.5) * 2; // -1 to 1
+                const mouseOffsetY = (this.mouseY - 0.5) * 2; // -1 to 1
+                
+                // Scale mouse movement for subtle but noticeable 4D rotation
+                const mouseSensitivity = 0.8;
+                const mouse4DRotations = {
+                    // Horizontal mouse movement -> YW rotation (side-to-side 4D perspective)
+                    rot4dYW: this.baseRotations.rot4dYW + (mouseOffsetX * mouseSensitivity),
+                    
+                    // Vertical mouse movement -> XW rotation (up-down 4D perspective) 
+                    rot4dXW: this.baseRotations.rot4dXW + (mouseOffsetY * mouseSensitivity),
+                    
+                    // Keep ZW rotation stable for mouse interaction
+                    rot4dZW: this.baseRotations.rot4dZW
+                };
+                
+                // Apply mouse-driven 4D perspective to visualizers
+                this.visualizers.forEach(visualizer => {
+                    if (visualizer.updateParameters) {
+                        // Combine with any existing device tilt effects
+                        const combinedRotations = { ...mouse4DRotations };
+                        
+                        // If device tilt is also active, add those rotations too
+                        if (this.interactivityState.tilt) {
+                            const tiltAlphaRad = (this.deviceOrientation.alpha * Math.PI / 180) * 0.3;
+                            const tiltBetaRad = (this.deviceOrientation.beta * Math.PI / 180) * 0.5;
+                            const tiltGammaRad = (this.deviceOrientation.gamma * Math.PI / 180) * 0.5;
+                            
+                            combinedRotations.rot4dXW += tiltBetaRad;
+                            combinedRotations.rot4dYW += tiltGammaRad;
+                            combinedRotations.rot4dZW = this.baseRotations.rot4dZW + tiltAlphaRad;
+                        }
+                        
+                        visualizer.updateParameters(combinedRotations);
+                    }
+                });
             }
             
             toggleFullscreen() {

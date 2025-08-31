@@ -61,6 +61,42 @@
             display: flex;
             justify-content: center;
             gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        /* Enhanced Interactivity Controls */
+        .interactivity-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .toggle-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            color: rgba(0, 255, 255, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .toggle-btn:hover {
+            border-color: rgba(0, 255, 255, 0.6);
+            color: rgba(0, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .toggle-btn.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
         }
         
         .nav-btn {
@@ -747,6 +783,22 @@
             <a href="index.html" class="nav-btn">🎛️ VIB34D Engine</a>
             <button class="nav-btn" onclick="downloadEngine()">⬇️ Download Engine</button>
         </div>
+        
+        <!-- Enhanced Interactivity Controls -->
+        <div class="interactivity-controls">
+            <button class="toggle-btn active" id="mouseToggle" onclick="toggleInteractivity('mouse')">
+                🖱️ Mouse Reactivity
+            </button>
+            <button class="toggle-btn active" id="tiltToggle" onclick="toggleInteractivity('tilt')">
+                📱 Device Tilt
+            </button>
+            <button class="toggle-btn" id="audioToggle" onclick="toggleInteractivity('audio')">
+                🎵 Audio Reactive
+            </button>
+            <button class="toggle-btn active" id="enhancedToggle" onclick="toggleInteractivity('enhanced')">
+                ✨ Enhanced Effects
+            </button>
+        </div>
     </div>
     
     <div class="loading" id="loadingMsg">
@@ -1386,6 +1438,9 @@
                 function handleCardMouseMove(e) {
                     if (!isHovering) return;
                     
+                    // Check if mouse reactivity is enabled
+                    if (!InteractivityManager.state.mouse) return;
+                    
                     const rect = card.getBoundingClientRect();
                     const cardX = ((e.clientX - rect.left) / rect.width) * 100;
                     const cardY = ((e.clientY - rect.top) / rect.height) * 100;
@@ -1535,6 +1590,106 @@
             console.log(`✅ Holographic effects initialized for ${cards.length} cards`);
         }
         
+        // 🎮 ENHANCED INTERACTIVITY SYSTEM
+        const InteractivityManager = {
+            state: {
+                mouse: true,
+                tilt: true, 
+                audio: false,
+                enhanced: true
+            },
+            
+            toggleInteractivity(type) {
+                this.state[type] = !this.state[type];
+                const button = document.getElementById(`${type}Toggle`);
+                
+                if (this.state[type]) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+                
+                this.updateEffects();
+                console.log(`🎮 ${type} interactivity: ${this.state[type] ? 'ON' : 'OFF'}`);
+            },
+            
+            updateEffects() {
+                const cards = document.querySelectorAll('.variation-card');
+                
+                cards.forEach(card => {
+                    // Update mouse reactivity
+                    if (this.state.mouse) {
+                        card.classList.add('mouse-reactive');
+                    } else {
+                        card.classList.remove('mouse-reactive');
+                        card.style.setProperty('--bend-intensity', '0');
+                    }
+                    
+                    // Update enhanced effects
+                    if (this.state.enhanced) {
+                        card.classList.add('enhanced-effects');
+                    } else {
+                        card.classList.remove('enhanced-effects');
+                    }
+                    
+                    // Send state to iframes
+                    const iframe = card.querySelector('iframe');
+                    if (iframe && iframe.contentWindow) {
+                        try {
+                            iframe.contentWindow.postMessage({
+                                type: 'interactivityState',
+                                ...this.state
+                            }, '*');
+                        } catch (e) { /* Cross-origin safety */ }
+                    }
+                });
+                
+                // Update mobile tilt system
+                if (window.mobileAccelerometer) {
+                    if (this.state.tilt) {
+                        window.mobileAccelerometer.activate();
+                    } else {
+                        window.mobileAccelerometer.deactivate();
+                    }
+                }
+            },
+            
+            init() {
+                // Load saved state from localStorage
+                const saved = localStorage.getItem('vib34d-gallery-interactivity');
+                if (saved) {
+                    try {
+                        this.state = { ...this.state, ...JSON.parse(saved) };
+                    } catch (e) { /* Invalid JSON */ }
+                }
+                
+                // Update UI to match state
+                Object.keys(this.state).forEach(type => {
+                    const button = document.getElementById(`${type}Toggle`);
+                    if (button) {
+                        if (this.state[type]) {
+                            button.classList.add('active');
+                        } else {
+                            button.classList.remove('active');
+                        }
+                    }
+                });
+                
+                this.updateEffects();
+                console.log('🎮 Enhanced Interactivity System initialized', this.state);
+            },
+            
+            save() {
+                localStorage.setItem('vib34d-gallery-interactivity', JSON.stringify(this.state));
+            }
+        };
+        
+        // Global toggle function
+        window.toggleInteractivity = function(type) {
+            InteractivityManager.toggleInteractivity(type);
+            InteractivityManager.save();
+        };
+        
         // Initialize holographic effects when DOM is ready
         // Mobile Accelerometer Card Tilt System
         class MobileAccelerometerTilt {
@@ -1616,6 +1771,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Small delay to ensure cards are rendered
             setTimeout(() => {
+                // Initialize enhanced interactivity system
+                InteractivityManager.init();
+                
                 initializeHolographicCardEffects();
                 
                 // Initialize mobile accelerometer tilt system
