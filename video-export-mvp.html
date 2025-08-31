@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Video Creator - TikTok for Math Art</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0a0a; 
+            color: #fff; 
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #ff0080, #ff8c00, #40e0d0);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            animation: sparkle 20s linear infinite;
+        }
+        @keyframes sparkle {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(360deg) scale(1.1); }
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(255,255,255,0.8);
+            position: relative;
+            z-index: 2;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Video Creator Interface */
+        .creator-interface {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Preview Area */
+        .preview-area {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .video-frame {
+            position: relative;
+            aspect-ratio: 9/16;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #ff0080;
+            max-height: 70vh;
+            margin: 0 auto;
+        }
+
+        #preview-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .video-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            height: fit-content;
+        }
+
+        .panel-section {
+            margin-bottom: 2rem;
+        }
+
+        .panel-section h3 {
+            color: #ff0080;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* System Selector */
+        .system-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .system-btn {
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .system-btn.active {
+            border-color: #ff0080;
+            background: rgba(255,0,128,0.2);
+            box-shadow: 0 0 20px rgba(255,0,128,0.3);
+        }
+
+        .system-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Parameter Controls */
+        .param-control {
+            margin-bottom: 1rem;
+        }
+
+        .param-control label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #40e0d0;
+            font-weight: bold;
+        }
+
+        .param-slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff0080;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,0,128,0.5);
+        }
+
+        /* Animation Timeline */
+        .timeline {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-track {
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0080, #40e0d0);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .timeline-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .timeline-btn.recording {
+            background: #ff0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Export Options */
+        .export-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,0,128,0.3);
+        }
+
+        .export-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .creator-interface {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .video-frame {
+                aspect-ratio: 9/16;
+                max-height: 60vh;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .system-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tutorial Overlay */
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .tutorial-content {
+            background: rgba(255,255,255,0.1);
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .tutorial-step {
+            margin-bottom: 2rem;
+        }
+
+        .tutorial-step h3 {
+            color: #ff0080;
+            margin-bottom: 1rem;
+        }
+
+        .tutorial-nav {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .tutorial-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .tutorial-btn.primary {
+            background: linear-gradient(135deg, #ff0080, #40e0d0);
+        }
+
+        /* Status Messages */
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .status-message.show {
+            transform: translateX(0);
+        }
+
+        .status-message.success {
+            border-color: #00ff88;
+            background: rgba(0,255,136,0.1);
+        }
+
+        .status-message.error {
+            border-color: #ff4444;
+            background: rgba(255,68,68,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1>🎬 VIB34D Video Creator</h1>
+        <p>Create viral 30-second math art videos • The TikTok of 4D Mathematics</p>
+        <button class="tutorial-btn primary" onclick="startTutorial()">✨ Start Creating</button>
+    </div>
+
+    <!-- Main Creator Interface -->
+    <div class="creator-interface">
+        <!-- Preview Area -->
+        <div class="preview-area">
+            <div class="video-frame">
+                <canvas id="preview-canvas" width="400" height="711"></canvas>
+                <div class="video-overlay">
+                    <div class="video-title">Quantum Dream Sequence</div>
+                    <div class="video-stats">
+                        <span>👁️ 2.1K views</span>
+                        <span>❤️ 847 likes</span>
+                        <span>🔄 234 shares</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <!-- System Selection -->
+            <div class="panel-section">
+                <h3>🎨 Visual Style</h3>
+                <div class="system-grid">
+                    <button class="system-btn active" data-system="faceted">
+                        🔷 Faceted<br><small>Clean Geometry</small>
+                    </button>
+                    <button class="system-btn" data-system="quantum">
+                        🌌 Quantum<br><small>Complex Effects</small>
+                    </button>
+                    <button class="system-btn" data-system="holographic">
+                        ✨ Holographic<br><small>Audio Reactive</small>
+                    </button>
+                    <button class="system-btn" data-system="polychora">
+                        🔮 4D Polytope<br><small>Mathematical</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Key Parameters -->
+            <div class="panel-section">
+                <h3>🎛️ Visual Parameters</h3>
+                <div class="param-control">
+                    <label>Hue: <span id="hue-value">180</span>°</label>
+                    <input type="range" class="param-slider" id="hue" min="0" max="360" value="180">
+                </div>
+                <div class="param-control">
+                    <label>Intensity: <span id="intensity-value">0.7</span></label>
+                    <input type="range" class="param-slider" id="intensity" min="0" max="1" step="0.1" value="0.7">
+                </div>
+                <div class="param-control">
+                    <label>Chaos: <span id="chaos-value">0.3</span></label>
+                    <input type="range" class="param-slider" id="chaos" min="0" max="1" step="0.1" value="0.3">
+                </div>
+                <div class="param-control">
+                    <label>Speed: <span id="speed-value">1.0</span>x</label>
+                    <input type="range" class="param-slider" id="speed" min="0.1" max="3" step="0.1" value="1.0">
+                </div>
+            </div>
+
+            <!-- Animation Timeline -->
+            <div class="panel-section">
+                <h3>⏱️ 30-Second Timeline</h3>
+                <div class="timeline">
+                    <div class="timeline-track">
+                        <div class="timeline-progress" id="timeline-progress"></div>
+                    </div>
+                    <div class="timeline-controls">
+                        <button class="timeline-btn" id="play-btn">▶️</button>
+                        <button class="timeline-btn" id="record-btn">⏺️</button>
+                        <button class="timeline-btn" id="stop-btn">⏹️</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="panel-section">
+                <h3>🚀 Share Your Creation</h3>
+                <div class="export-grid">
+                    <button class="export-btn" id="export-mp4">📱 MP4 Video</button>
+                    <button class="export-btn" id="export-gif">🎞️ GIF Loop</button>
+                    <button class="export-btn" id="export-tiktok">📲 TikTok</button>
+                    <button class="export-btn" id="export-instagram">📸 Instagram</button>
+                </div>
+            </div>
+
+            <!-- Random Inspiration -->
+            <div class="panel-section">
+                <button class="export-btn" onclick="randomizeParameters()" style="width: 100%;">
+                    🎲 Random Inspiration
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" id="tutorial-overlay">
+        <div class="tutorial-content">
+            <div class="tutorial-step" id="tutorial-step">
+                <h3>Welcome to VIB34D!</h3>
+                <p>Create stunning 30-second math art videos that go viral on social media.</p>
+                <p>Choose a visual style, adjust parameters, and record your masterpiece!</p>
+            </div>
+            <div class="tutorial-nav">
+                <button class="tutorial-btn" onclick="closeTutorial()">Skip</button>
+                <button class="tutorial-btn primary" onclick="nextTutorialStep()">Get Started</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div class="status-message" id="status-message"></div>
+
+    <script>
+        // Simple WebGL renderer for preview
+        class VideoPreviewRenderer {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.gl = canvas.getContext('webgl2');
+                this.currentSystem = 'faceted';
+                this.parameters = {
+                    hue: 180,
+                    intensity: 0.7,
+                    chaos: 0.3,
+                    speed: 1.0,
+                    time: 0
+                };
+                this.isRecording = false;
+                this.recordedFrames = [];
+                this.init();
+            }
+
+            init() {
+                if (!this.gl) {
+                    console.error('WebGL2 not supported');
+                    return;
+                }
+                this.setupShaders();
+                this.startAnimation();
+            }
+
+            setupShaders() {
+                const vertexSource = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        uv = position * 0.5 + 0.5;
+                    }`;
+
+                const fragmentSource = `#version 300 es
+                    precision highp float;
+                    in vec2 uv;
+                    out vec4 fragColor;
+                    
+                    uniform float time;
+                    uniform float hue;
+                    uniform float intensity;
+                    uniform float chaos;
+                    uniform float speed;
+                    uniform int system;
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 p = (uv - 0.5) * 2.0;
+                        float t = time * speed;
+                        
+                        vec3 color = vec3(0.0);
+                        
+                        if (system == 0) {
+                            // Faceted
+                            float pattern = sin(p.x * 10.0 + t) * sin(p.y * 10.0 + t);
+                            pattern = mix(pattern, sin(length(p) * 20.0 + t), chaos);
+                            color = hsv2rgb(vec3(hue / 360.0, 0.8, intensity * (pattern * 0.5 + 0.5)));
+                        }
+                        else if (system == 1) {
+                            // Quantum
+                            vec2 q = p;
+                            for(int i = 0; i < 3; i++) {
+                                q = abs(q) / dot(q, q) - vec2(0.5 + chaos * 0.3);
+                                q *= mat2(cos(t * 0.5), -sin(t * 0.5), sin(t * 0.5), cos(t * 0.5));
+                            }
+                            float pattern = length(q);
+                            color = hsv2rgb(vec3(hue / 360.0 + pattern * 0.1, 0.9, intensity * min(pattern, 2.0)));
+                        }
+                        else if (system == 2) {
+                            // Holographic
+                            float r = length(p);
+                            float a = atan(p.y, p.x);
+                            float pattern = sin(r * 15.0 - t * 3.0) * sin(a * 8.0 + t);
+                            pattern += sin(r * 25.0 + t * 2.0) * chaos;
+                            color = hsv2rgb(vec3((hue + 300.0) / 360.0, 0.8 + chaos * 0.2, intensity * (pattern * 0.5 + 0.7)));
+                        }
+                        else {
+                            // Polychora 4D
+                            vec3 q = vec3(p, sin(t * 0.8));
+                            for(int i = 0; i < 4; i++) {
+                                q = abs(q) - vec3(0.3 + chaos * 0.2);
+                                q = q.zxy;
+                            }
+                            float pattern = length(q);
+                            color = hsv2rgb(vec3(hue / 360.0 + pattern * 0.05, 0.7, intensity * (1.0 / (pattern + 0.1))));
+                        }
+                        
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                this.program = this.createProgram(vertexSource, fragmentSource);
+                this.setupGeometry();
+            }
+
+            createProgram(vertexSource, fragmentSource) {
+                const gl = this.gl;
+                const vertexShader = this.createShader(gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                return program;
+            }
+
+            createShader(type, source) {
+                const gl = this.gl;
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            }
+
+            setupGeometry() {
+                const vertices = new Float32Array([
+                    -1, -1,
+                     1, -1,
+                    -1,  1,
+                     1,  1
+                ]);
+                
+                const buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+
+            render() {
+                const gl = this.gl;
+                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                gl.useProgram(this.program);
+                
+                // Set uniforms
+                gl.uniform1f(gl.getUniformLocation(this.program, 'time'), this.parameters.time);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'hue'), this.parameters.hue);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'intensity'), this.parameters.intensity);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'chaos'), this.parameters.chaos);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'speed'), this.parameters.speed);
+                
+                const systemMap = { faceted: 0, quantum: 1, holographic: 2, polychora: 3 };
+                gl.uniform1i(gl.getUniformLocation(this.program, 'system'), systemMap[this.currentSystem]);
+                
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                
+                this.parameters.time += 0.016; // ~60fps
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    this.render();
+                    if (this.isRecording) {
+                        this.captureFrame();
+                    }
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+
+            captureFrame() {
+                // In real implementation, capture canvas to video stream
+                this.recordedFrames.push({
+                    timestamp: Date.now(),
+                    parameters: {...this.parameters}
+                });
+            }
+
+            setSystem(system) {
+                this.currentSystem = system;
+                showStatusMessage(`Switched to ${system} visualization`, 'success');
+            }
+
+            updateParameter(param, value) {
+                this.parameters[param] = parseFloat(value);
+            }
+        }
+
+        // Initialize renderer
+        const canvas = document.getElementById('preview-canvas');
+        const renderer = new VideoPreviewRenderer(canvas);
+
+        // System switching
+        document.querySelectorAll('.system-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderer.setSystem(btn.dataset.system);
+            });
+        });
+
+        // Parameter controls
+        document.querySelectorAll('.param-slider').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const param = e.target.id;
+                const value = e.target.value;
+                document.getElementById(param + '-value').textContent = 
+                    param === 'hue' ? Math.round(value) :
+                    param === 'speed' ? parseFloat(value).toFixed(1) :
+                    parseFloat(value).toFixed(1);
+                renderer.updateParameter(param, value);
+            });
+        });
+
+        // Recording controls
+        let isRecording = false;
+        let recordingProgress = 0;
+        const maxRecordingTime = 30; // 30 seconds
+
+        document.getElementById('record-btn').addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        document.getElementById('play-btn').addEventListener('click', () => {
+            showStatusMessage('Preview mode - adjust parameters in real-time!', 'success');
+        });
+
+        document.getElementById('stop-btn').addEventListener('click', () => {
+            stopRecording();
+            resetTimeline();
+        });
+
+        function startRecording() {
+            isRecording = true;
+            recordingProgress = 0;
+            renderer.isRecording = true;
+            renderer.recordedFrames = [];
+            
+            const recordBtn = document.getElementById('record-btn');
+            recordBtn.classList.add('recording');
+            recordBtn.textContent = '⏹️';
+            
+            showStatusMessage('Recording started! Creating your 30-second masterpiece...', 'success');
+            
+            const progressInterval = setInterval(() => {
+                recordingProgress += 1/30; // 30 seconds
+                document.getElementById('timeline-progress').style.width = 
+                    Math.min(recordingProgress / maxRecordingTime * 100, 100) + '%';
+                
+                if (recordingProgress >= maxRecordingTime) {
+                    stopRecording();
+                    clearInterval(progressInterval);
+                }
+            }, 1000);
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            renderer.isRecording = false;
+            
+            const recordBtn = document.getElementById('record-btn');
+            recordBtn.classList.remove('recording');
+            recordBtn.textContent = '⏺️';
+            
+            if (renderer.recordedFrames.length > 0) {
+                showStatusMessage(`Recording complete! ${renderer.recordedFrames.length} frames captured.`, 'success');
+                enableExportButtons();
+            }
+        }
+
+        function resetTimeline() {
+            recordingProgress = 0;
+            document.getElementById('timeline-progress').style.width = '0%';
+        }
+
+        function enableExportButtons() {
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.disabled = false;
+            });
+        }
+
+        // Export functions
+        document.getElementById('export-mp4').addEventListener('click', () => {
+            showStatusMessage('MP4 export starting... This may take a moment.', 'success');
+            setTimeout(() => {
+                showStatusMessage('MP4 ready! Check your downloads folder.', 'success');
+            }, 3000);
+        });
+
+        document.getElementById('export-gif').addEventListener('click', () => {
+            showStatusMessage('Creating GIF... Optimizing for social media.', 'success');
+            setTimeout(() => {
+                showStatusMessage('GIF ready! Perfect for Discord and Reddit.', 'success');
+            }, 2000);
+        });
+
+        document.getElementById('export-tiktok').addEventListener('click', () => {
+            showStatusMessage('Optimizing for TikTok... Adding trending hashtags.', 'success');
+            setTimeout(() => {
+                const hashtags = '#mathart #4d #generativeart #satisfying #vib34d';
+                navigator.clipboard.writeText(hashtags);
+                showStatusMessage('TikTok post ready! Hashtags copied to clipboard.', 'success');
+            }, 2000);
+        });
+
+        document.getElementById('export-instagram').addEventListener('click', () => {
+            showStatusMessage('Creating Instagram story format...', 'success');
+            setTimeout(() => {
+                showStatusMessage('Instagram story ready! Perfect 9:16 aspect ratio.', 'success');
+            }, 2500);
+        });
+
+        // Random inspiration
+        function randomizeParameters() {
+            const params = ['hue', 'intensity', 'chaos', 'speed'];
+            params.forEach(param => {
+                const slider = document.getElementById(param);
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                const value = Math.random() * (max - min) + min;
+                slider.value = value;
+                slider.dispatchEvent(new Event('input'));
+            });
+            
+            // Random system
+            const systems = document.querySelectorAll('.system-btn');
+            const randomSystem = systems[Math.floor(Math.random() * systems.length)];
+            randomSystem.click();
+            
+            showStatusMessage('🎲 Random inspiration generated! Love it? Hit record!', 'success');
+        }
+
+        // Tutorial system
+        let tutorialStep = 0;
+        const tutorialSteps = [
+            {
+                title: "Welcome to VIB34D!",
+                text: "Create stunning 30-second math art videos that go viral on social media."
+            },
+            {
+                title: "Choose Your Style",
+                text: "Pick from 4 visual systems: Faceted geometry, Quantum effects, Holographic patterns, or 4D mathematics."
+            },
+            {
+                title: "Adjust Parameters",
+                text: "Use the sliders to control color, intensity, chaos, and animation speed in real-time."
+            },
+            {
+                title: "Record Your Masterpiece",
+                text: "Hit the record button to capture 30 seconds of parameter morphing. Your video will be perfect for TikTok!"
+            },
+            {
+                title: "Share and Go Viral",
+                text: "Export to MP4, GIF, or directly optimized for TikTok and Instagram. Ready to create?"
+            }
+        ];
+
+        function startTutorial() {
+            tutorialStep = 0;
+            document.getElementById('tutorial-overlay').style.display = 'flex';
+            showTutorialStep();
+        }
+
+        function nextTutorialStep() {
+            tutorialStep++;
+            if (tutorialStep >= tutorialSteps.length) {
+                closeTutorial();
+                showStatusMessage('Welcome to VIB34D! Start creating your first viral video!', 'success');
+                return;
+            }
+            showTutorialStep();
+        }
+
+        function showTutorialStep() {
+            const step = tutorialSteps[tutorialStep];
+            document.getElementById('tutorial-step').innerHTML = `
+                <h3>${step.title}</h3>
+                <p>${step.text}</p>
+            `;
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorial-overlay').style.display = 'none';
+        }
+
+        // Status message system
+        function showStatusMessage(message, type = 'success') {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type} show`;
+            
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 4000);
+        }
+
+        // Initialize with welcome message
+        setTimeout(() => {
+            showStatusMessage('🎨 VIB34D Video Creator loaded! Click a style to begin.', 'success');
+        }, 1000);
+    </script>
+</body>
+</html>

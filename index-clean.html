@@ -259,11 +259,19 @@
                 }
                 
                 try {
-                    const polySystem = await import('./src/core/PolychoraSystem.js');
-                    PolychoraSystem = polySystem.PolychoraSystem;
-                    console.log('✅ PolychoraSystem imported');
+                    const newPolySystem = await import('./src/core/PolychoraSystemNew.js');
+                    NewPolychoraEngine = newPolySystem.NewPolychoraEngine;
+                    console.log('✅ NEW 4D Polychora Engine imported with VIB34D DNA');
                 } catch (e) {
-                    console.warn('⚠️ PolychoraSystem not available:', e.message);
+                    console.warn('⚠️ New Polychora Engine not available:', e.message);
+                    // Fallback to old system if new one fails
+                    try {
+                        const polySystem = await import('./src/core/PolychoraSystem.js');
+                        NewPolychoraEngine = polySystem.PolychoraSystem;
+                        console.log('✅ Fallback to old PolychoraSystem');
+                    } catch (e2) {
+                        console.warn('⚠️ No Polychora system available:', e2.message);
+                    }
                 }
                 
                 // Import other components with fallbacks
@@ -272,6 +280,14 @@
                     CanvasManager = canvasManager.CanvasManager;
                 } catch (e) {
                     console.warn('⚠️ CanvasManager not available - using stub');
+                }
+                
+                try {
+                    const unifiedReactivityManager = await import('./src/core/UnifiedReactivityManager.js');
+                    UnifiedReactivityManager = unifiedReactivityManager.UnifiedReactivityManager;
+                    console.log('✅ UnifiedReactivityManager imported');
+                } catch (e) {
+                    console.warn('⚠️ UnifiedReactivityManager not available');
                 }
                 
                 try {
@@ -286,10 +302,30 @@
                     VIB34DIntegratedEngine,
                     QuantumEngine,
                     RealHolographicSystem,
-                    PolychoraSystem
+                    NewPolychoraEngine
                 };
                 
                 console.log('📦 Engine classes stored:', Object.keys(window.engineClasses).filter(k => window.engineClasses[k]));
+
+                // Initialize Unified Reactivity Manager FIRST
+                if (UnifiedReactivityManager) {
+                    const reactivityManager = new UnifiedReactivityManager();
+                    console.log('✅ UnifiedReactivityManager initialized');
+                } else {
+                    // Fallback getCurrentReactivityState function
+                    window.getCurrentReactivityState = function() {
+                        return {
+                            system: window.currentSystem || 'faceted',
+                            mouse: { faceted: true, quantum: false, holographic: false, polychora: false, mixed: false },
+                            click: { faceted: true, quantum: false, holographic: false, polychora: false, mixed: false },
+                            scroll: { faceted: true, quantum: false, holographic: false, polychora: false, mixed: false },
+                            audio: window.audioEnabled || false,
+                            interactivity: window.interactivityEnabled !== false,
+                            deviceTilt: window.deviceTiltHandler?.isEnabled || false
+                        };
+                    };
+                    console.log('⚠️ Using fallback getCurrentReactivityState');
+                }
 
                 // Initialize VIB34D Application
                 const app = new VIB34DApp();

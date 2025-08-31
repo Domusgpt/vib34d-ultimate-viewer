@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Premium Trading Card Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 50%, #000428 100%);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        /* Animated background stars */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, white, transparent),
+                radial-gradient(2px 2px at 60% 70%, white, transparent),
+                radial-gradient(1px 1px at 50% 50%, white, transparent),
+                radial-gradient(1px 1px at 80% 10%, white, transparent);
+            background-size: 300px 300px;
+            background-position: 0 0, 150px 150px, 75px 75px, 225px 225px;
+            animation: stars 60s linear infinite;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        @keyframes stars {
+            from { transform: translateY(0); }
+            to { transform: translateY(-300px); }
+        }
+        
+        /* Premium Trading Card Container */
+        .trading-card-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(90vw, 600px);
+            height: min(90vh, 850px);
+            z-index: 100;
+            perspective: 1000px;
+        }
+        
+        .trading-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        
+        /* Holographic Border Effect */
+        .card-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000 0%, #1a1a2e 100%);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 
+                0 0 50px rgba(138, 43, 226, 0.5),
+                inset 0 0 50px rgba(0, 255, 255, 0.1);
+        }
+        
+        .card-frame::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(
+                45deg,
+                #ff0080, #ff8c00, #40e0d0, #ff0080,
+                #ff8c00, #40e0d0, #ff0080
+            );
+            background-size: 300% 300%;
+            border-radius: 20px;
+            animation: holographic-border 8s ease infinite;
+            z-index: -1;
+            opacity: 0.8;
+        }
+        
+        @keyframes holographic-border {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Rarity Badge */
+        .rarity-badge {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            z-index: 1000;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 1); }
+        }
+        
+        /* Visualization Area - FULL SIZE */
+        .visualization-area {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            right: 15px;
+            height: 55%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 0 30px rgba(138, 43, 226, 0.3),
+                0 0 50px rgba(0, 255, 255, 0.2);
+        }
+        
+        #canvasContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Card Information Section */
+        .card-info {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            background: linear-gradient(180deg, rgba(16, 16, 32, 0.9) 0%, rgba(32, 16, 48, 0.9) 100%);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .card-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 3s ease infinite;
+            text-align: center;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Parameter Grid with Icons */
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .param-badge {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(0, 255, 255, 0.2));
+            border: 1px solid rgba(138, 43, 226, 0.5);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .param-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.5);
+        }
+        
+        .param-icon {
+            font-size: 1.5rem;
+            margin-bottom: 3px;
+        }
+        
+        .param-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #00ffff;
+        }
+        
+        .param-label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        /* Creator & Stats Section */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .creator-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .creator-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .creator-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .creator-name {
+            font-weight: bold;
+            color: #00ffff;
+        }
+        
+        .card-series {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .card-stats {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .stat-icon {
+            color: #ff00ff;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.8), rgba(0, 255, 255, 0.8));
+            border: none;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(138, 43, 226, 0.6);
+        }
+        
+        .action-btn.primary {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            box-shadow: 0 5px 15px rgba(255, 0, 128, 0.4);
+        }
+        
+        /* Mobile Device Tilt Indicator */
+        .tilt-indicator {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+        
+        .tilt-dot {
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #00ffff, #ff00ff);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            transition: transform 0.1s ease;
+        }
+        
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(0, 255, 255, 0.2);
+            border-top: 4px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: #00ffff;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .trading-card-container {
+                width: 95vw;
+                height: 95vh;
+            }
+            
+            .parameter-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .card-name {
+                font-size: 1.2rem;
+            }
+            
+            .action-buttons {
+                flex-wrap: wrap;
+                bottom: 10px;
+                gap: 10px;
+            }
+            
+            .action-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">INITIALIZING 4D ENGINE...</div>
+    </div>
+    
+    <!-- Premium Trading Card -->
+    <div class="trading-card-container">
+        <div class="trading-card">
+            <div class="card-frame">
+                <!-- Rarity Badge -->
+                <div class="rarity-badge" id="rarityBadge">✨ LEGENDARY ✨</div>
+                
+                <!-- Visualization Area -->
+                <div class="visualization-area">
+                    <div id="canvasContainer">
+                        <!-- Faceted System Canvases -->
+                        <div id="vib34dLayers" style="display: block;">
+                            <canvas id="background-canvas" class="canvas-layer"></canvas>
+                            <canvas id="shadow-canvas" class="canvas-layer"></canvas>
+                            <canvas id="content-canvas" class="canvas-layer"></canvas>
+                            <canvas id="highlight-canvas" class="canvas-layer"></canvas>
+                            <canvas id="accent-canvas" class="canvas-layer"></canvas>
+                        </div>
+                        
+                        <!-- Quantum System Canvases -->
+                        <div id="quantumLayers" style="display: none;">
+                            <canvas id="quantum-background-canvas" class="canvas-layer"></canvas>
+                            <canvas id="quantum-shadow-canvas" class="canvas-layer"></canvas>
+                            <canvas id="quantum-content-canvas" class="canvas-layer"></canvas>
+                            <canvas id="quantum-highlight-canvas" class="canvas-layer"></canvas>
+                            <canvas id="quantum-accent-canvas" class="canvas-layer"></canvas>
+                        </div>
+                        
+                        <!-- Holographic System Canvases -->
+                        <div id="holoLayers" style="display: none;">
+                            <canvas id="holo-background-canvas" class="canvas-layer"></canvas>
+                            <canvas id="holo-shadow-canvas" class="canvas-layer"></canvas>
+                            <canvas id="holo-content-canvas" class="canvas-layer"></canvas>
+                            <canvas id="holo-highlight-canvas" class="canvas-layer"></canvas>
+                            <canvas id="holo-accent-canvas" class="canvas-layer"></canvas>
+                        </div>
+                        
+                        <!-- Polychora System Canvases -->
+                        <div id="polychoraLayers" style="display: none;">
+                            <canvas id="polychora-background-canvas" class="canvas-layer"></canvas>
+                            <canvas id="polychora-shadow-canvas" class="canvas-layer"></canvas>
+                            <canvas id="polychora-content-canvas" class="canvas-layer"></canvas>
+                            <canvas id="polychora-highlight-canvas" class="canvas-layer"></canvas>
+                            <canvas id="polychora-accent-canvas" class="canvas-layer"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Information -->
+                <div class="card-info">
+                    <div class="card-name" id="cardName">QUANTUM DREAM #1122</div>
+                    
+                    <!-- Parameter Badges -->
+                    <div class="parameter-grid" id="parameterGrid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- Creator & Stats -->
+                    <div class="card-footer">
+                        <div class="creator-info">
+                            <div class="creator-avatar">VB</div>
+                            <div class="creator-details">
+                                <div class="creator-name" id="creatorName">@vib34d_master</div>
+                                <div class="card-series" id="cardSeries">Quantum Masters Series</div>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat-item">
+                                <span class="stat-icon">❤️</span>
+                                <span id="likeCount">1.2K</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">👁️</span>
+                                <span id="viewCount">8.5K</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">#</span>
+                                <span id="cardNumber">001234</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Tilt Indicator -->
+    <div class="tilt-indicator">
+        <div class="tilt-dot" id="tiltDot"></div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="action-btn" onclick="toggleDeviceTilt()">📱 Tilt</button>
+        <button class="action-btn" onclick="toggleAudio()">🎵 Audio</button>
+        <button class="action-btn primary" onclick="shareCard()">Share ✨</button>
+        <button class="action-btn" onclick="saveToGallery()">Save 💾</button>
+        <button class="action-btn" onclick="randomize()">Random 🎲</button>
+    </div>
+    
+    <script type="module">
+        // Premium VIB34D Trading Card Viewer
+        
+        let currentSystem = 'faceted';
+        let currentParameters = {};
+        let activeEngine = null;
+        let deviceTiltEnabled = false;
+        let audioEnabled = false;
+        
+        // Card name generator
+        const cardNames = {
+            faceted: ['Crystal', 'Diamond', 'Prism', 'Lattice', 'Matrix'],
+            quantum: ['Quantum', 'Nebula', 'Cosmos', 'Galaxy', 'Stellar'],
+            holographic: ['Hologram', 'Aurora', 'Spectrum', 'Rainbow', 'Prismatic'],
+            polychora: ['Tesseract', 'Hypercube', '4D-Portal', 'Dimension', 'Polytope']
+        };
+        
+        const adjectives = ['Dream', 'Storm', 'Fusion', 'Infinity', 'Echo', 'Pulse', 'Wave', 'Flux'];
+        
+        function generateCardName(system) {
+            const systemNames = cardNames[system] || cardNames.faceted;
+            const name = systemNames[Math.floor(Math.random() * systemNames.length)];
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const number = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
+            return `${name} ${adj} #${number}`;
+        }
+        
+        // Rarity calculator based on parameters
+        function calculateRarity(params) {
+            const complexity = (params.gridDensity || 20) / 100 + 
+                              (params.morphFactor || 1) + 
+                              (params.chaos || 0);
+            
+            if (complexity > 2.5) return '🌟 MYTHIC 🌟';
+            if (complexity > 2.0) return '✨ LEGENDARY ✨';
+            if (complexity > 1.5) return '💎 EPIC 💎';
+            if (complexity > 1.0) return '🔷 RARE 🔷';
+            if (complexity > 0.5) return '🟢 UNCOMMON 🟢';
+            return '⚪ COMMON ⚪';
+        }
+        
+        // Parameter icons and formatters
+        const parameterConfig = [
+            { key: 'geometry', icon: '🔷', label: 'Shape', formatter: (v) => ['Tetra', 'Cube', 'Sphere', 'Torus', 'Klein', 'Fractal', 'Wave', 'Crystal'][Math.floor(v)] || 'Unknown' },
+            { key: 'rot4dXW', icon: '🔄', label: '4D-X', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dYW', icon: '🔀', label: '4D-Y', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dZW', icon: '🔁', label: '4D-Z', formatter: (v) => v.toFixed(2) },
+            { key: 'gridDensity', icon: '📐', label: 'Grid', formatter: (v) => Math.floor(v) },
+            { key: 'morphFactor', icon: '🌀', label: 'Morph', formatter: (v) => v.toFixed(1) },
+            { key: 'chaos', icon: '⚡', label: 'Chaos', formatter: (v) => (v * 100).toFixed(0) + '%' },
+            { key: 'speed', icon: '⏱️', label: 'Speed', formatter: (v) => v.toFixed(1) + 'x' },
+            { key: 'hue', icon: '🎨', label: 'Color', formatter: (v) => Math.floor(v) + '°' },
+            { key: 'intensity', icon: '💡', label: 'Bright', formatter: (v) => (v * 100).toFixed(0) + '%' },
+            { key: 'saturation', icon: '🌈', label: 'Sat', formatter: (v) => (v * 100).toFixed(0) + '%' }
+        ];
+        
+        // Enhanced Mobile Tilt Handler
+        class PremiumMobileTilt {
+            constructor() {
+                this.isActive = false;
+                this.sensitivity = 0.5;
+                this.smoothing = 0.15;
+                this.currentAccel = { x: 0, y: 0 };
+                this.targetAccel = { x: 0, y: 0 };
+                this.animationFrame = null;
+                this.tiltDot = document.getElementById('tiltDot');
+            }
+            
+            async enable() {
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceMotionEvent.requestPermission();
+                        if (permission !== 'granted') {
+                            console.warn('Device motion permission denied');
+                            return false;
+                        }
+                    } catch (error) {
+                        console.error('Error requesting device motion permission:', error);
+                        return false;
+                    }
+                }
+                
+                this.handleDeviceMotion = this.handleDeviceMotion.bind(this);
+                window.addEventListener('devicemotion', this.handleDeviceMotion);
+                
+                this.isActive = true;
+                this.startAnimation();
+                
+                return true;
+            }
+            
+            disable() {
+                this.isActive = false;
+                window.removeEventListener('devicemotion', this.handleDeviceMotion);
+                
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+                
+                // Reset tilt indicator
+                if (this.tiltDot) {
+                    this.tiltDot.style.transform = 'translate(0, 0)';
+                }
+            }
+            
+            handleDeviceMotion(event) {
+                if (!this.isActive || !event.accelerationIncludingGravity) return;
+                
+                const { x, y } = event.accelerationIncludingGravity;
+                
+                this.targetAccel.x = Math.max(-1, Math.min(1, x / 10)) * this.sensitivity;
+                this.targetAccel.y = Math.max(-1, Math.min(1, y / 10)) * this.sensitivity;
+            }
+            
+            startAnimation() {
+                const animate = () => {
+                    if (!this.isActive) return;
+                    
+                    // Smooth the values
+                    this.currentAccel.x += (this.targetAccel.x - this.currentAccel.x) * this.smoothing;
+                    this.currentAccel.y += (this.targetAccel.y - this.currentAccel.y) * this.smoothing;
+                    
+                    // Update tilt indicator
+                    if (this.tiltDot) {
+                        const x = this.currentAccel.x * 20;
+                        const y = -this.currentAccel.y * 20;
+                        this.tiltDot.style.transform = `translate(${x}px, ${y}px)`;
+                    }
+                    
+                    // Apply to engine
+                    if (activeEngine && typeof activeEngine.updateParameter === 'function') {
+                        activeEngine.updateParameter('rot4dXW', this.currentAccel.x * 3);
+                        activeEngine.updateParameter('rot4dYW', this.currentAccel.y * 3);
+                        activeEngine.updateParameter('rot4dZW', (this.currentAccel.x + this.currentAccel.y) * 1.5);
+                    }
+                    
+                    this.animationFrame = requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+        }
+        
+        const mobileTilt = new PremiumMobileTilt();
+        
+        // Global control functions
+        window.toggleDeviceTilt = function() {
+            deviceTiltEnabled = !deviceTiltEnabled;
+            
+            if (deviceTiltEnabled) {
+                mobileTilt.enable();
+            } else {
+                mobileTilt.disable();
+            }
+        };
+        
+        window.toggleAudio = function() {
+            audioEnabled = !audioEnabled;
+            
+            if (audioEnabled && activeEngine) {
+                if (typeof activeEngine.initAudio === 'function') {
+                    activeEngine.initAudio();
+                }
+            } else if (activeEngine && activeEngine.audioEnabled) {
+                activeEngine.audioEnabled = false;
+            }
+            
+            window.audioEnabled = audioEnabled;
+        };
+        
+        window.shareCard = function() {
+            const shareData = {
+                title: document.getElementById('cardName').textContent,
+                text: `Check out my VIB34D creation: ${document.getElementById('cardName').textContent}`,
+                url: window.location.href
+            };
+            
+            if (navigator.share) {
+                navigator.share(shareData);
+            } else {
+                // Fallback - copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+            }
+        };
+        
+        window.saveToGallery = function() {
+            if (activeEngine && typeof activeEngine.save === 'function') {
+                activeEngine.save();
+            }
+            // Show save confirmation
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Saved! ✅';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        };
+        
+        window.randomize = function() {
+            if (activeEngine && typeof activeEngine.randomizeParameters === 'function') {
+                activeEngine.randomizeParameters();
+                updateDisplay();
+            }
+        };
+        
+        // Update display
+        function updateDisplay() {
+            // Get current parameters
+            if (activeEngine) {
+                if (typeof activeEngine.getParameters === 'function') {
+                    currentParameters = activeEngine.getParameters();
+                } else if (activeEngine.parameters && typeof activeEngine.parameters.getAllParameters === 'function') {
+                    currentParameters = activeEngine.parameters.getAllParameters();
+                }
+            }
+            
+            // Update card name
+            const cardName = generateCardName(currentSystem);
+            document.getElementById('cardName').textContent = cardName;
+            
+            // Update rarity
+            const rarity = calculateRarity(currentParameters);
+            document.getElementById('rarityBadge').textContent = rarity;
+            
+            // Update parameter grid
+            const grid = document.getElementById('parameterGrid');
+            grid.innerHTML = parameterConfig.map(param => {
+                const value = currentParameters[param.key] || 0;
+                return `
+                    <div class="param-badge">
+                        <div class="param-icon">${param.icon}</div>
+                        <div class="param-value">${param.formatter(value)}</div>
+                        <div class="param-label">${param.label}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update stats (mock data for now)
+            document.getElementById('likeCount').textContent = Math.floor(Math.random() * 5000) + 'K';
+            document.getElementById('viewCount').textContent = Math.floor(Math.random() * 20000) + 'K';
+            document.getElementById('cardNumber').textContent = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
+        }
+        
+        // Initialize viewer
+        async function initializePremiumViewer() {
+            console.log('🎴 Initializing Premium VIB34D Trading Card Viewer...');
+            
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const system = urlParams.get('system') || 'faceted';
+            currentSystem = system;
+            
+            // Parse all parameters
+            const params = {};
+            urlParams.forEach((value, key) => {
+                if (key !== 'system') {
+                    const numValue = parseFloat(value);
+                    params[key] = isNaN(numValue) ? value : numValue;
+                }
+            });
+            
+            // Import engines
+            let VIB34DIntegratedEngine, QuantumEngine, RealHolographicSystem, NewPolychoraEngine;
+            
+            try {
+                const engineModule = await import('./src/core/Engine.js');
+                VIB34DIntegratedEngine = engineModule.VIB34DIntegratedEngine;
+            } catch (e) {
+                console.warn('VIB34DIntegratedEngine not available');
+            }
+            
+            try {
+                const quantumModule = await import('./src/quantum/QuantumEngine.js');
+                QuantumEngine = quantumModule.QuantumEngine;
+            } catch (e) {
+                console.warn('QuantumEngine not available');
+            }
+            
+            try {
+                const holoModule = await import('./src/holograms/RealHolographicSystem.js');
+                RealHolographicSystem = holoModule.RealHolographicSystem;
+            } catch (e) {
+                console.warn('RealHolographicSystem not available');
+            }
+            
+            try {
+                const polychoraModule = await import('./src/core/PolychoraSystemNew.js');
+                NewPolychoraEngine = polychoraModule.NewPolychoraEngine;
+            } catch (e) {
+                console.warn('NewPolychoraEngine not available');
+            }
+            
+            // Hide all layers first
+            document.querySelectorAll('#canvasContainer > div').forEach(div => {
+                div.style.display = 'none';
+            });
+            
+            // Initialize appropriate engine
+            switch (system) {
+                case 'faceted':
+                    if (VIB34DIntegratedEngine) {
+                        activeEngine = new VIB34DIntegratedEngine();
+                        document.getElementById('vib34dLayers').style.display = 'block';
+                    }
+                    break;
+                    
+                case 'quantum':
+                    if (QuantumEngine) {
+                        activeEngine = new QuantumEngine();
+                        document.getElementById('quantumLayers').style.display = 'block';
+                    }
+                    break;
+                    
+                case 'holographic':
+                    if (RealHolographicSystem) {
+                        activeEngine = new RealHolographicSystem();
+                        document.getElementById('holoLayers').style.display = 'block';
+                    }
+                    break;
+                    
+                case 'polychora':
+                    if (NewPolychoraEngine) {
+                        activeEngine = new NewPolychoraEngine();
+                        document.getElementById('polychoraLayers').style.display = 'block';
+                    }
+                    break;
+            }
+            
+            if (activeEngine) {
+                // Apply parameters
+                Object.keys(params).forEach(key => {
+                    if (activeEngine.updateParameter) {
+                        activeEngine.updateParameter(key, params[key]);
+                    }
+                });
+                
+                // Activate engine
+                if (activeEngine.activate) {
+                    activeEngine.activate();
+                }
+                
+                // Update display
+                currentParameters = { ...params };
+                updateDisplay();
+                
+                // Hide loading overlay
+                setTimeout(() => {
+                    const overlay = document.getElementById('loadingOverlay');
+                    overlay.classList.add('hidden');
+                }, 1000);
+                
+                console.log('🎴 Premium viewer ready!');
+            } else {
+                console.error('Failed to initialize engine for system:', system);
+            }
+        }
+        
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePremiumViewer);
+        } else {
+            initializePremiumViewer();
+        }
+        
+        // Update display periodically
+        setInterval(updateDisplay, 2000);
+    </script>
+</body>
+</html>

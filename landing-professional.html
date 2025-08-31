@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D - Mathematical Art Creation Platform</title>
+    <meta name="description" content="Professional 4D visualization platform for creating mathematical art, social media content, and interactive experiences.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background: #0a0a0a; 
+            color: #ffffff; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            z-index: 1000;
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff0080, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #ff0080;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 80px;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ff0080, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .hero-text p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .hero-visual {
+            position: relative;
+            aspect-ratio: 16/9;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* CTA Buttons */
+        .cta-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 10px 30px rgba(255, 0, 128, 0.4);
+        }
+
+        .btn-secondary:hover {
+            border-color: #ff0080;
+            background: rgba(255, 0, 128, 0.1);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .features-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 4rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255, 0, 128, 0.3);
+        }
+
+        .feature-preview {
+            height: 250px;
+            position: relative;
+            background: #000;
+        }
+
+        .feature-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .feature-content {
+            padding: 2rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #ff0080;
+        }
+
+        .feature-description {
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .feature-link {
+            color: #40e0d0;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .feature-link:hover {
+            color: #ff0080;
+        }
+
+        /* Use Cases Section */
+        .use-cases {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 6rem 2rem;
+        }
+
+        .use-cases-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .use-cases h2 {
+            font-size: 3rem;
+            margin-bottom: 4rem;
+            font-weight: 700;
+        }
+
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .use-case {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .use-case h3 {
+            color: #40e0d0;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        /* Technical Specs */
+        .tech-specs {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tech-specs h2 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 4rem;
+            font-weight: 700;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .spec-item {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .spec-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff0080;
+            margin-bottom: 0.5rem;
+        }
+
+        .spec-label {
+            opacity: 0.8;
+        }
+
+        /* Final CTA */
+        .final-cta {
+            background: linear-gradient(135deg, rgba(255, 0, 128, 0.1), rgba(64, 224, 208, 0.1));
+            padding: 6rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .final-cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .final-cta p {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav { padding: 1rem; }
+            .nav-links { gap: 1rem; }
+            .hero-content { 
+                grid-template-columns: 1fr; 
+                text-align: center; 
+            }
+            .hero-text h1 { font-size: 2.5rem; }
+            .features h2, .use-cases h2, .tech-specs h2 { font-size: 2rem; }
+            .cta-section { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="logo">VIB34D</div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#examples">Examples</a>
+                <a href="#tech">Technology</a>
+                <a href="index-clean.html" class="btn btn-primary">Launch Platform</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Mathematical Art Creation Platform</h1>
+                <p>Professional 4D visualization system for creating mathematical art, interactive content, and social media visuals. Used by designers, educators, and content creators worldwide.</p>
+                <div class="cta-section">
+                    <a href="index-clean.html" class="btn btn-primary">Launch Platform</a>
+                    <a href="onboarding-flow.html" class="btn btn-secondary">View Tutorial</a>
+                </div>
+                <div class="hero-stats">
+                    <span>WebGL 2.0 • Real-time Rendering • Cross-platform</span>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <canvas class="hero-canvas" id="hero-demo"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2>Visualization Systems</h2>
+        <p class="features-subtitle">Four distinct mathematical rendering engines, each optimized for different use cases</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-preview">
+                    <canvas class="feature-canvas" id="faceted-preview"></canvas>
+                </div>
+                <div class="feature-content">
+                    <h3 class="feature-title">Faceted Geometry</h3>
+                    <p class="feature-description">Clean geometric patterns based on mathematical functions. Ideal for logos, backgrounds, and minimalist designs. Real-time parameter control with 11 adjustable variables.</p>
+                    <a href="index-clean.html?system=faceted" class="feature-link">Try Faceted System →</a>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-preview">
+                    <canvas class="feature-canvas" id="quantum-preview"></canvas>
+                </div>
+                <div class="feature-content">
+                    <h3 class="feature-title">Quantum Lattice</h3>
+                    <p class="feature-description">Complex 3D lattice structures with holographic effects. Advanced shader algorithms create volumetric depth and shimmer effects for premium visual content.</p>
+                    <a href="index-clean.html?system=quantum" class="feature-link">Try Quantum System →</a>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-preview">
+                    <canvas class="feature-canvas" id="holographic-preview"></canvas>
+                </div>
+                <div class="feature-content">
+                    <h3 class="feature-title">Holographic Reactive</h3>
+                    <p class="feature-description">Audio-responsive visualizations with rich color palettes. Microphone input drives parameter modulation for live performances and interactive installations.</p>
+                    <a href="index-clean.html?system=holographic" class="feature-link">Try Holographic System →</a>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-preview">
+                    <canvas class="feature-canvas" id="polychora-preview"></canvas>
+                </div>
+                <div class="feature-content">
+                    <h3 class="feature-title">4D Polytopes</h3>
+                    <p class="feature-description">True 4-dimensional mathematical structures projected into 3D space. Educational and artistic applications featuring tesseracts, 120-cells, and other higher-dimensional forms.</p>
+                    <a href="index-clean.html?system=polychora" class="feature-link">Try 4D System →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="use-cases" id="examples">
+        <div class="use-cases-content">
+            <h2>Professional Applications</h2>
+            <div class="use-cases-grid">
+                <div class="use-case">
+                    <h3>Content Creation</h3>
+                    <p>Generate unique backgrounds, social media content, and video assets. Export high-resolution images or create animated loops for platforms like TikTok and Instagram.</p>
+                </div>
+                <div class="use-case">
+                    <h3>Educational Tools</h3>
+                    <p>Visualize complex mathematical concepts including 4D geometry, lattice structures, and parametric equations. Interactive learning for advanced mathematics courses.</p>
+                </div>
+                <div class="use-case">
+                    <h3>Design Assets</h3>
+                    <p>Create unique patterns for graphic design projects. Generate procedural textures, logos, and artistic elements with mathematical precision and infinite variations.</p>
+                </div>
+                <div class="use-case">
+                    <h3>Interactive Media</h3>
+                    <p>Build responsive installations, VJ visuals, and interactive experiences. Real-time parameter control enables live performance and audience interaction capabilities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Specifications -->
+    <section class="tech-specs" id="tech">
+        <h2>Technical Specifications</h2>
+        <div class="specs-grid">
+            <div class="spec-item">
+                <div class="spec-number">4</div>
+                <div class="spec-label">Rendering Systems</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-number">11</div>
+                <div class="spec-label">Control Parameters</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-number">60</div>
+                <div class="spec-label">FPS Performance</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-number">4K</div>
+                <div class="spec-label">Export Resolution</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-number">WebGL 2.0</div>
+                <div class="spec-label">Graphics API</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-number">Cross-Platform</div>
+                <div class="spec-label">Compatibility</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <h2>Ready to Create?</h2>
+        <p>Access the complete VIB34D platform with all four visualization systems, parameter controls, and export capabilities.</p>
+        <div class="cta-section">
+            <a href="index-clean.html" class="btn btn-primary">Launch VIB34D Platform</a>
+            <a href="video-export-mvp.html" class="btn btn-secondary">Video Creator Tool</a>
+        </div>
+    </section>
+
+    <script>
+        // Gallery-style preview system with tilt support
+        class LandingPreviewRenderer {
+            constructor(canvas, systemType) {
+                this.canvas = canvas;
+                this.systemType = systemType;
+                this.gl = canvas.getContext('webgl2');
+                this.time = 0;
+                this.parameters = this.getSystemParameters();
+                this.tilt = { x: 0, y: 0 };
+                this.targetTilt = { x: 0, y: 0 };
+                
+                if (this.gl) {
+                    this.init();
+                    this.setupTiltControls();
+                }
+            }
+
+            getSystemParameters() {
+                const base = { time: 0, hue: 180, intensity: 0.7, chaos: 0.3, speed: 1.0 };
+                switch(this.systemType) {
+                    case 'faceted': return { ...base, hue: 220, intensity: 0.8, chaos: 0.3 };
+                    case 'quantum': return { ...base, hue: 280, chaos: 0.7, intensity: 0.9 };
+                    case 'holographic': return { ...base, hue: 320, intensity: 0.85, chaos: 0.5 };
+                    case 'polychora': return { ...base, hue: 180, chaos: 0.4, intensity: 0.75 };
+                    case 'hero': return { ...base, hue: 280, chaos: 0.8, intensity: 0.95 };
+                    default: return base;
+                }
+            }
+
+            setupTiltControls() {
+                // Mouse tilt like gallery system
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width;
+                    const y = (e.clientY - rect.top) / rect.height;
+                    
+                    this.targetTilt.x = (x - 0.5) * 0.3;
+                    this.targetTilt.y = (y - 0.5) * 0.3;
+                });
+
+                this.canvas.addEventListener('mouseleave', () => {
+                    this.targetTilt.x = 0;
+                    this.targetTilt.y = 0;
+                });
+
+                // Touch tilt for mobile
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = (touch.clientX - rect.left) / rect.width;
+                    const y = (touch.clientY - rect.top) / rect.height;
+                    
+                    this.targetTilt.x = (x - 0.5) * 0.3;
+                    this.targetTilt.y = (y - 0.5) * 0.3;
+                });
+            }
+
+            init() {
+                this.setupShaders();
+                this.setupGeometry();
+                this.resize();
+                this.startAnimation();
+                
+                const resizeObserver = new ResizeObserver(() => this.resize());
+                resizeObserver.observe(this.canvas);
+            }
+
+            setupShaders() {
+                const vertexSource = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        uv = position * 0.5 + 0.5;
+                    }`;
+
+                const fragmentSource = this.getFragmentShader();
+                this.program = this.createProgram(vertexSource, fragmentSource);
+            }
+
+            getFragmentShader() {
+                const baseShader = `#version 300 es
+                    precision highp float;
+                    in vec2 uv;
+                    out vec4 fragColor;
+                    
+                    uniform float time;
+                    uniform float hue;
+                    uniform float intensity;
+                    uniform float chaos;
+                    uniform float speed;
+                    uniform vec2 tilt;
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 p = (uv - 0.5) * 2.0;
+                        p += tilt * 0.5; // Apply tilt offset
+                        float t = time * speed;
+                        vec3 color = vec3(0.0);`;
+
+                switch(this.systemType) {
+                    case 'faceted':
+                        return baseShader + `
+                        // Clean geometric patterns with tilt
+                        float pattern = sin(p.x * 8.0 + t + tilt.x * 3.0) * sin(p.y * 8.0 + t * 0.8 + tilt.y * 3.0);
+                        pattern = mix(pattern, sin(length(p) * 12.0 + t * 2.0), chaos * 0.5);
+                        color = hsv2rgb(vec3(hue / 360.0, 0.7, intensity * (pattern * 0.4 + 0.6)));
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                    case 'quantum':
+                        return baseShader + `
+                        // Complex quantum lattice with tilt
+                        vec2 q = p + tilt * 0.8;
+                        float complexity = 0.0;
+                        for(int i = 0; i < 4; i++) {
+                            q = abs(q) / dot(q, q) - vec2(0.5 + chaos * 0.3);
+                            q *= mat2(cos(t * 0.5 + tilt.x), -sin(t * 0.5 + tilt.y), 
+                                     sin(t * 0.5 + tilt.x), cos(t * 0.5 + tilt.y));
+                            complexity += length(q) * pow(0.8, float(i));
+                        }
+                        
+                        // RGB shimmer effects
+                        vec3 offset = vec3(0.01, 0.0, -0.01) * sin(t * 2.0 + tilt.x * 4.0);
+                        float r = sin(complexity * 6.0 + t * 2.0 + offset.x);
+                        float g = sin(complexity * 6.0 + t * 2.0 + offset.y);
+                        float b = sin(complexity * 6.0 + t * 2.0 + offset.z);
+                        
+                        vec3 baseColor = hsv2rgb(vec3(
+                            (hue + complexity * 20.0 + tilt.x * 50.0) / 360.0, 
+                            0.85, 
+                            intensity * (complexity * 0.3 + 0.7)
+                        ));
+                        baseColor += vec3(r * 0.2, g * 0.2, b * 0.2);
+                        
+                        fragColor = vec4(baseColor, 1.0);
+                    }`;
+
+                    case 'holographic':
+                        return baseShader + `
+                        // Holographic effects with tilt responsiveness
+                        vec2 tiltedP = p + tilt * 0.6;
+                        float r = length(tiltedP);
+                        float a = atan(tiltedP.y, tiltedP.x) + tilt.x * 2.0;
+                        
+                        float pattern = sin(r * 15.0 - t * 3.0 + tilt.y * 8.0) * sin(a * 8.0 + t);
+                        pattern += sin(r * 25.0 + t * 2.0 + tilt.x * 6.0) * chaos;
+                        pattern += cos(a * 12.0 + t * 1.5 + tilt.y * 4.0) * 0.3;
+                        
+                        color = hsv2rgb(vec3(
+                            (hue + pattern * 30.0 + tilt.x * 60.0) / 360.0, 
+                            0.9, 
+                            intensity * (pattern * 0.3 + 0.7)
+                        ));
+                        
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                    case 'polychora':
+                        return baseShader + `
+                        // 4D polytope with tilt in 4D space
+                        vec3 q = vec3(p + tilt * 0.4, sin(t * 0.8 + tilt.x * 2.0) * 0.5);
+                        
+                        for(int i = 0; i < 4; i++) {
+                            q = abs(q) - vec3(0.3 + chaos * 0.2);
+                            q = q.zxy;
+                            q *= 0.9 + tilt.y * 0.1;
+                        }
+                        
+                        float pattern = length(q) + sin(t * 2.0 + dot(p, p) * 8.0 + tilt.x * 5.0) * 0.2;
+                        color = hsv2rgb(vec3(
+                            (hue + pattern * 20.0 + tilt.y * 40.0) / 360.0, 
+                            0.6, 
+                            intensity * (1.5 / (pattern + 0.5))
+                        ));
+                        
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                    default: // hero - quantum system
+                        return baseShader + `
+                        // Hero quantum with maximum visual impact
+                        vec2 q = p * 1.2 + tilt * 1.0;
+                        float complexity = 0.0;
+                        
+                        for(int i = 0; i < 5; i++) {
+                            q = abs(q) / dot(q, q) - vec2(0.4 + chaos * 0.2);
+                            q *= mat2(cos(t * 0.3 + float(i) + tilt.x), -sin(t * 0.3 + float(i) + tilt.y), 
+                                     sin(t * 0.3 + float(i) + tilt.x), cos(t * 0.3 + float(i) + tilt.y));
+                            complexity += length(q) * pow(0.8, float(i));
+                        }
+                        
+                        // Enhanced shimmer with tilt
+                        float shimmer = sin(complexity * 8.0 + t * 4.0 + tilt.x * 6.0) * 0.3;
+                        shimmer += cos(complexity * 12.0 - t * 3.0 + tilt.y * 8.0) * 0.2;
+                        
+                        // RGB effects
+                        vec3 offset = vec3(0.015, 0.0, -0.015) * sin(t * 2.0 + tilt.x * 3.0);
+                        float r = sin(complexity * 6.0 + t * 2.0 + offset.x);
+                        float g = sin(complexity * 6.0 + t * 2.0 + offset.y);
+                        float b = sin(complexity * 6.0 + t * 2.0 + offset.z);
+                        
+                        vec3 baseColor = hsv2rgb(vec3(
+                            (hue + complexity * 30.0 + t * 15.0 + tilt.x * 80.0) / 360.0, 
+                            0.85 + shimmer * 0.15, 
+                            intensity * (complexity * 0.4 + 0.8)
+                        ));
+                        
+                        baseColor.r += r * 0.25;
+                        baseColor.g += g * 0.25;
+                        baseColor.b += b * 0.25;
+                        
+                        float glow = 1.0 / (complexity + 0.3) * intensity;
+                        baseColor += vec3(glow * 0.4, glow * 0.3, glow * 0.5);
+                        
+                        fragColor = vec4(baseColor, 1.0);
+                    }`;
+                }
+            }
+
+            createProgram(vertexSource, fragmentSource) {
+                const gl = this.gl;
+                const vertexShader = this.createShader(gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                return program;
+            }
+
+            createShader(type, source) {
+                const gl = this.gl;
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            }
+
+            setupGeometry() {
+                const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                this.buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+
+            resize() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width * devicePixelRatio;
+                this.canvas.height = rect.height * devicePixelRatio;
+            }
+
+            render() {
+                if (!this.gl || !this.program) return;
+                
+                // Smooth tilt interpolation
+                this.tilt.x += (this.targetTilt.x - this.tilt.x) * 0.1;
+                this.tilt.y += (this.targetTilt.y - this.tilt.y) * 0.1;
+                
+                const gl = this.gl;
+                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                gl.clearColor(0, 0, 0, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                gl.useProgram(this.program);
+                
+                // Set uniforms
+                gl.uniform1f(gl.getUniformLocation(this.program, 'time'), this.time);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'hue'), this.parameters.hue);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'intensity'), this.parameters.intensity);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'chaos'), this.parameters.chaos);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'speed'), this.parameters.speed);
+                gl.uniform2f(gl.getUniformLocation(this.program, 'tilt'), this.tilt.x, this.tilt.y);
+                
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                
+                this.time += 0.016;
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    this.render();
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+        }
+
+        // Initialize landing previews with gallery-style tilt
+        document.addEventListener('DOMContentLoaded', () => {
+            const previews = [
+                { id: 'hero-demo', type: 'hero' },
+                { id: 'faceted-preview', type: 'faceted' },
+                { id: 'quantum-preview', type: 'quantum' },
+                { id: 'holographic-preview', type: 'holographic' },
+                { id: 'polychora-preview', type: 'polychora' }
+            ];
+
+            previews.forEach(({ id, type }) => {
+                const canvas = document.getElementById(id);
+                if (canvas) {
+                    new LandingPreviewRenderer(canvas, type);
+                }
+            });
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -147,34 +147,32 @@ export class UnifiedSaveManager {
                     
                 case 'quantum':
                     // Quantum system has getParameters() method that calls this.parameters.getAllParameters()
-                    if (window.quantumEngine?.getParameters) {
+                    if (this.engine?.getParameters) {
+                        parameters = this.engine.getParameters();
+                        captureMethod = 'this.engine.getParameters()';
+                    } else if (window.quantumEngine?.getParameters) {
                         parameters = window.quantumEngine.getParameters();
                         captureMethod = 'window.quantumEngine.getParameters()';
-                    } else if (window.quantumEngine?.parameters?.getAllParameters) {
-                        parameters = window.quantumEngine.parameters.getAllParameters();
-                        captureMethod = 'window.quantumEngine.parameters.getAllParameters()';
                     }
                     break;
                     
                 case 'holographic':
-                    // Holographic system has getParameters() method that reads from DOM
-                    if (window.holographicSystem?.getParameters) {
-                        parameters = window.holographicSystem.getParameters();
-                        captureMethod = 'window.holographicSystem.getParameters()';
-                    } else if (window.holographicEngine?.getParameters) {
-                        parameters = window.holographicEngine.getParameters();
-                        captureMethod = 'window.holographicEngine.getParameters()';
-                    } else if (window.holoEngine?.getParameters) {
-                        parameters = window.holoEngine.getParameters();
-                        captureMethod = 'window.holoEngine.getParameters()';
+                    // Holographic system parameter capture
+                    if (window.holographicSystem?.parameters?.getAllParameters) {
+                        parameters = window.holographicSystem.parameters.getAllParameters();
+                        captureMethod = 'window.holographicSystem.parameters.getAllParameters()';
                     }
                     break;
                     
                 case 'polychora':
-                    // EXCLUDED: User confirmed polychora is placeholder/not working
-                    console.warn('⚠️ Polychora system excluded - using manual parameter fallback');
-                    parameters = null; // Force fallback to manual parameters
-                    captureMethod = 'polychora-excluded-by-user';
+                    // NEW: True 4D Polychora system parameter capture
+                    if (window.newPolychoraEngine?.getParameters) {
+                        parameters = window.newPolychoraEngine.getParameters();
+                        captureMethod = 'window.newPolychoraEngine.getParameters()';
+                    } else if (window.newPolychoraEngine?.parameters?.getAllParameters) {
+                        parameters = window.newPolychoraEngine.parameters.getAllParameters();
+                        captureMethod = 'window.newPolychoraEngine.parameters.getAllParameters()';
+                    }
                     break;
                     
                 default:

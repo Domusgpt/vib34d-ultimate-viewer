@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to VIB34D - Mathematical Art Creator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0a0a; 
+            color: #fff; 
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 50%, rgba(255,0,128,0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(64,224,208,0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(255,140,0,0.3) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            33% { transform: rotate(120deg) scale(1.1); }
+            66% { transform: rotate(240deg) scale(0.9); }
+        }
+
+        /* Onboarding Container */
+        .onboarding-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Step Indicator */
+        .step-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: #ff0080;
+            box-shadow: 0 0 20px rgba(255,0,128,0.5);
+        }
+
+        .step-dot.completed {
+            background: #00ff88;
+            box-shadow: 0 0 20px rgba(0,255,136,0.5);
+        }
+
+        /* Onboarding Steps */
+        .onboarding-step {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .onboarding-step.active {
+            display: flex;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Welcome Step */
+        .welcome-content h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ff0080, #ff8c00, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+            animation: textGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            from { filter: drop-shadow(0 0 20px rgba(255,0,128,0.5)); }
+            to { filter: drop-shadow(0 0 40px rgba(64,224,208,0.8)); }
+        }
+
+        .welcome-content p {
+            font-size: 1.4rem;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        /* System Selection */
+        .system-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin-bottom: 3rem;
+        }
+
+        .system-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .system-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .system-card:hover::before {
+            opacity: 1;
+        }
+
+        .system-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #ff0080;
+            box-shadow: 0 20px 40px rgba(255,0,128,0.3);
+        }
+
+        .system-card.selected {
+            border-color: #00ff88;
+            background: rgba(0,255,136,0.1);
+            box-shadow: 0 0 30px rgba(0,255,136,0.3);
+        }
+
+        .system-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .system-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: #ff0080;
+        }
+
+        .system-card p {
+            opacity: 0.8;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .system-preview {
+            width: 100%;
+            height: 100px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        /* Tutorial Interface */
+        .tutorial-interface {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            height: 70vh;
+        }
+
+        .tutorial-canvas {
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tutorial-canvas canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .tutorial-controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tutorial-step-info {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255,0,128,0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255,0,128,0.3);
+        }
+
+        .tutorial-step-info h4 {
+            color: #ff0080;
+            margin-bottom: 0.5rem;
+        }
+
+        .parameter-demo {
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-demo label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #40e0d0;
+            font-weight: bold;
+        }
+
+        .demo-slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff0080;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,0,128,0.5);
+        }
+
+        .slider-hint {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,0,128,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Name Your First Creation */
+        .creation-naming {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .creation-naming h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #ff0080;
+        }
+
+        .naming-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+
+        .naming-input:focus {
+            border-color: #ff0080;
+            box-shadow: 0 0 20px rgba(255,0,128,0.3);
+        }
+
+        .naming-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .suggestion-tag {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .suggestion-tag:hover {
+            background: rgba(255,0,128,0.2);
+            border-color: #ff0080;
+        }
+
+        /* Success Step */
+        .success-content {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+            60% { transform: translateY(-15px); }
+        }
+
+        .success-content h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #00ff88;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #40e0d0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .welcome-content h1 { font-size: 2.5rem; }
+            .system-showcase { grid-template-columns: 1fr; }
+            .tutorial-interface { 
+                grid-template-columns: 1fr; 
+                height: auto;
+            }
+            .tutorial-canvas { height: 300px; }
+            .action-buttons { flex-direction: column; }
+            .step-indicator { 
+                position: relative; 
+                top: auto;
+                left: auto;
+                transform: none;
+                margin: 1rem auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation"></div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step-dot active" data-step="0"></div>
+        <div class="step-dot" data-step="1"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-dot" data-step="3"></div>
+        <div class="step-dot" data-step="4"></div>
+    </div>
+
+    <!-- Onboarding Container -->
+    <div class="onboarding-container">
+        
+        <!-- Step 1: Welcome -->
+        <div class="onboarding-step active" id="step-0">
+            <div class="welcome-content">
+                <h1>Welcome to VIB34D</h1>
+                <p>Create stunning mathematical art with 4-dimensional visualizations. Join thousands of creators making viral content with math and beauty combined.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">50K+</div>
+                        <div class="stat-label">Creators</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">2M+</div>
+                        <div class="stat-label">Artworks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">10M+</div>
+                        <div class="stat-label">Views</div>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="nextStep()">🚀 Let's Create</button>
+                    <button class="btn btn-secondary" onclick="skipOnboarding()">Skip Tutorial</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Choose Your Style -->
+        <div class="onboarding-step" id="step-1">
+            <div class="welcome-content">
+                <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #ff0080;">Choose Your Visual Style</h2>
+                <p style="margin-bottom: 3rem;">Each system creates different types of mathematical art. Pick one to start with - you can always explore the others later!</p>
+                
+                <div class="system-showcase">
+                    <div class="system-card" data-system="faceted">
+                        <span class="system-icon">🔷</span>
+                        <h3>Faceted</h3>
+                        <p>Clean geometric patterns perfect for minimalist designs and architectural themes.</p>
+                        <div class="system-preview">Simple & Elegant Geometry</div>
+                    </div>
+                    <div class="system-card" data-system="quantum">
+                        <span class="system-icon">🌌</span>
+                        <h3>Quantum</h3>
+                        <p>Complex 3D lattice effects with holographic shimmer and volumetric depth.</p>
+                        <div class="system-preview">Complex & Mystical Effects</div>
+                    </div>
+                    <div class="system-card" data-system="holographic">
+                        <span class="system-icon">✨</span>
+                        <h3>Holographic</h3>
+                        <p>Audio-reactive patterns that respond to music with rich pink and magenta hues.</p>
+                        <div class="system-preview">Music-Reactive Visuals</div>
+                    </div>
+                    <div class="system-card" data-system="polychora">
+                        <span class="system-icon">🔮</span>
+                        <h3>4D Polytope</h3>
+                        <p>True 4-dimensional mathematics with impossible geometries and spatial illusions.</p>
+                        <div class="system-preview">Mind-Bending 4D Math</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="nextStep()" id="continue-system" disabled>Continue with Selection</button>
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Learn the Controls -->
+        <div class="onboarding-step" id="step-2">
+            <div class="welcome-content">
+                <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #ff0080;">Master the Controls</h2>
+                <p style="margin-bottom: 2rem;">Try adjusting these parameters to see how they change your creation in real-time!</p>
+                
+                <div class="tutorial-interface">
+                    <div class="tutorial-canvas">
+                        <canvas id="tutorial-canvas" width="600" height="400"></canvas>
+                    </div>
+                    <div class="tutorial-controls">
+                        <div class="tutorial-step-info">
+                            <h4>🎨 Color Control</h4>
+                            <p>Drag the Hue slider to change colors across the spectrum!</p>
+                        </div>
+                        
+                        <div class="parameter-demo">
+                            <label>Hue: <span id="hue-value">180</span>°</label>
+                            <input type="range" class="demo-slider" id="hue-slider" min="0" max="360" value="180">
+                            <div class="slider-hint">← Try dragging this!</div>
+                        </div>
+
+                        <div class="parameter-demo">
+                            <label>Intensity: <span id="intensity-value">0.7</span></label>
+                            <input type="range" class="demo-slider" id="intensity-slider" min="0" max="1" step="0.1" value="0.7">
+                            <div class="slider-hint">Controls brightness</div>
+                        </div>
+
+                        <div class="parameter-demo">
+                            <label>Chaos: <span id="chaos-value">0.3</span></label>
+                            <input type="range" class="demo-slider" id="chaos-slider" min="0" max="1" step="0.1" value="0.3">
+                            <div class="slider-hint">Adds randomness & complexity</div>
+                        </div>
+
+                        <button class="btn btn-secondary" onclick="randomizeTutorial()" style="width: 100%; margin-top: 1rem;">
+                            🎲 Random Magic
+                        </button>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="nextStep()">I've Got It! →</button>
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Name Your First Creation -->
+        <div class="onboarding-step" id="step-3">
+            <div class="creation-naming">
+                <h2>🎨 Name Your First Creation</h2>
+                <p style="margin-bottom: 2rem;">Give your mathematical masterpiece a memorable name. This will be the first artwork in your personal gallery!</p>
+                
+                <input type="text" class="naming-input" id="artwork-name" placeholder="Enter a creative name..." maxlength="50">
+                
+                <div class="naming-suggestions">
+                    <span class="suggestion-tag" onclick="suggestName('Quantum Dreams')">Quantum Dreams</span>
+                    <span class="suggestion-tag" onclick="suggestName('Fractal Symphony')">Fractal Symphony</span>
+                    <span class="suggestion-tag" onclick="suggestName('Digital Mandala')">Digital Mandala</span>
+                    <span class="suggestion-tag" onclick="suggestName('4D Meditation')">4D Meditation</span>
+                    <span class="suggestion-tag" onclick="suggestName('Crystal Visions')">Crystal Visions</span>
+                    <span class="suggestion-tag" onclick="suggestName('Cosmic Geometry')">Cosmic Geometry</span>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="nextStep()" id="save-creation" disabled>💾 Save to Gallery</button>
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Success & Next Steps -->
+        <div class="onboarding-step" id="step-4">
+            <div class="success-content">
+                <div class="success-icon">🎉</div>
+                <h2>Congratulations!</h2>
+                <p style="margin-bottom: 2rem;">You've created your first VIB34D artwork! You're now ready to explore the full platform and create amazing mathematical art.</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Artwork Created</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">More Styles to Try</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">Possibilities</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="launchMainApp()">🚀 Start Creating</button>
+                    <button class="btn btn-secondary" onclick="viewGallery()">🖼️ View My Gallery</button>
+                </div>
+
+                <p style="margin-top: 2rem; opacity: 0.8; font-size: 0.9rem;">
+                    Pro tip: Try the video creator to make viral 30-second loops for TikTok and Instagram!
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let selectedSystem = 'faceted';
+        let tutorialRenderer = null;
+
+        // Tutorial WebGL Renderer (simplified)
+        class TutorialRenderer {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.gl = canvas.getContext('webgl2');
+                this.parameters = { hue: 180, intensity: 0.7, chaos: 0.3, time: 0 };
+                this.init();
+            }
+
+            init() {
+                if (!this.gl) return;
+                this.setupShaders();
+                this.startAnimation();
+            }
+
+            setupShaders() {
+                const vertexSource = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        uv = position * 0.5 + 0.5;
+                    }`;
+
+                const fragmentSource = `#version 300 es
+                    precision highp float;
+                    in vec2 uv;
+                    out vec4 fragColor;
+                    
+                    uniform float time;
+                    uniform float hue;
+                    uniform float intensity;
+                    uniform float chaos;
+                    
+                    vec3 hsv2rgb(vec3 c) {
+                        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                    }
+                    
+                    void main() {
+                        vec2 p = (uv - 0.5) * 2.0;
+                        float pattern = sin(p.x * 8.0 + time) * sin(p.y * 8.0 + time * 0.8);
+                        pattern = mix(pattern, sin(length(p) * 15.0 + time * 2.0), chaos);
+                        vec3 color = hsv2rgb(vec3(hue / 360.0, 0.8, intensity * (pattern * 0.4 + 0.6)));
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                this.program = this.createProgram(vertexSource, fragmentSource);
+                this.setupGeometry();
+            }
+
+            createProgram(vertexSource, fragmentSource) {
+                const gl = this.gl;
+                const vertexShader = this.createShader(gl.VERTEX_SHADER, vertexSource);
+                const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fragmentSource);
+                
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                return program;
+            }
+
+            createShader(type, source) {
+                const gl = this.gl;
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            }
+
+            setupGeometry() {
+                const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                const buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+
+            render() {
+                const gl = this.gl;
+                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.useProgram(this.program);
+                
+                gl.uniform1f(gl.getUniformLocation(this.program, 'time'), this.parameters.time);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'hue'), this.parameters.hue);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'intensity'), this.parameters.intensity);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'chaos'), this.parameters.chaos);
+                
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                this.parameters.time += 0.016;
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    this.render();
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+
+            updateParameter(param, value) {
+                this.parameters[param] = parseFloat(value);
+            }
+        }
+
+        // Step Navigation
+        function nextStep() {
+            if (currentStep < 4) {
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                document.querySelectorAll('.step-dot')[currentStep].classList.add('completed');
+                document.querySelectorAll('.step-dot')[currentStep].classList.remove('active');
+                
+                currentStep++;
+                
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                document.querySelectorAll('.step-dot')[currentStep].classList.add('active');
+
+                // Initialize tutorial renderer on step 2
+                if (currentStep === 2 && !tutorialRenderer) {
+                    setTimeout(() => {
+                        const canvas = document.getElementById('tutorial-canvas');
+                        if (canvas) {
+                            tutorialRenderer = new TutorialRenderer(canvas);
+                            setupTutorialControls();
+                        }
+                    }, 100);
+                }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                document.querySelectorAll('.step-dot')[currentStep].classList.remove('active');
+                
+                if (currentStep < 4) {
+                    document.querySelectorAll('.step-dot')[currentStep].classList.remove('completed');
+                }
+                
+                currentStep--;
+                
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                document.querySelectorAll('.step-dot')[currentStep].classList.add('active');
+                document.querySelectorAll('.step-dot')[currentStep].classList.remove('completed');
+            }
+        }
+
+        // System Selection
+        document.querySelectorAll('.system-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.system-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedSystem = card.dataset.system;
+                document.getElementById('continue-system').disabled = false;
+            });
+        });
+
+        // Tutorial Controls
+        function setupTutorialControls() {
+            document.getElementById('hue-slider').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('hue-value').textContent = value;
+                if (tutorialRenderer) tutorialRenderer.updateParameter('hue', value);
+            });
+
+            document.getElementById('intensity-slider').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('intensity-value').textContent = parseFloat(value).toFixed(1);
+                if (tutorialRenderer) tutorialRenderer.updateParameter('intensity', value);
+            });
+
+            document.getElementById('chaos-slider').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('chaos-value').textContent = parseFloat(value).toFixed(1);
+                if (tutorialRenderer) tutorialRenderer.updateParameter('chaos', value);
+            });
+        }
+
+        function randomizeTutorial() {
+            const hue = Math.floor(Math.random() * 360);
+            const intensity = Math.random() * 0.5 + 0.5;
+            const chaos = Math.random();
+
+            document.getElementById('hue-slider').value = hue;
+            document.getElementById('intensity-slider').value = intensity;
+            document.getElementById('chaos-slider').value = chaos;
+
+            document.getElementById('hue-value').textContent = hue;
+            document.getElementById('intensity-value').textContent = intensity.toFixed(1);
+            document.getElementById('chaos-value').textContent = chaos.toFixed(1);
+
+            if (tutorialRenderer) {
+                tutorialRenderer.updateParameter('hue', hue);
+                tutorialRenderer.updateParameter('intensity', intensity);
+                tutorialRenderer.updateParameter('chaos', chaos);
+            }
+        }
+
+        // Name Input
+        document.getElementById('artwork-name').addEventListener('input', (e) => {
+            const saveBtn = document.getElementById('save-creation');
+            saveBtn.disabled = e.target.value.trim().length === 0;
+        });
+
+        function suggestName(name) {
+            document.getElementById('artwork-name').value = name;
+            document.getElementById('save-creation').disabled = false;
+        }
+
+        // Final Actions
+        function skipOnboarding() {
+            window.location.href = 'index-clean.html';
+        }
+
+        function launchMainApp() {
+            localStorage.setItem('onboardingComplete', 'true');
+            localStorage.setItem('preferredSystem', selectedSystem);
+            localStorage.setItem('firstArtworkName', document.getElementById('artwork-name')?.value || 'My First Creation');
+            window.location.href = 'index-clean.html';
+        }
+
+        function viewGallery() {
+            localStorage.setItem('onboardingComplete', 'true');
+            window.location.href = 'gallery.html';
+        }
+
+        // Auto-redirect if already onboarded
+        if (localStorage.getItem('onboardingComplete') === 'true') {
+            setTimeout(() => {
+                window.location.href = 'index-clean.html';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

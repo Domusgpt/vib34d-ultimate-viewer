@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Enhanced Viewer - Perfect Mobile Integration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        /* Canvas Container - Full Screen */
+        #canvasContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1;
+        }
+        
+        /* Canvas Layers - All 4 Systems */
+        .canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Viewer Information Overlay */
+        .viewer-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+            font-size: 0.9rem;
+        }
+        
+        .system-indicator {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        
+        .parameter-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin: 10px 0;
+            font-size: 0.8rem;
+        }
+        
+        .param-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .param-name {
+            color: #888;
+        }
+        
+        .param-value {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        /* Mobile Device Tilt Instructions */
+        .tilt-instructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: rgba(0, 255, 255, 0.9);
+            color: #000;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            max-width: 80vw;
+        }
+        
+        .tilt-instructions.show {
+            display: block;
+        }
+        
+        /* Mobile Controls */
+        .mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .mobile-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-btn:hover,
+        .mobile-btn.active {
+            background: rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 10px #00ffff;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .viewer-info {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+                font-size: 0.8rem;
+                padding: 10px;
+            }
+            
+            .parameter-display {
+                grid-template-columns: 1fr 1fr 1fr;
+                font-size: 0.7rem;
+            }
+            
+            .mobile-controls {
+                bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Canvas Container for All Systems -->
+    <div id="canvasContainer">
+        <!-- Faceted System Canvases -->
+        <div id="vib34dLayers" style="display: block;">
+            <canvas id="background-canvas" class="canvas-layer"></canvas>
+            <canvas id="shadow-canvas" class="canvas-layer"></canvas>
+            <canvas id="content-canvas" class="canvas-layer"></canvas>
+            <canvas id="highlight-canvas" class="canvas-layer"></canvas>
+            <canvas id="accent-canvas" class="canvas-layer"></canvas>
+        </div>
+        
+        <!-- Quantum System Canvases -->
+        <div id="quantumLayers" style="display: none;">
+            <canvas id="quantum-background-canvas" class="canvas-layer"></canvas>
+            <canvas id="quantum-shadow-canvas" class="canvas-layer"></canvas>
+            <canvas id="quantum-content-canvas" class="canvas-layer"></canvas>
+            <canvas id="quantum-highlight-canvas" class="canvas-layer"></canvas>
+            <canvas id="quantum-accent-canvas" class="canvas-layer"></canvas>
+        </div>
+        
+        <!-- Holographic System Canvases -->
+        <div id="holoLayers" style="display: none;">
+            <canvas id="holo-background-canvas" class="canvas-layer"></canvas>
+            <canvas id="holo-shadow-canvas" class="canvas-layer"></canvas>
+            <canvas id="holo-content-canvas" class="canvas-layer"></canvas>
+            <canvas id="holo-highlight-canvas" class="canvas-layer"></canvas>
+            <canvas id="holo-accent-canvas" class="canvas-layer"></canvas>
+        </div>
+        
+        <!-- Polychora System Canvases -->
+        <div id="polychoraLayers" style="display: none;">
+            <canvas id="polychora-background-canvas" class="canvas-layer"></canvas>
+            <canvas id="polychora-shadow-canvas" class="canvas-layer"></canvas>
+            <canvas id="polychora-content-canvas" class="canvas-layer"></canvas>
+            <canvas id="polychora-highlight-canvas" class="canvas-layer"></canvas>
+            <canvas id="polychora-accent-canvas" class="canvas-layer"></canvas>
+        </div>
+    </div>
+    
+    <!-- Viewer Information Overlay -->
+    <div class="viewer-info">
+        <div class="system-indicator" id="systemIndicator">FACETED SYSTEM</div>
+        <div id="parameterDisplay" class="parameter-display">
+            <!-- Parameters will be populated by JavaScript -->
+        </div>
+        <div style="margin-top: 10px; font-size: 0.7rem; color: #666;">
+            📱 Tilt device for 4D control<br>
+            👆 Tap to activate interactions
+        </div>
+    </div>
+    
+    <!-- Mobile Device Tilt Instructions -->
+    <div class="tilt-instructions" id="tiltInstructions">
+        <h3>📱 DEVICE TILT ENABLED</h3>
+        <p>Tilt your device to control 4D rotations</p>
+        <p>Small movements create dramatic effects!</p>
+        <button onclick="hideTiltInstructions()" style="margin-top: 10px; padding: 5px 15px; background: #000; color: #fff; border: 1px solid #00ffff; border-radius: 3px;">Got It!</button>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div class="mobile-controls">
+        <button class="mobile-btn" id="tiltBtn" onclick="toggleDeviceTilt()">📱 Tilt</button>
+        <button class="mobile-btn" id="audioBtn" onclick="toggleAudio()">🔇 Audio</button>
+        <button class="mobile-btn" onclick="randomizeParameters()">🎲 Random</button>
+        <button class="mobile-btn" onclick="resetParameters()">🔄 Reset</button>
+    </div>
+    
+    <script type="module">
+        // Enhanced Viewer with Perfect Mobile Integration
+        
+        let currentSystem = 'faceted';
+        let currentParameters = {};
+        let activeEngine = null;
+        let deviceTiltEnabled = false;
+        let audioEnabled = false;
+        
+        // Enhanced Mobile Accelerometer Handler
+        class EnhancedMobileAccelerometerTilt {
+            constructor() {
+                this.isActive = false;
+                this.sensitivity = 0.4; // Optimized for viewer
+                this.smoothing = 0.12; // Smoother for viewing
+                this.currentAccel = { x: 0, y: 0 };
+                this.targetAccel = { x: 0, y: 0 };
+                this.animationFrame = null;
+                this.baseRotation = { rot4dXW: 0, rot4dYW: 0, rot4dZW: 0 };
+                this.smoothedRotation = { ...this.baseRotation };
+            }
+            
+            async enable() {
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceMotionEvent.requestPermission();
+                        if (permission !== 'granted') {
+                            console.warn('🚫 Device motion permission denied');
+                            return false;
+                        }
+                    } catch (error) {
+                        console.error('❌ Error requesting device motion permission:', error);
+                        return false;
+                    }
+                }
+                
+                // Capture current parameter state as baseline
+                this.baseRotation = {
+                    rot4dXW: currentParameters.rot4dXW || 0,
+                    rot4dYW: currentParameters.rot4dYW || 0,
+                    rot4dZW: currentParameters.rot4dZW || 0
+                };
+                this.smoothedRotation = { ...this.baseRotation };
+                
+                this.handleDeviceMotion = this.handleDeviceMotion.bind(this);
+                window.addEventListener('devicemotion', this.handleDeviceMotion);
+                
+                this.isActive = true;
+                this.startSmoothAnimation();
+                
+                // Show instructions for mobile users
+                showTiltInstructions();
+                
+                console.log('📱 Enhanced mobile tilt enabled for viewer');
+                return true;
+            }
+            
+            disable() {
+                this.isActive = false;
+                
+                window.removeEventListener('devicemotion', this.handleDeviceMotion);
+                
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+                
+                console.log('📱 Enhanced mobile tilt disabled');
+            }
+            
+            handleDeviceMotion(event) {
+                if (!this.isActive || !event.accelerationIncludingGravity) return;
+                
+                const { x, y } = event.accelerationIncludingGravity;
+                
+                // Convert acceleration to rotation deltas
+                this.targetAccel.x = Math.max(-1, Math.min(1, x / 10)) * this.sensitivity;
+                this.targetAccel.y = Math.max(-1, Math.min(1, y / 10)) * this.sensitivity;
+            }
+            
+            startSmoothAnimation() {
+                const animate = () => {
+                    if (!this.isActive) return;
+                    
+                    // Smooth the acceleration values
+                    this.currentAccel.x += (this.targetAccel.x - this.currentAccel.x) * this.smoothing;
+                    this.currentAccel.y += (this.targetAccel.y - this.currentAccel.y) * this.smoothing;
+                    
+                    // Calculate new rotation values
+                    this.smoothedRotation.rot4dXW = this.baseRotation.rot4dXW + this.currentAccel.x;
+                    this.smoothedRotation.rot4dYW = this.baseRotation.rot4dYW + this.currentAccel.y;
+                    this.smoothedRotation.rot4dZW = this.baseRotation.rot4dZW + (this.currentAccel.x + this.currentAccel.y) * 0.5;
+                    
+                    // Apply to active engine
+                    if (activeEngine && typeof activeEngine.updateParameter === 'function') {
+                        activeEngine.updateParameter('rot4dXW', this.smoothedRotation.rot4dXW);
+                        activeEngine.updateParameter('rot4dYW', this.smoothedRotation.rot4dYW);
+                        activeEngine.updateParameter('rot4dZW', this.smoothedRotation.rot4dZW);
+                        
+                        // Update current parameters for display
+                        currentParameters.rot4dXW = this.smoothedRotation.rot4dXW;
+                        currentParameters.rot4dYW = this.smoothedRotation.rot4dYW;
+                        currentParameters.rot4dZW = this.smoothedRotation.rot4dZW;
+                        
+                        updateParameterDisplay();
+                    }
+                    
+                    this.animationFrame = requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+        }
+        
+        // Initialize mobile tilt handler
+        const mobileAccelerometer = new EnhancedMobileAccelerometerTilt();
+        window.mobileAccelerometer = mobileAccelerometer;
+        
+        // Global functions for mobile controls
+        window.toggleDeviceTilt = function() {
+            deviceTiltEnabled = !deviceTiltEnabled;
+            const btn = document.getElementById('tiltBtn');
+            
+            if (deviceTiltEnabled) {
+                mobileAccelerometer.enable();
+                btn.textContent = '📱 Tilt ON';
+                btn.classList.add('active');
+            } else {
+                mobileAccelerometer.disable();
+                btn.textContent = '📱 Tilt OFF';
+                btn.classList.remove('active');
+            }
+        };
+        
+        window.toggleAudio = function() {
+            audioEnabled = !audioEnabled;
+            const btn = document.getElementById('audioBtn');
+            
+            if (audioEnabled) {
+                btn.textContent = '🎵 Audio ON';
+                btn.classList.add('active');
+                // Initialize audio if engine supports it
+                if (activeEngine && typeof activeEngine.initAudio === 'function') {
+                    activeEngine.initAudio();
+                }
+            } else {
+                btn.textContent = '🔇 Audio OFF';
+                btn.classList.remove('active');
+                // Disable audio if engine supports it
+                if (activeEngine && activeEngine.audioEnabled) {
+                    activeEngine.audioEnabled = false;
+                }
+            }
+            
+            window.audioEnabled = audioEnabled;
+        };
+        
+        window.randomizeParameters = function() {
+            if (activeEngine && typeof activeEngine.randomizeParameters === 'function') {
+                activeEngine.randomizeParameters();
+                updateCurrentParameters();
+                updateParameterDisplay();
+            }
+        };
+        
+        window.resetParameters = function() {
+            if (activeEngine && typeof activeEngine.resetParameters === 'function') {
+                activeEngine.resetParameters();
+                updateCurrentParameters();
+                updateParameterDisplay();
+            }
+        };
+        
+        window.showTiltInstructions = function() {
+            const instructions = document.getElementById('tiltInstructions');
+            instructions.classList.add('show');
+            setTimeout(() => {
+                instructions.classList.remove('show');
+            }, 5000);
+        };
+        
+        window.hideTiltInstructions = function() {
+            const instructions = document.getElementById('tiltInstructions');
+            instructions.classList.remove('show');
+        };
+        
+        // Parameter display update
+        function updateParameterDisplay() {
+            const display = document.getElementById('parameterDisplay');
+            const params = [
+                { name: 'Geometry', key: 'geometry', formatter: (v) => Math.floor(v) },
+                { name: '4D-XW', key: 'rot4dXW', formatter: (v) => v.toFixed(2) },
+                { name: '4D-YW', key: 'rot4dYW', formatter: (v) => v.toFixed(2) },
+                { name: '4D-ZW', key: 'rot4dZW', formatter: (v) => v.toFixed(2) },
+                { name: 'Grid', key: 'gridDensity', formatter: (v) => Math.floor(v) },
+                { name: 'Morph', key: 'morphFactor', formatter: (v) => v.toFixed(2) },
+                { name: 'Chaos', key: 'chaos', formatter: (v) => v.toFixed(2) },
+                { name: 'Speed', key: 'speed', formatter: (v) => v.toFixed(2) },
+                { name: 'Hue', key: 'hue', formatter: (v) => Math.floor(v) + '°' },
+                { name: 'Intensity', key: 'intensity', formatter: (v) => v.toFixed(2) },
+                { name: 'Saturation', key: 'saturation', formatter: (v) => v.toFixed(2) }
+            ];
+            
+            display.innerHTML = params.map(param => {
+                const value = currentParameters[param.key] || 0;
+                return `
+                    <div class="param-item">
+                        <span class="param-name">${param.name}:</span>
+                        <span class="param-value">${param.formatter(value)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateCurrentParameters() {
+            if (activeEngine && typeof activeEngine.getParameters === 'function') {
+                currentParameters = activeEngine.getParameters();
+            } else if (activeEngine && activeEngine.parameters && typeof activeEngine.parameters.getAllParameters === 'function') {
+                currentParameters = activeEngine.parameters.getAllParameters();
+            }
+        }
+        
+        // System initialization
+        async function initializeViewer() {
+            console.log('🎬 Initializing Enhanced VIB34D Viewer...');
+            
+            // Parse URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const system = urlParams.get('system') || 'faceted';
+            
+            // Parse all parameters
+            const params = {};
+            urlParams.forEach((value, key) => {
+                if (key !== 'system') {
+                    const numValue = parseFloat(value);
+                    params[key] = isNaN(numValue) ? value : numValue;
+                }
+            });
+            
+            console.log(`🎯 Loading system: ${system}`);
+            console.log('🎛️ Parameters:', params);
+            
+            // Import required systems
+            let VIB34DIntegratedEngine, QuantumEngine, RealHolographicSystem, NewPolychoraEngine;
+            
+            try {
+                const engineModule = await import('./src/core/Engine.js');
+                VIB34DIntegratedEngine = engineModule.VIB34DIntegratedEngine;
+            } catch (e) {
+                console.warn('⚠️ VIB34DIntegratedEngine not available');
+            }
+            
+            try {
+                const quantumModule = await import('./src/quantum/QuantumEngine.js');
+                QuantumEngine = quantumModule.QuantumEngine;
+            } catch (e) {
+                console.warn('⚠️ QuantumEngine not available');
+            }
+            
+            try {
+                const holoModule = await import('./src/holograms/RealHolographicSystem.js');
+                RealHolographicSystem = holoModule.RealHolographicSystem;
+            } catch (e) {
+                console.warn('⚠️ RealHolographicSystem not available');
+            }
+            
+            try {
+                const polychoraModule = await import('./src/core/PolychoraSystemNew.js');
+                NewPolychoraEngine = polychoraModule.NewPolychoraEngine;
+            } catch (e) {
+                console.warn('⚠️ NewPolychoraEngine not available');
+            }
+            
+            // Initialize the appropriate engine
+            switch (system) {
+                case 'faceted':
+                    if (VIB34DIntegratedEngine) {
+                        activeEngine = new VIB34DIntegratedEngine();
+                        document.getElementById('vib34dLayers').style.display = 'block';
+                        document.getElementById('systemIndicator').textContent = 'FACETED SYSTEM';
+                    }
+                    break;
+                    
+                case 'quantum':
+                    if (QuantumEngine) {
+                        activeEngine = new QuantumEngine();
+                        document.getElementById('quantumLayers').style.display = 'block';
+                        document.getElementById('systemIndicator').textContent = 'QUANTUM SYSTEM';
+                    }
+                    break;
+                    
+                case 'holographic':
+                    if (RealHolographicSystem) {
+                        activeEngine = new RealHolographicSystem();
+                        document.getElementById('holoLayers').style.display = 'block';
+                        document.getElementById('systemIndicator').textContent = 'HOLOGRAPHIC SYSTEM';
+                    }
+                    break;
+                    
+                case 'polychora':
+                    if (NewPolychoraEngine) {
+                        activeEngine = new NewPolychoraEngine();
+                        document.getElementById('polychoraLayers').style.display = 'block';
+                        document.getElementById('systemIndicator').textContent = 'POLYCHORA SYSTEM - TRUE 4D';
+                    }
+                    break;
+            }
+            
+            if (activeEngine) {
+                console.log('✅ Engine initialized:', system);
+                
+                // Apply parameters
+                Object.keys(params).forEach(key => {
+                    if (activeEngine.updateParameter) {
+                        activeEngine.updateParameter(key, params[key]);
+                    }
+                });
+                
+                // Activate the engine
+                if (activeEngine.activate) {
+                    activeEngine.activate();
+                }
+                
+                // Update current parameters and display
+                currentSystem = system;
+                currentParameters = { ...params };
+                updateCurrentParameters();
+                updateParameterDisplay();
+                
+                console.log('🎬 Enhanced viewer ready!');
+            } else {
+                console.error('❌ Failed to initialize engine for system:', system);
+            }
+        }
+        
+        // Initialize on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeViewer);
+        } else {
+            initializeViewer();
+        }
+        
+        // Touch interaction for mobile
+        document.addEventListener('touchstart', () => {
+            // Activate any touch interactions
+            if (activeEngine && activeEngine.handleTouch) {
+                activeEngine.handleTouch();
+            }
+        });
+        
+        // Periodic parameter update for smooth display
+        setInterval(() => {
+            updateCurrentParameters();
+            updateParameterDisplay();
+        }, 1000);
+        
+    </script>
+</body>
+</html>

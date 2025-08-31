@@ -193,10 +193,10 @@ export class CanvasManager {
           break;
           
         case 'polychora':
-          if (engineClasses.PolychoraSystem) {
-            engine = new engineClasses.PolychoraSystem();
-            window.polychoraSystem = engine;
-            console.log('✅ Fresh Polychora engine');
+          if (engineClasses.NewPolychoraEngine) {
+            engine = new engineClasses.NewPolychoraEngine();
+            window.newPolychoraEngine = engine;
+            console.log('✅ Fresh TRUE 4D Polychora Engine with VIB34D DNA');
           }
           break;
           

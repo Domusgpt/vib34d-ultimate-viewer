@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D - Create Mathematical Art That Goes Viral</title>
+    <meta name="description" content="Create stunning mathematical art with 4D visualizations. The easiest way to make viral content with math and beauty.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: 2rem;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ff0080, #ff8c00, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,0,128,0.3);
+        }
+
+        /* What It Actually Is Section */
+        .what-section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .what-section h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #ff0080;
+        }
+
+        .what-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .what-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .what-card h3 {
+            color: #40e0d0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .what-card p {
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+
+        .example-link {
+            color: #ff0080;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .example-link:hover {
+            text-decoration: underline;
+        }
+
+        /* How It Works */
+        .how-section {
+            background: rgba(255,255,255,0.02);
+            padding: 4rem 2rem;
+        }
+
+        .how-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .how-section h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #ff0080;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff0080, #40e0d0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 {
+            color: #40e0d0;
+            margin-bottom: 1rem;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .examples-section h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #ff0080;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .example-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff0080;
+        }
+
+        .example-preview {
+            height: 200px;
+            background: #111;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .example-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #40e0d0;
+        }
+
+        /* Footer CTA */
+        .footer-cta {
+            background: rgba(255,0,128,0.1);
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,0,128,0.3);
+        }
+
+        .footer-cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #ff0080;
+        }
+
+        .footer-cta p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.2rem; }
+            .cta-buttons { flex-direction: column; align-items: center; }
+            .what-section h2, .how-section h2, .examples-section h2 { font-size: 2rem; }
+            .steps { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <canvas class="hero-bg" id="hero-canvas"></canvas>
+        <div class="hero-content">
+            <h1>Create Mathematical Art</h1>
+            <p>The easiest way to make stunning 4D visualizations. No math degree required.</p>
+            <div class="cta-buttons">
+                <a href="onboarding-flow.html" class="btn btn-primary">🚀 Start Creating (Free)</a>
+                <a href="#examples" class="btn btn-secondary">📱 See Examples</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- What It Actually Is -->
+    <section class="what-section">
+        <h2>What is VIB34D?</h2>
+        <div class="what-grid">
+            <div class="what-card">
+                <h3>🎨 Art Creator</h3>
+                <p>Make beautiful mathematical patterns and 4D visualizations with simple sliders. No coding or complex math required.</p>
+                <a href="index-clean.html" class="example-link">Try the Creator →</a>
+            </div>
+            <div class="what-card">
+                <h3>📱 Content Platform</h3>
+                <p>Create 30-second videos perfect for TikTok, Instagram, and social media. Math art that actually goes viral.</p>
+                <a href="video-export-mvp.html" class="example-link">Make a Video →</a>
+            </div>
+            <div class="what-card">
+                <h3>🖼️ Gallery System</h3>
+                <p>Save your creations, build collections, and share with others. Every creation gets a unique mathematical signature.</p>
+                <a href="viewer-simple.html" class="example-link">View Example →</a>
+            </div>
+        </div>
+        <p style="font-size: 1.2rem; opacity: 0.8;">Think Canva meets mathematical visualization meets TikTok creator tools.</p>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-section">
+        <div class="how-content">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Choose Style</h3>
+                    <p>Pick from 4 visual systems: Clean geometry, quantum effects, holographic patterns, or 4D mathematics.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Adjust Parameters</h3>
+                    <p>Use simple sliders to control colors, complexity, and animation. See changes in real-time.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Create & Share</h3>
+                    <p>Save to your gallery, export as video, or share directly to social media with one click.</p>
+                </div>
+            </div>
+            <a href="onboarding-flow.html" class="btn btn-primary">Start Your First Creation</a>
+        </div>
+    </section>
+
+    <!-- Examples Section -->
+    <section class="examples-section" id="examples">
+        <h2>See What You Can Make</h2>
+        <p style="margin-bottom: 2rem; opacity: 0.8;">Real creations made by users in under 5 minutes</p>
+        <div class="examples-grid">
+            <div class="example-card" onclick="openExample('faceted')">
+                <div class="example-preview">🔷 Faceted Geometry Preview</div>
+                <div class="example-title">Clean Minimalist Patterns</div>
+                <p>Perfect for logos, backgrounds, and architectural themes</p>
+            </div>
+            <div class="example-card" onclick="openExample('quantum')">
+                <div class="example-preview">🌌 Quantum Effects Preview</div>
+                <div class="example-title">Complex 3D Lattices</div>
+                <p>Holographic shimmer effects with volumetric depth</p>
+            </div>
+            <div class="example-card" onclick="openExample('holographic')">
+                <div class="example-preview">✨ Holographic Preview</div>
+                <div class="example-title">Audio-Reactive Visuals</div>
+                <p>Responds to music with rich pink and magenta hues</p>
+            </div>
+            <div class="example-card" onclick="openExample('polychora')">
+                <div class="example-preview">🔮 4D Mathematics Preview</div>
+                <div class="example-title">Mind-Bending 4D Shapes</div>
+                <p>True 4-dimensional mathematics and impossible geometries</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="footer-cta">
+        <h2>Ready to Create?</h2>
+        <p>Join thousands of creators making mathematical art. Start with our guided tutorial - no experience needed.</p>
+        <div class="cta-buttons">
+            <a href="onboarding-flow.html" class="btn btn-primary">🎨 Start Creating Now</a>
+            <a href="index-clean.html" class="btn btn-secondary">⚡ Skip to Advanced Creator</a>
+        </div>
+    </section>
+
+    <script>
+        // Simple hero background animation
+        class HeroRenderer {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.gl = canvas.getContext('webgl2');
+                this.time = 0;
+                this.init();
+            }
+
+            init() {
+                if (!this.gl) return;
+                this.setupShaders();
+                this.startAnimation();
+                this.handleResize();
+                window.addEventListener('resize', () => this.handleResize());
+            }
+
+            setupShaders() {
+                const vertexSource = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+                    void main() {
+                        gl_Position = vec4(position, 0.0, 1.0);
+                        uv = position * 0.5 + 0.5;
+                    }`;
+
+                const fragmentSource = `#version 300 es
+                    precision highp float;
+                    in vec2 uv;
+                    out vec4 fragColor;
+                    uniform float time;
+                    
+                    void main() {
+                        vec2 p = (uv - 0.5) * 2.0;
+                        
+                        // Subtle geometric pattern
+                        float pattern = sin(p.x * 3.0 + time * 0.5) * sin(p.y * 3.0 + time * 0.3);
+                        pattern += sin(length(p) * 8.0 + time) * 0.3;
+                        
+                        // Dark background with subtle highlights
+                        vec3 color = vec3(0.05) + pattern * 0.02;
+                        color += vec3(0.8, 0.0, 0.4) * max(0.0, pattern) * 0.1;
+                        
+                        fragColor = vec4(color, 1.0);
+                    }`;
+
+                this.program = this.createProgram(vertexSource, fragmentSource);
+                this.setupGeometry();
+            }
+
+            createProgram(vs, fs) {
+                const gl = this.gl;
+                const vertexShader = this.createShader(gl.VERTEX_SHADER, vs);
+                const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fs);
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                return program;
+            }
+
+            createShader(type, source) {
+                const gl = this.gl;
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            }
+
+            setupGeometry() {
+                const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+                const buffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                const positionLocation = this.gl.getAttribLocation(this.program, 'position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+            }
+
+            render() {
+                const gl = this.gl;
+                gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.useProgram(this.program);
+                gl.uniform1f(gl.getUniformLocation(this.program, 'time'), this.time);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                this.time += 0.016;
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    this.render();
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+
+            handleResize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+        }
+
+        // Initialize hero renderer
+        const heroCanvas = document.getElementById('hero-canvas');
+        new HeroRenderer(heroCanvas);
+
+        // Example navigation
+        function openExample(system) {
+            window.location.href = `index-clean.html?system=${system}&demo=true`;
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Track user interaction for analytics
+        document.querySelectorAll('.btn, .example-link, .example-card').forEach(element => {
+            element.addEventListener('click', function() {
+                // Track click for analytics (would integrate with real analytics)
+                console.log('User clicked:', this.textContent || this.className);
+            });
+        });
+    </script>
+</body>
+</html>
