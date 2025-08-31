@@ -302,10 +302,58 @@
             border-radius: 18px;
             pointer-events: none;
             transition: opacity 0.3s ease;
+            /* CSS variables for mouse tracking */
+            --mouse-x: 50%;
+            --mouse-y: 50%;
         }
 
         .visualization-portal:hover .portal-depth {
             opacity: 0.7;
+        }
+
+        /* Holographic Flash Sweep Effect - RGB based on tilt direction */
+        .visualization-portal::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                calc(45deg + (var(--mouse-x) - 50) * 0.8deg),
+                transparent 20%,
+                rgba(0, 255, 255, 0.15) 45%,
+                rgba(255, 0, 255, 0.2) 50%,
+                rgba(255, 100, 0, 0.15) 55%,
+                transparent 80%
+            );
+            transform: translateX(calc(-120% + (var(--mouse-x) - 50) * 1%)) 
+                       translateY(calc(-50% + (var(--mouse-y) - 50) * 0.5%))
+                       rotate(calc(45deg + (var(--mouse-x) - 50) * 0.5deg));
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+            pointer-events: none;
+            opacity: 0;
+            border-radius: 20px;
+            z-index: 10;
+        }
+
+        .visualization-portal:hover::after {
+            transform: translateX(calc(120% - (var(--mouse-x) - 50) * 1%)) 
+                       translateY(calc(50% - (var(--mouse-y) - 50) * 0.5%))
+                       rotate(calc(45deg + (var(--mouse-x) - 50) * 0.5deg));
+            opacity: 1;
+        }
+
+        /* Enhanced flash for expanded mode */
+        .visualization-portal.expanded::after {
+            background: linear-gradient(
+                calc(45deg + (var(--mouse-x) - 50) * 1.2deg),
+                transparent 10%,
+                rgba(0, 255, 255, 0.25) 40%,
+                rgba(255, 0, 255, 0.3) 50%,
+                rgba(64, 224, 208, 0.25) 60%,
+                transparent 90%
+            );
         }
 
         /* Exit Button for Expanded Mode */
@@ -506,7 +554,7 @@
                 const tiltDot = document.getElementById('tilt-dot');
                 const cursor = document.getElementById('custom-cursor');
                 
-                // Enhanced tilt with rotation effects
+                // Enhanced tilt with rotation effects + flash tracking
                 portal.addEventListener('mousemove', (e) => {
                     const rect = portal.getBoundingClientRect();
                     const x = (e.clientX - rect.left) / rect.width;
@@ -515,6 +563,12 @@
                     // Less dramatic tilt but more rotation
                     this.targetTilt.x = (x - 0.5) * 0.2;
                     this.targetTilt.y = (y - 0.5) * 0.2;
+                    
+                    // Update CSS variables for flash effect
+                    const mouseX = x * 100;
+                    const mouseY = y * 100;
+                    portal.style.setProperty('--mouse-x', mouseX + '%');
+                    portal.style.setProperty('--mouse-y', mouseY + '%');
                     
                     // Update tilt indicator
                     const dotX = x * 64 - 32;
@@ -530,6 +584,10 @@
                     this.targetTilt.x = 0;
                     this.targetTilt.y = 0;
                     tiltDot.style.transform = 'translate(-50%, -50%)';
+                    
+                    // Reset flash effect position
+                    portal.style.setProperty('--mouse-x', '50%');
+                    portal.style.setProperty('--mouse-y', '50%');
                 });
 
                 // Expand on click
@@ -827,6 +885,30 @@
                     toggle.classList.add('inactive');
                 }
             }
+
+            updateFromUrlParams(urlParams) {
+                // Update renderer parameters from URL
+                const paramMap = {
+                    'hue': 'hue',
+                    'intensity': 'intensity', 
+                    'chaos': 'chaos',
+                    'speed': 'speed',
+                    'system': 'system'
+                };
+
+                Object.entries(paramMap).forEach(([urlParam, rendererParam]) => {
+                    const value = urlParams.get(urlParam);
+                    if (value !== null) {
+                        if (rendererParam === 'system') {
+                            this.parameters[rendererParam] = value.toLowerCase();
+                        } else {
+                            this.parameters[rendererParam] = parseFloat(value);
+                        }
+                    }
+                });
+
+                console.log('Portal renderer updated with URL parameters:', this.parameters);
+            }
         }
 
         // Initialize Portal Renderer
@@ -889,13 +971,63 @@
         // Audio toggle click handler
         document.getElementById('audio-toggle').addEventListener('click', toggleAudio);
 
-        // URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('system')) {
-            const systemType = urlParams.get('system').toUpperCase();
-            document.getElementById('system-type').textContent = systemType;
-            document.getElementById('creation-title').textContent = systemType + ' PORTAL';
+        // Complete URL parameter handling for gallery integration
+        function loadParametersFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Update UI with URL parameters
+            if (urlParams.get('system')) {
+                const systemType = urlParams.get('system').toUpperCase();
+                document.getElementById('system-type').textContent = systemType;
+                document.getElementById('creation-title').textContent = systemType + ' PORTAL';
+            }
+            
+            if (urlParams.get('name')) {
+                document.getElementById('creation-title').textContent = urlParams.get('name');
+            }
+            
+            if (urlParams.get('id')) {
+                document.getElementById('creation-id').textContent = '#' + urlParams.get('id');
+            }
+            
+            // Update parameter display values
+            const paramMappings = {
+                'hue': 'hue-value',
+                'chaos': 'chaos-value', 
+                'intensity': 'intensity-value',
+                'speed': 'speed-value',
+                'geometryType': 'geometry-type'
+            };
+            
+            Object.entries(paramMappings).forEach(([urlParam, elementId]) => {
+                const value = urlParams.get(urlParam);
+                const element = document.getElementById(elementId);
+                if (value && element) {
+                    if (urlParam === 'hue') {
+                        element.textContent = Math.round(value) + '°';
+                    } else if (urlParam === 'speed') {
+                        element.textContent = parseFloat(value).toFixed(1) + 'x';
+                    } else if (urlParam === 'geometryType') {
+                        const geometryNames = ['TETRA', 'CUBE', 'OCTA', 'ICOSA', 'DODECA', 'LATTICE', 'WAVE', 'CRYSTAL'];
+                        element.textContent = geometryNames[parseInt(value)] || 'LATTICE';
+                    } else {
+                        element.textContent = parseFloat(value).toFixed(2);
+                    }
+                }
+            });
+            
+            // Apply parameters to renderer if it exists
+            if (window.portalRenderer) {
+                window.portalRenderer.updateFromUrlParams(urlParams);
+            }
+            
+            return urlParams;
         }
+        
+        // Load parameters when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadParametersFromUrl();
+        });
     </script>
 </body>
 </html>

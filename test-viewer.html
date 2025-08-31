@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Viewer</title>
+    <style>
+        body { background: #000; margin: 0; padding: 20px; }
+        canvas { border: 2px solid #fff; display: block; margin: 20px auto; }
+    </style>
+</head>
+<body>
+    <h1 style="color: white; text-align: center;">WebGL Test</h1>
+    <canvas id="test-canvas" width="800" height="600"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('test-canvas');
+        const gl = canvas.getContext('webgl2');
+        
+        if (!gl) {
+            document.body.innerHTML += '<p style="color: red;">WebGL2 not supported</p>';
+        } else {
+            document.body.innerHTML += '<p style="color: green;">WebGL2 supported</p>';
+            
+            // Simple test - just fill with color
+            gl.clearColor(1.0, 0.0, 0.5, 1.0); // Hot pink
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            document.body.innerHTML += '<p style="color: white;">Canvas should be hot pink above</p>';
+        }
+    </script>
+</body>
+</html>
