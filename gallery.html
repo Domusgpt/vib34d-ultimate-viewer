@@ -1270,7 +1270,7 @@
             // Build URL for viewer.html with all parameters - FIXED: Use current path base
             const currentPath = window.location.pathname;
             const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-            const viewerUrl = new URL(`${basePath}viewer-portal.html`, window.location.origin);
+            const viewerUrl = new URL(`${basePath}viewer.html`, window.location.origin);
             viewerUrl.searchParams.set('system', system);
             viewerUrl.searchParams.set('name', variationName);
             viewerUrl.searchParams.set('id', globalId);
