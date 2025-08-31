@@ -17,32 +17,43 @@
         }
 
         /* Dark Silicon Glass Background with Grid */
+        :root {
+            --bg-offset-x: 0px;
+            --bg-offset-y: 0px;
+            --tilt-intensity: 0;
+        }
+        
         .silicon-background {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: -100px; left: -100px; right: -100px; bottom: -100px; /* Oversized for parallax */
             background: 
                 radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.03) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.03) 0%, transparent 50%),
                 linear-gradient(135deg, #0a0a0a 0%, #1a1a2a 30%, #0f0f1f 70%, #0a0a0a 100%);
             backdrop-filter: blur(1px);
             z-index: -2;
+            /* Parallax movement based on tilt */
+            transform: translate(var(--bg-offset-x), var(--bg-offset-y));
+            transition: transform 0.1s ease-out;
         }
 
         .silicon-background::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: -50px; left: -50px; right: -50px; bottom: -50px; /* Oversized for parallax */
             background-image: 
                 linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
             background-size: 50px 50px;
             animation: gridShift 20s linear infinite;
             z-index: -1;
+            /* Double parallax for grid layer */
+            transform: translate(calc(var(--bg-offset-x) * 1.5), calc(var(--bg-offset-y) * 1.5));
         }
 
         @keyframes gridShift {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
         }
 
         /* Main Portal Container */
@@ -523,16 +534,11 @@
             }
             
             updatePortalTilt() {
-                const portal = this.portalWindow;
-                const scaleValue = this.isExpanded ? 1.08 : 1.0;
-                const zValue = this.isExpanded ? 30 : 0;
-                
-                portal.style.transform = `
-                    scale(${scaleValue}) 
-                    translateZ(${zValue}px) 
-                    rotateX(${this.tiltY}deg) 
-                    rotateY(${this.tiltX}deg)
-                `;
+                // Portal tilt is now handled by update4DPerspective and updateMouse4DPerspective
+                // This function is kept for compatibility but delegates to the new system
+                if (this.interactivityState.mouse && this.interactivityState.enhanced) {
+                    this.updateMouse4DPerspective();
+                }
             }
             
             updateEngineReactivity() {
@@ -671,74 +677,142 @@
             update4DPerspective(alpha, beta, gamma) {
                 if (!this.interactivityState.tilt) return;
                 
-                // Convert degrees to radians and scale for subtle but noticeable effect
-                const alphaRad = (alpha * Math.PI / 180) * 0.3;   // Compass rotation -> rot4dZW
-                const betaRad = (beta * Math.PI / 180) * 0.5;     // Front-back tilt -> rot4dXW  
-                const gammaRad = (gamma * Math.PI / 180) * 0.5;   // Left-right tilt -> rot4dYW
+                // Normalize device orientation values
+                const betaNorm = Math.max(-90, Math.min(90, beta));  // Clamp to -90 to 90
+                const gammaNorm = Math.max(-90, Math.min(90, gamma)); // Clamp to -90 to 90
                 
-                // Calculate new 4D rotations that give convincing perspective shifts
-                const new4DRotations = {
-                    // XW rotation: Front-back tilt affects the 4D depth perspective
-                    rot4dXW: this.baseRotations.rot4dXW + betaRad,
+                // 🎯 PARALLAX BACKGROUND: Move opposite to tilt direction
+                // When you tilt right, background moves left (creating depth)
+                const bgOffsetX = -gammaNorm * 2;  // Opposite direction, amplified
+                const bgOffsetY = -betaNorm * 1.5; // Opposite direction, amplified
+                
+                // Apply parallax to background (creates window effect)
+                document.documentElement.style.setProperty('--bg-offset-x', `${bgOffsetX}px`);
+                document.documentElement.style.setProperty('--bg-offset-y', `${bgOffsetY}px`);
+                
+                // 🔄 COUNTER-ROTATION: Object stays fixed in "world space"
+                // When device tilts, we counter-rotate the visualization
+                const counterRotateX = -betaNorm * 0.3;  // Opposite of tilt
+                const counterRotateY = -gammaNorm * 0.3; // Opposite of tilt
+                
+                // Apply counter-rotation to portal window (maintains object position)
+                this.portalWindow.style.transform = `
+                    perspective(1000px)
+                    rotateX(${counterRotateX}deg)
+                    rotateY(${counterRotateY}deg)
+                    scale(${this.isExpanded ? 1.08 : 1.0})
+                    translateZ(${this.isExpanded ? 30 : 0}px)
+                `;
+                
+                // 🌐 SUBTLE 4D PERSPECTIVE: Realistic cross-section changes
+                // Very subtle changes to 4D rotation show different "slices"
+                const subtle4DScale = 0.1; // Much more subtle than before
+                
+                // Calculate 4D perspective shifts (like seeing different angles of a tesseract)
+                const perspective4D = {
+                    // Tilting up/down slightly changes the XW slice we're viewing
+                    rot4dXW: this.baseRotations.rot4dXW + (betaNorm * Math.PI / 180 * subtle4DScale),
                     
-                    // YW rotation: Left-right tilt affects the 4D horizontal perspective
-                    rot4dYW: this.baseRotations.rot4dYW + gammaRad,
+                    // Tilting left/right slightly changes the YW slice
+                    rot4dYW: this.baseRotations.rot4dYW + (gammaNorm * Math.PI / 180 * subtle4DScale),
                     
-                    // ZW rotation: Compass rotation affects the 4D rotational perspective
-                    rot4dZW: this.baseRotations.rot4dZW + alphaRad
+                    // Rotation changes which ZW projection we see
+                    rot4dZW: this.baseRotations.rot4dZW + (alpha * Math.PI / 180 * subtle4DScale * 0.5),
+                    
+                    // NEW: Morph factor changes slightly based on viewing angle
+                    // This simulates how 4D objects look different from different 3D perspectives
+                    morphFactor: (this.params.morph || 1) + (Math.abs(betaNorm) + Math.abs(gammaNorm)) * 0.002
                 };
                 
-                // Apply the new 4D rotations to all visualizers
+                // Apply subtle 4D transformations to visualizers
                 this.visualizers.forEach(visualizer => {
                     if (visualizer.updateParameters) {
-                        visualizer.updateParameters(new4DRotations);
+                        visualizer.updateParameters(perspective4D);
                     }
                 });
                 
-                // Also update portal CSS transform for enhanced visual feedback
-                const tiltIntensity = Math.sqrt(betaRad*betaRad + gammaRad*gammaRad) * 10;
+                // Visual feedback for tilt intensity
+                const tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 90;
                 document.documentElement.style.setProperty('--tilt-intensity', tiltIntensity);
                 
-                console.log(`🌐 4D Perspective: XW=${new4DRotations.rot4dXW.toFixed(2)}, YW=${new4DRotations.rot4dYW.toFixed(2)}, ZW=${new4DRotations.rot4dZW.toFixed(2)}`);
+                console.log(`🌐 Holographic Window: BG(${bgOffsetX.toFixed(1)}, ${bgOffsetY.toFixed(1)}) | Counter(${counterRotateX.toFixed(1)}°, ${counterRotateY.toFixed(1)}°) | 4D(XW:${perspective4D.rot4dXW.toFixed(3)}, YW:${perspective4D.rot4dYW.toFixed(3)})`);
             }
             
             updateMouse4DPerspective() {
-                // Map mouse position to 4D viewing angle changes
-                // This creates the effect of "looking around" the 4D object
+                // Map mouse position to viewing angle (like moving your head)
                 const mouseOffsetX = (this.mouseX - 0.5) * 2; // -1 to 1
                 const mouseOffsetY = (this.mouseY - 0.5) * 2; // -1 to 1
                 
-                // Scale mouse movement for subtle but noticeable 4D rotation
-                const mouseSensitivity = 0.8;
-                const mouse4DRotations = {
-                    // Horizontal mouse movement -> YW rotation (side-to-side 4D perspective)
-                    rot4dYW: this.baseRotations.rot4dYW + (mouseOffsetX * mouseSensitivity),
+                // 🎯 PARALLAX BACKGROUND: Mouse movement creates depth
+                const bgMouseX = -mouseOffsetX * 30;  // Opposite direction for parallax
+                const bgMouseY = -mouseOffsetY * 20;  // Less vertical movement
+                
+                // Apply mouse parallax (combines with tilt parallax if active)
+                const currentBgX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bg-offset-x')) || 0;
+                const currentBgY = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bg-offset-y')) || 0;
+                
+                if (!this.interactivityState.tilt) {
+                    // If tilt is off, use only mouse parallax
+                    document.documentElement.style.setProperty('--bg-offset-x', `${bgMouseX}px`);
+                    document.documentElement.style.setProperty('--bg-offset-y', `${bgMouseY}px`);
+                }
+                
+                // 🔄 COUNTER-ROTATION: Keep object in "world space"
+                const mouseCounterX = -mouseOffsetY * 15;  // Vertical mouse -> X rotation
+                const mouseCounterY = -mouseOffsetX * 15;  // Horizontal mouse -> Y rotation
+                
+                // Update portal transform with mouse counter-rotation
+                const existingScale = this.isExpanded ? 1.08 : 1.0;
+                const existingZ = this.isExpanded ? 30 : 0;
+                
+                // Combine mouse and tilt if both active
+                let totalRotX = mouseCounterX;
+                let totalRotY = mouseCounterY;
+                
+                if (this.interactivityState.tilt) {
+                    const betaNorm = Math.max(-90, Math.min(90, this.deviceOrientation.beta));
+                    const gammaNorm = Math.max(-90, Math.min(90, this.deviceOrientation.gamma));
+                    totalRotX += -betaNorm * 0.3;
+                    totalRotY += -gammaNorm * 0.3;
+                }
+                
+                this.portalWindow.style.transform = `
+                    perspective(1000px)
+                    rotateX(${totalRotX}deg)
+                    rotateY(${totalRotY}deg)
+                    scale(${existingScale})
+                    translateZ(${existingZ}px)
+                `;
+                
+                // 🌐 SUBTLE 4D PERSPECTIVE: Mouse creates different viewing angles
+                const mouse4DScale = 0.15; // Very subtle 4D changes
+                
+                const mouse4DPerspective = {
+                    // Mouse movement subtly changes which 4D slice we see
+                    rot4dXW: this.baseRotations.rot4dXW + (mouseOffsetY * mouse4DScale),
+                    rot4dYW: this.baseRotations.rot4dYW + (mouseOffsetX * mouse4DScale),
+                    rot4dZW: this.baseRotations.rot4dZW,
                     
-                    // Vertical mouse movement -> XW rotation (up-down 4D perspective) 
-                    rot4dXW: this.baseRotations.rot4dXW + (mouseOffsetY * mouseSensitivity),
-                    
-                    // Keep ZW rotation stable for mouse interaction
-                    rot4dZW: this.baseRotations.rot4dZW
+                    // Slight morph based on distance from center (like focal depth)
+                    morphFactor: (this.params.morph || 1) + 
+                               (Math.sqrt(mouseOffsetX*mouseOffsetX + mouseOffsetY*mouseOffsetY) * 0.05)
                 };
                 
-                // Apply mouse-driven 4D perspective to visualizers
+                // If device tilt is active, combine the effects
+                if (this.interactivityState.tilt) {
+                    const betaNorm = Math.max(-90, Math.min(90, this.deviceOrientation.beta));
+                    const gammaNorm = Math.max(-90, Math.min(90, this.deviceOrientation.gamma));
+                    const alpha = this.deviceOrientation.alpha;
+                    
+                    mouse4DPerspective.rot4dXW += (betaNorm * Math.PI / 180 * 0.1);
+                    mouse4DPerspective.rot4dYW += (gammaNorm * Math.PI / 180 * 0.1);
+                    mouse4DPerspective.rot4dZW += (alpha * Math.PI / 180 * 0.05);
+                }
+                
+                // Apply subtle 4D transformations
                 this.visualizers.forEach(visualizer => {
                     if (visualizer.updateParameters) {
-                        // Combine with any existing device tilt effects
-                        const combinedRotations = { ...mouse4DRotations };
-                        
-                        // If device tilt is also active, add those rotations too
-                        if (this.interactivityState.tilt) {
-                            const tiltAlphaRad = (this.deviceOrientation.alpha * Math.PI / 180) * 0.3;
-                            const tiltBetaRad = (this.deviceOrientation.beta * Math.PI / 180) * 0.5;
-                            const tiltGammaRad = (this.deviceOrientation.gamma * Math.PI / 180) * 0.5;
-                            
-                            combinedRotations.rot4dXW += tiltBetaRad;
-                            combinedRotations.rot4dYW += tiltGammaRad;
-                            combinedRotations.rot4dZW = this.baseRotations.rot4dZW + tiltAlphaRad;
-                        }
-                        
-                        visualizer.updateParameters(combinedRotations);
+                        visualizer.updateParameters(mouse4DPerspective);
                     }
                 });
             }
