@@ -2012,13 +2012,42 @@
                     rot4dZW: 0  // Keep stable for mouse
                 };
                 
+                // 🚀 NEW: Make PC mouse trigger same DRAMATIC CSS effects as mobile tilt
+                const mouseIntensity = Math.sqrt(mouseOffsetX*mouseOffsetX + mouseOffsetY*mouseOffsetY); // 0-1.4 range
+                const extremeMouse = mouseIntensity > 0.8;
+                
+                // Apply same dramatic CSS effects that mobile tilt gets
+                document.documentElement.style.setProperty('--gallery-tilt-intensity', mouseIntensity * 15); // Same as mobile
+                
+                // Dramatic glow effects during extreme mouse movement (matching mobile)
+                if (extremeMouse) {
+                    const glowIntensity = (mouseIntensity - 0.8) * 5; // Adjusted for mouse range
+                    const pulseSpeed = Math.max(0.5, 2 - mouseIntensity * 0.5);
+                    document.documentElement.style.setProperty('--gallery-extreme-glow', glowIntensity);
+                    document.documentElement.style.setProperty('--gallery-pulse-speed', `${pulseSpeed}s`);
+                    
+                    // Add extreme tilt class to collections container (same as mobile)
+                    const container = document.getElementById('collectionsContainer');
+                    if (container) {
+                        container.classList.add('extreme-tilt');
+                    }
+                } else {
+                    document.documentElement.style.setProperty('--gallery-extreme-glow', 0);
+                    const container = document.getElementById('collectionsContainer');
+                    if (container) {
+                        container.classList.remove('extreme-tilt');
+                    }
+                }
+                
                 // Send to specific card iframe
                 const iframe = card.querySelector('iframe');
                 if (iframe && iframe.contentWindow) {
                     try {
                         iframe.contentWindow.postMessage({
                             type: 'mouse4DPerspective',
-                            ...mouse4D
+                            ...mouse4D,
+                            mouseIntensity: mouseIntensity,
+                            extremeMouse: extremeMouse
                         }, '*');
                     } catch (e) { /* Cross-origin safety */ }
                 }
