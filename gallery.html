@@ -99,6 +99,18 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
         }
         
+        /* 4D Perspective Enhancement */
+        :root {
+            --gallery-tilt-intensity: 0;
+        }
+        
+        .variation-card.enhanced-effects {
+            transform: perspective(1000px) 
+                       rotateX(calc(var(--gallery-tilt-intensity) * 0.5deg))
+                       rotateY(calc(var(--gallery-tilt-intensity) * 0.3deg));
+            transition: transform 0.1s ease-out;
+        }
+        
         .nav-btn {
             background: rgba(255, 150, 0, 0.2);
             border: 2px solid #ff9600;
@@ -1475,6 +1487,9 @@
                         }
                     }
                     
+                    // 🌐 Enhanced: Send 4D perspective changes based on mouse movement
+                    InteractivityManager.sendMouse4DPerspective(cardX, cardY, card);
+                    
                     // Add extra class for edge effects
                     if (cardX < 20 || cardX > 80 || cardY < 20 || cardY > 80) {
                         card.classList.add('edge-bend');
@@ -1599,6 +1614,13 @@
                 enhanced: true
             },
             
+            // 4D perspective tracking (matching viewer capabilities)
+            deviceOrientation: {
+                alpha: 0,   // Z-axis rotation (compass)
+                beta: 0,    // X-axis rotation (front-to-back tilt)  
+                gamma: 0    // Y-axis rotation (left-to-right tilt)
+            },
+            
             toggleInteractivity(type) {
                 this.state[type] = !this.state[type];
                 const button = document.getElementById(`${type}Toggle`);
@@ -1681,6 +1703,79 @@
             
             save() {
                 localStorage.setItem('vib34d-gallery-interactivity', JSON.stringify(this.state));
+            },
+            
+            // 🌐 4D PERSPECTIVE METHODS (matching viewer capabilities)
+            handleDeviceOrientation(event) {
+                if (!this.state.tilt) return;
+                
+                // Update device orientation tracking
+                this.deviceOrientation.alpha = event.alpha || 0;
+                this.deviceOrientation.beta = event.beta || 0;
+                this.deviceOrientation.gamma = event.gamma || 0;
+                
+                // Send 4D perspective changes to all card iframes
+                this.send4DPerspectiveToCards();
+            },
+            
+            send4DPerspectiveToCards() {
+                // Convert device orientation to 4D rotation parameters
+                const alphaRad = (this.deviceOrientation.alpha * Math.PI / 180) * 0.3;
+                const betaRad = (this.deviceOrientation.beta * Math.PI / 180) * 0.5;
+                const gammaRad = (this.deviceOrientation.gamma * Math.PI / 180) * 0.5;
+                
+                const perspective4D = {
+                    rot4dXW: betaRad,     // Front-back tilt -> XW rotation
+                    rot4dYW: gammaRad,    // Left-right tilt -> YW rotation
+                    rot4dZW: alphaRad     // Compass rotation -> ZW rotation
+                };
+                
+                // Send to all gallery card iframes
+                const cards = document.querySelectorAll('.variation-card');
+                cards.forEach(card => {
+                    const iframe = card.querySelector('iframe');
+                    if (iframe && iframe.contentWindow) {
+                        try {
+                            iframe.contentWindow.postMessage({
+                                type: '4DPerspective',
+                                ...perspective4D,
+                                deviceOrientation: this.deviceOrientation
+                            }, '*');
+                        } catch (e) { /* Cross-origin safety */ }
+                    }
+                });
+                
+                // Also update card visual tilt for enhanced effect
+                if (this.state.enhanced) {
+                    const tiltIntensity = Math.sqrt(betaRad*betaRad + gammaRad*gammaRad);
+                    document.documentElement.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 10);
+                }
+            },
+            
+            sendMouse4DPerspective(mouseX, mouseY, card) {
+                if (!this.state.mouse || !this.state.enhanced) return;
+                
+                // Map mouse position to 4D viewing angle (matching viewer logic)
+                const mouseOffsetX = (mouseX / 100 - 0.5) * 2; // -1 to 1
+                const mouseOffsetY = (mouseY / 100 - 0.5) * 2; // -1 to 1
+                
+                const mouseSensitivity = 0.6; // Slightly less sensitive than viewer
+                const mouse4D = {
+                    rot4dYW: mouseOffsetX * mouseSensitivity,  // Horizontal -> YW
+                    rot4dXW: mouseOffsetY * mouseSensitivity,  // Vertical -> XW
+                    rot4dZW: 0  // Keep stable for mouse
+                };
+                
+                // Send to specific card iframe
+                const iframe = card.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'mouse4DPerspective',
+                            ...mouse4D
+                        }, '*');
+                    } catch (e) { /* Cross-origin safety */ }
+                }
             }
         };
         
@@ -1778,6 +1873,16 @@
                 
                 // Initialize mobile accelerometer tilt system
                 mobileAccelerometer = new MobileAccelerometerTilt();
+                
+                // 🌐 Add device orientation listener for 4D perspective (matching viewer)
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', (e) => {
+                        InteractivityManager.handleDeviceOrientation(e);
+                    });
+                    console.log('🌐 Device orientation listener added for 4D perspective');
+                } else {
+                    console.log('⚠️ Device orientation not supported');
+                }
             }, 50);
         });
     </script>
