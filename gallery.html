@@ -1311,6 +1311,7 @@
         }
         
         let currentPreviewCard = null; // Track currently previewing card
+        let userHasInteracted = false; // Track user interaction for vibrate API
         
         // 🕐 DELAYED PREVIEW SYSTEM: Prevent premature iframe loading
         let previewTimeouts = new Map();
@@ -1712,8 +1713,8 @@
                     // 🎵 Discrete micro reaction - subtle audio feedback
                     playMicroSound('hover');
                     
-                    // 📱 Haptic feedback on mobile
-                    if ('vibrate' in navigator) {
+                    // 📱 Haptic feedback on mobile (only after user interaction)
+                    if ('vibrate' in navigator && userHasInteracted) {
                         navigator.vibrate(10); // Very brief haptic pulse
                     }
                     
@@ -1864,8 +1865,8 @@
                     // 🎵 Discrete micro reaction - click sound
                     playMicroSound('click');
                     
-                    // 📱 Enhanced haptic feedback for clicks
-                    if ('vibrate' in navigator) {
+                    // 📱 Enhanced haptic feedback for clicks (only after user interaction)
+                    if ('vibrate' in navigator && userHasInteracted) {
                         navigator.vibrate([20, 10, 20]); // Double pulse for clicks
                     }
                     
@@ -2144,8 +2145,8 @@
                     this.playMicroTone(frequency, duration, volume);
                 }
                 
-                // 📱 ENHANCED HAPTIC FEEDBACK for mobile
-                if (extremeTilt && 'vibrate' in navigator) {
+                // 📱 ENHANCED HAPTIC FEEDBACK for mobile (only after user interaction)
+                if (extremeTilt && 'vibrate' in navigator && userHasInteracted) {
                     const vibrationPattern = Math.floor(tiltIntensity * 50);
                     navigator.vibrate(vibrationPattern);
                 }
@@ -2381,6 +2382,13 @@
         let mobileAccelerometer = null;
         
         document.addEventListener('DOMContentLoaded', () => {
+            // Track user interaction for vibrate API
+            ['click', 'touchstart', 'keydown'].forEach(eventType => {
+                document.addEventListener(eventType, () => {
+                    userHasInteracted = true;
+                }, { once: true });
+            });
+            
             // Optimized delay for card initialization
             setTimeout(() => {
                 // Initialize enhanced interactivity system

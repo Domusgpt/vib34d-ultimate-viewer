@@ -1365,14 +1365,14 @@
                 
                 // Create complementary parameters by inverting/offsetting key values
                 const twinParams = {
-                    ...this.currentParams,
-                    hue: (this.currentParams.hue + 180) % 360, // Complementary hue
-                    intensity: 1 - this.currentParams.intensity, // Inverse intensity
-                    morphFactor: 2 - this.currentParams.morphFactor, // Inverse morph
-                    chaos: 1 - this.currentParams.chaos, // Inverse chaos
-                    rot4dXW: -this.currentParams.rot4dXW, // Opposite 4D rotation
-                    rot4dYW: -this.currentParams.rot4dYW,
-                    rot4dZW: -this.currentParams.rot4dZW
+                    ...this.params,
+                    hue: (this.params.hue + 180) % 360, // Complementary hue
+                    intensity: 1 - this.params.intensity, // Inverse intensity
+                    morphFactor: 2 - this.params.morph, // Inverse morph (use correct property)
+                    chaos: 1 - this.params.chaos, // Inverse chaos
+                    rot4dXW: -this.params.rot4dXW, // Opposite 4D rotation
+                    rot4dYW: -this.params.rot4dYW,
+                    rot4dZW: -this.params.rot4dZW
                 };
                 
                 // Apply twin parameters to twin canvases
