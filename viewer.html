@@ -177,6 +177,23 @@
             border-radius: 18px;
         }
 
+        /* ACCENT TWIN CANVASES: Complementary visualization system */
+        .twin-canvas {
+            mix-blend-mode: multiply;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .twin-canvas.active {
+            opacity: 0.3 !important;
+        }
+
+        /* Twin canvas specific blend modes for interesting interaction */
+        #twin-background-canvas { mix-blend-mode: overlay; }
+        #twin-shadow-canvas { mix-blend-mode: multiply; }
+        #twin-content-canvas { mix-blend-mode: screen; }
+        #twin-highlight-canvas { mix-blend-mode: color-dodge; }
+        #twin-accent-canvas { mix-blend-mode: difference; }
+
         /* Audio Toggle Buttons (Inside Control Panel) */
         .audio-toggle {
             background: rgba(0, 0, 0, 0.7);
@@ -206,17 +223,48 @@
         
         .control-panel {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 6px;
             z-index: 1000;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 15px;
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(25px);
+            transform: translateX(75%);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            width: auto;
+            min-width: 160px;
+        }
+
+        .control-panel:hover,
+        .control-panel.expanded {
+            transform: translateX(0%);
+            border-color: rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 45px rgba(0, 255, 255, 0.25);
+        }
+
+        .control-panel::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 30px;
+            background: linear-gradient(to right, transparent, rgba(0, 255, 255, 0.4));
+            border-radius: 0 4px 4px 0;
+            transition: all 0.4s ease;
+        }
+
+        .control-panel:hover::before,
+        .control-panel.expanded::before {
+            width: 12px;
+            background: linear-gradient(to right, transparent, rgba(0, 255, 255, 0.7));
         }
 
         /* Minimal Info Display */
@@ -418,20 +466,28 @@
                 <canvas id="content-canvas" class="engine-canvas"></canvas>
                 <canvas id="highlight-canvas" class="engine-canvas"></canvas>
                 <canvas id="accent-canvas" class="engine-canvas"></canvas>
+                
+                <!-- ACCENT TWIN VISUALIZER: Complementary/Inverse parameter visualization -->
+                <canvas id="twin-background-canvas" class="engine-canvas twin-canvas" style="opacity: 0;"></canvas>
+                <canvas id="twin-shadow-canvas" class="engine-canvas twin-canvas" style="opacity: 0;"></canvas>
+                <canvas id="twin-content-canvas" class="engine-canvas twin-canvas" style="opacity: 0;"></canvas>
+                <canvas id="twin-highlight-canvas" class="engine-canvas twin-canvas" style="opacity: 0;"></canvas>
+                <canvas id="twin-accent-canvas" class="engine-canvas twin-canvas" style="opacity: 0;"></canvas>
                 <div class="loading" id="loadingIndicator">Initializing Portal Engine...</div>
             </div>
         </div>
     </div>
 
     <div class="control-panel">
-        <button class="audio-toggle active" id="mouseToggle">🖱️ Mouse Reactive</button>
-        <button class="audio-toggle active" id="tiltToggle">📱 Device Tilt</button>
-        <button class="audio-toggle" id="audioToggle">🎵 Audio Reactive</button>
-        <button class="audio-toggle active" id="enhancedToggle">✨ Enhanced FX</button>
-        <hr style="border: 1px solid rgba(0, 255, 255, 0.3); margin: 10px 0;">
-        <button class="audio-toggle" id="backToPortfolio">📁 Back to Portfolio</button>
-        <button class="audio-toggle" id="openInEngine">🚀 Open in Engine</button>
-        <button class="audio-toggle" id="sharePortal">📤 Share Portal</button>
+        <button class="audio-toggle active" id="mouseToggle">Mouse Reactive</button>
+        <button class="audio-toggle active" id="tiltToggle">Device Tilt</button>
+        <button class="audio-toggle" id="audioToggle">Audio Reactive</button>
+        <button class="audio-toggle active" id="enhancedToggle">Enhanced FX</button>
+        <button class="audio-toggle" id="accentTwinToggle">Accent Twin</button>
+        <hr style="border: 1px solid rgba(0, 255, 255, 0.3); margin: 6px 0;">
+        <button class="audio-toggle" id="backToPortfolio">Back to Portfolio</button>
+        <button class="audio-toggle" id="openInEngine">Open in Engine</button>
+        <button class="audio-toggle" id="sharePortal">Share Portal</button>
     </div>
     
     <div class="info-display" id="infoDisplay">
@@ -777,22 +833,22 @@
                 switch (type) {
                     case 'audio':
                         if (isActive) {
-                            button.textContent = '🎵 Audio ON';
+                            button.textContent = 'Audio ON';
                             this.initAudio();
                         } else {
-                            button.textContent = '🎵 Audio OFF';
+                            button.textContent = 'Audio OFF';
                             this.audioReactive = false;
                         }
                         break;
                         
                     case 'mouse':
                         // Mouse reactivity affects portal tilt and visualizer interaction
-                        button.textContent = isActive ? '🖱️ Mouse ON' : '🖱️ Mouse OFF';
+                        button.textContent = isActive ? 'Mouse ON' : 'Mouse OFF';
                         break;
                         
                     case 'tilt':
                         // Device tilt affects 4D rotation perspective
-                        button.textContent = isActive ? '📱 Tilt ON' : '📱 Tilt OFF';
+                        button.textContent = isActive ? 'Tilt ON' : 'Tilt OFF';
                         if (!isActive) {
                             // Reset to base rotations when tilt is disabled
                             this.update4DPerspective(0, 0, 0);
@@ -801,7 +857,7 @@
                         
                     case 'enhanced':
                         // Enhanced effects add extra visual flair
-                        button.textContent = isActive ? '✨ Enhanced ON' : '✨ Enhanced OFF';
+                        button.textContent = isActive ? 'Enhanced ON' : 'Enhanced OFF';
                         break;
                 }
                 
@@ -821,7 +877,7 @@
                     this.audioData = new Uint8Array(analyser.frequencyBinCount);
                     this.audioAnalyser = analyser;
                     
-                    console.log('🎵 Audio reactive mode enabled');
+                    console.log('Audio reactive mode enabled');
                 } catch (error) {
                     console.warn('Audio access denied:', error);
                     this.audioReactive = false;
@@ -871,7 +927,7 @@
                 document.documentElement.style.setProperty('--bg-rotation', `${bgRotation}deg`);
                 document.documentElement.style.setProperty('--bg-blur', `${bgBlur}px`);
                 
-                // 🔄 DRAMATIC COUNTER-ROTATION: Object stays fixed while world moves dramatically
+                // DRAMATIC COUNTER-ROTATION: Object stays fixed while world moves dramatically
                 const counterMultiplier = extremeTilt ? 1.2 : 0.8; // More dramatic counter-rotation during extreme tilts
                 const counterRotateX = -betaNorm * counterMultiplier;   // Much stronger counter front-back tilt
                 const counterRotateY = -gammaNorm * counterMultiplier;  // Much stronger counter left-right tilt
@@ -945,7 +1001,7 @@
                     this.portalWindow.style.boxShadow = '';
                 }
                 
-                // 🎵 IMMERSIVE AUDIO FEEDBACK for dramatic tilts
+                // IMMERSIVE AUDIO FEEDBACK for dramatic tilts
                 if (extremeTilt && this.interactivityState.audio) {
                     const frequency = 150 + tiltIntensity * 200;
                     const duration = 30 + tiltIntensity * 20;
@@ -953,7 +1009,7 @@
                     this.playMicroTone(frequency, duration, volume);
                 }
                 
-                // 📱 ENHANCED HAPTIC FEEDBACK for mobile
+                // ENHANCED HAPTIC FEEDBACK for mobile
                 if (extremeTilt && 'vibrate' in navigator) {
                     const vibrationPattern = Math.floor(tiltIntensity * 50);
                     navigator.vibrate(vibrationPattern);
@@ -986,7 +1042,7 @@
                     document.documentElement.style.setProperty('--bg-offset-y', `${bgMouseY}px`);
                 }
                 
-                // 🔄 COUNTER-ROTATION: Keep object in "world space"
+                // COUNTER-ROTATION: Keep object in "world space"
                 const mouseCounterX = -mouseOffsetY * 15;  // Vertical mouse -> X rotation
                 const mouseCounterY = -mouseOffsetX * 15;  // Horizontal mouse -> Y rotation
                 
