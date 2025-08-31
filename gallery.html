@@ -99,16 +99,59 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
         }
         
-        /* 4D Perspective Enhancement */
+        /* DRAMATIC 4D PERSPECTIVE ENHANCEMENT */
         :root {
             --gallery-tilt-intensity: 0;
+            --gallery-bg-offset-x: 0px;
+            --gallery-bg-offset-y: 0px;
+            --gallery-bg-scale: 1.0;
+            --gallery-bg-rotation: 0deg;
+            --gallery-extreme-glow: 0;
+            --gallery-pulse-speed: 2s;
         }
         
-        .variation-card.enhanced-effects {
-            transform: perspective(1000px) 
-                       rotateX(calc(var(--gallery-tilt-intensity) * 0.5deg))
-                       rotateY(calc(var(--gallery-tilt-intensity) * 0.3deg));
+        /* DRAMATIC background parallax during tilting */
+        body {
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+            transform: 
+                translate(var(--gallery-bg-offset-x), var(--gallery-bg-offset-y))
+                scale(var(--gallery-bg-scale))
+                rotate(var(--gallery-bg-rotation));
             transition: transform 0.1s ease-out;
+        }
+        
+        /* DRAMATIC enhanced effects for cards */
+        .variation-card.enhanced-effects {
+            transform: perspective(calc(800px + var(--gallery-tilt-intensity) * 400px)) 
+                       rotateX(calc(var(--gallery-tilt-intensity) * 2deg))
+                       rotateY(calc(var(--gallery-tilt-intensity) * 1.5deg))
+                       translateZ(calc(var(--gallery-tilt-intensity) * 30px));
+            transition: transform 0.1s ease-out;
+            
+            /* DRAMATIC glow effects during extreme tilts */
+            filter: 
+                brightness(calc(1 + var(--gallery-extreme-glow) * 0.4))
+                saturate(calc(1 + var(--gallery-extreme-glow) * 0.6))
+                hue-rotate(calc(var(--gallery-extreme-glow) * 40deg));
+        }
+        
+        /* DRAMATIC pulsing animation during extreme tilts */
+        .collections-container {
+            animation: dramaticTiltPulse var(--gallery-pulse-speed) ease-in-out infinite;
+            animation-play-state: paused;
+        }
+        
+        .collections-container.extreme-tilt {
+            animation-play-state: running;
+        }
+        
+        @keyframes dramaticTiltPulse {
+            0%, 100% { 
+                filter: brightness(1) saturate(1);
+            }
+            50% { 
+                filter: brightness(calc(1 + var(--gallery-extreme-glow) * 0.3)) saturate(calc(1 + var(--gallery-extreme-glow) * 0.5));
+            }
         }
         
         .nav-btn {
@@ -1719,11 +1762,41 @@
                 enhanced: true
             },
             
+            // Audio context for dramatic effects
+            audioContext: null,
+            
             // 4D perspective tracking (matching viewer capabilities)
             deviceOrientation: {
                 alpha: 0,   // Z-axis rotation (compass)
                 beta: 0,    // X-axis rotation (front-to-back tilt)  
                 gamma: 0    // Y-axis rotation (left-to-right tilt)
+            },
+            
+            // 🎵 MICRO TONE GENERATION for dramatic tilts
+            playMicroTone(frequency, duration, volume) {
+                if (!this.state.audio) return;
+                
+                try {
+                    if (!this.audioContext) {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.audioContext = new AudioContext();
+                    }
+                    
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(volume || 0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + (duration || 100) / 1000);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + (duration || 100) / 1000);
+                } catch (e) {
+                    console.log('🎵 Audio context blocked:', e);
+                }
             },
             
             toggleInteractivity(type) {
@@ -1824,15 +1897,49 @@
             },
             
             send4DPerspectiveToCards() {
-                // Convert device orientation to 4D rotation parameters
-                const alphaRad = (this.deviceOrientation.alpha * Math.PI / 180) * 0.3;
-                const betaRad = (this.deviceOrientation.beta * Math.PI / 180) * 0.5;
-                const gammaRad = (this.deviceOrientation.gamma * Math.PI / 180) * 0.5;
+                // 🚀 DRAMATIC 4D PERSPECTIVE TRANSFORMATION SYSTEM (matching viewer)
+                // Extended range for more dramatic tilting effects
+                const betaNorm = Math.max(-120, Math.min(120, this.deviceOrientation.beta));
+                const gammaNorm = Math.max(-120, Math.min(120, this.deviceOrientation.gamma));
+                const alphaNorm = ((this.deviceOrientation.alpha % 360) + 360) % 360;
+                
+                // Calculate tilt intensity (0-2.67 for dramatic scaling)
+                const tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 90;
+                const extremeTilt = tiltIntensity > 1.0;
+                
+                // 🎯 DRAMATIC PARALLAX BACKGROUND: Move opposite to create deep perspective
+                const parallaxMultiplier = extremeTilt ? 12 : 8;
+                const bgOffsetX = -gammaNorm * parallaxMultiplier;
+                const bgOffsetY = -betaNorm * (parallaxMultiplier * 0.75);
+                const bgScale = 1.1 + tiltIntensity * 0.15;
+                const bgRotation = alphaNorm * 0.3;
+                
+                // Apply dramatic background transforms
+                document.documentElement.style.setProperty('--gallery-bg-offset-x', `${bgOffsetX}px`);
+                document.documentElement.style.setProperty('--gallery-bg-offset-y', `${bgOffsetY}px`);
+                document.documentElement.style.setProperty('--gallery-bg-scale', bgScale);
+                document.documentElement.style.setProperty('--gallery-bg-rotation', `${bgRotation}deg`);
+                
+                // 🌐 DRAMATIC 4D TRANSFORMATIONS: Natural but transformative 4D effects
+                const dramatic4DScale = extremeTilt ? 0.8 : 0.5; // 8x more dramatic than before!
+                const transformativeScale = tiltIntensity * 0.2;
+                
+                const alphaRad = (alphaNorm * Math.PI / 180) * dramatic4DScale * 0.5;
+                const betaRad = (betaNorm * Math.PI / 180) * dramatic4DScale;
+                const gammaRad = (gammaNorm * Math.PI / 180) * dramatic4DScale;
                 
                 const perspective4D = {
-                    rot4dXW: betaRad,     // Front-back tilt -> XW rotation
-                    rot4dYW: gammaRad,    // Left-right tilt -> YW rotation
-                    rot4dZW: alphaRad     // Compass rotation -> ZW rotation
+                    rot4dXW: betaRad,     // DRAMATICALLY enhanced front-back tilt -> XW rotation
+                    rot4dYW: gammaRad,    // DRAMATICALLY enhanced left-right tilt -> YW rotation
+                    rot4dZW: alphaRad,    // DRAMATICALLY enhanced compass rotation -> ZW rotation
+                    
+                    // TRANSFORMATIVE parameters that change with tilt intensity
+                    morphFactor: 1 + tiltIntensity * 0.4 + transformativeScale,
+                    intensity: 0.8 + tiltIntensity * 0.25 + (extremeTilt ? 0.2 : 0),
+                    chaos: 0.2 + Math.pow(tiltIntensity, 2) * 0.15,
+                    gridDensity: 15 * (1 + tiltIntensity * 0.3),
+                    hue: 200 + (alphaNorm - 180) * 0.8 + (extremeTilt ? Math.sin(Date.now() * 0.005) * 20 : 0),
+                    saturation: 0.8 + tiltIntensity * 0.15 + (extremeTilt ? 0.1 : 0)
                 };
                 
                 // Send to all gallery card iframes
@@ -1844,17 +1951,55 @@
                             iframe.contentWindow.postMessage({
                                 type: '4DPerspective',
                                 ...perspective4D,
-                                deviceOrientation: this.deviceOrientation
+                                deviceOrientation: this.deviceOrientation,
+                                tiltIntensity: tiltIntensity,
+                                extremeTilt: extremeTilt
                             }, '*');
                         } catch (e) { /* Cross-origin safety */ }
                     }
                 });
                 
-                // Also update card visual tilt for enhanced effect
-                if (this.state.enhanced) {
-                    const tiltIntensity = Math.sqrt(betaRad*betaRad + gammaRad*gammaRad);
-                    document.documentElement.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 10);
+                // 🌟 DRAMATIC VISUAL FEEDBACK EFFECTS
+                document.documentElement.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 15); // 50% more intense
+                
+                // Dramatic glow effects during extreme tilts
+                if (extremeTilt) {
+                    const glowIntensity = (tiltIntensity - 1) * 3;
+                    const pulseSpeed = Math.max(0.5, 2 - tiltIntensity * 0.5);
+                    document.documentElement.style.setProperty('--gallery-extreme-glow', glowIntensity);
+                    document.documentElement.style.setProperty('--gallery-pulse-speed', `${pulseSpeed}s`);
+                    
+                    // Add extreme tilt class to collections container
+                    const container = document.getElementById('collectionsContainer');
+                    if (container) {
+                        container.classList.add('extreme-tilt');
+                    }
+                } else {
+                    document.documentElement.style.setProperty('--gallery-extreme-glow', 0);
+                    const container = document.getElementById('collectionsContainer');
+                    if (container) {
+                        container.classList.remove('extreme-tilt');
+                    }
                 }
+                
+                // 🎵 IMMERSIVE AUDIO FEEDBACK for dramatic tilts (matching viewer)
+                if (extremeTilt && this.state.audio) {
+                    const frequency = 150 + tiltIntensity * 200;
+                    const duration = 30 + tiltIntensity * 20;
+                    const volume = Math.min(0.15, tiltIntensity * 0.08);
+                    this.playMicroTone(frequency, duration, volume);
+                }
+                
+                // 📱 ENHANCED HAPTIC FEEDBACK for mobile
+                if (extremeTilt && 'vibrate' in navigator) {
+                    const vibrationPattern = Math.floor(tiltIntensity * 50);
+                    navigator.vibrate(vibrationPattern);
+                }
+                
+                console.log(`🌐 DRAMATIC GALLERY PERSPECTIVE: 
+                    Tilt: ${tiltIntensity.toFixed(2)} ${extremeTilt ? '(EXTREME)' : ''}
+                    BG: (${bgOffsetX.toFixed(1)}, ${bgOffsetY.toFixed(1)}) Scale: ${bgScale.toFixed(2)}
+                    4D: XW:${perspective4D.rot4dXW.toFixed(3)} YW:${perspective4D.rot4dYW.toFixed(3)} ZW:${perspective4D.rot4dZW.toFixed(3)}`);
             },
             
             sendMouse4DPerspective(mouseX, mouseY, card) {

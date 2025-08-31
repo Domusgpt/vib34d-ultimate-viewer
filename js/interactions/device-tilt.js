@@ -9,6 +9,7 @@ export class DeviceTiltHandler {
         this.isSupported = false;
         this.sensitivity = 1.0;
         this.smoothing = 0.1; // Smoothing factor (0-1, lower = smoother)
+        this.dramaticMode = false; // 🚀 NEW: Dramatic tilting mode
         
         // Current device orientation (radians)
         this.currentTilt = {
@@ -16,6 +17,10 @@ export class DeviceTiltHandler {
             beta: 0,  // X-axis rotation (front-back tilt)  
             gamma: 0  // Y-axis rotation (left-right tilt)
         };
+        
+        // 🚀 DRAMATIC TILTING: Track tilt intensity for extreme effects
+        this.tiltIntensity = 0;
+        this.extremeTilt = false;
         
         // Smoothed 4D rotation values
         this.smoothedRotation = {
@@ -33,23 +38,48 @@ export class DeviceTiltHandler {
         
         // Mapping configuration
         this.mapping = {
-            // Device beta (front-back tilt) -> 4D XW rotation
-            betaToXW: {
-                scale: 0.01, // Radians per degree of device tilt
-                range: [-45, 45], // Degrees of device tilt to use
-                clamp: [-1.5, 1.5] // 4D rotation limits (radians)
+            // 🔷 NORMAL MODE: Conservative mapping (original behavior)
+            normal: {
+                // Device beta (front-back tilt) -> 4D XW rotation
+                betaToXW: {
+                    scale: 0.01, // Radians per degree of device tilt
+                    range: [-45, 45], // Degrees of device tilt to use
+                    clamp: [-1.5, 1.5] // 4D rotation limits (radians)
+                },
+                // Device gamma (left-right tilt) -> 4D YW rotation  
+                gammaToYW: {
+                    scale: 0.015,
+                    range: [-30, 30],
+                    clamp: [-1.5, 1.5]
+                },
+                // Device alpha (compass heading) -> 4D ZW rotation
+                alphaToZW: {
+                    scale: 0.008,
+                    range: [-180, 180],
+                    clamp: [-2.0, 2.0]
+                }
             },
-            // Device gamma (left-right tilt) -> 4D YW rotation  
-            gammaToYW: {
-                scale: 0.015,
-                range: [-30, 30],
-                clamp: [-1.5, 1.5]
-            },
-            // Device alpha (compass heading) -> 4D ZW rotation
-            alphaToZW: {
-                scale: 0.008,
-                range: [-180, 180],
-                clamp: [-2.0, 2.0]
+            
+            // 🚀 DRAMATIC MODE: 8x more sensitive with extended range
+            dramatic: {
+                // Device beta (front-back tilt) -> 4D XW rotation
+                betaToXW: {
+                    scale: 0.08, // 8x more sensitive!
+                    range: [-120, 120], // Extended range for dramatic effects
+                    clamp: [-6.0, 6.0] // Much wider 4D rotation limits
+                },
+                // Device gamma (left-right tilt) -> 4D YW rotation  
+                gammaToYW: {
+                    scale: 0.12, // 8x more sensitive!
+                    range: [-120, 120], // Extended range
+                    clamp: [-6.0, 6.0]
+                },
+                // Device alpha (compass heading) -> 4D ZW rotation
+                alphaToZW: {
+                    scale: 0.064, // 8x more sensitive!
+                    range: [-180, 180],
+                    clamp: [-6.0, 6.0]
+                }
             }
         };
         
@@ -210,34 +240,43 @@ export class DeviceTiltHandler {
         const gammaDeg = event.gamma || 0; // Left-right tilt (-90 to 90)
         const alphaDeg = event.alpha || 0; // Compass heading (0 to 360)
         
+        // 🚀 DRAMATIC MODE: Choose mapping configuration
+        const activeMapping = this.dramaticMode ? this.mapping.dramatic : this.mapping.normal;
+        
+        // 🚀 CALCULATE TILT INTENSITY for dramatic effects
+        const betaNorm = Math.max(-120, Math.min(120, betaDeg));
+        const gammaNorm = Math.max(-120, Math.min(120, gammaDeg));
+        this.tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 90;
+        this.extremeTilt = this.tiltIntensity > 1.0;
+        
         // Map beta (front-back tilt) to XW rotation
-        const betaClamped = Math.max(this.mapping.betaToXW.range[0], 
-            Math.min(this.mapping.betaToXW.range[1], betaDeg));
+        const betaClamped = Math.max(activeMapping.betaToXW.range[0], 
+            Math.min(activeMapping.betaToXW.range[1], betaDeg));
         const rot4dXW = this.baseRotation.rot4dXW + 
-            (betaClamped * this.mapping.betaToXW.scale * this.sensitivity);
+            (betaClamped * activeMapping.betaToXW.scale * this.sensitivity);
         
         // Map gamma (left-right tilt) to YW rotation
-        const gammaClamped = Math.max(this.mapping.gammaToYW.range[0],
-            Math.min(this.mapping.gammaToYW.range[1], gammaDeg));
+        const gammaClamped = Math.max(activeMapping.gammaToYW.range[0],
+            Math.min(activeMapping.gammaToYW.range[1], gammaDeg));
         const rot4dYW = this.baseRotation.rot4dYW + 
-            (gammaClamped * this.mapping.gammaToYW.scale * this.sensitivity);
+            (gammaClamped * activeMapping.gammaToYW.scale * this.sensitivity);
         
         // Map alpha (compass) to ZW rotation
         let alphaNormalized = alphaDeg;
         if (alphaNormalized > 180) alphaNormalized -= 360; // Normalize to -180 to 180
-        const alphaClamped = Math.max(this.mapping.alphaToZW.range[0],
-            Math.min(this.mapping.alphaToZW.range[1], alphaNormalized));
+        const alphaClamped = Math.max(activeMapping.alphaToZW.range[0],
+            Math.min(activeMapping.alphaToZW.range[1], alphaNormalized));
         const rot4dZW = this.baseRotation.rot4dZW + 
-            (alphaClamped * this.mapping.alphaToZW.scale * this.sensitivity);
+            (alphaClamped * activeMapping.alphaToZW.scale * this.sensitivity);
         
         // Apply final clamping to prevent extreme values
         return {
-            rot4dXW: Math.max(this.mapping.betaToXW.clamp[0],
-                Math.min(this.mapping.betaToXW.clamp[1], rot4dXW)),
-            rot4dYW: Math.max(this.mapping.gammaToYW.clamp[0],
-                Math.min(this.mapping.gammaToYW.clamp[1], rot4dYW)),
-            rot4dZW: Math.max(this.mapping.alphaToZW.clamp[0],
-                Math.min(this.mapping.alphaToZW.clamp[1], rot4dZW))
+            rot4dXW: Math.max(activeMapping.betaToXW.clamp[0],
+                Math.min(activeMapping.betaToXW.clamp[1], rot4dXW)),
+            rot4dYW: Math.max(activeMapping.gammaToYW.clamp[0],
+                Math.min(activeMapping.gammaToYW.clamp[1], rot4dYW)),
+            rot4dZW: Math.max(activeMapping.alphaToZW.clamp[0],
+                Math.min(activeMapping.alphaToZW.clamp[1], rot4dZW))
         };
     }
     
@@ -276,6 +315,30 @@ export class DeviceTiltHandler {
     }
     
     /**
+     * 🚀 Enable/disable dramatic tilting mode
+     */
+    setDramaticMode(enabled) {
+        this.dramaticMode = enabled;
+        console.log(`🚀 DEVICE TILT: Dramatic mode ${enabled ? 'ENABLED - 8x more sensitive!' : 'disabled - normal sensitivity'}`);
+        
+        // Update UI indicator to show mode
+        this.updateTiltModeDisplay();
+        
+        // If dramatic mode is enabled and tilt is active, show warning about extreme effects
+        if (enabled && this.isEnabled) {
+            console.log('⚠️ DRAMATIC TILTING ACTIVE: Tilt your device carefully - effects are 8x more intense!');
+        }
+    }
+    
+    /**
+     * 🚀 Toggle dramatic tilting mode
+     */
+    toggleDramaticMode() {
+        this.setDramaticMode(!this.dramaticMode);
+        return this.dramaticMode;
+    }
+    
+    /**
      * Show/hide tilt indicator UI
      */
     showTiltIndicator(show) {
@@ -289,10 +352,12 @@ export class DeviceTiltHandler {
                 <div class="tilt-status">
                     <div class="tilt-icon">📱</div>
                     <div class="tilt-text">4D Tilt Active</div>
+                    <div class="tilt-mode" id="tilt-mode">NORMAL MODE</div>
                     <div class="tilt-values">
                         <span id="tilt-xw">XW: 0.00</span>
                         <span id="tilt-yw">YW: 0.00</span>
                         <span id="tilt-zw">ZW: 0.00</span>
+                        <span id="tilt-intensity">Intensity: 0.00</span>
                     </div>
                 </div>
             `;
@@ -327,10 +392,28 @@ export class DeviceTiltHandler {
         const xwDisplay = document.getElementById('tilt-xw');
         const ywDisplay = document.getElementById('tilt-yw');
         const zwDisplay = document.getElementById('tilt-zw');
+        const intensityDisplay = document.getElementById('tilt-intensity');
         
         if (xwDisplay) xwDisplay.textContent = `XW: ${this.smoothedRotation.rot4dXW.toFixed(2)}`;
         if (ywDisplay) ywDisplay.textContent = `YW: ${this.smoothedRotation.rot4dYW.toFixed(2)}`;
         if (zwDisplay) zwDisplay.textContent = `ZW: ${this.smoothedRotation.rot4dZW.toFixed(2)}`;
+        if (intensityDisplay) {
+            intensityDisplay.textContent = `Intensity: ${this.tiltIntensity.toFixed(2)}`;
+            // 🚀 Color intensity display based on extreme tilt
+            intensityDisplay.style.color = this.extremeTilt ? '#ff4444' : '#0ff';
+        }
+    }
+    
+    /**
+     * 🚀 Update tilt mode display
+     */
+    updateTiltModeDisplay() {
+        const modeDisplay = document.getElementById('tilt-mode');
+        if (modeDisplay) {
+            modeDisplay.textContent = this.dramaticMode ? '🚀 DRAMATIC MODE' : 'NORMAL MODE';
+            modeDisplay.style.color = this.dramaticMode ? '#ff4444' : '#0ff';
+            modeDisplay.style.fontWeight = this.dramaticMode ? 'bold' : 'normal';
+        }
     }
     
     /**
@@ -428,7 +511,50 @@ if (typeof window !== 'undefined') {
         window.deviceTiltHandler.setSensitivity(value);
     };
     
-    console.log('🎯 DEVICE TILT: System loaded and ready');
+    // 🚀 NEW: Dramatic tilting mode functions
+    window.setDramaticTilting = (enabled) => {
+        window.deviceTiltHandler.setDramaticMode(enabled);
+    };
+    
+    window.toggleDramaticTilting = () => {
+        return window.deviceTiltHandler.toggleDramaticMode();
+    };
+    
+    // 🚀 NEW: Enhanced toggle that can enable dramatic mode
+    window.toggleDeviceTiltDramatic = async () => {
+        if (!window.deviceTiltHandler.isEnabled) {
+            // First enable tilt
+            const enabled = await window.toggleDeviceTilt();
+            if (enabled) {
+                // Then enable dramatic mode
+                window.deviceTiltHandler.setDramaticMode(true);
+                console.log('🚀 DRAMATIC TILTING ENABLED: 8x more sensitive! Tilt carefully!');
+                
+                const tiltBtn = document.getElementById('tiltBtn');
+                if (tiltBtn) {
+                    tiltBtn.style.background = 'linear-gradient(45deg, #ff4444, #ff0080)';
+                    tiltBtn.title = '🚀 DRAMATIC 4D Tilt Active - 8x More Sensitive!';
+                }
+            }
+            return enabled;
+        } else {
+            // Toggle dramatic mode if tilt is already enabled
+            const dramatic = window.deviceTiltHandler.toggleDramaticMode();
+            const tiltBtn = document.getElementById('tiltBtn');
+            if (tiltBtn) {
+                if (dramatic) {
+                    tiltBtn.style.background = 'linear-gradient(45deg, #ff4444, #ff0080)';
+                    tiltBtn.title = '🚀 DRAMATIC 4D Tilt Active - 8x More Sensitive!';
+                } else {
+                    tiltBtn.style.background = 'linear-gradient(45deg, #00ffff, #0099ff)';
+                    tiltBtn.title = 'Device Tilt Active - Normal Sensitivity';
+                }
+            }
+            return dramatic;
+        }
+    };
+    
+    console.log('🎯 DEVICE TILT: System loaded with DRAMATIC MODE support! 🚀');
 }
 
 export default DeviceTiltHandler;

@@ -21,6 +21,11 @@
             --bg-offset-x: 0px;
             --bg-offset-y: 0px;
             --tilt-intensity: 0;
+            --bg-scale: 1.0;
+            --bg-rotation: 0deg;
+            --bg-blur: 0px;
+            --extreme-glow: 0;
+            --pulse-speed: 2s;
         }
         
         .silicon-background {
@@ -30,11 +35,14 @@
                 radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.03) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.03) 0%, transparent 50%),
                 linear-gradient(135deg, #0a0a0a 0%, #1a1a2a 30%, #0f0f1f 70%, #0a0a0a 100%);
-            backdrop-filter: blur(1px);
+            backdrop-filter: blur(calc(1px + var(--bg-blur)));
             z-index: -2;
-            /* Parallax movement based on tilt */
-            transform: translate(var(--bg-offset-x), var(--bg-offset-y));
-            transition: transform 0.1s ease-out;
+            /* DRAMATIC parallax movement with scaling, rotation, and blur */
+            transform: 
+                translate(var(--bg-offset-x), var(--bg-offset-y)) 
+                scale(var(--bg-scale)) 
+                rotate(var(--bg-rotation));
+            transition: transform 0.1s ease-out, backdrop-filter 0.1s ease-out;
         }
 
         .silicon-background::before {
@@ -95,6 +103,36 @@
                 0 0 80px rgba(0, 255, 255, 0.4),
                 0 0 150px rgba(255, 0, 255, 0.2),
                 inset 0 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* DRAMATIC EXTREME TILT EFFECTS */
+        .visualization-portal {
+            /* Dynamic glow effects during extreme tilts */
+            filter: 
+                brightness(calc(1 + var(--extreme-glow) * 0.3))
+                saturate(calc(1 + var(--extreme-glow) * 0.5))
+                hue-rotate(calc(var(--extreme-glow) * 30deg));
+            
+            /* Pulsing animation during extreme tilts */
+            animation: 
+                extremeTiltPulse var(--pulse-speed) ease-in-out infinite;
+            animation-play-state: 
+                calc(var(--extreme-glow) > 0 ? running : paused);
+        }
+
+        @keyframes extremeTiltPulse {
+            0%, 100% { 
+                filter: 
+                    brightness(calc(1 + var(--extreme-glow) * 0.3))
+                    saturate(calc(1 + var(--extreme-glow) * 0.5))
+                    hue-rotate(calc(var(--extreme-glow) * 30deg)); 
+            }
+            50% { 
+                filter: 
+                    brightness(calc(1 + var(--extreme-glow) * 0.6))
+                    saturate(calc(1 + var(--extreme-glow) * 0.8))
+                    hue-rotate(calc(var(--extreme-glow) * 60deg)); 
+            }
         }
 
         /* RGB Flash Effect */
@@ -677,65 +715,125 @@
             update4DPerspective(alpha, beta, gamma) {
                 if (!this.interactivityState.tilt) return;
                 
-                // Normalize device orientation values
-                const betaNorm = Math.max(-90, Math.min(90, beta));  // Clamp to -90 to 90
-                const gammaNorm = Math.max(-90, Math.min(90, gamma)); // Clamp to -90 to 90
+                // 🚀 DRAMATIC 4D PERSPECTIVE TRANSFORMATION SYSTEM
+                // Extended range for more dramatic tilting effects
+                const betaNorm = Math.max(-120, Math.min(120, beta));   // Extended range for front-back tilt
+                const gammaNorm = Math.max(-120, Math.min(120, gamma)); // Extended range for left-right tilt
+                const alphaNorm = ((alpha % 360) + 360) % 360;
                 
-                // 🎯 PARALLAX BACKGROUND: Move opposite to tilt direction
-                // When you tilt right, background moves left (creating depth)
-                const bgOffsetX = -gammaNorm * 2;  // Opposite direction, amplified
-                const bgOffsetY = -betaNorm * 1.5; // Opposite direction, amplified
+                // Calculate tilt intensity (0-2.67 for dramatic scaling)
+                const tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 90;
+                const extremeTilt = tiltIntensity > 1.0; // Detect extreme tilts
                 
-                // Apply parallax to background (creates window effect)
+                // 🎯 DRAMATIC PARALLAX BACKGROUND: Move opposite to create deep perspective illusion
+                const parallaxMultiplier = extremeTilt ? 12 : 8; // More dramatic during extreme tilts
+                const bgOffsetX = -gammaNorm * parallaxMultiplier;    // Dramatically increased horizontal parallax
+                const bgOffsetY = -betaNorm * (parallaxMultiplier * 0.75); // Dramatically increased vertical parallax
+                const bgScale = 1.2 + tiltIntensity * 0.15; // Dynamic scaling based on tilt
+                const bgRotation = alphaNorm * 0.3; // Background rotates with compass
+                const bgBlur = extremeTilt ? tiltIntensity * 2 : 0; // Blur during extreme tilts
+                
+                // Apply dramatic background transforms
                 document.documentElement.style.setProperty('--bg-offset-x', `${bgOffsetX}px`);
                 document.documentElement.style.setProperty('--bg-offset-y', `${bgOffsetY}px`);
+                document.documentElement.style.setProperty('--bg-scale', bgScale);
+                document.documentElement.style.setProperty('--bg-rotation', `${bgRotation}deg`);
+                document.documentElement.style.setProperty('--bg-blur', `${bgBlur}px`);
                 
-                // 🔄 COUNTER-ROTATION: Object stays fixed in "world space"
-                // When device tilts, we counter-rotate the visualization
-                const counterRotateX = -betaNorm * 0.3;  // Opposite of tilt
-                const counterRotateY = -gammaNorm * 0.3; // Opposite of tilt
+                // 🔄 DRAMATIC COUNTER-ROTATION: Object stays fixed while world moves dramatically
+                const counterMultiplier = extremeTilt ? 1.2 : 0.8; // More dramatic counter-rotation during extreme tilts
+                const counterRotateX = -betaNorm * counterMultiplier;   // Much stronger counter front-back tilt
+                const counterRotateY = -gammaNorm * counterMultiplier;  // Much stronger counter left-right tilt
+                const counterRotateZ = -alphaNorm * 0.4;                // Enhanced compass counter-rotation
+                const dynamicPerspective = 800 + tiltIntensity * 400;   // Dynamic perspective based on tilt
+                const portalScale = (this.isExpanded ? 1.08 : 1.0) + (extremeTilt ? tiltIntensity * 0.1 : 0);
+                const portalTranslateZ = (this.isExpanded ? 30 : 0) + (extremeTilt ? tiltIntensity * 20 : 0);
                 
-                // Apply counter-rotation to portal window (maintains object position)
+                // Apply dramatic counter-rotation to portal window
                 this.portalWindow.style.transform = `
-                    perspective(1000px)
+                    perspective(${dynamicPerspective}px)
                     rotateX(${counterRotateX}deg)
                     rotateY(${counterRotateY}deg)
-                    scale(${this.isExpanded ? 1.08 : 1.0})
-                    translateZ(${this.isExpanded ? 30 : 0}px)
+                    rotateZ(${counterRotateZ}deg)
+                    scale(${portalScale})
+                    translateZ(${portalTranslateZ}px)
                 `;
                 
-                // 🌐 SUBTLE 4D PERSPECTIVE: Realistic cross-section changes
-                // Very subtle changes to 4D rotation show different "slices"
-                const subtle4DScale = 0.1; // Much more subtle than before
+                // 🌐 DRAMATIC 4D TRANSFORMATIONS: Natural but transformative 4D effects
+                const dramatic4DScale = extremeTilt ? 0.8 : 0.5; // 8x more dramatic than before!
+                const transformativeScale = tiltIntensity * 0.2;  // Additional transformative scaling
                 
-                // Calculate 4D perspective shifts (like seeing different angles of a tesseract)
                 const perspective4D = {
-                    // Tilting up/down slightly changes the XW slice we're viewing
-                    rot4dXW: this.baseRotations.rot4dXW + (betaNorm * Math.PI / 180 * subtle4DScale),
+                    // DRAMATICALLY enhanced 4D rotations
+                    rot4dXW: this.baseRotations.rot4dXW + (betaNorm * Math.PI / 180 * dramatic4DScale),
+                    rot4dYW: this.baseRotations.rot4dYW + (gammaNorm * Math.PI / 180 * dramatic4DScale),
+                    rot4dZW: this.baseRotations.rot4dZW + (alphaNorm * Math.PI / 180 * dramatic4DScale * 0.5),
                     
-                    // Tilting left/right slightly changes the YW slice
-                    rot4dYW: this.baseRotations.rot4dYW + (gammaNorm * Math.PI / 180 * subtle4DScale),
+                    // TRANSFORMATIVE morphing based on tilt intensity
+                    morphFactor: (this.params.morph || 1) + tiltIntensity * 0.4 + transformativeScale,
                     
-                    // Rotation changes which ZW projection we see
-                    rot4dZW: this.baseRotations.rot4dZW + (alpha * Math.PI / 180 * subtle4DScale * 0.5),
+                    // DRAMATIC intensity changes that make tilting feel alive
+                    intensity: (this.params.intensity || 0.8) + tiltIntensity * 0.25 + (extremeTilt ? 0.2 : 0),
                     
-                    // NEW: Morph factor changes slightly based on viewing angle
-                    // This simulates how 4D objects look different from different 3D perspectives
-                    morphFactor: (this.params.morph || 1) + (Math.abs(betaNorm) + Math.abs(gammaNorm)) * 0.002
+                    // ORGANIC chaos increases with extreme tilts
+                    chaos: (this.params.chaos || 0.2) + Math.pow(tiltIntensity, 2) * 0.15,
+                    
+                    // DYNAMIC grid density shifts create dramatic depth perception
+                    gridDensity: (this.params.density || 15) * (1 + tiltIntensity * 0.3),
+                    
+                    // TRANSFORMATIVE color shifts for dimensional feel
+                    hue: (this.params.hue || 200) + (alphaNorm - 180) * 0.8 + (extremeTilt ? Math.sin(Date.now() * 0.005) * 20 : 0),
+                    saturation: (this.params.saturation || 0.8) + tiltIntensity * 0.15 + (extremeTilt ? 0.1 : 0)
                 };
                 
-                // Apply subtle 4D transformations to visualizers
+                // Apply dramatic 4D transformations to visualizers
                 this.visualizers.forEach(visualizer => {
                     if (visualizer.updateParameters) {
                         visualizer.updateParameters(perspective4D);
                     }
                 });
                 
-                // Visual feedback for tilt intensity
-                const tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 90;
+                // 🌟 DRAMATIC VISUAL FEEDBACK EFFECTS
                 document.documentElement.style.setProperty('--tilt-intensity', tiltIntensity);
                 
-                console.log(`🌐 Holographic Window: BG(${bgOffsetX.toFixed(1)}, ${bgOffsetY.toFixed(1)}) | Counter(${counterRotateX.toFixed(1)}°, ${counterRotateY.toFixed(1)}°) | 4D(XW:${perspective4D.rot4dXW.toFixed(3)}, YW:${perspective4D.rot4dYW.toFixed(3)})`);
+                // Dramatic glow effects during extreme tilts
+                if (extremeTilt) {
+                    const glowIntensity = (tiltIntensity - 1) * 3;
+                    const pulseSpeed = Math.max(0.5, 2 - tiltIntensity * 0.5);
+                    document.documentElement.style.setProperty('--extreme-glow', glowIntensity);
+                    document.documentElement.style.setProperty('--pulse-speed', `${pulseSpeed}s`);
+                    
+                    // Add dramatic box-shadow to portal during extreme tilts
+                    this.portalWindow.style.boxShadow = `
+                        0 0 ${glowIntensity * 20}px rgba(0, 255, 255, ${glowIntensity * 0.3}),
+                        0 0 ${glowIntensity * 40}px rgba(255, 0, 255, ${glowIntensity * 0.2}),
+                        inset 0 0 ${glowIntensity * 10}px rgba(255, 255, 255, ${glowIntensity * 0.1})
+                    `;
+                } else {
+                    document.documentElement.style.setProperty('--extreme-glow', 0);
+                    this.portalWindow.style.boxShadow = '';
+                }
+                
+                // 🎵 IMMERSIVE AUDIO FEEDBACK for dramatic tilts
+                if (extremeTilt && this.interactivityState.audio) {
+                    const frequency = 150 + tiltIntensity * 200;
+                    const duration = 30 + tiltIntensity * 20;
+                    const volume = Math.min(0.15, tiltIntensity * 0.08);
+                    this.playMicroTone(frequency, duration, volume);
+                }
+                
+                // 📱 ENHANCED HAPTIC FEEDBACK for mobile
+                if (extremeTilt && 'vibrate' in navigator) {
+                    const vibrationPattern = Math.floor(tiltIntensity * 50);
+                    navigator.vibrate(vibrationPattern);
+                }
+                
+                console.log(`🌐 DRAMATIC HOLOGRAPHIC WINDOW: 
+                    Tilt: ${tiltIntensity.toFixed(2)} ${extremeTilt ? '(EXTREME)' : ''}
+                    BG: (${bgOffsetX.toFixed(1)}, ${bgOffsetY.toFixed(1)}) Scale: ${bgScale.toFixed(2)}
+                    Counter: (${counterRotateX.toFixed(1)}°, ${counterRotateY.toFixed(1)}°, ${counterRotateZ.toFixed(1)}°)
+                    4D: XW:${perspective4D.rot4dXW.toFixed(3)} YW:${perspective4D.rot4dYW.toFixed(3)} ZW:${perspective4D.rot4dZW.toFixed(3)}
+                    Transforms: morph:${perspective4D.morphFactor.toFixed(2)} intensity:${perspective4D.intensity.toFixed(2)}`);
             }
             
             updateMouse4DPerspective() {
