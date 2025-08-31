@@ -599,6 +599,8 @@
             
             async createEngineVisualizers() {
                 // Create system-specific visualizers based on URL system parameter
+                console.log(`🔍 SYSTEM DEBUG: URL = ${window.location.search}`);
+                console.log(`🔍 SYSTEM DEBUG: this.params =`, this.params);
                 console.log(`🔍 Creating visualizers for system: ${this.params.system}`);
                 
                 const layers = [
