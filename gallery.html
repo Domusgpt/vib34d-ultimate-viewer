@@ -771,6 +771,41 @@
             transition: all 0.2s ease;
         }
         
+        /* 🌈 RGB FLASH SYSTEM - Matching gallery quality */
+        .variation-card {
+            --rgb-flash-intensity: 0;
+            --rgb-hue-shift: 0;
+        }
+        
+        .variation-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                calc(45deg + var(--rgb-hue-shift) * 0.5deg),
+                transparent 15%,
+                rgba(255, 0, 255, calc(var(--rgb-flash-intensity) * 0.1)) 25%,
+                rgba(0, 255, 255, calc(var(--rgb-flash-intensity) * 0.15)) 50%,
+                rgba(255, 255, 0, calc(var(--rgb-flash-intensity) * 0.1)) 75%,
+                transparent 85%
+            );
+            border-radius: 15px;
+            opacity: var(--rgb-flash-intensity);
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .variation-card.rgb-flash-active::before {
+            opacity: 1;
+            animation: rgbFlashPulse 0.6s ease-out infinite alternate;
+        }
+        
+        @keyframes rgbFlashPulse {
+            0% { opacity: var(--rgb-flash-intensity); filter: hue-rotate(0deg); }
+            100% { opacity: calc(var(--rgb-flash-intensity) * 1.5); filter: hue-rotate(30deg); }
+        }
+
         /* Enhanced date-based organization styling */
         .date-section {
             margin-bottom: 30px;
@@ -1578,12 +1613,18 @@
                     console.log('🌌 Holographic card deactivated');
                 });
                 
-                // Mouse move - track position for card bending + visual reactivity
+                // Mouse move - track position for card bending + visual reactivity  
+                let lastUpdate = 0;
                 function handleCardMouseMove(e) {
                     if (!isHovering) return;
                     
                     // Check if mouse reactivity is enabled
                     if (!InteractivityManager.state.mouse) return;
+                    
+                    // 🚀 120 FPS PERFORMANCE: Proper high refresh rate throttling
+                    const now = Date.now();
+                    if (now - lastUpdate < 8.33) return; // 120fps throttle
+                    lastUpdate = now;
                     
                     const rect = card.getBoundingClientRect();
                     const cardX = ((e.clientX - rect.left) / rect.width) * 100;
@@ -1604,23 +1645,21 @@
                     card.style.setProperty('--mouse-y', cardY);
                     card.style.setProperty('--bend-intensity', bendIntensity);
                     
-                    // SURGICAL FIX: Send mouse data to iframe visualization
-                    const iframe = card.querySelector('iframe');
-                    if (iframe && iframe.contentWindow) {
-                        try {
-                            iframe.contentWindow.postMessage({
-                                type: 'mouseMove',
-                                x: cardX / 100, // Normalize to 0-1
-                                y: cardY / 100,
-                                intensity: bendIntensity
-                            }, '*');
-                        } catch (e) {
-                            // Cross-origin restriction - expected
-                        }
+                    // 🌈 RGB FLASH: Add the RGB flash effects you wanted
+                    const rgbIntensity = bendIntensity * 0.8;
+                    const hueShift = cardX * 3.6; // 0-360 based on position
+                    card.style.setProperty('--rgb-flash-intensity', rgbIntensity);
+                    card.style.setProperty('--rgb-hue-shift', hueShift);
+                    
+                    // Activate RGB flash class for animation
+                    if (bendIntensity > 0.5) {
+                        card.classList.add('rgb-flash-active');
+                    } else {
+                        card.classList.remove('rgb-flash-active');
                     }
                     
-                    // 🌐 Enhanced: Send 4D perspective changes based on mouse movement
-                    InteractivityManager.sendMouse4DPerspective(cardX, cardY, card);
+                    // 🌐 UNIFIED FIX: Send single consolidated message to prevent parameter conflicts
+                    InteractivityManager.sendUnifiedMouseData(cardX, cardY, bendIntensity, card);
                     
                     // Add extra class for edge effects
                     if (cardX < 20 || cardX > 80 || cardY < 20 || cardY > 80) {
@@ -2075,6 +2114,64 @@
                 }
                 
                 console.log(`🌐 LOGICAL GALLERY PERSPECTIVE: Mouse(${mouseOffsetX.toFixed(2)}, ${mouseOffsetY.toFixed(2)}) → 4D(XW:${mouse4D.rot4dXW.toFixed(3)}, YW:${mouse4D.rot4dYW.toFixed(3)}) Intensity:${mouseIntensity.toFixed(2)}`);
+            },
+            
+            // 🌐 UNIFIED MESSAGE SYSTEM: Single consolidated postMessage to prevent parameter conflicts
+            sendUnifiedMouseData(cardX, cardY, bendIntensity, card) {
+                if (!this.state.mouse) return;
+                
+                // 🎯 UNIFIED MOUSE DATA: All mouse interaction data in single message
+                const unifiedData = {
+                    type: 'unifiedMouseInteraction',
+                    
+                    // RGB Flash System Data
+                    rgb: {
+                        intensity: bendIntensity * 0.8,
+                        hueShift: cardX * 3.6, // 0-360 based on position
+                        active: bendIntensity > 0.5
+                    },
+                    
+                    // Mouse Position Data
+                    mouse: {
+                        x: cardX,
+                        y: cardY,
+                        bendIntensity: bendIntensity,
+                        normalized: {
+                            x: (cardX / 100 - 0.5) * 2, // -1 to 1
+                            y: (cardY / 100 - 0.5) * 2  // -1 to 1
+                        }
+                    },
+                    
+                    // Performance Data
+                    performance: {
+                        timestamp: Date.now(),
+                        fps: 120 // Target FPS for smooth interactions
+                    },
+                    
+                    // Holographic Parameter Updates
+                    holographic: {
+                        hue: Math.floor(cardX * 3.6) % 360,
+                        intensity: Math.min(1.0, 0.7 + bendIntensity * 0.3),
+                        saturation: Math.min(1.0, 0.8 + bendIntensity * 0.2),
+                        morphFactor: 1 + bendIntensity * 0.1,
+                        chaos: Math.min(0.8, bendIntensity * 0.6)
+                    }
+                };
+                
+                // Send unified message to iframe
+                const iframe = card.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    try {
+                        iframe.contentWindow.postMessage(unifiedData, '*');
+                    } catch (e) {
+                        console.log('🌐 PostMessage safety catch:', e);
+                    }
+                }
+                
+                // Also send mouse 4D perspective if enhanced effects are enabled
+                if (this.state.enhanced) {
+                    this.sendMouse4DPerspective(cardX, cardY, card);
+                }
             }
         };
         
