@@ -301,7 +301,7 @@ export class CollectionManager {
                             name: variation.name || `User Variation ${index + 1}`,
                             isCustom: true,
                             globalId: variation.id,
-                            system: variation.system || 'faceted',
+                            system: variation.system || variation.currentSystem || 'faceted', // Preserve original system
                             parameters: this.normalizeParameters(variation.parameters || {})
                         }))
                     };
