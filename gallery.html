@@ -332,10 +332,10 @@
             --bend-intensity: 0;
         }
         
-        /* Default desktop tilt intensity */
+        /* Default desktop tilt intensity - DRAMATICALLY REDUCED */
         .variation-card {
-            --tilt-intensity-y: 1.2deg;
-            --tilt-intensity-x: 0.6deg;
+            --tilt-intensity-y: 0.15deg; /* Reduced from 1.2deg (87.5% reduction) */
+            --tilt-intensity-x: 0.08deg; /* Reduced from 0.6deg (86.7% reduction) */
             --accel-x: 0;
             --accel-y: 0;
         }
@@ -348,8 +348,8 @@
                 0 0 40px rgba(255, 0, 255, 0.4);
             transform: 
                 perspective(1200px)
-                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * 8deg))
-                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * 8deg))
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * 1deg))
+                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * 1deg))
                 translateZ(calc(var(--bend-intensity) * 40px))
                 translateY(-15px)
                 scale(1.02);
@@ -358,11 +358,11 @@
             transition: transform 0.08s cubic-bezier(0.23, 0.4, 0.42, 0.96);
         }
 
-        /* Mobile optimization: Reduced tilt intensity by 50% */
+        /* Mobile optimization: EXTREMELY reduced tilt intensity for smooth touch */
         @media (max-width: 768px), (pointer: coarse) {
             .variation-card {
-                --tilt-intensity-y: 0.6deg;
-                --tilt-intensity-x: 0.3deg;
+                --tilt-intensity-y: 0.05deg; /* Reduced from 0.6deg (91.7% reduction) */
+                --tilt-intensity-x: 0.02deg; /* Reduced from 0.3deg (93.3% reduction) */
             }
         }
         
@@ -402,8 +402,8 @@
                 perspective(1000px)
                 translateZ(30px)
                 scale(2.0)  /* 2x scale from center */
-                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * 0.75 + var(--accel-y) * 6deg))
-                rotateX(calc((50 - var(--mouse-y)) * var(--tilt-intensity-x) + var(--accel-x) * 6deg));
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * 0.75 + var(--accel-y) * 0.8deg))
+                rotateX(calc((50 - var(--mouse-y)) * var(--tilt-intensity-x) + var(--accel-x) * 0.8deg));
             transform-origin: center center;
             z-index: 100;
             box-shadow: 
@@ -2056,16 +2056,16 @@
                 const gammaNorm = Math.max(-120, Math.min(120, this.deviceOrientation.gamma));
                 const alphaNorm = ((this.deviceOrientation.alpha % 360) + 360) % 360;
                 
-                // Calculate tilt intensity (REDUCED sensitivity for smoother experience)
-                const tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 120; // Reduced from /90
-                const extremeTilt = tiltIntensity > 0.8; // Raised threshold from 1.0
+                // Calculate tilt intensity (DRAMATICALLY REDUCED sensitivity for smooth mobile experience)
+                const tiltIntensity = Math.sqrt(betaNorm*betaNorm + gammaNorm*gammaNorm) / 400; // Reduced from /120 (70% reduction)
+                const extremeTilt = tiltIntensity > 0.3; // Lowered threshold from 0.8
                 
-                // 🎯 SUBTLE PARALLAX BACKGROUND: Reduced multipliers for smoother movement
-                const parallaxMultiplier = extremeTilt ? 6 : 4; // Reduced from 12:8
+                // 🎯 MINIMAL PARALLAX BACKGROUND: Dramatically reduced multipliers
+                const parallaxMultiplier = extremeTilt ? 1.5 : 1.0; // Reduced from 6:4 (75% reduction)
                 const bgOffsetX = -gammaNorm * parallaxMultiplier;
-                const bgOffsetY = -betaNorm * (parallaxMultiplier * 0.6); // Reduced from 0.75
-                const bgScale = 1.05 + tiltIntensity * 0.08; // Reduced from 1.1 + 0.15
-                const bgRotation = alphaNorm * 0.15; // Reduced from 0.3
+                const bgOffsetY = -betaNorm * (parallaxMultiplier * 0.3); // Reduced from 0.6
+                const bgScale = 1.01 + tiltIntensity * 0.02; // Reduced from 1.05 + 0.08
+                const bgRotation = alphaNorm * 0.05; // Reduced from 0.15
                 
                 // Apply dramatic background transforms
                 document.documentElement.style.setProperty('--gallery-bg-offset-x', `${bgOffsetX}px`);
@@ -2073,9 +2073,9 @@
                 document.documentElement.style.setProperty('--gallery-bg-scale', bgScale);
                 document.documentElement.style.setProperty('--gallery-bg-rotation', `${bgRotation}deg`);
                 
-                // 🌐 SMOOTH 4D TRANSFORMATIONS: Reduced intensity for better control
-                const dramatic4DScale = extremeTilt ? 0.4 : 0.25; // Reduced from 0.8:0.5
-                const transformativeScale = tiltIntensity * 0.1; // Reduced from 0.2
+                // 🌐 MINIMAL 4D TRANSFORMATIONS: Dramatically reduced for smooth experience
+                const dramatic4DScale = extremeTilt ? 0.1 : 0.05; // Reduced from 0.4:0.25 (75% reduction)
+                const transformativeScale = tiltIntensity * 0.02; // Reduced from 0.1 (80% reduction)
                 
                 const alphaRad = (alphaNorm * Math.PI / 180) * dramatic4DScale * 0.5;
                 const betaRad = (betaNorm * Math.PI / 180) * dramatic4DScale;
@@ -2086,13 +2086,13 @@
                     rot4dYW: gammaRad,    // DRAMATICALLY enhanced left-right tilt -> YW rotation
                     rot4dZW: alphaRad,    // DRAMATICALLY enhanced compass rotation -> ZW rotation
                     
-                    // SMOOTH parameters that change with tilt intensity (reduced ranges)
-                    morphFactor: 1 + tiltIntensity * 0.2 + transformativeScale, // Reduced from 0.4
-                    intensity: 0.8 + tiltIntensity * 0.15 + (extremeTilt ? 0.1 : 0), // Reduced from 0.25, 0.2
-                    chaos: 0.15 + Math.pow(tiltIntensity, 2) * 0.08, // Reduced from 0.2, 0.15
-                    gridDensity: 15 * (1 + tiltIntensity * 0.15), // Reduced from 0.3
-                    hue: 200 + (alphaNorm - 180) * 0.4 + (extremeTilt ? Math.sin(Date.now() * 0.003) * 12 : 0), // Reduced all
-                    saturation: 0.8 + tiltIntensity * 0.08 + (extremeTilt ? 0.05 : 0) // Reduced from 0.15, 0.1
+                    // MINIMAL parameters for smooth mobile experience (dramatically reduced ranges)
+                    morphFactor: 1 + tiltIntensity * 0.05 + transformativeScale, // Reduced from 0.2 (75% reduction)
+                    intensity: 0.8 + tiltIntensity * 0.03 + (extremeTilt ? 0.02 : 0), // Reduced from 0.15, 0.1 (80% reduction)
+                    chaos: 0.15 + Math.pow(tiltIntensity, 2) * 0.02, // Reduced from 0.08 (75% reduction)
+                    gridDensity: 15 * (1 + tiltIntensity * 0.03), // Reduced from 0.15 (80% reduction)
+                    hue: 200 + (alphaNorm - 180) * 0.1 + (extremeTilt ? Math.sin(Date.now() * 0.003) * 3 : 0), // Reduced from 0.4, 12 (75% reduction)
+                    saturation: 0.8 + tiltIntensity * 0.02 + (extremeTilt ? 0.01 : 0) // Reduced from 0.08, 0.05 (75% reduction)
                 };
                 
                 // Send to all gallery card iframes
@@ -2115,7 +2115,7 @@
                 // 🌟 SMOOTH VISUAL FEEDBACK EFFECTS - ISOLATED TO CARDS ONLY
                 // Apply tilt effects only to variation cards, not to layout containers
                 document.querySelectorAll('.variation-card').forEach(card => {
-                    card.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 8); // Reduced from 15
+                    card.style.setProperty('--gallery-tilt-intensity', tiltIntensity * 2); // Reduced from 8 (75% reduction)
                 });
                 
                 // Dramatic glow effects during extreme tilts - APPLY TO CARDS ONLY  

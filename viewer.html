@@ -1369,9 +1369,9 @@
                 const twinParams = {
                     ...this.params,
                     hue: (this.params.hue + 180) % 360, // Complementary hue
-                    intensity: 1 - this.params.intensity, // Inverse intensity
-                    morphFactor: 2 - this.params.morph, // Inverse morph (use correct property)
-                    chaos: 1 - this.params.chaos, // Inverse chaos
+                    intensity: Math.max(0.1, 1 - this.params.intensity), // Inverse intensity with minimum
+                    morph: Math.max(0.1, 2 - this.params.morph), // Inverse morph using correct property
+                    chaos: Math.max(0.05, 1 - this.params.chaos), // Inverse chaos with minimum
                     rot4dXW: -this.params.rot4dXW, // Opposite 4D rotation
                     rot4dYW: -this.params.rot4dYW,
                     rot4dZW: -this.params.rot4dZW
