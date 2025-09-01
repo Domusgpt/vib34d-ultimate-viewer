@@ -115,18 +115,27 @@ export class DeviceTiltHandler {
      * Apply geometric window effects to the visualization
      */
     applyGeometricWindow(windowData) {
-        const { visualRotation, windowDepth, viewingAngle4D, perspectiveEffects } = windowData;
+        const { visualRotation, windowDepth, viewingAngle4D, perspectiveEffects, tiltIntensity } = windowData;
         
-        // 1. Apply visual CSS rotation to match device tilt
+        // 1. Calculate dynamic scaling to fill perspective view (prevents background showing)
+        const tiltScale = 1 + (tiltIntensity * 0.6); // 1.0x to 1.6x scaling based on tilt intensity
+        const maxTilt = Math.max(Math.abs(visualRotation.rotateX), Math.abs(visualRotation.rotateZ));
+        const clampedScale = Math.min(tiltScale, 1.8); // Cap at 1.8x to avoid too much zoom
+        
+        // 2. Apply visual CSS rotation with dynamic scaling to match device tilt
         const canvases = document.querySelectorAll('canvas');
         canvases.forEach(canvas => {
             if (canvas) {
+                // Limit tilt angles to prevent edge-on view
+                const clampedRotateX = Math.max(-45, Math.min(45, visualRotation.rotateX));
+                const clampedRotateZ = Math.max(-45, Math.min(45, visualRotation.rotateZ));
+                
                 canvas.style.transform = `
-                    perspective(1200px)
-                    rotateX(${visualRotation.rotateX}deg) 
+                    perspective(1500px)
+                    rotateX(${clampedRotateX}deg) 
                     rotateY(${visualRotation.rotateY}deg) 
-                    rotateZ(${visualRotation.rotateZ}deg)
-                    scale3d(${perspectiveEffects.scaleX}, ${perspectiveEffects.scaleY}, 1)
+                    rotateZ(${clampedRotateZ}deg)
+                    scale3d(${clampedScale * perspectiveEffects.scaleX}, ${clampedScale * perspectiveEffects.scaleY}, 1)
                 `;
                 canvas.style.filter = `
                     brightness(${perspectiveEffects.brightness}) 
@@ -134,6 +143,16 @@ export class DeviceTiltHandler {
                 `;
             }
         });
+        
+        // 3. Add dark background overlay when tilting to hide any gaps
+        const portalWindow = document.getElementById('portalWindow');
+        if (portalWindow) {
+            if (tiltIntensity > 0.3) {
+                portalWindow.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+            } else {
+                portalWindow.style.backgroundColor = 'transparent';
+            }
+        }
         
         // 2. Update 4D rotation parameters
         if (window.updateParameter) {

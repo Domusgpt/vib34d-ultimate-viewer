@@ -180,22 +180,24 @@
             border-radius: 18px;
         }
 
-        /* ACCENT TWIN CANVASES: Complementary visualization system */
+        /* HOLOGRAPHIC SHADOW CANVASES: Rhythmic shadow visualization system */
         .twin-canvas {
             mix-blend-mode: multiply;
             transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: blur(1px); /* Soft shadow effect */
+            transform: translate(8px, 8px); /* Offset shadow position */
         }
 
         .twin-canvas.active {
-            opacity: 0.3 !important;
+            opacity: 0.4 !important; /* Slightly more visible for shadow effect */
         }
 
-        /* Twin canvas specific blend modes for interesting interaction */
-        #twin-background-canvas { mix-blend-mode: overlay; }
-        #twin-shadow-canvas { mix-blend-mode: multiply; }
-        #twin-content-canvas { mix-blend-mode: screen; }
-        #twin-highlight-canvas { mix-blend-mode: color-dodge; }
-        #twin-accent-canvas { mix-blend-mode: difference; }
+        /* Shadow canvas specific blend modes for depth */
+        #twin-background-canvas { mix-blend-mode: multiply; opacity: 0.3; }
+        #twin-shadow-canvas { mix-blend-mode: overlay; opacity: 0.5; }
+        #twin-content-canvas { mix-blend-mode: soft-light; opacity: 0.4; }
+        #twin-highlight-canvas { mix-blend-mode: darken; opacity: 0.3; }
+        #twin-accent-canvas { mix-blend-mode: color-burn; opacity: 0.2; }
 
         /* Audio Toggle Buttons (Inside Control Panel) */
         .audio-toggle {
@@ -487,9 +489,10 @@
     <div class="control-panel">
         <button class="audio-toggle active" id="mouseToggle">Mouse Reactive</button>
         <button class="audio-toggle active" id="tiltToggle">Device Tilt</button>
-        <button class="audio-toggle" id="audioToggle">Audio Reactive</button>
-        <button class="audio-toggle active" id="enhancedToggle">Enhanced FX</button>
-        <button class="audio-toggle" id="accentTwinToggle">Accent Twin</button>
+        <button class="audio-toggle" id="audioToggle">🎵 Audio Reactive</button>
+        <button class="audio-toggle active" id="enhancedToggle">✨ Enhanced FX</button>
+        <button class="audio-toggle" id="mobileAudioEnable" style="display: none;">🎵 Enable Audio (Mobile)</button>
+        <button class="audio-toggle" id="shadowToggle">🌑 Holographic Shadow</button>
         <hr style="border: 1px solid rgba(0, 255, 255, 0.3); margin: 6px 0;">
         <button class="audio-toggle" id="backToPortfolio">Back to Portfolio</button>
         <button class="audio-toggle" id="openInEngine">Open in Engine</button>
@@ -526,8 +529,12 @@
                     tilt: true,
                     audio: false,
                     enhanced: true,
-                    accentTwin: false
+                    holographicShadow: false
                 };
+                
+                // Mobile detection for audio button
+                this.isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                               (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
                 
                 // 4D rotation perspective base values
                 this.baseRotations = {
@@ -788,8 +795,13 @@
                     this.toggleInteractivity('enhanced');
                 });
                 
-                document.getElementById('accentTwinToggle').addEventListener('click', () => {
-                    this.toggleInteractivity('accentTwin');
+                document.getElementById('shadowToggle').addEventListener('click', () => {
+                    this.toggleInteractivity('holographicShadow');
+                });
+                
+                // Mobile audio enable button  
+                document.getElementById('mobileAudioEnable').addEventListener('click', async () => {
+                    await this.enableMobileAudio();
                 });
 
                 // Navigation buttons
@@ -876,10 +888,10 @@
                         button.textContent = isActive ? 'Enhanced ON' : 'Enhanced OFF';
                         break;
                         
-                    case 'accentTwin':
-                        // Accent twin visualizer with complementary parameters
-                        button.textContent = isActive ? 'Accent Twin ON' : 'Accent Twin OFF';
-                        this.toggleAccentTwin(isActive);
+                    case 'holographicShadow':
+                        // Holographic shadow visualizer with rhythmic motion
+                        button.textContent = isActive ? '🌑 Shadow ON' : '🌑 Holographic Shadow';
+                        this.toggleHolographicShadow(isActive);
                         break;
                 }
                 
@@ -1340,49 +1352,99 @@
                 document.getElementById('configInfo').textContent = `Config: ${this.params.name}`;
             }
             
-            // ACCENT TWIN SYSTEM: Toggle complementary/inverse visualization
-            toggleAccentTwin(isActive) {
-                const twinCanvases = document.querySelectorAll('.twin-canvas');
+            // HOLOGRAPHIC SHADOW SYSTEM: Rhythmic shadow that moves with tilt and audio
+            toggleHolographicShadow(isActive) {
+                const shadowCanvases = document.querySelectorAll('.twin-canvas');
                 
                 if (isActive) {
-                    // Enable twin canvases with smooth fade-in
-                    twinCanvases.forEach(canvas => {
+                    // Enable shadow canvases with smooth fade-in
+                    shadowCanvases.forEach(canvas => {
                         canvas.classList.add('active');
                     });
                     
-                    // Initialize twin visualizers if needed
-                    this.initializeTwinVisualizers();
+                    // Initialize shadow visualizers
+                    this.initializeShadowVisualizers();
                     
-                    console.log('🎭 Accent Twin Visualizer: ENABLED');
+                    console.log('🌑 Holographic Shadow: ENABLED');
                 } else {
-                    // Disable twin canvases with smooth fade-out
-                    twinCanvases.forEach(canvas => {
+                    // Disable shadow canvases with smooth fade-out
+                    shadowCanvases.forEach(canvas => {
                         canvas.classList.remove('active');
                     });
                     
-                    console.log('🎭 Accent Twin Visualizer: DISABLED');
+                    console.log('🌑 Holographic Shadow: DISABLED');
                 }
             }
             
-            // Initialize twin visualizers with complementary parameters
-            initializeTwinVisualizers() {
-                console.log('🎭 Initializing accent twin visualizers...');
+            // Initialize shadow visualizers with rhythmic, offset motion
+            initializeShadowVisualizers() {
+                console.log('🌑 Initializing holographic shadow visualizers...');
                 
-                // Create complementary parameters by inverting/offsetting key values
-                const twinParams = {
+                // Create shadow parameters that move rhythmically with main visualization
+                const shadowParams = {
                     ...this.params,
-                    hue: (this.params.hue + 180) % 360, // Complementary hue
-                    intensity: Math.max(0.1, 1 - this.params.intensity), // Inverse intensity with minimum
-                    morph: Math.max(0.1, 2 - this.params.morph), // Inverse morph using correct property
-                    chaos: Math.max(0.05, 1 - this.params.chaos), // Inverse chaos with minimum
-                    rot4dXW: -this.params.rot4dXW, // Opposite 4D rotation
-                    rot4dYW: -this.params.rot4dYW,
-                    rot4dZW: -this.params.rot4dZW
+                    // Shadow uses darker, more muted colors
+                    hue: (this.params.hue + 45) % 360, // Slight hue shift for depth
+                    intensity: Math.max(0.2, this.params.intensity * 0.6), // Dimmer shadow
+                    saturation: Math.max(0.3, this.params.saturation * 0.8), // Less saturated
+                    
+                    // Shadow moves in rhythm but different phase
+                    speed: this.params.speed * 1.2, // Slightly faster for rhythmic offset
+                    chaos: Math.min(0.8, this.params.chaos + 0.1), // Bit more chaotic for texture
+                    
+                    // 4D rotation offset for spatial separation
+                    rot4dXW: this.params.rot4dXW + 0.3, // Offset in 4D space
+                    rot4dYW: this.params.rot4dYW - 0.2,
+                    rot4dZW: this.params.rot4dZW + 0.15
                 };
                 
-                // Apply twin parameters to twin canvases
-                // Note: This would need integration with the visualizer system
-                console.log('🎨 Twin parameters calculated:', twinParams);
+                console.log('🌑 Shadow parameters calculated:', shadowParams);
+            }
+            
+            // MOBILE AUDIO SYSTEM
+            updateMobileAudioButton() {
+                const button = document.getElementById('mobileAudioEnable');
+                const audioToggle = document.getElementById('audioToggle');
+                
+                if (this.isMobile && !this.interactivityState.audio) {
+                    button.style.display = 'block';
+                    audioToggle.style.opacity = '0.5';  // Dim regular audio button
+                } else {
+                    button.style.display = 'none';
+                    audioToggle.style.opacity = '1';
+                }
+            }
+            
+            async enableMobileAudio() {
+                try {
+                    console.log('🎵 Requesting mobile audio permission...');
+                    
+                    // Request audio permission with user gesture
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // Initialize audio system
+                    await this.initializeAudio();
+                    
+                    // Update button states
+                    this.interactivityState.audio = true;
+                    this.updateMobileAudioButton();
+                    
+                    // Update button text
+                    document.getElementById('audioToggle').textContent = '🎵 Audio ON';
+                    document.getElementById('audioToggle').classList.add('active');
+                    
+                    console.log('✅ Mobile audio enabled successfully!');
+                    
+                    // Stop the permission stream (we'll create our own)
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                } catch (error) {
+                    console.warn('❌ Mobile audio permission denied:', error);
+                    document.getElementById('mobileAudioEnable').textContent = '🎵 Audio Denied';
+                    setTimeout(() => {
+                        document.getElementById('mobileAudioEnable').textContent = '🎵 Enable Audio (Mobile)';
+                    }, 2000);
+                }
             }
         }
         

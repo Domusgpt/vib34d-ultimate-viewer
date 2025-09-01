@@ -348,8 +348,8 @@
                 0 0 40px rgba(255, 0, 255, 0.4);
             transform: 
                 perspective(1200px)
-                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * 8deg))
-                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * 8deg))
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * var(--bend-intensity) + var(--accel-y) * var(--mobile-accelerometer-scale, 8deg)))
+                rotateX(calc((var(--mouse-y) - 50) * var(--tilt-intensity-x) * var(--bend-intensity) + var(--accel-x) * var(--mobile-accelerometer-scale, 8deg)))
                 translateZ(calc(var(--bend-intensity) * 40px))
                 translateY(-15px)
                 scale(1.02);
@@ -363,6 +363,14 @@
             .variation-card {
                 --tilt-intensity-y: 0.1deg; /* Touch-only reduction for smooth mobile experience */
                 --tilt-intensity-x: 0.05deg; /* Touch-only reduction for smooth mobile experience */
+                --mobile-accelerometer-scale: 2deg; /* Reduced from 8deg - much smoother */
+                transition: transform 0.2s ease-out; /* Add smooth transitions */
+            }
+            
+            /* Disable CSS mouse tilt when device orientation is active on mobile */
+            .variation-card:hover {
+                --tilt-intensity-y: 0deg;
+                --tilt-intensity-x: 0deg;
             }
         }
         
@@ -402,8 +410,8 @@
                 perspective(1000px)
                 translateZ(30px)
                 scale(2.0)  /* 2x scale from center */
-                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * 0.75 + var(--accel-y) * 6deg))
-                rotateX(calc((50 - var(--mouse-y)) * var(--tilt-intensity-x) + var(--accel-x) * 6deg));
+                rotateY(calc((var(--mouse-x) - 50) * var(--tilt-intensity-y) * 0.75 + var(--accel-y) * var(--mobile-accelerometer-scale, 6deg)))
+                rotateX(calc((50 - var(--mouse-y)) * var(--tilt-intensity-x) + var(--accel-x) * var(--mobile-accelerometer-scale, 6deg)));
             transform-origin: center center;
             z-index: 100;
             box-shadow: 
