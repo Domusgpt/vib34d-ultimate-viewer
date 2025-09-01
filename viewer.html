@@ -1293,7 +1293,7 @@
                         visualizer.render();
                     }
                 });
-            },
+            }
             
             startRenderLoop() {
                 const renderFrame = () => {
@@ -1301,7 +1301,7 @@
                     requestAnimationFrame(renderFrame);
                 };
                 renderFrame();
-            },
+            }
             
             parseUrlParameters() {
                 const params = new URLSearchParams(window.location.search);
@@ -1330,7 +1330,7 @@
                 
                 console.log('🔍 Parsed URL parameters:', parsedParams);
                 return parsedParams;
-            },
+            }
             
             updateInfoDisplay() {
                 const geometryNames = ['Tetrahedron', 'Hypercube', 'Sphere', 'Torus', 'Klein Bottle', 'Fractal', 'Wave', 'Crystal'];
@@ -1338,7 +1338,7 @@
                 document.getElementById('systemType').textContent = `System: ${this.params.system.toUpperCase()}`;
                 document.getElementById('geometryInfo').textContent = `Geometry: ${geometryNames[this.params.geometryType] || 'Unknown'}`;
                 document.getElementById('configInfo').textContent = `Config: ${this.params.name}`;
-            },
+            }
             
             // ACCENT TWIN SYSTEM: Toggle complementary/inverse visualization
             toggleAccentTwin(isActive) {
@@ -1362,7 +1362,7 @@
                     
                     console.log('🎭 Accent Twin Visualizer: DISABLED');
                 }
-            },
+            }
             
             // Initialize twin visualizers with complementary parameters
             initializeTwinVisualizers() {
