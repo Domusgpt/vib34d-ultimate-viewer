@@ -584,7 +584,10 @@
                 const rect = this.portalWindow.getBoundingClientRect();
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 
-                const canvases = ['background-canvas', 'shadow-canvas', 'content-canvas', 'highlight-canvas', 'accent-canvas'];
+                const canvases = [
+                    'background-canvas', 'shadow-canvas', 'content-canvas', 'highlight-canvas', 'accent-canvas',
+                    'twin-background-canvas', 'twin-shadow-canvas', 'twin-content-canvas', 'twin-highlight-canvas', 'twin-accent-canvas'
+                ];
                 
                 canvases.forEach(canvasId => {
                     const canvas = document.getElementById(canvasId);
