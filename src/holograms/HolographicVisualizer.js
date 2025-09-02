@@ -469,12 +469,15 @@ export class HolographicVisualizer {
                 
                 vec3 p = project4Dto3D(p4d);
                 
-                float scrollDensityMod = 1.0 + u_gridDensityShift * 0.3;
-                float audioDensityMod = 1.0 + u_audioDensityBoost * 0.5;
-                // FIX: Prevent density doubling by using base density with controlled variations
-                float baseDensity = u_density * u_roleDensity;
-                float densityVariations = (u_densityVariation * 0.3 + (scrollDensityMod - 1.0) * 0.4 + (audioDensityMod - 1.0) * 0.2);
-                float roleDensity = baseDensity + densityVariations;
+                // FIX: Proper density calculation without doubling/multiplication
+                // Use base density from UI slider, then add controlled variations
+                float baseDensity = u_density; // Direct from UI slider (0.3-2.5 range)
+                float scrollVariation = u_gridDensityShift * 0.2; // Small scroll effect
+                float audioVariation = u_audioDensityBoost * 0.3; // Moderate audio boost
+                float densityVariation = u_densityVariation * 0.1; // Small random variation
+                
+                // Final density = base + variations (not multiplied)
+                float roleDensity = (baseDensity + scrollVariation + audioVariation + densityVariation) * u_roleDensity;
                 
                 float morphedGeometry = u_geometryType + u_morph * 3.0 + u_touchMorph * 2.0 + u_audioMorphBoost * 1.5;
                 float lattice = getDynamicGeometry(p, roleDensity, morphedGeometry);
@@ -805,10 +808,11 @@ export class HolographicVisualizer {
         this.gl.uniform2f(this.uniforms.mouse, this.mouseX, this.mouseY);
         this.gl.uniform1f(this.uniforms.geometryType, this.variantParams.geometryType || 0);
         this.gl.uniform1f(this.uniforms.density, this.variantParams.density || 1.0);
-        // FIX: Controlled speed calculation - base speed controls main movement, audio provides subtle boost
-        const baseSpeed = (this.variantParams.speed || 0.5) * 0.2; // Much slower base speed
-        const audioBoost = (this.audioSpeedBoost || 0.0) * 0.1; // Subtle audio boost only
-        this.gl.uniform1f(this.uniforms.speed, baseSpeed + audioBoost);
+        // FIX: Use actual speed parameter from UI slider, not variant defaults
+        const uiSpeed = parseFloat(document.getElementById('speed')?.value || this.variantParams.speed || 1.0);
+        const audioBoost = (this.audioSpeedBoost || 0.0) * 0.1; // Very small audio boost only
+        const finalSpeed = uiSpeed * 0.3 + audioBoost; // Use UI speed as primary control
+        this.gl.uniform1f(this.uniforms.speed, finalSpeed);
         this.gl.uniform3fv(this.uniforms.color, new Float32Array(rgbColor));
         this.gl.uniform1f(this.uniforms.intensity, (this.variantParams.intensity || 0.5) * this.roleParams.intensity);
         this.gl.uniform1f(this.uniforms.roleDensity, this.roleParams.densityMult);
@@ -914,12 +918,17 @@ export class HolographicVisualizer {
                 if (mappedParam !== null) {
                     let scaledValue = params[param];
                     
-                    // FIX: Scale gridDensity to reasonable holographic density range (back to normal levels)
+                    // FIX: Scale gridDensity to reasonable holographic density range
                     if (param === 'gridDensity') {
                         // Convert gridDensity (5-100) to holographic density (0.3-2.5) - reasonable range
-                        // Formula: density = 0.3 + (gridDensity - 5) / (100 - 5) * (2.5 - 0.3)
                         scaledValue = 0.3 + (parseFloat(params[param]) - 5) / 95 * 2.2;
-                        console.log(`🔧 Density scaling: gridDensity=${params[param]} → density=${scaledValue.toFixed(3)} (normal range)`);
+                        console.log(`🔧 Holographic density: gridDensity=${params[param]} → density=${scaledValue.toFixed(3)}`);
+                    }
+                    
+                    // FIX: Ensure speed parameter is properly stored for UI responsiveness
+                    if (param === 'speed') {
+                        scaledValue = parseFloat(params[param]);
+                        console.log(`🔧 Holographic speed: UI=${params[param]} → speed=${scaledValue.toFixed(2)}`);
                     }
                     
                     this.variantParams[mappedParam] = scaledValue;
@@ -932,6 +941,8 @@ export class HolographicVisualizer {
                 }
             });
         }
+        
+        console.log(`✨ Holographic parameters updated:`, Object.keys(params).map(p => `${p}=${params[p]}`).join(', '));
         
         // Don't call render() here - engine will call it to prevent infinite loop
     }
