@@ -534,6 +534,113 @@ function showInteractivityOverlay() {
     showInteractivityStatus();
 }
 
+/**
+ * Popout Management Functions - Hover/Touch based UI
+ */
+
+// Track touch state for mobile
+let touchMenuOpen = null;
+
+// Show reactivity popout on hover
+window.showReactivityPopout = function() {
+    const popout = document.getElementById('reactivityPopout');
+    if (popout) {
+        popout.classList.add('show');
+    }
+};
+
+// Hide reactivity popout
+window.hideReactivityPopout = function() {
+    const popout = document.getElementById('reactivityPopout');
+    if (popout && touchMenuOpen !== 'reactivity') {
+        popout.classList.remove('show');
+    }
+};
+
+// Show audio popout on hover
+window.showAudioPopout = function() {
+    const popout = document.getElementById('audioPopout');
+    if (popout) {
+        popout.classList.add('show');
+    }
+};
+
+// Hide audio popout
+window.hideAudioPopout = function() {
+    const popout = document.getElementById('audioPopout');
+    if (popout && touchMenuOpen !== 'audio') {
+        popout.classList.remove('show');
+    }
+};
+
+// Touch handler for interactivity button
+window.handleInteractivityTouch = function(event) {
+    event.preventDefault();
+    const popout = document.getElementById('reactivityPopout');
+    
+    if (touchMenuOpen === 'reactivity') {
+        // Menu is open, close it and allow click through
+        popout.classList.remove('show');
+        touchMenuOpen = null;
+        return false; // Allow click to proceed
+    } else {
+        // Menu is closed, open it and prevent click
+        hideAllPopouts();
+        popout.classList.add('show');
+        touchMenuOpen = 'reactivity';
+        event.stopPropagation();
+        return true; // Prevent click
+    }
+};
+
+// Touch handler for audio button
+window.handleAudioTouch = function(event) {
+    event.preventDefault();
+    const popout = document.getElementById('audioPopout');
+    
+    if (touchMenuOpen === 'audio') {
+        // Menu is open, close it and allow click through
+        popout.classList.remove('show');
+        touchMenuOpen = null;
+        return false; // Allow click to proceed
+    } else {
+        // Menu is closed, open it and prevent click
+        hideAllPopouts();
+        popout.classList.add('show');
+        touchMenuOpen = 'audio';
+        event.stopPropagation();
+        return true; // Prevent click
+    }
+};
+
+// Hide all popouts
+function hideAllPopouts() {
+    document.getElementById('reactivityPopout')?.classList.remove('show');
+    document.getElementById('audioPopout')?.classList.remove('show');
+}
+
+// Close popouts when clicking outside
+document.addEventListener('click', function(event) {
+    const isInsidePopout = event.target.closest('.popout-container');
+    const isActionButton = event.target.closest('#interactivityBtn, #audioBtn');
+    
+    if (!isInsidePopout && !isActionButton && touchMenuOpen) {
+        hideAllPopouts();
+        touchMenuOpen = null;
+    }
+});
+
+// Close popout functions called by X buttons
+window.hideReactivityPopout = function() {
+    document.getElementById('reactivityPopout')?.classList.remove('show');
+    touchMenuOpen = null;
+};
+
+window.hideAudioPopout = function() {
+    document.getElementById('audioPopout')?.classList.remove('show');
+    touchMenuOpen = null;
+};
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
     if (e.key === 'i' || e.key === 'I') {

@@ -170,3 +170,82 @@
     width: 100%;
     margin-bottom: 10px;
 }
+
+/* Popout Container Styles */
+.popout-container {
+    position: fixed;
+    width: 350px;
+    max-height: 70vh;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #00ffff;
+    border-radius: 10px;
+    padding: 20px;
+    z-index: 2000;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    transform: translateY(10px) scale(0.95);
+}
+
+.popout-container.show {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+}
+
+/* Position popouts next to buttons */
+#reactivityPopout {
+    top: 60px;
+    right: 80px; /* Position to left of I button */
+}
+
+#audioPopout {
+    top: 60px;
+    right: 200px; /* Position to left of 🎵 button */
+}
+
+.popout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: #00ffff;
+    font-weight: bold;
+    text-shadow: 0 0 10px #00ffff;
+}
+
+.popout-close {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.popout-close:hover {
+    background: rgba(255, 0, 0, 0.4);
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+@keyframes popoutSlideIn {
+    0% { 
+        opacity: 0; 
+        transform: translateX(50px) scale(0.9); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateX(0) scale(1); 
+    }
+}
