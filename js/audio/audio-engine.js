@@ -143,15 +143,14 @@ export class SimpleAudioEngine {
  */
 export function setupAudioToggle() {
     window.toggleAudio = function() {
-        const audioBtn = document.querySelector('[onclick="toggleAudio()"]');
+        const audioBtn = document.getElementById('audioToggle') || document.querySelector('[onclick="toggleAudio()"]');
         
         if (!window.audioEngine.isActive) {
             // Try to start audio
             window.audioEngine.init().then(success => {
                 if (success) {
                     if (audioBtn) {
-                        audioBtn.style.background = 'linear-gradient(45deg, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.6))';
-                        audioBtn.style.borderColor = '#00ff00';
+                        audioBtn.classList.add('active');
                         audioBtn.title = 'Audio Reactivity: ON';
                     }
                     console.log('🎵 Audio Reactivity: ON');
@@ -166,10 +165,11 @@ export function setupAudioToggle() {
             
             if (audioBtn) {
                 // Update button visual state
-                audioBtn.style.background = audioEnabled ? 
-                    'linear-gradient(45deg, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.6))' : 
-                    'linear-gradient(45deg, rgba(255, 0, 255, 0.1), rgba(255, 0, 255, 0.3))';
-                audioBtn.style.borderColor = audioEnabled ? '#00ff00' : 'rgba(255, 0, 255, 0.3)';
+                if (audioEnabled) {
+                    audioBtn.classList.add('active');
+                } else {
+                    audioBtn.classList.remove('active');
+                }
                 audioBtn.title = `Audio Reactivity: ${audioEnabled ? 'ON' : 'OFF'}`;
             }
             

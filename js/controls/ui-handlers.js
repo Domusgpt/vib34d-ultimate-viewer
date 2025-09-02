@@ -206,20 +206,40 @@ window.openGallery = function() {
 };
 
 /**
+ * Open Viewer/Display Card - Navigate to viewer interface
+ */
+window.openViewer = function() {
+    console.log('👁️ Navigating to viewer...');
+    // Save current parameters for viewer
+    const currentState = {
+        system: window.currentSystem || 'faceted',
+        parameters: window.userParameterState || {},
+        toggleStates: {
+            audioEnabled: window.audioEnabled || false,
+            interactivityEnabled: window.interactivityEnabled !== false
+        }
+    };
+    localStorage.setItem('vib34d-viewer-state', JSON.stringify(currentState));
+    
+    // Navigate to viewer
+    window.location.href = './viewer.html';
+};
+
+/**
  * Interactivity Toggle - Enable/disable mouse and touch interactions
  */
 window.toggleInteractivity = function() {
     interactivityEnabled = !interactivityEnabled;
     
     // Update interactivity button visual state
-    const interactBtn = document.querySelector('[onclick="toggleInteractivity()"]');
+    const interactBtn = document.getElementById('interactivityToggle') || document.querySelector('[onclick="toggleInteractivity()"]');
     if (interactBtn) {
-        interactBtn.style.background = interactivityEnabled ? 
-            'linear-gradient(45deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.6))' : 
-            'linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.3))';
-        interactBtn.style.borderColor = interactivityEnabled ? '#00ffff' : 'rgba(255, 255, 255, 0.5)';
-        interactBtn.title = `Toggle Interactivity: ${interactivityEnabled ? 'ON' : 'OFF'}`;
-        interactBtn.textContent = interactivityEnabled ? 'I' : 'I';
+        if (interactivityEnabled) {
+            interactBtn.classList.add('active');
+        } else {
+            interactBtn.classList.remove('active');
+        }
+        interactBtn.title = `Interactive Control: ${interactivityEnabled ? 'ON' : 'OFF'}`;
     }
     
     console.log(`🎛️ Mouse/Touch Interactions: ${interactivityEnabled ? 'ENABLED' : 'DISABLED'}`);

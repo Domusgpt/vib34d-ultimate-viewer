@@ -233,3 +233,56 @@
     border-color: #00ffff;
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
 }
+
+/* Professional Action Buttons */
+.panel-btn.action-randomize {
+    background: rgba(100, 255, 100, 0.1);
+    border-color: rgba(100, 255, 100, 0.3);
+    color: #64ff64;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-reset {
+    background: rgba(255, 100, 100, 0.1);
+    border-color: rgba(255, 100, 100, 0.3);
+    color: #ff6464;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-save {
+    background: rgba(0, 255, 255, 0.1);
+    border-color: rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-card {
+    background: rgba(255, 200, 0, 0.1);
+    border-color: rgba(255, 200, 0, 0.3);
+    color: #ffc800;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.panel-btn.action-randomize:hover {
+    background: rgba(100, 255, 100, 0.2);
+    box-shadow: 0 0 10px rgba(100, 255, 100, 0.5);
+}
+
+.panel-btn.action-reset:hover {
+    background: rgba(255, 100, 100, 0.2);
+    box-shadow: 0 0 10px rgba(255, 100, 100, 0.5);
+}
+
+.panel-btn.action-save:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.panel-btn.action-card:hover {
+    background: rgba(255, 200, 0, 0.2);
+    box-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+}
