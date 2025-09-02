@@ -122,7 +122,7 @@ export class ReactivityManager {
         document.addEventListener('click', (e) => this.handleGlobalClick(e));
         document.addEventListener('touchmove', (e) => this.handleGlobalTouchMove(e));
         document.addEventListener('touchend', (e) => this.handleGlobalTouchEnd(e));
-        document.addEventListener('wheel', (e) => this.handleGlobalWheel(e));
+        document.addEventListener('wheel', (e) => this.handleGlobalWheel(e), {passive: false});
     }
     
     /**

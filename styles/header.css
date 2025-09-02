@@ -56,6 +56,11 @@
     gap: 10px;
 }
 
+.action-buttons-top {
+    display: flex;
+    gap: 10px;
+}
+
 .action-btn {
     background: rgba(255, 0, 255, 0.1);
     border: 2px solid rgba(255, 0, 255, 0.3);

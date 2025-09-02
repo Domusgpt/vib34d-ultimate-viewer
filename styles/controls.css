@@ -73,6 +73,45 @@
     cursor: pointer;
     font-size: 0.7rem;
     transition: all 0.3s;
+    
+    /* FIXED: Handle long text like HYPERTETRAHEDRON */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    min-height: 40px;
+    
+    /* Allow text wrapping for long geometry names */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* SPECIAL: HyperTetrahedron button - split into two lines */
+.geom-btn[data-name*="HYPERTETRAHEDRON"],
+.geom-btn[title*="HYPERTETRAHEDRON"] {
+    font-size: 0.6rem;
+    line-height: 1.0;
+    padding: 6px 4px;
+}
+
+.geom-btn[data-name*="HYPERTETRAHEDRON"]::before,
+.geom-btn[title*="HYPERTETRAHEDRON"]::before {
+    content: "HYPER\ATETRAHEDRON";
+    white-space: pre-line;
+    text-align: center;
+}
+
+/* Alternative: CSS-only line break for HYPERTETRAHEDRON */
+.geom-btn-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.geom-btn-line {
+    font-size: 0.65rem;
 }
 
 .geom-btn:hover {
@@ -160,4 +199,37 @@
 .panel-btn.wide {
     width: 100%;
     margin-bottom: 10px;
+}
+
+/* System Selector Panel (moved from top bar) */
+.system-selector-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.system-selector-panel .system-btn {
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: #00ffff;
+    padding: 10px 8px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.system-selector-panel .system-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.system-selector-panel .system-btn.active {
+    background: rgba(0, 255, 255, 0.3);
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
 }
