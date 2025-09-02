@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔍 BROWSER DEBUG - Geometry Button Issue</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            background: #000; 
+            color: #fff; 
+            padding: 20px;
+        }
+        .test-section { 
+            border: 2px solid #0ff; 
+            margin: 20px 0; 
+            padding: 15px; 
+        }
+        .geometry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            border: 2px solid red;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .geom-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #0ff;
+            color: #fff;
+            padding: 8px;
+            font-size: 0.7rem;
+        }
+        .debug-output {
+            background: rgba(0,255,0,0.1);
+            border: 1px solid #0f0;
+            padding: 10px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 BROWSER DEBUG TEST - Geometry Buttons</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Immediate Button Creation</h2>
+        <div class="geometry-grid" id="testGrid1"></div>
+        <div class="debug-output" id="output1"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Simulate Real App Conditions</h2>
+        <div class="geometry-grid" id="testGrid2"></div>
+        <div class="debug-output" id="output2"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Module Loading Simulation</h2>
+        <div class="geometry-grid" id="testGrid3"></div>
+        <div class="debug-output" id="output3"></div>
+    </div>
+
+    <script>
+        function log(testNum, message) {
+            const output = document.getElementById(`output${testNum}`);
+            output.textContent += message + '\n';
+            console.log(`[Test ${testNum}] ${message}`);
+        }
+
+        // Test 1: Immediate creation
+        function test1() {
+            log(1, '🧪 Starting Test 1: Immediate Button Creation');
+            
+            const geometries = [
+                'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
+                'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 
+                'HYPERTETRAHEDRON'
+            ];
+            
+            log(1, `Array length: ${geometries.length}`);
+            log(1, `Last item: "${geometries[8]}"`);
+            
+            const grid = document.getElementById('testGrid1');
+            grid.innerHTML = geometries.map((name, i) => 
+                `<button class="geom-btn" data-index="${i}">${name}</button>`
+            ).join('');
+            
+            const actualCount = grid.children.length;
+            log(1, `Created: ${actualCount} buttons`);
+            log(1, `Result: ${actualCount === 9 ? '✅ SUCCESS' : '❌ FAILED'}`);
+            
+            for (let i = 0; i < grid.children.length; i++) {
+                log(1, `Button ${i}: "${grid.children[i].textContent}"`);
+            }
+        }
+
+        // Test 2: Simulate module loading
+        function test2() {
+            log(2, '🧪 Starting Test 2: Module Simulation');
+            
+            // Simulate window.geometries like in real app
+            window.geometries = {
+                faceted: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON']
+            };
+            
+            const system = 'faceted';
+            const geoList = window.geometries?.[system] || window.geometries?.faceted || [
+                'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
+                'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
+            ];
+            
+            log(2, `Using system: ${system}`);
+            log(2, `Geometry list length: ${geoList.length}`);
+            log(2, `Last geometry: "${geoList[8]}"`);
+            
+            const grid = document.getElementById('testGrid2');
+            grid.innerHTML = geoList.map((name, i) => 
+                `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
+                         data-index="${i}" onclick="alert('${name}')">
+                    ${name}
+                </button>`
+            ).join('');
+            
+            const actualCount = grid.children.length;
+            log(2, `Created: ${actualCount} buttons`);
+            log(2, `Result: ${actualCount === 9 ? '✅ SUCCESS' : '❌ FAILED'}`);
+        }
+
+        // Test 3: Async module loading
+        async function test3() {
+            log(3, '🧪 Starting Test 3: Async Module Loading');
+            
+            // Simulate async delays like real app
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            log(3, 'Simulating setupGeometry function...');
+            
+            function setupGeometry(system) {
+                const grid = document.getElementById('testGrid3');
+                if (!grid) {
+                    log(3, '❌ Grid not found!');
+                    return;
+                }
+                
+                const geoList = window.geometries?.[system] || [
+                    'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
+                    'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
+                ];
+                
+                log(3, `Final array length: ${geoList.length}`);
+                
+                grid.innerHTML = geoList.map((name, i) => 
+                    `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
+                             data-index="${i}">
+                        ${name}
+                    </button>`
+                ).join('');
+                
+                const actualCount = grid.children.length;
+                log(3, `Created: ${actualCount} buttons`);
+                log(3, `DOM children: ${grid.children.length}`);
+                log(3, `Result: ${actualCount === 9 ? '✅ SUCCESS' : '❌ FAILED'}`);
+                
+                return actualCount;
+            }
+            
+            const result = setupGeometry('faceted');
+            log(3, `Final result: ${result} buttons`);
+        }
+
+        // Run all tests
+        document.addEventListener('DOMContentLoaded', () => {
+            test1();
+            setTimeout(test2, 100);
+            setTimeout(test3, 200);
+        });
+    </script>
+</body>
+</html>

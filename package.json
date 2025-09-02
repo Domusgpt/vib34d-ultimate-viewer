@@ -25,5 +25,8 @@
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "playwright": "^1.55.0"
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0"
   }
 }

@@ -605,7 +605,27 @@ window.setupGeometry = function(system) {
         </button>`
     ).join('');
     
+    // FORCE DOM REFRESH - Fix for missing 9th button
+    grid.style.display = 'none';
+    grid.offsetHeight; // Force reflow
+    grid.style.display = '';
+    
     console.log(`✅ Created ${grid.children.length} geometry buttons`);
+    
+    // PARANOID CHECK: Verify all buttons are visible
+    const visibleButtons = Array.from(grid.children).filter(btn => 
+        btn.offsetWidth > 0 && btn.offsetHeight > 0
+    );
+    console.log(`👁️ Visible buttons: ${visibleButtons.length}/${grid.children.length}`);
+    
+    if (visibleButtons.length !== geoList.length) {
+        console.error(`🚨 VISIBILITY BUG: Expected ${geoList.length}, visible ${visibleButtons.length}`);
+        // Force re-render
+        setTimeout(() => {
+            console.log('🔄 Force re-render attempt...');
+            setupGeometry(system);
+        }, 100);
+    }
 };
 
 /**
