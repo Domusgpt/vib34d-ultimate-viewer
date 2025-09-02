@@ -47,110 +47,131 @@
             <button class="toggle-btn" onclick="toggleAudio()" onmouseenter="showAudioPopout()" onmouseleave="hideAudioPopout()" title="Audio Reactivity" id="audioToggle">AUDIO</button>
             <button class="toggle-btn" onclick="toggleInteractivity()" onmouseenter="showReactPopout()" onmouseleave="hideReactPopout()" title="Interactive Control" id="interactivityToggle">REACT</button>
             
-            <!-- Audio Reactivity Popout Menu -->
+            <!-- Audio Reactivity Popout Menu - ORIGINAL 3x3 GRID SYSTEM -->
             <div class="popout-menu audio-popout" id="audioPopout">
                 <div class="audio-grid">
-                    <div class="audio-header">AUDIO</div>
-                    <div class="audio-header">VOL</div>
-                    <div class="audio-header">FREQ</div>
-                    <div class="audio-header">BEAT</div>
+                    <div class="audio-header"></div>
+                    <div class="audio-header">COL</div>
+                    <div class="audio-header">GEO</div>
+                    <div class="audio-header">MOV</div>
                     
-                    <div class="audio-label">REACT</div>
-                    <div class="audio-cell" onclick="toggleAudioReact('volume')">
-                        <input type="checkbox" id="audioVolume" checked>
-                        <span class="cell-text">Volume</span>
+                    <!-- Low Sensitivity Row -->
+                    <div class="audio-label">L</div>
+                    <div class="audio-cell" onclick="toggleAudioCell('lowColor')">
+                        <input type="checkbox" id="lowColor">
+                        <span class="cell-text">Subtle</span>
                     </div>
-                    <div class="audio-cell" onclick="toggleAudioReact('frequency')">
-                        <input type="checkbox" id="audioFreq" checked>
-                        <span class="cell-text">Frequency</span>
+                    <div class="audio-cell" onclick="toggleAudioCell('lowGeometry')">
+                        <input type="checkbox" id="lowGeometry">
+                        <span class="cell-text">Gentle</span>
                     </div>
-                    <div class="audio-cell" onclick="toggleAudioReact('beat')">
-                        <input type="checkbox" id="audioBeat">
-                        <span class="cell-text">Beat</span>
-                    </div>
-                    
-                    <div class="audio-label">MORPH</div>
-                    <div class="audio-cell" onclick="toggleAudioReact('morphVol')">
-                        <input type="checkbox" id="audioMorphVol">
-                        <span class="cell-text">Shape</span>
-                    </div>
-                    <div class="audio-cell" onclick="toggleAudioReact('morphFreq')">
-                        <input type="checkbox" id="audioMorphFreq">
-                        <span class="cell-text">Warp</span>
-                    </div>
-                    <div class="audio-cell" onclick="toggleAudioReact('morphBeat')">
-                        <input type="checkbox" id="audioMorphBeat" checked>
-                        <span class="cell-text">Pulse</span>
+                    <div class="audio-cell" onclick="toggleAudioCell('lowMovement')">
+                        <input type="checkbox" id="lowMovement" checked>
+                        <span class="cell-text">Smooth</span>
                     </div>
                     
-                    <div class="audio-label">COLOR</div>
-                    <div class="audio-cell" onclick="toggleAudioReact('hueVol')">
-                        <input type="checkbox" id="audioHueVol" checked>
-                        <span class="cell-text">Hue</span>
+                    <!-- Medium Sensitivity Row -->
+                    <div class="audio-label">M</div>
+                    <div class="audio-cell" onclick="toggleAudioCell('medColor')">
+                        <input type="checkbox" id="medColor" checked>
+                        <span class="cell-text">Reactive</span>
                     </div>
-                    <div class="audio-cell" onclick="toggleAudioReact('satFreq')">
-                        <input type="checkbox" id="audioSatFreq">
-                        <span class="cell-text">Sat</span>
+                    <div class="audio-cell" onclick="toggleAudioCell('medGeometry')">
+                        <input type="checkbox" id="medGeometry">
+                        <span class="cell-text">Morph</span>
                     </div>
-                    <div class="audio-cell" onclick="toggleAudioReact('intBeat')">
-                        <input type="checkbox" id="audioIntBeat" checked>
-                        <span class="cell-text">Bright</span>
+                    <div class="audio-cell" onclick="toggleAudioCell('medMovement')">
+                        <input type="checkbox" id="medMovement">
+                        <span class="cell-text">Wave</span>
+                    </div>
+                    
+                    <!-- High Sensitivity Row -->
+                    <div class="audio-label">H</div>
+                    <div class="audio-cell" onclick="toggleAudioCell('highColor')">
+                        <input type="checkbox" id="highColor">
+                        <span class="cell-text">Intense</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioCell('highGeometry')">
+                        <input type="checkbox" id="highGeometry" checked>
+                        <span class="cell-text">Wild</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioCell('highMovement')">
+                        <input type="checkbox" id="highMovement">
+                        <span class="cell-text">Chaos</span>
                     </div>
                 </div>
-                <div class="audio-note">Audio reactive parameters</div>
+                <div class="audio-note">Audio sensitivity levels: L=Low, M=Medium, H=High</div>
             </div>
             
-            <!-- Interactive Reactivity Popout Menu -->
+            <!-- Interactive Reactivity Popout Menu - ORIGINAL 4x4 GRID SYSTEM -->
             <div class="popout-menu react-popout" id="reactPopout">
                 <div class="reactivity-grid">
-                    <div class="reactivity-header">REACT</div>
+                    <div class="reactivity-header"></div>
                     <div class="reactivity-header">MOVE</div>
-                    <div class="reactivity-header">CLICK</div>
-                    <div class="reactivity-header">SCROLL</div>
+                    <div class="reactivity-header">TAP</div>
+                    <div class="reactivity-header">ROLL</div>
                     
-                    <div class="reactivity-label">MORPH</div>
-                    <div class="reactivity-cell" onclick="toggleReact('mouseMove')">
-                        <input type="checkbox" id="reactMouseMove" checked>
-                        <span class="cell-text">Mouse</span>
-                    </div>
-                    <div class="reactivity-cell" onclick="toggleReact('clickMorph')">
-                        <input type="checkbox" id="reactClickMorph">
-                        <span class="cell-text">Shape</span>
-                    </div>
-                    <div class="reactivity-cell" onclick="toggleReact('scrollMorph')">
-                        <input type="checkbox" id="reactScrollMorph" checked>
-                        <span class="cell-text">Zoom</span>
-                    </div>
-                    
-                    <div class="reactivity-label">ROTATE</div>
-                    <div class="reactivity-cell" onclick="toggleReact('mouseSpin')">
-                        <input type="checkbox" id="reactMouseSpin" checked>
-                        <span class="cell-text">Spin</span>
-                    </div>
-                    <div class="reactivity-cell" onclick="toggleReact('clickSpin')">
-                        <input type="checkbox" id="reactClickSpin" checked>
-                        <span class="cell-text">Burst</span>
-                    </div>
-                    <div class="reactivity-cell" onclick="toggleReact('scrollSpin')">
-                        <input type="checkbox" id="reactScrollSpin">
-                        <span class="cell-text">Twist</span>
-                    </div>
-                    
-                    <div class="reactivity-label">COLOR</div>
-                    <div class="reactivity-cell" onclick="toggleReact('mouseHue')">
-                        <input type="checkbox" id="reactMouseHue" checked>
-                        <span class="cell-text">Trail</span>
-                    </div>
-                    <div class="reactivity-cell" onclick="toggleReact('clickColor')">
-                        <input type="checkbox" id="reactClickColor" checked>
+                    <!-- Faceted Row -->
+                    <div class="reactivity-label">FAC</div>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="facetedMouse" checked onchange="toggleSystemReactivity('faceted', 'mouse', this.checked)">
+                        <span class="cell-text">Rotate</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="facetedClick" checked onchange="toggleSystemReactivity('faceted', 'click', this.checked)">
                         <span class="cell-text">Flash</span>
-                    </div>
-                    <div class="reactivity-cell" onclick="toggleReact('scrollColor')">
-                        <input type="checkbox" id="reactScrollColor">
-                        <span class="cell-text">Shift</span>
-                    </div>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="facetedScroll" onchange="toggleSystemReactivity('faceted', 'scroll', this.checked)">
+                        <span class="cell-text">Scale</span>
+                    </label>
+                    
+                    <!-- Quantum Row -->
+                    <div class="reactivity-label">QUA</div>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="quantumMouse" onchange="toggleSystemReactivity('quantum', 'mouse', this.checked)">
+                        <span class="cell-text">Warp</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="quantumClick" onchange="toggleSystemReactivity('quantum', 'click', this.checked)">
+                        <span class="cell-text">Pulse</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="quantumScroll" checked onchange="toggleSystemReactivity('quantum', 'scroll', this.checked)">
+                        <span class="cell-text">Phase</span>
+                    </label>
+                    
+                    <!-- Holographic Row -->
+                    <div class="reactivity-label">HOL</div>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="holographicMouse" onchange="toggleSystemReactivity('holographic', 'mouse', this.checked)">
+                        <span class="cell-text">Shimmer</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="holographicClick" onchange="toggleSystemReactivity('holographic', 'click', this.checked)">
+                        <span class="cell-text">Ripple</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="holographicScroll" onchange="toggleSystemReactivity('holographic', 'scroll', this.checked)">
+                        <span class="cell-text">Depth</span>
+                    </label>
+                    
+                    <!-- Mixed Row -->
+                    <div class="reactivity-label">MIX</div>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="mixedMouse" onchange="toggleSystemReactivity('mixed', 'mouse', this.checked)">
+                        <span class="cell-text">Fac+Holo</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="mixedClick" onchange="toggleSystemReactivity('mixed', 'click', this.checked)">
+                        <span class="cell-text">Multi</span>
+                    </label>
+                    <label class="reactivity-cell">
+                        <input type="checkbox" id="mixedScroll" onchange="toggleSystemReactivity('mixed', 'scroll', this.checked)">
+                        <span class="cell-text">Blend</span>
+                    </label>
                 </div>
-                <div class="reactivity-note">Interactive response controls</div>
+                <div class="reactivity-note">Mix and match any system's behavior with any interaction type</div>
             </div>
         </div>
     </div>
@@ -648,58 +669,205 @@
             }, 300);
         };
 
-        // Audio reactivity toggle functions
-        window.toggleAudioReact = function(type) {
-            const checkbox = document.querySelector(`#audio${type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, c => c)}`);
-            if (checkbox) {
-                checkbox.checked = !checkbox.checked;
+        // ORIGINAL toggleSystemReactivity function with column exclusivity and mixed modes
+        window.toggleSystemReactivity = function(system, interaction, enabled) {
+            console.log(`⚡ toggleSystemReactivity: ${system} ${interaction} = ${enabled}`);
+            
+            if (enabled) {
+                // When enabling a checkbox, disable others in the same column
+                const columnCheckboxes = {
+                    'mouse': ['facetedMouse', 'quantumMouse', 'holographicMouse', 'mixedMouse'],
+                    'click': ['facetedClick', 'quantumClick', 'holographicClick', 'mixedClick'],
+                    'scroll': ['facetedScroll', 'quantumScroll', 'holographicScroll', 'mixedScroll']
+                };
                 
-                // Update audio system based on selection
-                if (window.audioEngine) {
-                    const reactiveSettings = {
-                        volume: document.getElementById('audioVolume')?.checked,
-                        frequency: document.getElementById('audioFreq')?.checked,
-                        beat: document.getElementById('audioBeat')?.checked,
-                        morphVol: document.getElementById('audioMorphVol')?.checked,
-                        morphFreq: document.getElementById('audioMorphFreq')?.checked,
-                        morphBeat: document.getElementById('audioMorphBeat')?.checked,
-                        hueVol: document.getElementById('audioHueVol')?.checked,
-                        satFreq: document.getElementById('audioSatFreq')?.checked,
-                        intBeat: document.getElementById('audioIntBeat')?.checked
-                    };
-                    
-                    console.log(`🎵 Audio reactivity updated: ${type} = ${checkbox.checked}`);
-                    if (window.audioEngine.updateReactiveSettings) {
-                        window.audioEngine.updateReactiveSettings(reactiveSettings);
+                const currentColumnIds = columnCheckboxes[interaction];
+                const currentCheckboxId = system + interaction.charAt(0).toUpperCase() + interaction.slice(1);
+                
+                if (currentColumnIds) {
+                    currentColumnIds.forEach(id => {
+                        const checkbox = document.getElementById(id);
+                        if (checkbox && id !== currentCheckboxId) {
+                            checkbox.checked = false; // Uncheck others in column
+                        }
+                    });
+                }
+            }
+            
+            // Apply to reactivity manager
+            if (window.reactivityManager) {
+                if (interaction === 'mouse') {
+                    if (enabled) {
+                        if (system === 'faceted') {
+                            window.reactivityManager.setMouseMode('rotate');
+                        } else if (system === 'quantum') {
+                            window.reactivityManager.setMouseMode('warp');
+                        } else if (system === 'holographic') {
+                            window.reactivityManager.setMouseMode('distance');
+                        } else if (system === 'mixed') {
+                            window.reactivityManager.setMouseMode('mixed_faceted_holo');
+                        }
+                        window.reactivityManager.toggleMouse(true);
+                    } else {
+                        // Check if any mouse mode is still enabled
+                        const anyMouseEnabled = 
+                            document.getElementById('facetedMouse')?.checked ||
+                            document.getElementById('quantumMouse')?.checked ||
+                            document.getElementById('holographicMouse')?.checked ||
+                            document.getElementById('mixedMouse')?.checked;
+                        
+                        if (!anyMouseEnabled) {
+                            window.reactivityManager.toggleMouse(false);
+                        }
+                    }
+                } else if (interaction === 'click') {
+                    if (enabled) {
+                        if (system === 'faceted') {
+                            window.reactivityManager.setClickMode('flash');
+                        } else if (system === 'quantum') {
+                            window.reactivityManager.setClickMode('pulse');
+                        } else if (system === 'holographic') {
+                            window.reactivityManager.setClickMode('ripple');
+                        } else if (system === 'mixed') {
+                            window.reactivityManager.setClickMode('mixed_multi');
+                        }
+                        window.reactivityManager.toggleClick(true);
+                    } else {
+                        const anyClickEnabled = 
+                            document.getElementById('facetedClick')?.checked ||
+                            document.getElementById('quantumClick')?.checked ||
+                            document.getElementById('holographicClick')?.checked ||
+                            document.getElementById('mixedClick')?.checked;
+                        
+                        if (!anyClickEnabled) {
+                            window.reactivityManager.toggleClick(false);
+                        }
+                    }
+                } else if (interaction === 'scroll') {
+                    if (enabled) {
+                        if (system === 'faceted') {
+                            window.reactivityManager.setScrollMode('scale');
+                        } else if (system === 'quantum') {
+                            window.reactivityManager.setScrollMode('phase');
+                        } else if (system === 'holographic') {
+                            window.reactivityManager.setScrollMode('depth');
+                        } else if (system === 'mixed') {
+                            window.reactivityManager.setScrollMode('mixed_blend');
+                        }
+                        window.reactivityManager.toggleScroll(true);
+                    } else {
+                        const anyScrollEnabled = 
+                            document.getElementById('facetedScroll')?.checked ||
+                            document.getElementById('quantumScroll')?.checked ||
+                            document.getElementById('holographicScroll')?.checked ||
+                            document.getElementById('mixedScroll')?.checked;
+                        
+                        if (!anyScrollEnabled) {
+                            window.reactivityManager.toggleScroll(false);
+                        }
                     }
                 }
             }
         };
 
-        // Interactivity toggle functions
-        window.toggleReact = function(type) {
-            const checkbox = document.querySelector(`#react${type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, c => c)}`);
-            if (checkbox) {
-                checkbox.checked = !checkbox.checked;
+        // ORIGINAL toggleAudioCell function with column exclusivity
+        window.toggleAudioCell = function(cellId) {
+            const checkbox = document.getElementById(cellId);
+            if (!checkbox) return;
+            
+            checkbox.checked = !checkbox.checked;
+            const [sensitivity, mode] = cellId.match(/^(low|med|high)(Color|Geometry|Movement)$/)?.slice(1) || [];
+            
+            if (checkbox.checked && sensitivity && mode) {
+                // Disable other checkboxes in the same column
+                const sensitivities = ['low', 'med', 'high'];
+                sensitivities.forEach(s => {
+                    if (s !== sensitivity) {
+                        const otherId = s + mode;
+                        const otherCheckbox = document.getElementById(otherId);
+                        if (otherCheckbox) otherCheckbox.checked = false;
+                    }
+                });
                 
-                // Update reactivity system
-                const reactSettings = {
-                    mouseMove: document.getElementById('reactMouseMove')?.checked,
-                    clickMorph: document.getElementById('reactClickMorph')?.checked,
-                    scrollMorph: document.getElementById('reactScrollMorph')?.checked,
-                    mouseSpin: document.getElementById('reactMouseSpin')?.checked,
-                    clickSpin: document.getElementById('reactClickSpin')?.checked,
-                    scrollSpin: document.getElementById('reactScrollSpin')?.checked,
-                    mouseHue: document.getElementById('reactMouseHue')?.checked,
-                    clickColor: document.getElementById('reactClickColor')?.checked,
-                    scrollColor: document.getElementById('reactScrollColor')?.checked
-                };
-                
-                console.log(`⚡ Reactivity updated: ${type} = ${checkbox.checked}`);
-                
-                // Apply to all active systems
-                if (window.currentEngine && window.currentEngine.updateReactiveSettings) {
-                    window.currentEngine.updateReactiveSettings(reactSettings);
+                // Apply audio settings
+                if (window.audioEngine) {
+                    const settings = {
+                        colorSensitivity: document.querySelector('[id$="Color"]:checked')?.id.replace('Color', '') || 'med',
+                        geometrySensitivity: document.querySelector('[id$="Geometry"]:checked')?.id.replace('Geometry', '') || 'med',
+                        movementSensitivity: document.querySelector('[id$="Movement"]:checked')?.id.replace('Movement', '') || 'low'
+                    };
+                    
+                    console.log(`🎵 Audio settings updated:`, settings);
+                    if (window.audioEngine.updateSensitivity) {
+                        window.audioEngine.updateSensitivity(settings);
+                    }
+                }
+            }
+        };
+
+        // Reset reactivity grid to system defaults when switching visualizers
+        window.resetReactivityGridToDefaults = function(system) {
+            console.log(`🔄 Resetting reactivity grid to ${system} defaults`);
+            
+            const systemDefaults = {
+                faceted: {
+                    mouse: 'faceted',
+                    click: 'faceted',
+                    scroll: null
+                },
+                quantum: {
+                    mouse: null,
+                    click: null,
+                    scroll: 'quantum'
+                },
+                holographic: {
+                    mouse: null,
+                    click: null,
+                    scroll: null
+                },
+                polychora: {
+                    mouse: 'faceted',
+                    click: 'faceted',
+                    scroll: null
+                }
+            };
+            
+            const defaults = systemDefaults[system] || systemDefaults.faceted;
+            
+            // Clear all checkboxes first
+            const allCheckboxes = [
+                'facetedMouse', 'quantumMouse', 'holographicMouse', 'mixedMouse',
+                'facetedClick', 'quantumClick', 'holographicClick', 'mixedClick', 
+                'facetedScroll', 'quantumScroll', 'holographicScroll', 'mixedScroll'
+            ];
+            
+            allCheckboxes.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox) checkbox.checked = false;
+            });
+            
+            // Set system-appropriate defaults
+            if (defaults.mouse) {
+                const mouseCheckbox = document.getElementById(defaults.mouse + 'Mouse');
+                if (mouseCheckbox) {
+                    mouseCheckbox.checked = true;
+                    toggleSystemReactivity(defaults.mouse, 'mouse', true);
+                }
+            }
+            
+            if (defaults.click) {
+                const clickCheckbox = document.getElementById(defaults.click + 'Click');
+                if (clickCheckbox) {
+                    clickCheckbox.checked = true;
+                    toggleSystemReactivity(defaults.click, 'click', true);
+                }
+            }
+            
+            if (defaults.scroll) {
+                const scrollCheckbox = document.getElementById(defaults.scroll + 'Scroll');
+                if (scrollCheckbox) {
+                    scrollCheckbox.checked = true;
+                    toggleSystemReactivity(defaults.scroll, 'scroll', true);
                 }
             }
         };
