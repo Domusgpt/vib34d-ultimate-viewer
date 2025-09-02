@@ -288,10 +288,34 @@
     gap: 10px;
 }
 
-/* Professional Navigation Buttons */
+/* Primary Action Buttons */
+.action-buttons-primary {
+    display: flex;
+    gap: 12px;
+}
+
+.primary-btn {
+    background: rgba(255, 200, 0, 0.1);
+    border: 2px solid rgba(255, 200, 0, 0.4);
+    color: #ffc800;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.primary-btn:hover {
+    background: rgba(255, 200, 0, 0.2);
+    box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
+}
+
+/* Navigation Buttons */
 .navigation-buttons {
     display: flex;
-    gap: 15px;
+    gap: 12px;
 }
 
 .nav-btn {
@@ -302,11 +326,9 @@
     cursor: pointer;
     font-family: 'Orbitron', monospace;
     font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
     transition: all 0.3s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 120px;
 }
 
 .nav-btn:hover {
@@ -373,4 +395,53 @@
 .action-btn:hover {
     background: rgba(255, 0, 255, 0.3);
     box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+/* ⚡ POPOUT MENU SYSTEM - 3x4 grids for toggle buttons */
+.popout-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    min-width: 280px;
+    background: rgba(0, 0, 0, 0.98);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.popout-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.audio-popout {
+    border-color: rgba(255, 0, 255, 0.4);
+}
+
+.react-popout {
+    border-color: rgba(0, 255, 255, 0.4);
+}
+
+/* Position control-toggles relatively for popout positioning */
+.control-toggles {
+    position: relative;
+}
+
+/* Prevent popout from closing when interacting with it */
+.popout-menu:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
 }

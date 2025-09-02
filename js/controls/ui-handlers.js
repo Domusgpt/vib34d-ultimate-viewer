@@ -206,6 +206,47 @@ window.openGallery = function() {
 };
 
 /**
+ * Get current active geometry index
+ */
+function getCurrentGeometryIndex() {
+    const activeBtn = document.querySelector('.geom-btn.active');
+    if (activeBtn) {
+        return parseInt(activeBtn.dataset.index) || 0;
+    }
+    return 0;
+}
+
+/**
+ * Randomize Lite - Only parameters, not geometry or hue
+ */
+window.randomizeLite = function() {
+    console.log('🎲 Randomizing parameters only (not geometry or hue)...');
+    
+    // Keep current geometry and hue
+    const currentGeometry = getCurrentGeometryIndex();
+    const currentHue = document.getElementById('hue')?.value || 200;
+    
+    // Randomize other parameters
+    updateParameter('rot4dXW', (Math.random() - 0.5) * 12.56);
+    updateParameter('rot4dYW', (Math.random() - 0.5) * 12.56);
+    updateParameter('rot4dZW', (Math.random() - 0.5) * 12.56);
+    updateParameter('gridDensity', 5 + Math.random() * 95);
+    updateParameter('morphFactor', Math.random() * 2);
+    updateParameter('chaos', Math.random());
+    updateParameter('speed', 0.1 + Math.random() * 2.9);
+    updateParameter('intensity', 0.2 + Math.random() * 0.8);
+    updateParameter('saturation', 0.3 + Math.random() * 0.7);
+    
+    // Keep current hue and geometry
+    updateParameter('hue', currentHue);
+    if (window.selectGeometry) {
+        window.selectGeometry(currentGeometry);
+    }
+    
+    console.log('✅ Lite randomization complete - geometry and hue preserved');
+};
+
+/**
  * Open Viewer/Display Card - Navigate to viewer interface
  */
 window.openViewer = function() {
