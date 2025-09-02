@@ -266,7 +266,7 @@ export class TradingCardGenerator {
             geometryType = params.polytope;
         }
         
-        const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'];
+        const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'];
         const systemNames = {
             faceted: 'FACETED',
             holographic: 'HOLOGRAPHIC',

@@ -272,7 +272,7 @@ export class CardGeneratorBase {
     
     getGeometryName(parameters) {
         // Default implementation - systems can override
-        const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'];
+        const geometryNames = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'];
         const geomIndex = parameters.geometry || parameters.geometryType || 0;
         return geometryNames[geomIndex] || 'GEOMETRY';
     }

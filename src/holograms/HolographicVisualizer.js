@@ -86,7 +86,7 @@ export class HolographicVisualizer {
     generateVariantParams(variant) {
         const vib3Geometries = [
             'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
-            'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'
+            'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
         ];
         
         const geometryMap = [

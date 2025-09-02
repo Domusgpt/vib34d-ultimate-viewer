@@ -27,7 +27,7 @@ export class QuantumSystem {
         this.geometries = [
             'Quantum Tetra', 'Quantum Cube', 'Quantum Sphere',
             'Quantum Torus', 'Quantum Klein', 'Quantum Fractal', 
-            'Quantum Wave', 'Quantum Crystal'
+            'Quantum Wave', 'Quantum Crystal', 'Quantum HyperTetra'
         ];
         
         console.log('🌌 QuantumSystem: Initialized with enhanced holographic effects');

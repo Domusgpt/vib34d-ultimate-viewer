@@ -139,7 +139,7 @@ function randomizeParameters() {
 function randomizeGeometryAndHue() {
     // Randomize geometry selection
     if (window.currentSystem !== 'holographic') {
-        const geometryCount = window.geometries?.[window.currentSystem]?.length || 8;
+        const geometryCount = window.geometries?.[window.currentSystem]?.length || 9;
         const randomGeometry = Math.floor(Math.random() * geometryCount);
         if (window.selectGeometry) {
             window.selectGeometry(randomGeometry);
@@ -582,7 +582,7 @@ window.setupGeometry = function(system) {
     
     const geoList = window.geometries?.[system] || window.geometries?.faceted || [
         'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
-        'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'
+        'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
     ];
     
     grid.innerHTML = geoList.map((name, i) => 

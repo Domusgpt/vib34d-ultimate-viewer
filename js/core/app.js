@@ -263,6 +263,30 @@ export class VIB34DApp {
                 }
             }
             
+            // Initialize global geometries from GeometryLibrary
+            try {
+                console.log('🔧 Initializing global geometries...');
+                const { GeometryLibrary } = await import('../../src/geometry/GeometryLibrary.js');
+                
+                window.geometries = {
+                    faceted: GeometryLibrary.getGeometryNames(),
+                    quantum: GeometryLibrary.getGeometryNames(),
+                    holographic: GeometryLibrary.getGeometryNames(),
+                    polychora: GeometryLibrary.getGeometryNames()
+                };
+                
+                console.log('✅ Global geometries initialized with 9 geometries each:', window.geometries);
+            } catch (error) {
+                console.warn('⚠️ GeometryLibrary not available, using fallback:', error.message);
+                // Create fallback geometry arrays
+                window.geometries = {
+                    faceted: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'],
+                    quantum: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'],
+                    holographic: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'],
+                    polychora: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON']
+                };
+            }
+            
             this.isInitialized = true;
             console.log('✅ VIB34D Application initialized');
             
