@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HyperTetrahedron Button Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #001122; color: #fff; }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #444; }
+        .geom-btn { 
+            margin: 5px; 
+            padding: 10px; 
+            background: #333; 
+            color: #fff; 
+            border: 1px solid #666;
+            cursor: pointer;
+        }
+        .geom-btn.active { background: #0066ff; }
+        #geometryGrid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 HyperTetrahedron Button Debug</h1>
+    
+    <div class="test-section">
+        <h2>TEST 1: Hardcoded Geometry Arrays</h2>
+        <div id="arrays-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>TEST 2: setupGeometry Function Test</h2>
+        <div id="geometryGrid"></div>
+        <button onclick="testSetupGeometry()">🧪 Run setupGeometry Test</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>TEST 3: Direct Button Creation</h2>
+        <div id="direct-test"></div>
+        <button onclick="createDirectButtons()">🧪 Create 9 Buttons Directly</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>DEBUG LOG</h2>
+        <div id="debug-log" style="font-size: 12px; max-height: 200px; overflow-y: scroll; border: 1px solid #666; padding: 10px;"></div>
+    </div>
+
+    <script>
+        // Initialize geometry arrays exactly like index-clean.html
+        window.geometries = {
+            faceted: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'],
+            quantum: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'],
+            holographic: ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'],
+            polychora: ['5-CELL', 'TESSERACT', '16-CELL', '24-CELL', '600-CELL', '120-CELL', 'HYPERSPHERE', 'KLEIN BOTTLE 4D', 'HYPERTETRAHEDRON']
+        };
+        
+        // Debug logging
+        function debugLog(message) {
+            const log = document.getElementById('debug-log');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+            console.log(message);
+        }
+        
+        // TEST 1: Show arrays
+        function showArrays() {
+            const container = document.getElementById('arrays-test');
+            let html = '';
+            Object.entries(window.geometries).forEach(([system, geometries]) => {
+                html += `<div><strong>${system}:</strong> ${geometries.length} items</div>`;
+                html += `<div style="font-size: 12px; color: #ccc;">${geometries.join(', ')}</div><br>`;
+            });
+            container.innerHTML = html;
+            debugLog('✅ Arrays displayed');
+        }
+        
+        // TEST 2: setupGeometry function (copied from ui-handlers.js)
+        window.setupGeometry = function(system) {
+            debugLog(`🎯 setupGeometry called for system: ${system}`);
+            
+            const grid = document.getElementById('geometryGrid');
+            if (!grid) {
+                debugLog('❌ geometryGrid element not found!');
+                return;
+            }
+            
+            const geoList = window.geometries?.[system] || window.geometries?.faceted || [
+                'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
+                'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
+            ];
+            debugLog(`🎯 FINAL geometry list for ${system}: ${geoList.length} items`);
+            debugLog(`📊 Geometries: ${geoList.join(', ')}`);
+            
+            grid.innerHTML = geoList.map((name, i) => 
+                `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
+                         data-index="${i}" onclick="selectGeometry(${i})">
+                    ${name}
+                </button>`
+            ).join('');
+            
+            // Force DOM refresh
+            grid.style.display = 'none';
+            grid.offsetHeight; // Force reflow
+            grid.style.display = '';
+            
+            debugLog(`✅ Created ${grid.children.length} geometry buttons`);
+            
+            // Check visibility
+            const visibleButtons = Array.from(grid.children).filter(btn => 
+                btn.offsetWidth > 0 && btn.offsetHeight > 0
+            );
+            debugLog(`👁️ Visible buttons: ${visibleButtons.length}/${grid.children.length}`);
+            
+            if (visibleButtons.length !== geoList.length) {
+                debugLog(`🚨 VISIBILITY BUG: Expected ${geoList.length}, visible ${visibleButtons.length}`);
+            }
+        };
+        
+        function testSetupGeometry() {
+            debugLog('🧪 Starting setupGeometry test...');
+            window.setupGeometry('faceted');
+        }
+        
+        // TEST 3: Direct button creation
+        function createDirectButtons() {
+            debugLog('🧪 Creating 9 buttons directly...');
+            const container = document.getElementById('direct-test');
+            const names = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'];
+            
+            container.innerHTML = names.map((name, i) => 
+                `<button class="geom-btn" onclick="alert('Button ${i}: ${name}')">${name}</button>`
+            ).join('');
+            
+            debugLog(`✅ Created ${container.children.length} direct buttons`);
+        }
+        
+        // Dummy selectGeometry function
+        window.selectGeometry = function(index) {
+            debugLog(`🎯 selectGeometry(${index}) called`);
+            alert(`Selected geometry ${index}`);
+        };
+        
+        // Auto-run tests on load
+        window.onload = function() {
+            debugLog('🚀 Page loaded, running tests...');
+            showArrays();
+            setTimeout(testSetupGeometry, 500);
+            setTimeout(createDirectButtons, 1000);
+        };
+    </script>
+</body>
+</html>
