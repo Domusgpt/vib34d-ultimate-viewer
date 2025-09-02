@@ -577,13 +577,19 @@ window.addEventListener('message', (event) => {
  * Setup geometry buttons for the current system
  */
 window.setupGeometry = function(system) {
+    console.log(`🎯 setupGeometry called for system: ${system}`);
     const grid = document.getElementById('geometryGrid');
-    if (!grid) return;
+    if (!grid) {
+        console.error('❌ geometryGrid element not found!');
+        return;
+    }
     
+    console.log(`📊 window.geometries:`, window.geometries);
     const geoList = window.geometries?.[system] || window.geometries?.faceted || [
         'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
         'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
     ];
+    console.log(`🎯 Using geometry list for ${system}: ${geoList.length} items`, geoList);
     
     grid.innerHTML = geoList.map((name, i) => 
         `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
@@ -591,6 +597,8 @@ window.setupGeometry = function(system) {
             ${name}
         </button>`
     ).join('');
+    
+    console.log(`✅ Created ${grid.children.length} geometry buttons`);
 };
 
 /**
@@ -610,3 +618,18 @@ window.toggleMobilePanel = function() {
 // Note: createTradingCard is defined in gallery-manager.js
 
 console.log('🎛️ UI Handlers Module: Loaded');
+
+// DEBUGGING: Immediate test of geometry setup
+setTimeout(() => {
+    console.log('🧪 TESTING: Running geometry setup test after 2 seconds...');
+    if (window.setupGeometry && window.geometries) {
+        console.log('🧪 TEST: window.geometries.faceted =', window.geometries.faceted);
+        console.log('🧪 TEST: Faceted has', window.geometries.faceted?.length, 'geometries');
+        // Force a manual setup to test
+        if (document.getElementById('geometryGrid')) {
+            window.setupGeometry('faceted');
+        }
+    } else {
+        console.error('🧪 TEST FAILED: setupGeometry or geometries not available');
+    }
+}, 2000);
