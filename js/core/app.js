@@ -36,14 +36,10 @@ export class VIB34DApp {
                             window.reactivityManager.setActiveSystem(system, newEngine);
                         }
                         
-                        // CRITICAL: Sync new engine to current UI parameter state
+                        // OPTIMIZED: Coordinated parameter sync with 60ms buffer
                         setTimeout(() => {
-                            if (window.syncVisualizerToUI) {
-                                window.syncVisualizerToUI(system, newEngine);
-                            } else {
-                                console.warn('⚠️ syncVisualizerToUI function not available');
-                            }
-                        }, 300); // Small delay for system initialization
+                            window.applyParametersCoordinated(system, newEngine);
+                        }, 60);
                         
                         // Update UI buttons
                         document.querySelectorAll('.system-btn').forEach(btn => {
@@ -167,6 +163,52 @@ export class VIB34DApp {
             });
             
             console.log(`✅ ${systemName} visualizer synced to UI`);
+        };
+
+        // OPTIMIZED: Coordinated parameter application (eliminates 300ms→60ms)
+        window.applyParametersCoordinated = async (systemName, engine) => {
+            console.log(`⚡ FAST: Coordinated parameter sync for ${systemName}`);
+            const startTime = performance.now();
+            
+            try {
+                const currentParams = window.getCurrentUIParameterState();
+                console.log(`⚡ Retrieved ${Object.keys(currentParams).length} parameters`);
+                
+                if (window.userParameterState) {
+                    Object.assign(window.userParameterState, currentParams);
+                }
+                
+                if (engine && currentParams) {
+                    Object.entries(currentParams).forEach(([param, value]) => {
+                        if (window.updateParameter && typeof value === 'number' && !isNaN(value)) {
+                            window.updateParameter(param, value);
+                        }
+                    });
+                }
+                
+                if (currentParams.geometry !== undefined) {
+                    const geometryValue = parseInt(currentParams.geometry);
+                    if (!isNaN(geometryValue) && geometryValue >= 0 && geometryValue <= 8) {
+                        if (window.selectGeometry) {
+                            window.selectGeometry(geometryValue);
+                        }
+                    }
+                }
+                
+                if (window.syncSlidersToStoredValues) {
+                    window.syncSlidersToStoredValues();
+                }
+                
+                const endTime = performance.now();
+                console.log(`⚡ COORDINATED SYNC: ${systemName} in ${(endTime - startTime).toFixed(1)}ms`);
+                console.log(`⚡ IMPROVEMENT: Eliminated 240ms cascade delay`);
+                
+            } catch (error) {
+                console.error(`❌ Coordinated sync error:`, error);
+                if (window.syncVisualizerToUI) {
+                    window.syncVisualizerToUI(systemName, engine);
+                }
+            }
         };
         
         // Device Tilt Functions for 4D Rotation Control
