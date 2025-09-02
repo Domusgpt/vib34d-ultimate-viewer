@@ -33,20 +33,125 @@
             </div>
         </div>
         
+        <div class="action-buttons-primary">
+            <button class="primary-btn" onclick="createTradingCard()" title="Generate Trading Card">TRADING CARD</button>
+            <button class="primary-btn" onclick="saveToGallery()" title="Save Current State">SAVE</button>
+        </div>
+        
         <div class="navigation-buttons">
-            <button class="nav-btn card-collection-btn" onclick="openGallery()" title="Card Collection">
-                <span class="nav-text-top">Card</span>
-                <span class="nav-text-bottom">Collection</span>
-            </button>
-            <button class="nav-btn engine-display-btn" onclick="openViewer()" title="Parametric Engine Display">
-                <span class="nav-text-top">Parametric Engine</span>
-                <span class="nav-text-bottom">Display Card</span>
-            </button>
+            <button class="nav-btn" onclick="openGallery()" title="Gallery">GALLERY</button>
+            <button class="nav-btn" onclick="openViewer()" title="Viewer">VIEWER</button>
         </div>
         
         <div class="control-toggles">
-            <button class="toggle-btn" onclick="toggleAudio()" title="Audio Reactivity" id="audioToggle">AUDIO</button>
-            <button class="toggle-btn" onclick="toggleInteractivity()" title="Interactive Control" id="interactivityToggle">REACT</button>
+            <button class="toggle-btn" onclick="toggleAudio()" onmouseenter="showAudioPopout()" onmouseleave="hideAudioPopout()" title="Audio Reactivity" id="audioToggle">AUDIO</button>
+            <button class="toggle-btn" onclick="toggleInteractivity()" onmouseenter="showReactPopout()" onmouseleave="hideReactPopout()" title="Interactive Control" id="interactivityToggle">REACT</button>
+            
+            <!-- Audio Reactivity Popout Menu -->
+            <div class="popout-menu audio-popout" id="audioPopout">
+                <div class="audio-grid">
+                    <div class="audio-header">AUDIO</div>
+                    <div class="audio-header">VOL</div>
+                    <div class="audio-header">FREQ</div>
+                    <div class="audio-header">BEAT</div>
+                    
+                    <div class="audio-label">REACT</div>
+                    <div class="audio-cell" onclick="toggleAudioReact('volume')">
+                        <input type="checkbox" id="audioVolume" checked>
+                        <span class="cell-text">Volume</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioReact('frequency')">
+                        <input type="checkbox" id="audioFreq" checked>
+                        <span class="cell-text">Frequency</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioReact('beat')">
+                        <input type="checkbox" id="audioBeat">
+                        <span class="cell-text">Beat</span>
+                    </div>
+                    
+                    <div class="audio-label">MORPH</div>
+                    <div class="audio-cell" onclick="toggleAudioReact('morphVol')">
+                        <input type="checkbox" id="audioMorphVol">
+                        <span class="cell-text">Shape</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioReact('morphFreq')">
+                        <input type="checkbox" id="audioMorphFreq">
+                        <span class="cell-text">Warp</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioReact('morphBeat')">
+                        <input type="checkbox" id="audioMorphBeat" checked>
+                        <span class="cell-text">Pulse</span>
+                    </div>
+                    
+                    <div class="audio-label">COLOR</div>
+                    <div class="audio-cell" onclick="toggleAudioReact('hueVol')">
+                        <input type="checkbox" id="audioHueVol" checked>
+                        <span class="cell-text">Hue</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioReact('satFreq')">
+                        <input type="checkbox" id="audioSatFreq">
+                        <span class="cell-text">Sat</span>
+                    </div>
+                    <div class="audio-cell" onclick="toggleAudioReact('intBeat')">
+                        <input type="checkbox" id="audioIntBeat" checked>
+                        <span class="cell-text">Bright</span>
+                    </div>
+                </div>
+                <div class="audio-note">Audio reactive parameters</div>
+            </div>
+            
+            <!-- Interactive Reactivity Popout Menu -->
+            <div class="popout-menu react-popout" id="reactPopout">
+                <div class="reactivity-grid">
+                    <div class="reactivity-header">REACT</div>
+                    <div class="reactivity-header">MOVE</div>
+                    <div class="reactivity-header">CLICK</div>
+                    <div class="reactivity-header">SCROLL</div>
+                    
+                    <div class="reactivity-label">MORPH</div>
+                    <div class="reactivity-cell" onclick="toggleReact('mouseMove')">
+                        <input type="checkbox" id="reactMouseMove" checked>
+                        <span class="cell-text">Mouse</span>
+                    </div>
+                    <div class="reactivity-cell" onclick="toggleReact('clickMorph')">
+                        <input type="checkbox" id="reactClickMorph">
+                        <span class="cell-text">Shape</span>
+                    </div>
+                    <div class="reactivity-cell" onclick="toggleReact('scrollMorph')">
+                        <input type="checkbox" id="reactScrollMorph" checked>
+                        <span class="cell-text">Zoom</span>
+                    </div>
+                    
+                    <div class="reactivity-label">ROTATE</div>
+                    <div class="reactivity-cell" onclick="toggleReact('mouseSpin')">
+                        <input type="checkbox" id="reactMouseSpin" checked>
+                        <span class="cell-text">Spin</span>
+                    </div>
+                    <div class="reactivity-cell" onclick="toggleReact('clickSpin')">
+                        <input type="checkbox" id="reactClickSpin" checked>
+                        <span class="cell-text">Burst</span>
+                    </div>
+                    <div class="reactivity-cell" onclick="toggleReact('scrollSpin')">
+                        <input type="checkbox" id="reactScrollSpin">
+                        <span class="cell-text">Twist</span>
+                    </div>
+                    
+                    <div class="reactivity-label">COLOR</div>
+                    <div class="reactivity-cell" onclick="toggleReact('mouseHue')">
+                        <input type="checkbox" id="reactMouseHue" checked>
+                        <span class="cell-text">Trail</span>
+                    </div>
+                    <div class="reactivity-cell" onclick="toggleReact('clickColor')">
+                        <input type="checkbox" id="reactClickColor" checked>
+                        <span class="cell-text">Flash</span>
+                    </div>
+                    <div class="reactivity-cell" onclick="toggleReact('scrollColor')">
+                        <input type="checkbox" id="reactScrollColor">
+                        <span class="cell-text">Shift</span>
+                    </div>
+                </div>
+                <div class="reactivity-note">Interactive response controls</div>
+            </div>
         </div>
     </div>
 
@@ -201,10 +306,9 @@
         <!-- Actions -->
         <div class="control-section">
             <div class="section-title">Actions</div>
-            <button class="panel-btn action-randomize" onclick="randomizeAll()">RANDOMIZE</button>
+            <button class="panel-btn action-randomize-lite" onclick="randomizeLite()">RANDOMIZE LITE</button>
+            <button class="panel-btn action-randomize" onclick="randomizeAll()">RANDOMIZE ALL</button>
             <button class="panel-btn action-reset" onclick="resetAll()">RESET ALL</button>
-            <button class="panel-btn action-save" onclick="saveToGallery()">SAVE</button>
-            <button class="panel-btn action-card" onclick="createTradingCard()">GENERATE CARD</button>
         </div>
     </div>
 
@@ -505,6 +609,129 @@
                 document.body.appendChild(errorDiv);
             }
         })();
+
+        // ⚡ POPOUT MENU FUNCTIONS - Toggle button reactivity grids
+        let audioPopoutTimer = null;
+        let reactPopoutTimer = null;
+
+        window.showAudioPopout = function() {
+            clearTimeout(audioPopoutTimer);
+            const popout = document.getElementById('audioPopout');
+            if (popout) {
+                popout.classList.add('show');
+            }
+        };
+
+        window.hideAudioPopout = function() {
+            audioPopoutTimer = setTimeout(() => {
+                const popout = document.getElementById('audioPopout');
+                if (popout && !popout.matches(':hover')) {
+                    popout.classList.remove('show');
+                }
+            }, 300);
+        };
+
+        window.showReactPopout = function() {
+            clearTimeout(reactPopoutTimer);
+            const popout = document.getElementById('reactPopout');
+            if (popout) {
+                popout.classList.add('show');
+            }
+        };
+
+        window.hideReactPopout = function() {
+            reactPopoutTimer = setTimeout(() => {
+                const popout = document.getElementById('reactPopout');
+                if (popout && !popout.matches(':hover')) {
+                    popout.classList.remove('show');
+                }
+            }, 300);
+        };
+
+        // Audio reactivity toggle functions
+        window.toggleAudioReact = function(type) {
+            const checkbox = document.querySelector(`#audio${type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, c => c)}`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                
+                // Update audio system based on selection
+                if (window.audioEngine) {
+                    const reactiveSettings = {
+                        volume: document.getElementById('audioVolume')?.checked,
+                        frequency: document.getElementById('audioFreq')?.checked,
+                        beat: document.getElementById('audioBeat')?.checked,
+                        morphVol: document.getElementById('audioMorphVol')?.checked,
+                        morphFreq: document.getElementById('audioMorphFreq')?.checked,
+                        morphBeat: document.getElementById('audioMorphBeat')?.checked,
+                        hueVol: document.getElementById('audioHueVol')?.checked,
+                        satFreq: document.getElementById('audioSatFreq')?.checked,
+                        intBeat: document.getElementById('audioIntBeat')?.checked
+                    };
+                    
+                    console.log(`🎵 Audio reactivity updated: ${type} = ${checkbox.checked}`);
+                    if (window.audioEngine.updateReactiveSettings) {
+                        window.audioEngine.updateReactiveSettings(reactiveSettings);
+                    }
+                }
+            }
+        };
+
+        // Interactivity toggle functions
+        window.toggleReact = function(type) {
+            const checkbox = document.querySelector(`#react${type.charAt(0).toUpperCase() + type.slice(1).replace(/([A-Z])/g, c => c)}`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                
+                // Update reactivity system
+                const reactSettings = {
+                    mouseMove: document.getElementById('reactMouseMove')?.checked,
+                    clickMorph: document.getElementById('reactClickMorph')?.checked,
+                    scrollMorph: document.getElementById('reactScrollMorph')?.checked,
+                    mouseSpin: document.getElementById('reactMouseSpin')?.checked,
+                    clickSpin: document.getElementById('reactClickSpin')?.checked,
+                    scrollSpin: document.getElementById('reactScrollSpin')?.checked,
+                    mouseHue: document.getElementById('reactMouseHue')?.checked,
+                    clickColor: document.getElementById('reactClickColor')?.checked,
+                    scrollColor: document.getElementById('reactScrollColor')?.checked
+                };
+                
+                console.log(`⚡ Reactivity updated: ${type} = ${checkbox.checked}`);
+                
+                // Apply to all active systems
+                if (window.currentEngine && window.currentEngine.updateReactiveSettings) {
+                    window.currentEngine.updateReactiveSettings(reactSettings);
+                }
+            }
+        };
+
+        // Handle popout menu interactions - prevent closing when hovering
+        document.addEventListener('DOMContentLoaded', function() {
+            const audioPopout = document.getElementById('audioPopout');
+            const reactPopout = document.getElementById('reactPopout');
+            
+            if (audioPopout) {
+                audioPopout.addEventListener('mouseenter', () => {
+                    clearTimeout(audioPopoutTimer);
+                    audioPopout.classList.add('show');
+                });
+                
+                audioPopout.addEventListener('mouseleave', () => {
+                    window.hideAudioPopout();
+                });
+            }
+            
+            if (reactPopout) {
+                reactPopout.addEventListener('mouseenter', () => {
+                    clearTimeout(reactPopoutTimer);
+                    reactPopout.classList.add('show');
+                });
+                
+                reactPopout.addEventListener('mouseleave', () => {
+                    window.hideReactPopout();
+                });
+            }
+        });
+
     </script>
 </body>
 </html>
