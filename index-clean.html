@@ -486,9 +486,25 @@
                     await window.switchSystem(initialSystem);
                 }
                 
+                // CRITICAL FIX: Force setupGeometry call with delay to ensure UI is ready
+                console.log('🎯 FORCING setupGeometry call for initial system:', initialSystem);
                 if (window.setupGeometry) {
                     window.setupGeometry(initialSystem);
+                    console.log('✅ setupGeometry called immediately');
+                } else {
+                    console.error('❌ setupGeometry not available yet!');
                 }
+                
+                // PARANOID FIX: Also call it after a delay to ensure DOM is fully ready
+                setTimeout(() => {
+                    console.log('🎯 DELAYED setupGeometry call for:', initialSystem);
+                    if (window.setupGeometry) {
+                        window.setupGeometry(initialSystem);
+                        console.log('✅ setupGeometry called after delay');
+                    } else {
+                        console.error('❌ setupGeometry STILL not available!');
+                    }
+                }, 500);
 
                 window.moduleReady = true;
                 document.body.classList.remove('loading');
