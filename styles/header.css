@@ -16,11 +16,243 @@
     backdrop-filter: blur(10px);
 }
 
-.logo {
-    font-size: 1.2rem;
+/* 🌟 SPECTACULAR VIB3-4D LOGO - BEYOND EXPECTATIONS! */
+.vib3d-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+}
+
+.vib3d-logo {
+    font-family: 'Orbitron', monospace;
     font-weight: 900;
+    font-size: 2.2rem;
+    display: flex;
+    align-items: baseline;
+    position: relative;
+    margin-bottom: 2px;
+}
+
+.logo-text {
     color: #00ffff;
-    text-shadow: 0 0 20px #00ffff;
+    text-shadow: 
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 30px #00ffff;
+    animation: logoGlow 3s ease-in-out infinite alternate;
+}
+
+/* 🎭 THE MAGICAL "3" - DYNAMIC VISUALIZER WINDOW */
+.special-three {
+    font-size: 3.5rem !important;
+    position: relative;
+    display: inline-block;
+    margin: 0 2px;
+    background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: 
+        holographicShine 2s linear infinite,
+        specialThreeFloat 4s ease-in-out infinite,
+        specialThreePulse 1.5s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8));
+    transform-origin: center;
+}
+
+/* 🌈 HOLOGRAPHIC SHINE ANIMATION */
+@keyframes holographicShine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ✨ FLOATING ANIMATION FOR THE "3" */
+@keyframes specialThreeFloat {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    25% { transform: translateY(-3px) scale(1.05); }
+    75% { transform: translateY(2px) scale(0.98); }
+}
+
+/* 💫 PULSING GLOW */
+@keyframes specialThreePulse {
+    0% { filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)); }
+    100% { filter: drop-shadow(0 0 25px rgba(0, 255, 255, 1)); }
+}
+
+/* ⭐ MAIN LOGO GLOW */
+@keyframes logoGlow {
+    0% { 
+        text-shadow: 
+            0 0 10px #00ffff,
+            0 0 20px #00ffff,
+            0 0 30px #00ffff;
+    }
+    100% { 
+        text-shadow: 
+            0 0 15px #00ffff,
+            0 0 25px #00ffff,
+            0 0 35px #00ffff,
+            0 0 45px #00ffff;
+    }
+}
+
+/* 📝 ELEGANT SUBTITLE */
+.logo-subtitle {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.7rem;
+    font-weight: 400;
+    line-height: 1.1;
+    margin-top: -2px;
+}
+
+.subtitle-line-1 {
+    color: #ffffff;
+    text-shadow: 0 0 8px #ffffff;
+    opacity: 0.9;
+}
+
+.subtitle-line-2 {
+    color: #00ffff;
+    font-weight: 700;
+    text-shadow: 0 0 10px #00ffff;
+    margin-top: 1px;
+}
+
+/* 👨‍💻 CREDITS */
+.logo-credits {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.5rem;
+    margin-top: 3px;
+    opacity: 0.7;
+}
+
+.by-text {
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.developer-credit {
+    color: #888;
+    font-weight: 300;
+    font-size: 0.45rem;
+    margin-top: 1px;
+}
+
+/* 🎆 SPECTACULAR PARTICLE EFFECTS AROUND THE "3" - BEYOND EXPECTATIONS! */
+.special-three::before,
+.special-three::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, #ff00ff, #00ffff, transparent);
+    border-radius: 50%;
+    animation: sparkle 2s linear infinite, particleFloat 3s ease-in-out infinite;
+}
+
+.special-three::before {
+    top: -8px;
+    left: -10px;
+    animation-delay: 0s, 0.5s;
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+.special-three::after {
+    bottom: -8px;
+    right: -10px;
+    animation-delay: 1s, 1.5s;
+    box-shadow: 0 0 10px #00ffff;
+}
+
+/* 🌟 ADDITIONAL PARTICLE ORBITS */
+.special-three {
+    overflow: visible;
+}
+
+.special-three::before {
+    box-shadow: 
+        0 0 10px #ff00ff,
+        -15px 0 8px #00ffff,
+        15px 0 8px #ffff00,
+        0 -15px 6px #ff00ff,
+        0 15px 6px #00ffff;
+}
+
+@keyframes particleFloat {
+    0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+    25% { transform: translateY(-2px) translateX(1px) scale(1.2); }
+    50% { transform: translateY(0px) translateX(2px) scale(0.8); }
+    75% { transform: translateY(2px) translateX(-1px) scale(1.1); }
+}
+
+/* 💫 ADVANCED HOLOGRAPHIC EFFECTS */
+.special-three {
+    background: 
+        linear-gradient(45deg, transparent 30%, rgba(255,0,255,0.3) 50%, transparent 70%),
+        linear-gradient(135deg, transparent 30%, rgba(0,255,255,0.3) 50%, transparent 70%),
+        linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+    background-size: 200% 200%, 200% 200%, 400% 400%;
+    animation: 
+        holographicShine 2s linear infinite,
+        specialThreeFloat 4s ease-in-out infinite,
+        specialThreePulse 1.5s ease-in-out infinite alternate,
+        holographicSweep 3s ease-in-out infinite;
+}
+
+/* 🌈 HOLOGRAPHIC SWEEP EFFECT */
+@keyframes holographicSweep {
+    0% { 
+        background-position: 0% 0%, 100% 100%, 0% 50%; 
+        filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)) hue-rotate(0deg);
+    }
+    33% { 
+        background-position: 50% 50%, 50% 50%, 50% 50%; 
+        filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.9)) hue-rotate(120deg);
+    }
+    66% { 
+        background-position: 100% 100%, 0% 0%, 100% 50%; 
+        filter: drop-shadow(0 0 25px rgba(255, 255, 0, 1)) hue-rotate(240deg);
+    }
+    100% { 
+        background-position: 0% 0%, 100% 100%, 0% 50%; 
+        filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)) hue-rotate(360deg);
+    }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+/* 🌟 HOVER EFFECTS - INTERACTIVE MAGIC */
+.vib3d-logo-container:hover .special-three {
+    animation-duration: 1s, 2s, 0.8s;
+    transform: scale(1.1);
+}
+
+.vib3d-logo-container:hover .logo-text {
+    animation-duration: 1.5s;
+}
+
+/* 📱 RESPONSIVE SCALING */
+@media (max-width: 768px) {
+    .vib3d-logo {
+        font-size: 1.8rem;
+    }
+    
+    .special-three {
+        font-size: 2.8rem !important;
+    }
+    
+    .logo-subtitle {
+        font-size: 0.6rem;
+    }
 }
 
 .system-selector {
