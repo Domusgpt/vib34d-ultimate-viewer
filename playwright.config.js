@@ -9,7 +9,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:8146',
+    baseURL: 'http://localhost:8145',
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'always',
@@ -34,8 +34,8 @@ module.exports = defineConfig({
   ],
 
   webServer: {
-    command: 'python3 -m http.server 8146',
-    url: 'http://localhost:8146',
+    command: 'python3 -m http.server 8145',
+    url: 'http://localhost:8145',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

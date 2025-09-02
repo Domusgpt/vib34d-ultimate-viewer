@@ -40,7 +40,9 @@ export class HolographicSystem {
             // 23-25: WAVE variations
             'WAVE LATTICE', 'WAVE FIELD', 'WAVE QUANTUM',
             // 26-29: CRYSTAL variations
-            'CRYSTAL LATTICE', 'CRYSTAL FIELD', 'CRYSTAL MATRIX', 'CRYSTAL QUANTUM'
+            'CRYSTAL LATTICE', 'CRYSTAL FIELD', 'CRYSTAL MATRIX', 'CRYSTAL QUANTUM',
+            // 30: HYPERTETRAHEDRON variant
+            'HYPERTETRAHEDRON LATTICE'
         ];
         
         // Audio reactivity system - PRESERVED EXACTLY
@@ -244,8 +246,8 @@ export class HolographicSystem {
         
         geometryGrid.innerHTML = '';
         
-        // CRITICAL: Holographic system shows first 8 variants in 3x3 grid (original behavior)
-        const displayVariants = this.variantNames.slice(0, 8);
+        // CRITICAL: Holographic system shows first 9 variants in 3x3 grid (updated for HyperTetrahedron)
+        const displayVariants = this.variantNames.slice(0, 9);
         
         displayVariants.forEach((variant, index) => {
             const btn = document.createElement('button');

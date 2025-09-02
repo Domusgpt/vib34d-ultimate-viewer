@@ -26,7 +26,8 @@ export class PolychoraSystem {
         // 4D Polytope configuration exactly like index.html
         this.polytopes = [
             '5-Cell', 'Tesseract', '16-Cell',
-            '24-Cell', '600-Cell', '120-Cell'
+            '24-Cell', '600-Cell', '120-Cell',
+            'Hypersphere', 'Klein Bottle 4D', 'HyperTetrahedron'
         ];
         
         console.log('🔮 PolychoraSystem: Initialized with true 4D polytope mathematics');
