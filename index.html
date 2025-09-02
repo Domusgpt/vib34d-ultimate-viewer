@@ -872,6 +872,174 @@
             }
         };
 
+        // 🔮 GEOMETRY SYSTEM - Setup geometry buttons for each system
+        window.geometries = {
+            faceted: ['Tetra', 'Cube', 'Sphere', 'Torus', 'Klein', 'Fractal', 'Wave', 'Crystal'],
+            quantum: ['Q-Tetra', 'Q-Cube', 'Q-Sphere', 'Q-Torus', 'Q-Klein', 'Q-Fractal', 'Q-Wave', 'Q-Crystal'],
+            holographic: ['H-Tetra', 'H-Cube', 'H-Sphere', 'H-Torus', 'H-Klein', 'H-Fractal', 'H-Wave', 'H-Crystal'],
+            polychora: ['5-Cell', 'Tesseract', '16-Cell', '24-Cell', '600-Cell', '120-Cell', 'Hyper-Torus', 'Crystal-4D']
+        };
+
+        window.setupGeometry = function(system) {
+            const grid = document.getElementById('geometryGrid');
+            if (!grid) return;
+            
+            const geoList = window.geometries?.[system] || window.geometries?.faceted || [];
+            
+            grid.innerHTML = geoList.map((name, i) => {
+                // Handle long names like HYPERTETRAHEDRON -> split into lines
+                let displayName = name;
+                if (name.length > 12) {
+                    if (name.includes('-')) {
+                        const parts = name.split('-');
+                        displayName = `<div class="geom-btn-text"><div class="geom-btn-line">${parts[0]}</div><div class="geom-btn-line">${parts[1] || ''}</div></div>`;
+                    } else {
+                        displayName = `<div class="geom-btn-text"><div class="geom-btn-line">${name.substring(0, 6)}</div><div class="geom-btn-line">${name.substring(6)}</div></div>`;
+                    }
+                }
+                
+                return `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
+                               data-index="${i}" 
+                               onclick="selectGeometry(${i})"
+                               title="${name}">
+                            ${displayName}
+                        </button>`;
+            }).join('');
+            
+            console.log(`🔮 Geometry grid setup for ${system}: ${geoList.length} geometries`);
+        };
+
+        window.selectGeometry = function(index) {
+            console.log(`🔮 Selecting geometry ${index}`);
+            
+            // Update active button
+            document.querySelectorAll('.geom-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            
+            // Apply to current system
+            if (window.updateParameter) {
+                window.updateParameter('geometry', index);
+            }
+        };
+
+        // ⚙️ CRITICAL: updateParameter function - updates engines and displays
+        window.updateParameter = function(param, value) {
+            const numValue = parseFloat(value);
+            
+            // Store user's parameter choice for persistence
+            if (!window.userParameterState) window.userParameterState = {};
+            window.userParameterState[param] = numValue;
+            console.log(`💾 User parameter: ${param} = ${value}`);
+            
+            // Update the parameter display value
+            const displayElement = document.getElementById(param + '-display');
+            if (displayElement) {
+                if (param === 'hue') {
+                    displayElement.textContent = Math.round(numValue);
+                } else if (['rot4dXW', 'rot4dYW', 'rot4dZW', 'morphFactor', 'chaos', 'speed', 'intensity', 'saturation'].includes(param)) {
+                    displayElement.textContent = numValue.toFixed(2);
+                } else if (param === 'gridDensity') {
+                    displayElement.textContent = Math.round(numValue);
+                }
+            }
+            
+            // Route parameter to active engine
+            const activeSystem = window.currentSystem || 'faceted';
+            const engine = window.currentEngine;
+            
+            if (!engine) {
+                console.warn(`⚠️ No active engine for ${activeSystem} - parameter queued`);
+                return;
+            }
+            
+            try {
+                if (activeSystem === 'faceted') {
+                    if (engine.parameterManager) {
+                        engine.parameterManager.setParameter(param, numValue);
+                        engine.updateVisualizers?.();
+                    } else if (engine.updateParameter) {
+                        engine.updateParameter(param, numValue);
+                    }
+                } else if (activeSystem === 'quantum') {
+                    if (engine.updateParameter) {
+                        engine.updateParameter(param, numValue);
+                    } else if (engine.parameterManager) {
+                        engine.parameterManager.setParameter(param, numValue);
+                        engine.updateVisualizers?.();
+                    }
+                } else if (activeSystem === 'holographic') {
+                    if (engine.updateParameter) {
+                        engine.updateParameter(param, numValue);
+                    } else if (engine.parameterManager) {
+                        engine.parameterManager.setParameter(param, numValue);
+                    }
+                } else if (activeSystem === 'polychora') {
+                    if (engine.updateParameters) {
+                        engine.updateParameters({ [param]: numValue });
+                    } else if (engine.updateParameter) {
+                        engine.updateParameter(param, numValue);
+                    }
+                }
+                
+                console.log(`✅ Parameter ${param} = ${value} applied to ${activeSystem}`);
+            } catch (error) {
+                console.error(`❌ Error updating parameter ${param} on ${activeSystem}:`, error);
+            }
+        };
+
+        // 🚀 NAVIGATION FUNCTIONS - Smart parameter injection across pages
+        window.openGallery = function() {
+            const currentParams = window.getCurrentUIParameterState ? window.getCurrentUIParameterState() : {};
+            const paramString = new URLSearchParams({
+                system: window.currentSystem || 'faceted',
+                ...currentParams
+            }).toString();
+            
+            console.log('🎨 Opening gallery with parameters:', paramString);
+            window.location.href = `gallery.html?${paramString}`;
+        };
+
+        window.openViewer = function() {
+            const currentParams = window.getCurrentUIParameterState ? window.getCurrentUIParameterState() : {};
+            const paramString = new URLSearchParams({
+                system: window.currentSystem || 'faceted',
+                ...currentParams
+            }).toString();
+            
+            console.log('👀 Opening viewer with parameters:', paramString);
+            window.location.href = `viewer.html?${paramString}`;
+        };
+
+        // Get current UI parameter state
+        window.getCurrentUIParameterState = function() {
+            const parameterIds = [
+                'rot4dXW', 'rot4dYW', 'rot4dZW', 
+                'gridDensity', 'morphFactor', 'chaos', 
+                'speed', 'hue', 'intensity', 'saturation'
+            ];
+            
+            const currentParams = {};
+            
+            // Get values from sliders and user state
+            parameterIds.forEach(param => {
+                const slider = document.getElementById(param);
+                if (slider) {
+                    currentParams[param] = parseFloat(slider.value);
+                } else if (window.userParameterState && window.userParameterState[param] !== undefined) {
+                    currentParams[param] = window.userParameterState[param];
+                }
+            });
+            
+            // Get geometry selection
+            const activeGeomBtn = document.querySelector('.geom-btn.active');
+            if (activeGeomBtn) {
+                currentParams.geometry = parseInt(activeGeomBtn.dataset.index) || 0;
+            }
+            
+            return currentParams;
+        };
+
         // Handle popout menu interactions - prevent closing when hovering
         document.addEventListener('DOMContentLoaded', function() {
             const audioPopout = document.getElementById('audioPopout');
