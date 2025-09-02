@@ -60,6 +60,12 @@ export class VIB34DApp {
                         const panelHeader = document.getElementById('panelHeader');
                         if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
                         
+                        // CRITICAL FIX: Update geometry buttons for the new system
+                        if (window.setupGeometry) {
+                            window.setupGeometry(system);
+                            console.log(`🎯 Updated geometry buttons for ${system} system`);
+                        }
+                        
                         console.log(`✅ Switched to ${system} system successfully`);
                         return; // Success - exit early
                     } else if (system === 'polychora') {
