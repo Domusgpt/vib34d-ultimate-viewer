@@ -4,7 +4,7 @@
     /* Main layout adjustments for mobile */
     .control-panel {
         width: 100vw;
-        height: 40vh;
+        height: 60vh; /* INCREASED from 40vh to ensure space for all geometry buttons */
         top: auto;
         bottom: 0;
         right: 0;
@@ -15,7 +15,7 @@
     
     .canvas-container {
         right: 0;
-        bottom: 60px;
+        bottom: 40vh; /* Adjust to match new 60vh control panel height */
         top: 0;
     }
     
@@ -144,11 +144,11 @@
     
     .control-panel {
         padding: 15px;
-        height: 45vh;
+        height: 65vh; /* INCREASED from 45vh to ensure space for all content */
     }
     
     .canvas-container {
-        bottom: 55px;
+        bottom: 35vh; /* Adjust to match new 65vh control panel height */
     }
     
     /* Further reduce text sizes */
