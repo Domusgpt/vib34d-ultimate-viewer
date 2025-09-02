@@ -15,7 +15,11 @@ let interactivityEnabled = false;
 window.updateParameter = function(param, value) {
     // CRITICAL: Store user's parameter choice for persistence
     window.userParameterState[param] = parseFloat(value);
-    console.log(`💾 User parameter: ${param} = ${value}`);
+    
+    // GALLERY PERFORMANCE FIX: Reduce parameter logging spam in gallery context
+    if (!window.isGalleryPreview) {
+        console.log(`💾 User parameter: ${param} = ${value}`);
+    }
     
     const displays = {
         rot4dXW: 'xwValue',
@@ -87,7 +91,10 @@ window.updateParameter = function(param, value) {
             engine.updateParameters({ [param]: parseFloat(value) });
         }
         
-        console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${value}`);
+        // GALLERY PERFORMANCE FIX: Reduce engine parameter logging spam in gallery context
+        if (!window.isGalleryPreview) {
+            console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${value}`);
+        }
         
     } catch (error) {
         console.error(`❌ Parameter update error in ${window.currentSystem || 'unknown'} for ${param}:`, error);
