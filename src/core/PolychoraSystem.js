@@ -217,11 +217,27 @@ class PolychoraVisualizer {
                     float d = length(q) - 1.0;
                     float r = max(max(q.x, q.y/phi), max(q.z*phi, q.w)) - 0.8;
                     return min(d, r);
-                } else {
+                } else if (type < 5.5) {
                     // 120-Cell
                     vec4 q = abs(p);
                     float d = max(max(max(q.x, q.y), max(q.z, q.w)), length(q.xy) + length(q.zw)) - 1.1;
                     return d;
+                } else {
+                    // HyperTetrahedron - True 4D tetrahedron with face normals
+                    // True tetrahedron face normal vectors in 4D
+                    vec4 c1 = normalize(vec4(1.0, 1.0, 1.0, 1.0));
+                    vec4 c2 = normalize(vec4(-1.0, -1.0, 1.0, 1.0));
+                    vec4 c3 = normalize(vec4(-1.0, 1.0, -1.0, 1.0));
+                    vec4 c4 = normalize(vec4(1.0, -1.0, -1.0, 1.0));
+                    
+                    // Calculate distances to each tetrahedron face
+                    float d1 = abs(dot(p, c1)) - 0.8;
+                    float d2 = abs(dot(p, c2)) - 0.8;
+                    float d3 = abs(dot(p, c3)) - 0.8;
+                    float d4 = abs(dot(p, c4)) - 0.8;
+                    
+                    // Minimum distance to any face (intersection)
+                    return max(max(d1, d2), max(d3, d4));
                 }
             }
             
@@ -529,19 +545,20 @@ export class PolychoraSystem {
         this.physicsEnabled = false;
         this.physicsBodies = [];
         
-        // 6 Real 4D Polytopes
+        // 7 Real 4D Polytopes
         this.polytopes = [
             { name: '5-Cell', description: '4-Simplex with 5 tetrahedral cells' },
             { name: 'Tesseract', description: '8-Cell hypercube with 8 cubic cells' },
             { name: '16-Cell', description: '4-Orthoplex with 16 tetrahedral cells' },
             { name: '24-Cell', description: 'Unique 4D polytope with 24 octahedral cells' },
             { name: '600-Cell', description: 'Icosahedral symmetry with 600 tetrahedral cells' },
-            { name: '120-Cell', description: 'Largest regular 4D polytope with 120 dodecahedral cells' }
+            { name: '120-Cell', description: 'Largest regular 4D polytope with 120 dodecahedral cells' },
+            { name: 'HyperTetrahedron', description: 'Advanced 4D tetrahedron with moiré interference patterns' }
         ];
         
         // Polychora-specific parameters
         this.parameters = {
-            polytope: 0,        // Current polytope (0-5)
+            polytope: 0,        // Current polytope (0-6)
             lineThickness: 2.5, // Core line thickness
             coreSize: 1.2,      // Inner core size
             outlineWidth: 1.8,  // Outline width
