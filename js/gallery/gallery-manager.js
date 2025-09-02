@@ -393,35 +393,84 @@ function checkGalleryParameters() {
  * Load parameters from gallery data
  */
 function loadGalleryParameters(data) {
-    const { system, parameters, globalId } = data;
+    const { system, parameters, globalId, metadata } = data;
     console.log(`🎯 Loading ${system} variation #${globalId} from gallery`);
     
-    if (system === 'faceted' && window.engine) {
-        // Load VIB34D parameters
+    // 🆕 FIXED: Restore toggle states (audio/interactivity) from metadata
+    if (metadata && metadata.toggleStates) {
+        console.log('🔧 Restoring toggle states:', metadata.toggleStates);
+        
+        // Restore audio state
+        if (metadata.toggleStates.audioEnabled !== undefined) {
+            window.audioEnabled = metadata.toggleStates.audioEnabled;
+            const audioBtn = document.getElementById('audioBtn');
+            if (audioBtn) {
+                audioBtn.style.background = window.audioEnabled ? 
+                    'linear-gradient(45deg, #ff6b9d, #c44569)' : '';
+            }
+            console.log(`🔧 Audio restored: ${window.audioEnabled}`);
+        }
+        
+        // Restore interactivity state  
+        if (metadata.toggleStates.interactivityEnabled !== undefined) {
+            window.interactivityEnabled = metadata.toggleStates.interactivityEnabled;
+            const interactivityBtn = document.getElementById('interactivityBtn');
+            if (interactivityBtn) {
+                interactivityBtn.style.background = window.interactivityEnabled ?
+                    'linear-gradient(45deg, #74b9ff, #0984e3)' : '';
+            }
+            console.log(`🔧 Interactivity restored: ${window.interactivityEnabled}`);
+        }
+        
+        // Restore device tilt state
+        if (metadata.toggleStates.deviceTiltEnabled !== undefined && window.deviceTiltHandler) {
+            if (metadata.toggleStates.deviceTiltEnabled) {
+                window.deviceTiltHandler.enable();
+            } else {
+                window.deviceTiltHandler.disable();
+            }
+            console.log(`🔧 Device tilt restored: ${metadata.toggleStates.deviceTiltEnabled}`);
+        }
+    }
+    
+    // 🆕 FIXED: Support ALL 4 systems in parameter loading
+    const engines = {
+        faceted: window.engine,
+        quantum: window.quantumEngine, 
+        holographic: window.holographicSystem,
+        polychora: window.polychoraSystem
+    };
+    
+    const currentEngine = engines[system];
+    if (currentEngine) {
+        console.log(`🎯 Loading ${system} parameters with engine present`);
+        
+        // Apply all parameters to the correct system
         Object.entries(parameters).forEach(([param, value]) => {
             if (param === 'geometry' && typeof value === 'number') {
                 if (window.selectGeometry) {
                     window.selectGeometry(value);
+                    console.log(`🎯 Set ${system} geometry to ${value}`);
                 }
             } else {
                 const slider = document.getElementById(param);
                 if (slider) {
                     slider.value = value;
                     window.updateParameter(param, value);
+                    console.log(`🎯 Applied ${system} ${param} = ${value}`);
                 }
             }
         });
-    } else if (system === 'holographic' && window.holographicSystem) {
-        // Load Holographic variation parameters
-        Object.entries(parameters).forEach(([param, value]) => {
-            const slider = document.getElementById(param);
-            if (slider) {
-                slider.value = value;
-                window.updateParameter(param, value);
-            }
+        
+        console.log(`✅ Successfully loaded ${system} variation`);
+    } else {
+        console.error(`❌ ${system} engine not available:`, {
+            faceted: !!window.engine,
+            quantum: !!window.quantumEngine,
+            holographic: !!window.holographicSystem,
+            polychora: !!window.polychoraSystem
         });
     }
-    // Add other system parameter loading as needed
 }
 
 /**
