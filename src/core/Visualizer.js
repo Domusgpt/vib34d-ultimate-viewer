@@ -272,26 +272,6 @@ float geometryFunction(vec4 p) {
         float cube = max(max(abs(pos.x), abs(pos.y)), max(abs(pos.z), abs(pos.w)));
         return cube * u_morphFactor;
     }
-    else if (geomType == 8) {
-        // HyperTetrahedron - True 4D tetrahedron faces
-        vec4 pos = p * u_gridDensity * 0.08;
-        
-        // Four face normal vectors of a 4D tetrahedron
-        vec4 n1 = normalize(vec4(1.0, 1.0, 1.0, 1.0));
-        vec4 n2 = normalize(vec4(-1.0, -1.0, 1.0, 1.0));  
-        vec4 n3 = normalize(vec4(-1.0, 1.0, -1.0, 1.0));
-        vec4 n4 = normalize(vec4(1.0, -1.0, -1.0, 1.0));
-        
-        // Distance to each face
-        float d1 = abs(dot(pos, n1));
-        float d2 = abs(dot(pos, n2));
-        float d3 = abs(dot(pos, n3));
-        float d4 = abs(dot(pos, n4));
-        
-        // Minimum distance creates tetrahedron lattice
-        float tetra = min(min(d1, d2), min(d3, d4));
-        return fract(tetra) * u_morphFactor;
-    }
     else {
         // Default hypercube - UNIFORM GRID DENSITY
         vec4 pos = fract(p * u_gridDensity * 0.08);

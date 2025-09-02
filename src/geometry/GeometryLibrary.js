@@ -14,8 +14,7 @@ export class GeometryLibrary {
             'KLEIN BOTTLE',
             'FRACTAL',
             'WAVE',
-            'CRYSTAL',
-            'HYPERTETRAHEDRON'
+            'CRYSTAL'
         ];
     }
     
@@ -65,12 +64,6 @@ export class GeometryLibrary {
             case 7: // Crystal
                 baseParams.gridDensity *= 1.5;
                 baseParams.morphFactor *= 0.6;
-                break;
-            case 8: // HyperTetrahedron
-                baseParams.gridDensity *= 0.8;
-                baseParams.morphFactor *= 1.2;
-                baseParams.chaos *= 0.7;
-                baseParams.speed *= 0.9;
                 break;
         }
         

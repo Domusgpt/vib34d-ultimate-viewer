@@ -345,51 +345,6 @@ export class HolographicVisualizer {
                 return 1.0 - smoothstep(0.3, 0.5, d);
             }
             
-            float hypertetrahedronLattice(vec3 p, float gridSize) {
-                // True tetrahedron mathematics using face normal vectors
-                float density = max(0.1, gridSize * 0.65);
-                float dynamicThickness = max(0.003, 0.035);
-                
-                // True tetrahedron face normal vectors
-                vec3 c1 = normalize(vec3(1.0, 1.0, 1.0));
-                vec3 c2 = normalize(vec3(-1.0, -1.0, 1.0));
-                vec3 c3 = normalize(vec3(-1.0, 1.0, -1.0));
-                vec3 c4 = normalize(vec3(1.0, -1.0, -1.0));
-                
-                // Create modulated 3D position for repeating tetrahedrons
-                vec3 p_mod3D = fract(p * density * 0.5 + 0.5 + u_time * 0.005) - 0.5;
-                
-                // Calculate distance to each tetrahedron face
-                float d1 = dot(p_mod3D, c1);
-                float d2 = dot(p_mod3D, c2);
-                float d3 = dot(p_mod3D, c3);
-                float d4 = dot(p_mod3D, c4);
-                
-                // Find minimum distance to any face plane
-                float minDistToPlane3D = min(min(abs(d1), abs(d2)), min(abs(d3), abs(d4)));
-                
-                // Generate lattice pattern using smoothstep
-                float lattice3D = 1.0 - smoothstep(0.0, dynamicThickness, minDistToPlane3D);
-                
-                // Add moiré interference patterns
-                float offset1 = u_time * 0.01 + length(p) * 0.1;
-                float offset2 = u_time * 0.007 + dot(p, vec3(1.0, 0.7, 0.3)) * 0.08;
-                
-                vec3 p1 = p + vec3(offset1, offset2, -offset1 * 0.7);
-                vec3 p_mod1 = fract(p1 * density * 0.45 + 0.5) - 0.5;
-                float dp1_1 = dot(p_mod1, c1), dp2_1 = dot(p_mod1, c2), dp3_1 = dot(p_mod1, c3), dp4_1 = dot(p_mod1, c4);
-                float minDist1 = min(min(abs(dp1_1), abs(dp2_1)), min(abs(dp3_1), abs(dp4_1)));
-                float lattice1 = 1.0 - smoothstep(0.0, dynamicThickness, minDist1);
-                
-                // Create moiré interference
-                float moire = lattice3D * (0.7 + 0.3 * lattice1);
-                
-                // Add subtle chaos/noise for organic feel
-                float noise = sin(p.x * 7.3 + p.y * 5.7 + p.z * 11.1 + u_time * 2.0) * 0.05 * u_chaos;
-                
-                return max(0.0, moire + noise);
-            }
-            
             float getDynamicGeometry(vec3 p, float gridSize, float geometryType) {
                 // WebGL 1.0 compatible modulus replacement
                 float baseGeomFloat = geometryType - floor(geometryType / 8.0) * 8.0;
@@ -404,8 +359,6 @@ export class HolographicVisualizer {
                 else if (baseGeom == 4) return kleinLattice(p, variedGridSize);
                 else if (baseGeom == 5) return fractalLattice(p, variedGridSize);
                 else if (baseGeom == 6) return waveLattice(p, variedGridSize);
-                else if (baseGeom == 7) return crystalLattice(p, variedGridSize);
-                else if (baseGeom == 8) return hypertetrahedronLattice(p, variedGridSize);
                 else return crystalLattice(p, variedGridSize);
             }
             
