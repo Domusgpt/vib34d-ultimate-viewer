@@ -21,19 +21,20 @@
     <div class="top-bar">
         <div class="logo">VIB34D ENGINE</div>
         
-        <div class="action-buttons-top">
-            <button class="action-btn" onclick="saveToGallery()" title="Save to Gallery">💾</button>
-            <button class="action-btn" onclick="resetAll()" title="Reset All">🔄</button>
-            <button class="action-btn" onclick="createTradingCard()" title="Trading Card">🎴</button>
-            <button class="action-btn" onclick="randomizeEverything()" title="Full Random">🎯</button>
+        <div class="navigation-buttons">
+            <button class="nav-btn card-collection-btn" onclick="openGallery()" title="Card Collection">
+                <span class="nav-text-top">Card</span>
+                <span class="nav-text-bottom">Collection</span>
+            </button>
+            <button class="nav-btn engine-display-btn" onclick="openViewer()" title="Parametric Engine Display">
+                <span class="nav-text-top">Parametric Engine</span>
+                <span class="nav-text-bottom">Display Card</span>
+            </button>
         </div>
         
-        <div class="action-buttons">
-            <button class="action-btn" onclick="openGallery()" title="Gallery">🖼️</button>
-            <button class="action-btn" onclick="toggleAudio()" title="Audio">🎵</button>
-            <button class="action-btn" onclick="toggleDeviceTilt()" title="Device Tilt (4D Rotation)" id="tiltBtn">📱</button>
-            <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters">🤖</button>
-            <button class="action-btn" onclick="toggleInteractivity()" title="Interactivity Menu (Press I)">I</button>
+        <div class="control-toggles">
+            <button class="toggle-btn" onclick="toggleAudio()" title="Audio Reactivity" id="audioToggle">AUDIO</button>
+            <button class="toggle-btn" onclick="toggleInteractivity()" title="Interactive Control" id="interactivityToggle">REACT</button>
         </div>
     </div>
 
@@ -185,11 +186,13 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Actions -->
         <div class="control-section">
-            <div class="section-title">Quick Actions</div>
-            <button class="panel-btn" onclick="randomizeAll()">🎲 Randomize</button>
-            <button class="panel-btn" onclick="openGallery()">🖼️ Gallery</button>
+            <div class="section-title">Actions</div>
+            <button class="panel-btn action-randomize" onclick="randomizeAll()">RANDOMIZE</button>
+            <button class="panel-btn action-reset" onclick="resetAll()">RESET ALL</button>
+            <button class="panel-btn action-save" onclick="saveToGallery()">SAVE</button>
+            <button class="panel-btn action-card" onclick="createTradingCard()">GENERATE CARD</button>
         </div>
     </div>
 
