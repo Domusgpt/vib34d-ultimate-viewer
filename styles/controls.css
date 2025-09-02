@@ -45,6 +45,12 @@
     margin-bottom: 25px;
     padding-bottom: 20px;
     border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    flex-shrink: 0; /* Don't shrink sections */
+}
+
+/* Ensure geometry section has priority space */
+#geometrySection {
+    min-height: 180px; /* Guaranteed minimum space for geometry grid */
 }
 
 .control-section:last-child {
@@ -62,7 +68,10 @@
 .geometry-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: repeat(3, minmax(44px, auto));
     gap: 5px;
+    min-height: 140px; /* Ensure space for all 3 rows */
+    max-height: none; /* Don't constrain height */
 }
 
 .geom-btn {
