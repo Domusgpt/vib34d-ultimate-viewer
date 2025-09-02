@@ -50,6 +50,9 @@ export class VIB34DApp {
                             window.reactivityManager.setActiveSystem(system, newEngine);
                         }
                         
+                        // SYSTEM DEFAULT REACTIVITY: Set appropriate row for each system
+                        this.setSystemDefaultReactivity(system);
+                        
                         // OPTIMIZED: Coordinated parameter sync with 60ms buffer
                         setTimeout(() => {
                             window.applyParametersCoordinated(system, newEngine);
@@ -141,7 +144,10 @@ export class VIB34DApp {
 
         // Sync sliders to stored values
         window.syncSlidersToStoredValues = () => {
-            console.log('🔄 Syncing sliders to stored values...');
+            // GALLERY PERFORMANCE FIX: Reduce slider sync logging spam in gallery context
+            if (!window.isGalleryPreview) {
+                console.log('🔄 Syncing sliders to stored values...');
+            }
             
             Object.entries(this.userParameterState).forEach(([param, value]) => {
                 // Skip geometry parameter - it's handled by geometry buttons, not sliders
@@ -157,7 +163,10 @@ export class VIB34DApp {
                         display.textContent = value;
                     }
                     
-                    console.log(`🔄 Synced ${param} slider to ${value}`);
+                    // GALLERY PERFORMANCE FIX: Reduce individual sync logging in gallery
+                    if (!window.isGalleryPreview) {
+                        console.log(`🔄 Synced ${param} slider to ${value}`);
+                    }
                 } else if (!slider) {
                     console.warn(`⚠️ Slider not found for parameter: ${param}`);
                 }
@@ -184,7 +193,10 @@ export class VIB34DApp {
 
         // OPTIMIZED: Coordinated parameter application (eliminates 300ms→60ms)
         window.applyParametersCoordinated = async (systemName, engine) => {
-            console.log(`⚡ FAST: Coordinated parameter sync for ${systemName}`);
+            // GALLERY PERFORMANCE FIX: Reduce logging spam in gallery context
+            if (!window.isGalleryPreview) {
+                console.log(`⚡ FAST: Coordinated parameter sync for ${systemName}`);
+            }
             const startTime = performance.now();
             
             try {
@@ -217,8 +229,11 @@ export class VIB34DApp {
                 }
                 
                 const endTime = performance.now();
-                console.log(`⚡ COORDINATED SYNC: ${systemName} in ${(endTime - startTime).toFixed(1)}ms`);
-                console.log(`⚡ IMPROVEMENT: Eliminated 240ms cascade delay`);
+                // GALLERY PERFORMANCE FIX: Only log timing outside gallery context
+                if (!window.isGalleryPreview) {
+                    console.log(`⚡ COORDINATED SYNC: ${systemName} in ${(endTime - startTime).toFixed(1)}ms`);
+                    console.log(`⚡ IMPROVEMENT: Eliminated 240ms cascade delay`);
+                }
                 
             } catch (error) {
                 console.error(`❌ Coordinated sync error:`, error);
@@ -345,6 +360,71 @@ export class VIB34DApp {
     // Get current parameter state
     getParameterState() {
         return { ...this.userParameterState };
+    }
+
+    // Set system-specific default reactivity (each system has its standard row)
+    setSystemDefaultReactivity(system) {
+        console.log(`🎛️ Setting ${system} system default reactivity...`);
+        
+        // Clear all checkboxes first
+        const allCheckboxes = [
+            'facetedMouse', 'facetedClick', 'facetedScroll',
+            'quantumMouse', 'quantumClick', 'quantumScroll', 
+            'holographicMouse', 'holographicClick', 'holographicScroll',
+            'mixedMouse', 'mixedClick', 'mixedScroll'
+        ];
+        
+        allCheckboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = false;
+        });
+        
+        // Set system defaults based on original system requirements
+        // Each system has its standard interaction row (1-3, Mixed=4)
+        const systemDefaults = {
+            'faceted': {
+                mouse: 'facetedMouse',    // Row 1: Faceted Mouse (Rotate)
+                click: 'facetedClick',    // Row 1: Faceted Click (Flash) 
+                scroll: null              // Row 1: Faceted Scroll usually OFF by default
+            },
+            'quantum': {
+                mouse: null,              // Row 2: Quantum Mouse usually OFF by default
+                click: null,              // Row 2: Quantum Click usually OFF by default
+                scroll: 'quantumScroll'   // Row 2: Quantum Scroll (Phase) - quantum's signature
+            },
+            'holographic': {
+                mouse: null,              // Row 3: Holographic Mouse usually OFF by default
+                click: null,              // Row 3: Holographic Click usually OFF by default  
+                scroll: 'holographicScroll' // Row 3: Holographic Scroll (Depth) - holo's signature
+            },
+            'polychora': {
+                mouse: 'facetedMouse',    // Row 1: Use faceted as fallback for polychora
+                click: 'facetedClick',    // Row 1: Use faceted as fallback for polychora
+                scroll: null              // No scroll for 4D polychora by default
+            }
+        };
+        
+        const defaults = systemDefaults[system];
+        if (!defaults) return;
+        
+        // Apply the default checkboxes and trigger the reactivity
+        Object.entries(defaults).forEach(([interaction, checkboxId]) => {
+            if (checkboxId) {
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    console.log(`🎛️ ${system}: Enabled ${checkboxId} (${interaction})`);
+                    
+                    // Trigger the reactivity system with the checkbox change
+                    const systemFromId = checkboxId.replace(/Mouse|Click|Scroll/, '');
+                    if (window.toggleSystemReactivity) {
+                        window.toggleSystemReactivity(systemFromId, interaction, true);
+                    }
+                }
+            }
+        });
+        
+        console.log(`✅ ${system} system default reactivity applied`);
     }
 }
 
