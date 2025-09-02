@@ -234,11 +234,27 @@ window.toggleInteractivity = function() {
 };
 
 /**
+ * Initialize ReactivityManager stub immediately to prevent cascade errors
+ */
+if (!window.reactivityManager) {
+    window.reactivityManager = {
+        setActiveSystem: () => console.log('🔧 ReactivityManager stub: setActiveSystem'),
+        setMouseMode: () => console.log('🔧 ReactivityManager stub: setMouseMode'), 
+        toggleMouse: () => console.log('🔧 ReactivityManager stub: toggleMouse'),
+        setClickMode: () => console.log('🔧 ReactivityManager stub: setClickMode'),
+        toggleClick: () => console.log('🔧 ReactivityManager stub: toggleClick'),
+        setScrollMode: () => console.log('🔧 ReactivityManager stub: setScrollMode'),
+        toggleScroll: () => console.log('🔧 ReactivityManager stub: toggleScroll')
+    };
+    console.log('🔧 ReactivityManager stub initialized in ui-handlers.js');
+}
+
+/**
  * 3×3 Modular Reactivity Grid System (accessible from HTML)
  */
 window.toggleSystemReactivity = function(system, interaction, enabled) {
     if (!window.reactivityManager) {
-        console.warn('⚠️ ReactivityManager not initialized');
+        console.error('🚨 CRITICAL: ReactivityManager still not available after stub init');
         return;
     }
     
@@ -575,58 +591,99 @@ window.addEventListener('message', (event) => {
 });
 
 /**
- * Setup geometry buttons for the current system
+ * Setup geometry buttons for the current system - COMPREHENSIVE DEBUG VERSION
  */
 window.setupGeometry = function(system) {
     const timestamp = new Date().toISOString();
-    const callStack = new Error().stack;
-    console.log(`🎯 [${timestamp}] setupGeometry called for system: ${system}`);
-    console.log(`📍 Call stack:`, callStack);
+    console.log(`🎯🎯🎯 [${timestamp}] setupGeometry DEBUG SESSION START`);
+    console.log(`🎯 System: ${system}`);
     
     const grid = document.getElementById('geometryGrid');
     if (!grid) {
-        console.error('❌ geometryGrid element not found!');
+        console.error('❌❌❌ geometryGrid element not found!');
         return;
     }
+    console.log(`✅ Grid element found:`, grid);
     
+    // CHECK GEOMETRY DATA
     console.log(`📊 window.geometries exists:`, !!window.geometries);
-    console.log(`📊 window.geometries.${system}:`, window.geometries?.[system]);
-    console.log(`📊 window.geometries.faceted:`, window.geometries?.faceted);
+    console.log(`📊 window.geometries full object:`, window.geometries);
     
     const geoList = window.geometries?.[system] || window.geometries?.faceted || [
         'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
         'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
     ];
-    console.log(`🎯 FINAL geometry list for ${system}: ${geoList.length} items:`, geoList);
+    console.log(`🎯 GEOMETRY LIST for ${system}:`);
+    console.log(`   📝 Length: ${geoList.length}`);
+    geoList.forEach((name, i) => {
+        console.log(`   📝 [${i}] "${name}" (${typeof name}) length: ${name.length}`);
+    });
     
-    grid.innerHTML = geoList.map((name, i) => 
-        `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
-                 data-index="${i}" onclick="selectGeometry(${i})">
-            ${name}
-        </button>`
-    ).join('');
+    // CHECK BUTTON HTML GENERATION
+    console.log(`🔧 Generating button HTML...`);
+    const buttonHTMLArray = geoList.map((name, i) => {
+        const buttonHTML = `<button class="geom-btn ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="selectGeometry(${i})">${name}</button>`;
+        console.log(`   🔧 [${i}] HTML: ${buttonHTML}`);
+        return buttonHTML;
+    });
     
-    // FORCE DOM REFRESH - Fix for missing 9th button
+    const finalHTML = buttonHTMLArray.join('');
+    console.log(`🔧 FINAL HTML LENGTH: ${finalHTML.length} characters`);
+    console.log(`🔧 FINAL HTML: ${finalHTML}`);
+    
+    // SET THE HTML
+    console.log(`🔄 Setting grid.innerHTML...`);
+    grid.innerHTML = finalHTML;
+    console.log(`✅ grid.innerHTML set successfully`);
+    
+    // IMMEDIATE DOM CHECK
+    console.log(`👀 IMMEDIATE DOM CHECK:`);
+    console.log(`   📊 grid.children.length: ${grid.children.length}`);
+    console.log(`   📊 grid.innerHTML.length: ${grid.innerHTML.length}`);
+    
+    // CHECK EACH BUTTON IN DOM
+    Array.from(grid.children).forEach((btn, i) => {
+        console.log(`   👀 Button [${i}]: tag="${btn.tagName}" class="${btn.className}" data-index="${btn.dataset.index}" text="${btn.textContent}" visible=${btn.offsetWidth > 0 && btn.offsetHeight > 0}`);
+        console.log(`       📐 Dimensions: ${btn.offsetWidth}x${btn.offsetHeight} at (${btn.offsetLeft}, ${btn.offsetTop})`);
+        const styles = window.getComputedStyle(btn);
+        console.log(`       🎨 Display: ${styles.display} Visibility: ${styles.visibility} Opacity: ${styles.opacity}`);
+    });
+    
+    // FORCE DOM REFRESH
+    console.log(`🔄 Force DOM refresh...`);
     grid.style.display = 'none';
     grid.offsetHeight; // Force reflow
     grid.style.display = '';
+    console.log(`✅ DOM refresh complete`);
     
-    console.log(`✅ Created ${grid.children.length} geometry buttons`);
+    // FINAL VERIFICATION
+    console.log(`🔍 FINAL VERIFICATION:`);
+    console.log(`   📊 grid.children.length: ${grid.children.length}`);
     
-    // PARANOID CHECK: Verify all buttons are visible
     const visibleButtons = Array.from(grid.children).filter(btn => 
         btn.offsetWidth > 0 && btn.offsetHeight > 0
     );
-    console.log(`👁️ Visible buttons: ${visibleButtons.length}/${grid.children.length}`);
+    console.log(`   👁️ Visible buttons: ${visibleButtons.length}/${grid.children.length}`);
+    
+    const invisibleButtons = Array.from(grid.children).filter(btn => 
+        btn.offsetWidth === 0 || btn.offsetHeight === 0
+    );
+    if (invisibleButtons.length > 0) {
+        console.error(`🚨 INVISIBLE BUTTONS DETECTED:`);
+        invisibleButtons.forEach((btn, i) => {
+            console.error(`   ❌ [${btn.dataset.index}] "${btn.textContent}" - ${btn.offsetWidth}x${btn.offsetHeight}`);
+        });
+    }
+    
+    if (grid.children.length !== geoList.length) {
+        console.error(`🚨🚨🚨 BUTTON COUNT MISMATCH: Expected ${geoList.length}, got ${grid.children.length}`);
+    }
     
     if (visibleButtons.length !== geoList.length) {
-        console.error(`🚨 VISIBILITY BUG: Expected ${geoList.length}, visible ${visibleButtons.length}`);
-        // Force re-render
-        setTimeout(() => {
-            console.log('🔄 Force re-render attempt...');
-            setupGeometry(system);
-        }, 100);
+        console.error(`🚨🚨🚨 VISIBILITY MISMATCH: Expected ${geoList.length}, visible ${visibleButtons.length}`);
     }
+    
+    console.log(`🎯🎯🎯 setupGeometry DEBUG SESSION END`);
 };
 
 /**
