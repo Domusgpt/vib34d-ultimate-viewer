@@ -1,0 +1,141 @@
+<!-- COMPLETE REACTIVITY GRIDS CODE - PRESERVE EXACTLY -->
+<!-- DO NOT DELETE - This code took a long time to get working correctly -->
+
+        <!-- MODULAR REACTIVITY SECTION -->
+        <div class="control-section">
+            <div class="section-title">MODULAR REACTIVITY</div>
+            
+            <!-- 3×3 Grid: Systems × Interaction Types -->
+            <div class="reactivity-grid">
+                <!-- Header Row -->
+                <div class="reactivity-header"></div>
+                <div class="reactivity-header">🖱️ MOVE</div>
+                <div class="reactivity-header">👆 TAP</div>
+                <div class="reactivity-header">🌀 ROLL</div>
+                
+                <!-- Faceted Row -->
+                <div class="reactivity-label">🔷 FAC</div>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="facetedMouse" checked onchange="toggleSystemReactivity('faceted', 'mouse', this.checked)">
+                    <span class="cell-text">Rotate</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="facetedClick" checked onchange="toggleSystemReactivity('faceted', 'click', this.checked)">
+                    <span class="cell-text">Flash</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="facetedScroll" checked onchange="toggleSystemReactivity('faceted', 'scroll', this.checked)">
+                    <span class="cell-text">Density</span>
+                </label>
+                
+                <!-- Quantum Row -->
+                <div class="reactivity-label">🌌 QUA</div>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="quantumMouse" onchange="toggleSystemReactivity('quantum', 'mouse', this.checked)">
+                    <span class="cell-text">Speed</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="quantumClick" onchange="toggleSystemReactivity('quantum', 'click', this.checked)">
+                    <span class="cell-text">Burst</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="quantumScroll" onchange="toggleSystemReactivity('quantum', 'scroll', this.checked)">
+                    <span class="cell-text">Cycles</span>
+                </label>
+                
+                <!-- Holographic Row -->
+                <div class="reactivity-label">✨ HOLO</div>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="holographicMouse" onchange="toggleSystemReactivity('holographic', 'mouse', this.checked)">
+                    <span class="cell-text">Shine</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="holographicClick" onchange="toggleSystemReactivity('holographic', 'click', this.checked)">
+                    <span class="cell-text">Burst</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="holographicScroll" onchange="toggleSystemReactivity('holographic', 'scroll', this.checked)">
+                    <span class="cell-text">Flow</span>
+                </label>
+                
+                <!-- Mixed Combinations Row -->
+                <div class="reactivity-label">🌈 MIX</div>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="mixedMouse" onchange="toggleSystemReactivity('mixed', 'mouse', this.checked)">
+                    <span class="cell-text">Fac+Holo</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="mixedClick" onchange="toggleSystemReactivity('mixed', 'click', this.checked)">
+                    <span class="cell-text">Multi</span>
+                </label>
+                <label class="reactivity-cell">
+                    <input type="checkbox" id="mixedScroll" onchange="toggleSystemReactivity('mixed', 'scroll', this.checked)">
+                    <span class="cell-text">Blend</span>
+                </label>
+            </div>
+            
+            <div class="reactivity-note">
+                📝 Mix and match any system's behavior with any interaction type
+            </div>
+            
+            <!-- AUDIO REACTIVITY GRID (BELOW REACTIVITY GRID) -->
+            <div class="section-title" style="margin-top: 20px;">AUDIO REACTIVITY</div>
+            
+            <!-- 3×3 Audio Grid: Sensitivity × Visual Mode -->
+            <div class="audio-grid">
+                <!-- Header Row -->
+                <div class="audio-header"></div>
+                <div class="audio-header">🎨 COL</div>
+                <div class="audio-header">📐 GEO</div>
+                <div class="audio-header">🌊 MOV</div>
+                
+                <!-- Low Sensitivity Row -->
+                <div class="audio-label">🔉 L</div>
+                <div class="audio-cell" onclick="toggleAudioCell('lowColor')">
+                    <input type="checkbox" id="lowColor">
+                    <span class="cell-text">Subtle</span>
+                </div>
+                <div class="audio-cell" onclick="toggleAudioCell('lowGeometry')">
+                    <input type="checkbox" id="lowGeometry">
+                    <span class="cell-text">Gentle</span>
+                </div>
+                <div class="audio-cell" onclick="toggleAudioCell('lowMovement')">
+                    <input type="checkbox" id="lowMovement">
+                    <span class="cell-text">Smooth</span>
+                </div>
+                
+                <!-- Medium Sensitivity Row -->
+                <div class="audio-label">🔊 M</div>
+                <div class="audio-cell" onclick="toggleAudioCell('mediumColor')">
+                    <input type="checkbox" id="mediumColor" checked>
+                    <span class="cell-text">Adapt</span>
+                </div>
+                <div class="audio-cell" onclick="toggleAudioCell('mediumGeometry')">
+                    <input type="checkbox" id="mediumGeometry">
+                    <span class="cell-text">Morph</span>
+                </div>
+                <div class="audio-cell" onclick="toggleAudioCell('mediumMovement')">
+                    <input type="checkbox" id="mediumMovement">
+                    <span class="cell-text">Flow</span>
+                </div>
+                
+                <!-- High Sensitivity Row -->
+                <div class="audio-label">🔊🔊 H</div>
+                <div class="audio-cell" onclick="toggleAudioCell('highColor')">
+                    <input type="checkbox" id="highColor">
+                    <span class="cell-text">Intense</span>
+                </div>
+                <div class="audio-cell" onclick="toggleAudioCell('highGeometry')">
+                    <input type="checkbox" id="highGeometry">
+                    <span class="cell-text">Blast</span>
+                </div>
+                <div class="audio-cell" onclick="toggleAudioCell('highMovement')">
+                    <input type="checkbox" id="highMovement">
+                    <span class="cell-text">Wild</span>
+                </div>
+            </div>
+            
+            <div class="audio-note">
+                🎵 Audio sensitivity and visual response intensity controls
+            </div>
+        </div>
