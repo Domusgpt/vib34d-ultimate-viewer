@@ -31,6 +31,20 @@ export class VIB34DApp {
                         window.currentSystem = system;
                         this.currentSystem = system;
                         
+                        // CRITICAL FIX: Set system-specific global engine reference
+                        if (system === 'faceted') {
+                            window.engine = newEngine;
+                        } else if (system === 'quantum') {
+                            window.quantumEngine = newEngine;
+                        } else if (system === 'holographic') {
+                            window.holographicSystem = newEngine;
+                        } else if (system === 'polychora') {
+                            window.polychoraSystem = newEngine;
+                        }
+                        
+                        // Also set universal reference for compatibility
+                        window.currentEngine = newEngine;
+                        
                         // Update ReactivityManager with new active system
                         if (window.reactivityManager) {
                             window.reactivityManager.setActiveSystem(system, newEngine);
