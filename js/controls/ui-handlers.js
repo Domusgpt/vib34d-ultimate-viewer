@@ -577,19 +577,26 @@ window.addEventListener('message', (event) => {
  * Setup geometry buttons for the current system
  */
 window.setupGeometry = function(system) {
-    console.log(`🎯 setupGeometry called for system: ${system}`);
+    const timestamp = new Date().toISOString();
+    const callStack = new Error().stack;
+    console.log(`🎯 [${timestamp}] setupGeometry called for system: ${system}`);
+    console.log(`📍 Call stack:`, callStack);
+    
     const grid = document.getElementById('geometryGrid');
     if (!grid) {
         console.error('❌ geometryGrid element not found!');
         return;
     }
     
-    console.log(`📊 window.geometries:`, window.geometries);
+    console.log(`📊 window.geometries exists:`, !!window.geometries);
+    console.log(`📊 window.geometries.${system}:`, window.geometries?.[system]);
+    console.log(`📊 window.geometries.faceted:`, window.geometries?.faceted);
+    
     const geoList = window.geometries?.[system] || window.geometries?.faceted || [
         'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
         'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'
     ];
-    console.log(`🎯 Using geometry list for ${system}: ${geoList.length} items`, geoList);
+    console.log(`🎯 FINAL geometry list for ${system}: ${geoList.length} items:`, geoList);
     
     grid.innerHTML = geoList.map((name, i) => 
         `<button class="geom-btn ${i === 0 ? 'active' : ''}" 

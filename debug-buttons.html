@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Button Debug Test</title>
+    <style>
+        .geometry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            border: 2px solid red;
+            padding: 10px;
+        }
+        .geom-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 8px;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>GEOMETRY BUTTON DEBUG</h1>
+    
+    <div class="geometry-grid" id="geometryGrid">
+        <!-- Buttons will be added here -->
+    </div>
+    
+    <script>
+        // Test data from index-clean.html
+        const geometries = ['TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL', 'HYPERTETRAHEDRON'];
+        
+        console.log('🧪 TEST: Geometries array:', geometries);
+        console.log('🧪 TEST: Array length:', geometries.length);
+        
+        const grid = document.getElementById('geometryGrid');
+        
+        grid.innerHTML = geometries.map((name, i) => 
+            `<button class="geom-btn ${i === 0 ? 'active' : ''}" 
+                     data-index="${i}">
+                ${name}
+            </button>`
+        ).join('');
+        
+        console.log('🧪 TEST: Created buttons:', grid.children.length);
+        console.log('🧪 TEST: Button names:');
+        Array.from(grid.children).forEach((btn, i) => {
+            console.log(`  ${i}: ${btn.textContent}`);
+        });
+        
+        // Visual test
+        document.body.innerHTML += `<p>Created ${grid.children.length} buttons</p>`;
+    </script>
+</body>
+</html>
