@@ -798,14 +798,44 @@
                 });
 
                 document.getElementById('openInEngine').addEventListener('click', () => {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const configData = urlParams.get('config');
-                    if (configData) {
-                        // Pass the current configuration to the main engine
-                        window.location.href = `index-clean.html?config=${encodeURIComponent(configData)}`;
-                    } else {
-                        window.location.href = 'index-clean.html';
-                    }
+                    console.log('🎱 Open in Engine: Capturing complete viewer state...');
+                    
+                    // 🆕 FIXED: Capture COMPLETE current state for perfect engine matching
+                    const completeState = {
+                        system: window.currentSystem || 'quantum', // Current active system
+                        parameters: {
+                            geometry: this.params.geometry || 0,
+                            rot4dXW: this.params.rot4dXW || 0,
+                            rot4dYW: this.params.rot4dYW || 0, 
+                            rot4dZW: this.params.rot4dZW || 0,
+                            gridDensity: this.params.gridDensity || this.params.density || 15,
+                            morphFactor: this.params.morphFactor || this.params.morph || 1,
+                            chaos: this.params.chaos || 0.2,
+                            speed: this.params.speed || 1,
+                            hue: this.params.hue || 200,
+                            intensity: this.params.intensity || 0.5,
+                            saturation: this.params.saturation || 0.8
+                        },
+                        metadata: {
+                            toggleStates: {
+                                audioEnabled: window.audioEnabled || false,
+                                interactivityEnabled: window.interactivityEnabled || false,
+                                deviceTiltEnabled: window.deviceTiltHandler?.isEnabled || false
+                            }
+                        },
+                        source: 'viewer',
+                        timestamp: Date.now()
+                    };
+                    
+                    console.log('🎱 Complete state captured:', completeState);
+                    
+                    // Store complete state for engine to load
+                    localStorage.setItem('vib34d-engine-load-state', JSON.stringify(completeState));
+                    
+                    // Navigate to engine
+                    window.location.href = 'index-clean.html';
+                    
+                    console.log('🎱 Navigating to engine with complete state transfer');
                 });
 
                 document.getElementById('sharePortal').addEventListener('click', () => {

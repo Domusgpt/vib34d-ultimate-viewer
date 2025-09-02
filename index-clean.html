@@ -21,19 +21,11 @@
     <div class="top-bar">
         <div class="logo">VIB34D ENGINE</div>
         
-        <div class="system-selector">
-            <button class="system-btn active" data-system="faceted" onclick="switchSystem('faceted')">
-                🔷 FACETED
-            </button>
-            <button class="system-btn" data-system="quantum" onclick="switchSystem('quantum')">
-                🌌 QUANTUM
-            </button>
-            <button class="system-btn" data-system="holographic" onclick="switchSystem('holographic')">
-                ✨ HOLOGRAPHIC
-            </button>
-            <button class="system-btn" data-system="polychora" onclick="switchSystem('polychora')">
-                🔮 POLYCHORA
-            </button>
+        <div class="action-buttons-top">
+            <button class="action-btn" onclick="saveToGallery()" title="Save to Gallery">💾</button>
+            <button class="action-btn" onclick="resetAll()" title="Reset All">🔄</button>
+            <button class="action-btn" onclick="createTradingCard()" title="Trading Card">🎴</button>
+            <button class="action-btn" onclick="randomizeEverything()" title="Full Random">🎯</button>
         </div>
         
         <div class="action-buttons">
@@ -57,8 +49,27 @@
     <!-- Control Panel -->
     <div class="control-panel" id="controlPanel">
         <div class="panel-header" id="panelHeader">
-            <span>FACETED SYSTEM</span>
+            <span>VIB3-4D POLYTOPE PROJECTION ENGINE</span>
             <button class="mobile-collapse-btn" onclick="toggleMobilePanel()" style="display: none;">▼</button>
+        </div>
+
+        <!-- System Selection (moved from top bar) -->
+        <div class="control-section" id="systemSection">
+            <div class="section-title">System</div>
+            <div class="system-selector-panel">
+                <button class="system-btn active" data-system="faceted" onclick="switchSystem('faceted')">
+                    🔷 FACETED
+                </button>
+                <button class="system-btn" data-system="quantum" onclick="switchSystem('quantum')">
+                    🌌 QUANTUM
+                </button>
+                <button class="system-btn" data-system="holographic" onclick="switchSystem('holographic')">
+                    ✨ HOLOGRAPHIC
+                </button>
+                <button class="system-btn" data-system="polychora" onclick="switchSystem('polychora')">
+                    🔮 POLYCHORA
+                </button>
+            </div>
         </div>
 
         <!-- Geometry Selection -->
@@ -174,13 +185,11 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- Quick Actions -->
         <div class="control-section">
-            <button class="panel-btn" onclick="randomizeAll()">🎲 Randomize Parameters</button>
-            <button class="panel-btn" onclick="randomizeEverything()">🎯 Full Random</button>
-            <button class="panel-btn" onclick="resetAll()">🔄 Reset All</button>
-            <button class="panel-btn" onclick="saveToGallery()">💾 Save to Gallery</button>
-            <button class="panel-btn" onclick="createTradingCard()">🎴 Trading Card</button>
+            <div class="section-title">Quick Actions</div>
+            <button class="panel-btn" onclick="randomizeAll()">🎲 Randomize</button>
+            <button class="panel-btn" onclick="openGallery()">🖼️ Gallery</button>
         </div>
     </div>
 

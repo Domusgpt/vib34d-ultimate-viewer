@@ -130,6 +130,9 @@ export class VIB34DApp {
             console.log('🔄 Syncing sliders to stored values...');
             
             Object.entries(this.userParameterState).forEach(([param, value]) => {
+                // Skip geometry parameter - it's handled by geometry buttons, not sliders
+                if (param === 'geometry') return;
+                
                 const slider = document.getElementById(param);
                 if (slider && !isNaN(value)) {
                     slider.value = value;
