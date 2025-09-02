@@ -22,11 +22,19 @@ export class URLParameterHandler {
                 this.setupCleanPreview();
             }
             
-            // Load parameters from URL
+            // Load parameters from URL with safe numeric conversion
             const parameters = {};
             urlParams.forEach((value, key) => {
                 if (!['system', 'hideui', 'alllayers', 'highquality'].includes(key)) {
-                    parameters[key] = parseFloat(value) || value;
+                    // Safe numeric conversion - ensure we always get a valid number or fallback
+                    const numericValue = parseFloat(value);
+                    if (!isNaN(numericValue) && isFinite(numericValue)) {
+                        parameters[key] = numericValue;
+                    } else {
+                        // For non-numeric values, keep as string but warn
+                        parameters[key] = value;
+                        console.warn(`🎨 Gallery preview: Non-numeric parameter ${key} = "${value}"`);
+                    }
                 }
             });
             

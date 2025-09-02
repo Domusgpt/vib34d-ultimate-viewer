@@ -195,7 +195,12 @@ export class GalleryPreviewFix {
                     try {
                         if (window.updateParameter) {
                             window.updateParameter(param, parameters[param]);
-                            console.log(`🚀 4D ROTATION: ${param} = ${parameters[param].toFixed(4)}`);
+                            // Safe numeric logging - check if value is a number before using toFixed
+                            const value = parameters[param];
+                            const displayValue = (typeof value === 'number' && !isNaN(value)) 
+                                ? value.toFixed(4) 
+                                : value;
+                            console.log(`🚀 4D ROTATION: ${param} = ${displayValue}`);
                         }
                     } catch (error) {
                         console.warn(`🚀 4D ROTATION ${param} failed:`, error.message);
@@ -208,7 +213,11 @@ export class GalleryPreviewFix {
                 try {
                     if (window.updateParameter) {
                         window.updateParameter('dimension', parameters.dimension);
-                        console.log(`🚀 DIMENSION: dimension = ${parameters.dimension}`);
+                        const value = parameters.dimension;
+                        const displayValue = (typeof value === 'number' && !isNaN(value)) 
+                            ? value.toFixed(3) 
+                            : value;
+                        console.log(`🚀 DIMENSION: dimension = ${displayValue}`);
                     }
                 } catch (error) {
                     console.warn(`🚀 DIMENSION failed:`, error.message);
@@ -222,7 +231,11 @@ export class GalleryPreviewFix {
                     try {
                         if (window.updateParameter) {
                             window.updateParameter(param, parameters[param]);
-                            console.log(`🚀 VISUAL: ${param} = ${parameters[param]}`);
+                            const value = parameters[param];
+                            const displayValue = (typeof value === 'number' && !isNaN(value)) 
+                                ? (value % 1 === 0 ? value.toString() : value.toFixed(3))
+                                : value;
+                            console.log(`🚀 VISUAL: ${param} = ${displayValue}`);
                         }
                     } catch (error) {
                         console.warn(`🚀 VISUAL ${param} failed:`, error.message);
@@ -237,7 +250,11 @@ export class GalleryPreviewFix {
                     try {
                         if (window.updateParameter) {
                             window.updateParameter(param, parameters[param]);
-                            console.log(`🚀 COLOR: ${param} = ${parameters[param]}`);
+                            const value = parameters[param];
+                            const displayValue = (typeof value === 'number' && !isNaN(value)) 
+                                ? (value % 1 === 0 ? value.toString() : value.toFixed(3))
+                                : value;
+                            console.log(`🚀 COLOR: ${param} = ${displayValue}`);
                         }
                     } catch (error) {
                         console.warn(`🚀 COLOR ${param} failed:`, error.message);
