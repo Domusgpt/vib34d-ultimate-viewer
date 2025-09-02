@@ -172,11 +172,18 @@ window.createTradingCard = async function(format = 'classic') {
             saturation: parseFloat(document.getElementById('saturation').value)
         };
         
-        // Generate system-specific trading card
+        // 🌟 ENHANCED: Generate system-specific trading card with holographic VIB3-4D logo background
         const result = await TradingCardManager.createCard(
             window.currentSystem || 'faceted',
             format,
-            parameters
+            parameters,
+            {
+                holographicLogo: true,
+                logoSystem: window.currentSystem,
+                logoParameters: parameters,
+                sparkleEffects: true,
+                logoShine: true
+            }
         );
         
         if (result.success) {
