@@ -48,10 +48,8 @@ export class VIB34DApp {
                         // Update ReactivityManager with new active system
                         if (window.reactivityManager) {
                             window.reactivityManager.setActiveSystem(system, newEngine);
+                            // ReactivityManager.autoSelectDefaults() is called automatically by setActiveSystem
                         }
-                        
-                        // SYSTEM DEFAULT REACTIVITY: Set appropriate row for each system
-                        this.setSystemDefaultReactivity(system);
                         
                         // OPTIMIZED: Coordinated parameter sync with 60ms buffer
                         setTimeout(() => {
@@ -362,70 +360,7 @@ export class VIB34DApp {
         return { ...this.userParameterState };
     }
 
-    // Set system-specific default reactivity (each system has its standard row)
-    setSystemDefaultReactivity(system) {
-        console.log(`🎛️ Setting ${system} system default reactivity...`);
-        
-        // Clear all checkboxes first
-        const allCheckboxes = [
-            'facetedMouse', 'facetedClick', 'facetedScroll',
-            'quantumMouse', 'quantumClick', 'quantumScroll', 
-            'holographicMouse', 'holographicClick', 'holographicScroll',
-            'mixedMouse', 'mixedClick', 'mixedScroll'
-        ];
-        
-        allCheckboxes.forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) checkbox.checked = false;
-        });
-        
-        // Set system defaults based on original system requirements
-        // Each system has its standard interaction row (1-3, Mixed=4)
-        const systemDefaults = {
-            'faceted': {
-                mouse: 'facetedMouse',    // Row 1: Faceted Mouse (Rotate)
-                click: 'facetedClick',    // Row 1: Faceted Click (Flash) 
-                scroll: null              // Row 1: Faceted Scroll usually OFF by default
-            },
-            'quantum': {
-                mouse: null,              // Row 2: Quantum Mouse usually OFF by default
-                click: null,              // Row 2: Quantum Click usually OFF by default
-                scroll: 'quantumScroll'   // Row 2: Quantum Scroll (Phase) - quantum's signature
-            },
-            'holographic': {
-                mouse: null,              // Row 3: Holographic Mouse usually OFF by default
-                click: null,              // Row 3: Holographic Click usually OFF by default  
-                scroll: 'holographicScroll' // Row 3: Holographic Scroll (Depth) - holo's signature
-            },
-            'polychora': {
-                mouse: 'facetedMouse',    // Row 1: Use faceted as fallback for polychora
-                click: 'facetedClick',    // Row 1: Use faceted as fallback for polychora
-                scroll: null              // No scroll for 4D polychora by default
-            }
-        };
-        
-        const defaults = systemDefaults[system];
-        if (!defaults) return;
-        
-        // Apply the default checkboxes and trigger the reactivity
-        Object.entries(defaults).forEach(([interaction, checkboxId]) => {
-            if (checkboxId) {
-                const checkbox = document.getElementById(checkboxId);
-                if (checkbox) {
-                    checkbox.checked = true;
-                    console.log(`🎛️ ${system}: Enabled ${checkboxId} (${interaction})`);
-                    
-                    // Trigger the reactivity system with the checkbox change
-                    const systemFromId = checkboxId.replace(/Mouse|Click|Scroll/, '');
-                    if (window.toggleSystemReactivity) {
-                        window.toggleSystemReactivity(systemFromId, interaction, true);
-                    }
-                }
-            }
-        });
-        
-        console.log(`✅ ${system} system default reactivity applied`);
-    }
+    // REMOVED: setSystemDefaultReactivity - ReactivityManager.autoSelectDefaults() handles this
 }
 
 export default VIB34DApp;
