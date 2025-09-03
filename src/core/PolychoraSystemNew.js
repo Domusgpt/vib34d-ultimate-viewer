@@ -490,8 +490,7 @@ export class NewPolychoraEngine {
         this.parameters = new ParameterManager();
         this.isActive = false;
         
-        // Conditional reactivity - EXACT DNA pattern
-        this.useBuiltInReactivity = !window.reactivityManager;
+        // REMOVED: Built-in reactivity - ReactivityManager handles all interactions now
         
         // Mouse interaction state - DNA pattern
         this.mouseX = 0.5;
@@ -564,8 +563,8 @@ export class NewPolychoraEngine {
     }
     
     setup4DInteractivity() {
-        // Unique 4D interaction system for Polychora
-        if (this.useBuiltInReactivity) {
+        // REMOVED: Built-in reactivity - ReactivityManager handles all interactions
+        if (false) { // Disabled
             // Track 4D rotation velocity for advanced interaction
             setInterval(() => {
                 const currentRot = {
