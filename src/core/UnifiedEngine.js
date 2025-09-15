@@ -552,7 +552,38 @@ export class VIB34DUnifiedEngine {
             }
         });
     }
-    
+
+    getGPUInfo() {
+        const gl = this.canvasManager.gl || this.canvasManager.getMasterGL();
+        if (!gl) return null;
+
+        const info = {};
+
+        // Basic renderer information
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+            info.vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+            info.renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        }
+
+        // Attempt to gather GPU memory details if extension available
+        const memExt = gl.getExtension('GL_GPU_MEMORY_INFO') ||
+                       gl.getExtension('GL_GPU_MEMORY_INFO_EXT') ||
+                       gl.getExtension('WEBGL_memory_info');
+        if (memExt) {
+            const totalConst = memExt.GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX ||
+                               memExt.GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_EXT;
+            const availConst = memExt.GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX ||
+                               memExt.GPU_MEMORY_INFO_CURRENT_AVAILABLE_MEMORY_EXT;
+            info.memory = {
+                total: totalConst ? gl.getParameter(totalConst) : null,
+                available: availConst ? gl.getParameter(availConst) : null
+            };
+        }
+
+        return Object.keys(info).length ? info : null;
+    }
+
     /**
      * PERFORMANCE MONITORING: Get comprehensive stats
      */
@@ -568,6 +599,7 @@ export class VIB34DUnifiedEngine {
         return {
             ...this.performanceStats,
             memoryStats: this.resourceManager.getMemoryStats(),
+            gpuInfo: this.getGPUInfo(),
             mobileOptimizations: this.config.enableMobileOptimizations,
             singleContext: this.config.useSingleContext,
             activeSystems,
