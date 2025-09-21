@@ -1035,13 +1035,22 @@
                         // Update panel header
                         const headers = {
                             faceted: 'FACETED SYSTEM',
-                            quantum: 'QUANTUM SYSTEM', 
+                            quantum: 'QUANTUM SYSTEM',
                             holographic: 'HOLOGRAPHIC SYSTEM',
                             polychora: 'POLYCHORA SYSTEM'
                         };
                         const panelHeader = document.getElementById('panelHeader');
                         if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
-                        
+
+                        if (window.audioDirector) {
+                            window.audioDirector.attachEngines({
+                                engine: window.engine,
+                                quantumEngine: window.quantumEngine,
+                                holographicSystem: window.holographicSystem,
+                                polychoraSystem: window.polychoraSystem
+                            });
+                        }
+
                         console.log(`✅ Switched to ${system} system successfully`);
                         return; // Success - exit early
                     } else if (system === 'polychora') {
@@ -1569,6 +1578,7 @@
         import { CanvasManager } from './src/core/CanvasManager.js';
         import { TradingCardGenerator } from './src/export/TradingCardGenerator.js';
         import { ReactivityManager } from './src/core/ReactivityManager.js';
+        import AudioGameplayDirector from './src/core/AudioGameplayDirector.js';
         // Universal reactivity system removed - implementing modular reactivity system
         
         // Global state - CRITICAL FIX: Check for gallery preview data FIRST
@@ -1620,18 +1630,18 @@
             window.geometries = geometries;
             window.initializePolychora = initializePolychora;
             window.updateParameter = updateParameter;
-            
+
             // Initialize ReactivityManager
             reactivityManager = new ReactivityManager();
             window.reactivityManager = reactivityManager;
-            
+
             // Disable built-in reactivity now that ReactivityManager is active
             if (window.engine) window.engine.useBuiltInReactivity = false;
             if (window.quantumEngine) window.quantumEngine.useBuiltInReactivity = false;
             if (window.holographicSystem) window.holographicSystem.useBuiltInReactivity = false;
-            
+
             console.log('⚡ Built-in system reactivity DISABLED - ReactivityManager taking control');
-            
+
             // Connect ReactivityManager to global interactivity toggle
             if (window.toggleInteractivity) {
                 const originalToggle = window.toggleInteractivity;
@@ -1642,7 +1652,23 @@
                     }
                 };
             }
-            
+
+            if (success) {
+                const audioDirector = new AudioGameplayDirector({
+                    audioEngine: window.audioEngine,
+                    statusManager: engine?.statusManager,
+                    reactivityManager
+                });
+                audioDirector.attachEngines({
+                    engine,
+                    quantumEngine,
+                    holographicSystem,
+                    polychoraSystem
+                });
+                audioDirector.start();
+                window.audioDirector = audioDirector;
+            }
+
             console.log('🚀 VIB34D Clean Interface Ready - All systems + modular reactivity initialized');
         });
         
@@ -2082,14 +2108,22 @@
                 }
                 
                 const success = polychoraSystem.initialize();
-                
+
                 // Hide again if it was hidden
                 if (wasHidden) {
                     polychoraLayers.style.display = 'none';
                 }
-                
+
                 if (success) {
                     console.log('✅ Polychora System initialized');
+                    if (window.audioDirector) {
+                        window.audioDirector.attachEngines({
+                            engine,
+                            quantumEngine,
+                            holographicSystem,
+                            polychoraSystem
+                        });
+                    }
                     return true;
                 } else {
                     console.error('❌ Polychora System initialization failed');
@@ -2217,33 +2251,61 @@
         }
         
         window.toggleAudio = async function() {
-            audioEnabled = !audioEnabled;
-            window.audioEnabled = audioEnabled; // Update global flag
-            
-            // Update button visual state
-            const audioBtn = document.querySelector('[onclick="toggleAudio()"]');
-            if (audioBtn) {
-                audioBtn.style.background = audioEnabled ? 
-                    'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 255, 0.1)';
-                audioBtn.style.borderColor = audioEnabled ? '#00ff00' : 'rgba(255, 0, 255, 0.3)';
-                audioBtn.title = `Audio Reactivity: ${audioEnabled ? 'ON' : 'OFF'}`;
+            if (!window.audioEngine) {
+                console.warn('⚠️ Audio engine not initialized');
+                return;
             }
-            
-            // ✅ NEW: CONNECT TO AUDIO ENGINE
-            if (audioEnabled && window.audioEngine) {
+
+            const audioBtn = document.querySelector('[onclick="toggleAudio()"]');
+
+            if (!window.audioEngine.isActive) {
                 const success = await window.audioEngine.init();
-                if (!success) {
-                    audioEnabled = false;
-                    window.audioEnabled = false;
+                audioEnabled = success || window.audioEngine.mode === 'fallback';
+                window.audioEnabled = audioEnabled;
+
+                if (audioBtn) {
+                    if (window.audioEngine.mode === 'fallback') {
+                        audioBtn.style.background = 'linear-gradient(45deg, rgba(255, 140, 0, 0.2), rgba(255, 99, 71, 0.4))';
+                        audioBtn.style.borderColor = '#ff8c00';
+                        audioBtn.title = 'Audio Reactivity: Fallback';
+                    } else if (audioEnabled) {
+                        audioBtn.style.background = 'linear-gradient(45deg, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.6))';
+                        audioBtn.style.borderColor = '#00ff00';
+                        audioBtn.title = 'Audio Reactivity: ON';
+                    }
+                }
+
+                if (!success && window.audioEngine.mode !== 'fallback') {
                     console.warn('🎵 Audio initialization failed');
                 }
-            } else if (!audioEnabled && window.audioEngine) {
-                // Properly disable audio engine
-                window.audioEngine.isActive = false;
-                console.log('🎵 Audio engine disabled');
+            } else {
+                audioEnabled = !window.audioEnabled;
+                window.audioEnabled = audioEnabled;
+
+                if (!audioEnabled) {
+                    window.audioEngine.stop();
+                } else {
+                    await window.audioEngine.init();
+                }
+
+                if (audioBtn) {
+                    if (!audioEnabled) {
+                        audioBtn.style.background = 'linear-gradient(45deg, rgba(255, 0, 255, 0.1), rgba(255, 0, 255, 0.3))';
+                        audioBtn.style.borderColor = 'rgba(255, 0, 255, 0.3)';
+                        audioBtn.title = 'Audio Reactivity: OFF';
+                    } else if (window.audioEngine.mode === 'fallback') {
+                        audioBtn.style.background = 'linear-gradient(45deg, rgba(255, 140, 0, 0.2), rgba(255, 99, 71, 0.4))';
+                        audioBtn.style.borderColor = '#ff8c00';
+                        audioBtn.title = 'Audio Reactivity: Fallback';
+                    } else {
+                        audioBtn.style.background = 'linear-gradient(45deg, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.6))';
+                        audioBtn.style.borderColor = '#00ff00';
+                        audioBtn.title = 'Audio Reactivity: ON';
+                    }
+                }
             }
-            
-            console.log(`🎵 Audio: ${audioEnabled ? 'ENABLED' : 'DISABLED'}`);
+
+            console.log(`🎵 Audio Reactivity: ${window.audioEnabled ? 'ENABLED' : 'DISABLED'} (${window.audioEngine.mode})`);
         }
         
         window.showLLMInterface = async function() {
@@ -2511,95 +2573,308 @@
                 this.analyser = null;
                 this.dataArray = null;
                 this.isActive = false;
-                
-                // Mobile-safe: Initialize with defaults
+                this.mode = 'idle';
+                this.sourceNode = null;
+                this.currentStream = null;
+                this.trackElement = null;
+                this.trackUrl = null;
+                this.processing = false;
+                this.modeListeners = new Set();
+                this.fallbackTempo = 110;
+                this.fallbackPhase = 0;
+                this.fallbackLastTime = performance.now();
+
                 window.audioReactive = {
                     bass: 0,
-                    mid: 0, 
+                    mid: 0,
                     high: 0,
-                    energy: 0
+                    energy: 0,
+                    mode: 'idle',
+                    bpm: 0
                 };
             }
-            
-            async init() {
-                if (this.isActive) return true;
-                
-                try {
-                    console.log('🎵 Simple Audio Engine: Starting...');
-                    
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.context = new (window.AudioContext || window.webkitAudioContext)();
-                    
-                    if (this.context.state === 'suspended') {
-                        await this.context.resume();
+
+            async init(options = {}) {
+                const { trackUrl = null, fallbackTempo = null, autoplay = true } = options;
+
+                await this.ensureContext();
+                await this.setupAnalyser();
+
+                if (this.isActive) {
+                    if (trackUrl && trackUrl !== this.trackUrl) {
+                        return this.useTrack(trackUrl, { autoplay });
                     }
-                    
-                    this.analyser = this.context.createAnalyser();
-                    this.analyser.fftSize = 256;
-                    this.analyser.smoothingTimeConstant = 0.8;
-                    
-                    const source = this.context.createMediaStreamSource(stream);
-                    source.connect(this.analyser);
-                    
-                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                    if (!trackUrl && this.mode === 'track') {
+                        return this.useMicrophone();
+                    }
+                    return true;
+                }
+
+                try {
+                    if (trackUrl) {
+                        await this.connectTrack(trackUrl, { autoplay });
+                    } else {
+                        await this.connectMicrophone();
+                    }
+
                     this.isActive = true;
-                    
-                    // CRITICAL FIX: Enable global audio flag so visualizers will use the data
                     window.audioEnabled = true;
-                    
                     this.startProcessing();
                     console.log('✅ Audio Engine: Active - window.audioEnabled = true');
                     return true;
-                    
                 } catch (error) {
-                    console.log('⚠️ Audio denied - silent mode');
-                    window.audioEnabled = false; // Keep audio disabled if permission denied
+                    console.warn('⚠️ Audio init failed, switching to fallback metronome:', error);
+                    await this.enableFallback(fallbackTempo || this.fallbackTempo);
+                    this.isActive = true;
+                    window.audioEnabled = true;
+                    this.startProcessing();
                     return false;
                 }
             }
-            
+
+            async ensureContext() {
+                if (!this.context) {
+                    this.context = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.context.state === 'suspended') {
+                    await this.context.resume();
+                }
+                return this.context;
+            }
+
+            async setupAnalyser() {
+                if (!this.analyser && this.context) {
+                    this.analyser = this.context.createAnalyser();
+                    this.analyser.fftSize = 512;
+                    this.analyser.smoothingTimeConstant = 0.75;
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                }
+            }
+
+            disconnectSources() {
+                if (this.sourceNode) {
+                    try { this.sourceNode.disconnect(); } catch (error) { console.warn('Audio source disconnect issue:', error); }
+                    this.sourceNode = null;
+                }
+                if (this.currentStream) {
+                    try {
+                        this.currentStream.getTracks().forEach(track => track.stop());
+                    } catch (error) {
+                        console.warn('Audio stream stop issue:', error);
+                    }
+                    this.currentStream = null;
+                }
+                if (this.trackElement) {
+                    try { this.trackElement.pause(); } catch (error) { console.warn('Audio track pause issue:', error); }
+                    this.trackElement.src = '';
+                    this.trackElement = null;
+                }
+                this.trackUrl = null;
+            }
+
+            async connectMicrophone() {
+                this.disconnectSources();
+                if (!navigator.mediaDevices?.getUserMedia) {
+                    throw new Error('Microphone access not supported');
+                }
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                this.currentStream = stream;
+                this.sourceNode = this.context.createMediaStreamSource(stream);
+                this.sourceNode.connect(this.analyser);
+                this.setMode('microphone');
+            }
+
+            async connectTrack(trackUrl, options = {}) {
+                this.disconnectSources();
+                const { autoplay = true, loop = true } = options;
+                const audioElement = new Audio();
+                audioElement.crossOrigin = 'anonymous';
+                audioElement.src = trackUrl;
+                audioElement.loop = loop;
+
+                if (autoplay) {
+                    try {
+                        await audioElement.play();
+                    } catch (error) {
+                        console.warn('Auto-play blocked, waiting for interaction:', error.message);
+                    }
+                }
+
+                this.trackElement = audioElement;
+                this.sourceNode = this.context.createMediaElementSource(audioElement);
+                this.sourceNode.connect(this.analyser);
+                this.sourceNode.connect(this.context.destination);
+                this.trackUrl = trackUrl;
+                this.setMode('track');
+            }
+
+            async useMicrophone() {
+                try {
+                    await this.connectMicrophone();
+                    this.isActive = true;
+                    this.startProcessing();
+                    return true;
+                } catch (error) {
+                    console.warn('Microphone activation failed, keeping fallback:', error.message);
+                    await this.enableFallback(this.fallbackTempo);
+                    this.startProcessing();
+                    return false;
+                }
+            }
+
+            async useTrack(trackUrl, options = {}) {
+                await this.ensureContext();
+                await this.setupAnalyser();
+                if (!trackUrl) {
+                    return this.useMicrophone();
+                }
+                try {
+                    await this.connectTrack(trackUrl, options);
+                    this.isActive = true;
+                    this.startProcessing();
+                    return true;
+                } catch (error) {
+                    console.error('Failed to load external track:', error);
+                    return false;
+                }
+            }
+
+            async enableFallback(tempo = 110) {
+                await this.ensureContext();
+                this.disconnectSources();
+                this.fallbackTempo = tempo;
+                this.fallbackPhase = 0;
+                this.fallbackLastTime = performance.now();
+                this.setMode('fallback');
+            }
+
+            onModeChange(listener) {
+                if (typeof listener === 'function') {
+                    this.modeListeners.add(listener);
+                    return () => this.modeListeners.delete(listener);
+                }
+                return () => {};
+            }
+
+            setMode(mode, reason = '') {
+                if (this.mode === mode) return;
+                this.mode = mode;
+                if (window.audioReactive) {
+                    window.audioReactive.mode = mode;
+                }
+                this.modeListeners.forEach(listener => {
+                    try {
+                        listener(mode, reason);
+                    } catch (error) {
+                        console.warn('Audio mode listener error:', error);
+                    }
+                });
+            }
+
             startProcessing() {
+                if (this.processing) return;
+                this.processing = true;
+
                 const process = () => {
-                    if (!this.isActive || !this.analyser) {
+                    if (!this.processing) return;
+
+                    if (!this.isActive) {
                         requestAnimationFrame(process);
                         return;
                     }
-                    
-                    this.analyser.getByteFrequencyData(this.dataArray);
-                    
-                    // Simple frequency analysis
-                    const len = this.dataArray.length;
-                    const bassRange = Math.floor(len * 0.1);
-                    const midRange = Math.floor(len * 0.3);
-                    
-                    let bass = 0, mid = 0, high = 0;
-                    
-                    for (let i = 0; i < bassRange; i++) bass += this.dataArray[i];
-                    for (let i = bassRange; i < midRange; i++) mid += this.dataArray[i];
-                    for (let i = midRange; i < len; i++) high += this.dataArray[i];
-                    
-                    bass = (bass / bassRange) / 255;
-                    mid = (mid / (midRange - bassRange)) / 255;
-                    high = (high / (len - midRange)) / 255;
-                    
-                    const smoothing = 0.7;
-                    window.audioReactive.bass = bass * smoothing + window.audioReactive.bass * (1 - smoothing);
-                    window.audioReactive.mid = mid * smoothing + window.audioReactive.mid * (1 - smoothing);
-                    window.audioReactive.high = high * smoothing + window.audioReactive.high * (1 - smoothing);
-                    window.audioReactive.energy = (window.audioReactive.bass + window.audioReactive.mid + window.audioReactive.high) / 3;
-                    
-                    // Debug logging every 5 seconds to verify audio processing
-                    if (Date.now() % 5000 < 16) {
-                        console.log(`🎵 Audio levels: Bass=${window.audioReactive.bass.toFixed(2)} Mid=${window.audioReactive.mid.toFixed(2)} High=${window.audioReactive.high.toFixed(2)} Energy=${window.audioReactive.energy.toFixed(2)}`);
+
+                    if (this.mode === 'fallback') {
+                        this.updateFallbackReactive();
+                    } else if (this.analyser && this.dataArray) {
+                        this.analyser.getByteFrequencyData(this.dataArray);
+
+                        const len = this.dataArray.length;
+                        const bassRange = Math.max(1, Math.floor(len * 0.1));
+                        const midRange = Math.max(bassRange + 1, Math.floor(len * 0.35));
+
+                        let bass = 0, mid = 0, high = 0;
+
+                        for (let i = 0; i < bassRange; i++) bass += this.dataArray[i];
+                        for (let i = bassRange; i < midRange; i++) mid += this.dataArray[i];
+                        for (let i = midRange; i < len; i++) high += this.dataArray[i];
+
+                        bass = (bass / bassRange) / 255;
+                        mid = (mid / (midRange - bassRange)) / 255;
+                        high = (high / (len - midRange)) / 255;
+
+                        this.applySmoothing({ bass, mid, high }, 0.7);
                     }
-                    
+
                     requestAnimationFrame(process);
                 };
-                
-                process();
+
+                requestAnimationFrame(process);
+            }
+
+            applySmoothing(levels, smoothing = 0.7) {
+                if (!window.audioReactive) return;
+                window.audioReactive.bass = levels.bass * smoothing + (window.audioReactive.bass || 0) * (1 - smoothing);
+                window.audioReactive.mid = levels.mid * smoothing + (window.audioReactive.mid || 0) * (1 - smoothing);
+                window.audioReactive.high = levels.high * smoothing + (window.audioReactive.high || 0) * (1 - smoothing);
+                window.audioReactive.energy = (window.audioReactive.bass + window.audioReactive.mid + window.audioReactive.high) / 3;
+                window.audioReactive.mode = this.mode;
+            }
+
+            updateFallbackReactive() {
+                const now = performance.now();
+                const dt = (now - this.fallbackLastTime) / 1000;
+                this.fallbackLastTime = now;
+
+                const beatFrequency = (this.fallbackTempo || 110) / 60;
+                this.fallbackPhase = (this.fallbackPhase + dt * beatFrequency) % 1;
+
+                const bass = Math.max(0, Math.sin(this.fallbackPhase * Math.PI));
+                const mid = Math.max(0, Math.sin(((this.fallbackPhase + 0.33) % 1) * Math.PI));
+                const high = Math.max(0, Math.sin(((this.fallbackPhase + 0.66) % 1) * Math.PI));
+
+                this.applySmoothing({
+                    bass: bass * 0.95 + Math.random() * 0.05,
+                    mid: mid * 0.9 + Math.random() * 0.04,
+                    high: high * 0.85 + Math.random() * 0.03
+                }, 0.6);
+            }
+
+            isAudioActive() {
+                return this.isActive && this.mode !== 'idle';
+            }
+
+            stop() {
+                this.processing = false;
+                this.isActive = false;
+                window.audioEnabled = false;
+                this.setMode('idle');
+
+                if (this.context) {
+                    try {
+                        this.context.close();
+                    } catch (error) {
+                        console.warn('Audio context close issue:', error);
+                    }
+                    this.context = null;
+                }
+
+                this.disconnectSources();
+                this.analyser = null;
+                this.dataArray = null;
+
+                window.audioReactive = {
+                    bass: 0,
+                    mid: 0,
+                    high: 0,
+                    energy: 0,
+                    mode: 'idle',
+                    bpm: 0
+                };
+
+                console.log('🎵 Audio Engine: Stopped');
             }
         }
-        
+
         // Create the simple, mobile-safe audio engine
         window.audioEngine = new SimpleAudioEngine();
         
