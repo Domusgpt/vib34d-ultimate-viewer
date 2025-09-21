@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#020407">
+  <title>Lattice Pulse • VIB34D</title>
+  <link rel="manifest" href="./lattice-pulse-manifest.json">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap">
+  <link rel="stylesheet" href="./styles/lattice-pulse.css">
+</head>
+<body>
+  <div id="lp-app">
+    <div id="lp-canvas-root"></div>
+    <div id="lp-input-layer"></div>
+    <div id="lp-hud"></div>
+    <div id="lp-start-screen">
+      <div class="lp-start-title">Lattice Pulse</div>
+      <div class="lp-start-subtitle">Tap to pulse, swipe to steer the lattice. Hold to phase shift and glide through beats.</div>
+      <button id="lp-start-button">Start</button>
+    </div>
+  </div>
+  <script type="module" src="./src/game/LatticePulseGame.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw-lattice-pulse.js').catch((err) => console.warn('SW registration failed', err));
+      });
+    }
+  </script>
+</body>
+</html>
