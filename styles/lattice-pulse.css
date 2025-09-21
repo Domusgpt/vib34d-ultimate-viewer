@@ -1,0 +1,222 @@
+/*
+ * Lattice Pulse directive overlay styling.
+ * The overlay is intentionally loud so gesture directives and quick draw prompts
+ * feel cinematic and impossible to miss.
+ */
+@property --directive-progress {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+}
+
+.directive-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+    transition: opacity 180ms ease, transform 260ms cubic-bezier(0.19, 1, 0.22, 1);
+    z-index: 32;
+    font-family: 'Orbitron', 'Rajdhani', 'Montserrat', sans-serif;
+    --directive-progress: 1;
+    --directive-duration: 4000ms;
+    --directive-accent: #3fffe4;
+    --directive-accent-glow: rgba(63, 255, 228, 0.48);
+    --directive-background: rgba(10, 20, 28, 0.82);
+    --directive-audio-intensity: 0;
+    --directive-band-glow: var(--directive-accent-glow);
+}
+
+.directive-overlay.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.directive-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.12), transparent 60%);
+    pointer-events: none;
+    opacity: calc(var(--directive-audio-intensity, 0) * 0.55);
+    transform: scale(calc(1 + (var(--directive-audio-intensity, 0) * 0.12)));
+    transition: opacity 160ms ease, transform 220ms ease;
+}
+
+.directive-overlay[data-band='low'] {
+    --directive-band-glow: rgba(36, 255, 170, 0.55);
+}
+
+.directive-overlay[data-band='mid'] {
+    --directive-band-glow: rgba(120, 160, 255, 0.55);
+}
+
+.directive-overlay[data-band='high'] {
+    --directive-band-glow: rgba(255, 120, 210, 0.58);
+}
+
+.directive-overlay__panel {
+    position: relative;
+    padding: clamp(24px, 4vw, 48px) clamp(32px, 6vw, 64px);
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(12, 18, 26, 0.9), rgba(10, 18, 24, 0.6));
+    background-color: var(--directive-background);
+    border: 3px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.45),
+        0 0 calc(110px + (220px * var(--directive-audio-intensity))) 0 var(--directive-band-glow),
+        inset 0 0 30px rgba(255, 255, 255, 0.04);
+    max-width: min(720px, 86vw);
+    text-align: center;
+    backdrop-filter: blur(18px);
+    pointer-events: none;
+}
+
+.directive-overlay__panel::before {
+    content: '';
+    position: absolute;
+    inset: clamp(6px, 1vw, 12px);
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: calc(0.25 + var(--directive-audio-intensity, 0) * 0.55);
+    --directive-pattern-gradient: transparent;
+    background-image:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.14), transparent 70%),
+        var(--directive-pattern-gradient, transparent);
+    background-blend-mode: screen;
+    transition: opacity 160ms ease, transform 220ms ease;
+}
+
+.directive-overlay[data-pattern*='slash'] .directive-overlay__panel::before {
+    --directive-pattern-gradient: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0 12px, transparent 12px 24px);
+}
+
+.directive-overlay[data-pattern*='grid'] .directive-overlay__panel::before {
+    --directive-pattern-gradient: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 0);
+    background-size: 22px 22px, 22px 22px;
+}
+
+.directive-overlay[data-pattern*='burst'] .directive-overlay__panel::before {
+    --directive-pattern-gradient: radial-gradient(circle at center, rgba(255, 255, 255, 0.15), transparent 60%);
+}
+
+.directive-overlay__label {
+    font-size: clamp(0.75rem, 1.6vw, 1.05rem);
+    letter-spacing: 0.65em;
+    text-transform: uppercase;
+    color: var(--directive-accent);
+    opacity: 0.9;
+}
+
+.directive-overlay__prompt {
+    margin-top: clamp(12px, 2vw, 24px);
+    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #f5f7ff;
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.06em;
+}
+
+.directive-overlay__annotation {
+    margin-top: 12px;
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.directive-overlay__countdown {
+    position: relative;
+    margin: clamp(24px, 4vw, 36px) auto 0;
+    width: clamp(140px, 24vw, 200px);
+    aspect-ratio: 1 / 1;
+}
+
+.directive-overlay__countdown-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at center, rgba(8, 12, 18, 0.85) 58%, transparent 60%),
+        conic-gradient(var(--directive-accent) calc(var(--directive-progress) * 360deg), rgba(255, 255, 255, 0.08) 0deg);
+    transform: rotate(-90deg);
+    box-shadow: 0 0 calc(45px + 80px * var(--directive-audio-intensity)) var(--directive-band-glow);
+    opacity: 0.95;
+}
+
+.directive-overlay__countdown-ring.is-animating {
+    animation: directiveRing var(--directive-duration, 4000ms) linear forwards;
+}
+
+@keyframes directiveRing {
+    0% {
+        --directive-progress: 1;
+        opacity: 1;
+    }
+    100% {
+        --directive-progress: 0;
+        opacity: 0.8;
+    }
+}
+
+.directive-overlay__countdown-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -54%);
+    font-size: clamp(2.75rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #ffffff;
+    text-shadow:
+        0 0 20px rgba(255, 255, 255, 0.6),
+        0 0 calc(60px + 40px * var(--directive-audio-intensity)) var(--directive-band-glow);
+    animation: directiveCountdownPulse 1s steps(1, end) infinite;
+}
+
+@keyframes directiveCountdownPulse {
+    0% {
+        transform: translate(-50%, -54%) scale(1);
+        opacity: 1;
+    }
+    60% {
+        transform: translate(-50%, -54%) scale(1.1);
+        opacity: 0.88;
+    }
+    100% {
+        transform: translate(-50%, -54%) scale(1);
+        opacity: 1;
+    }
+}
+
+.directive-overlay__countdown-hint {
+    position: absolute;
+    bottom: clamp(-12px, -1.5vw, -18px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(0.6rem, 1vw, 0.75rem);
+    letter-spacing: 0.55em;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.directive-overlay--gesture {
+    --directive-accent: #45ffe7;
+    --directive-accent-glow: rgba(69, 255, 231, 0.55);
+    --directive-background: rgba(14, 40, 54, 0.82);
+}
+
+.directive-overlay--quickDraw {
+    --directive-accent: #ff3a73;
+    --directive-accent-glow: rgba(255, 58, 115, 0.55);
+    --directive-background: rgba(36, 10, 26, 0.82);
+}
+
+.directive-overlay--generic {
+    --directive-accent: #7f9cff;
+    --directive-accent-glow: rgba(127, 156, 255, 0.45);
+    --directive-background: rgba(16, 20, 36, 0.82);
+}
