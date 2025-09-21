@@ -10,6 +10,7 @@ import UnifiedResourceManager from './UnifiedResourceManager.js';
 import MobileOptimizedRenderer from './MobileOptimizedRenderer.js';
 import MobileTouchController from './MobileTouchController.js';
 import EnhancedPolychoraSystem from './EnhancedPolychoraSystem.js';
+import createAethericSystem from '../systems/aetheric/aetheric.js';
 
 export class VIB34DUnifiedEngine {
     constructor(config = {}) {
@@ -67,6 +68,20 @@ export class VIB34DUnifiedEngine {
         this.animationId = null;
         this.isRendering = false;
         this.renderQueue = new Set();
+
+        this.parameterState = {
+            rot4dXW: 0,
+            rot4dYW: 0,
+            rot4dZW: 0,
+            gridDensity: 15,
+            morphFactor: 1,
+            chaos: 0.2,
+            speed: 1,
+            hue: 200,
+            intensity: 0.8,
+            saturation: 0.7,
+            scale: 1
+        };
         
         // Initialize unified system
         this.init();
@@ -150,6 +165,17 @@ export class VIB34DUnifiedEngine {
             renderer: new EnhancedPolychoraSystem(gl, this.canvasManager),
             active: false,
             priority: 0,
+            memoryUsage: 0,
+            renderTime: 0
+        });
+
+        // 5. AETHERIC SYSTEM: Screen-space interference field
+        const aethericRenderer = await this.createAethericSystem(gl);
+        this.systems.set('aetheric', {
+            name: 'Aetheric',
+            renderer: aethericRenderer,
+            active: false,
+            priority: 4,
             memoryUsage: 0,
             renderTime: 0
         });
@@ -327,6 +353,45 @@ export class VIB34DUnifiedEngine {
             dispose: () => {}
         };
     }
+
+    async createAethericSystem(gl) {
+        const engine = this;
+        const system = createAethericSystem();
+        await system.init(gl);
+
+        return {
+            render(timestamp) {
+                const parameters = engine.getSystemParameters('aetheric');
+                const mappedParams = {
+                    rotXW: parameters.rot4dXW ?? parameters.rotXW ?? 0,
+                    rotYW: parameters.rot4dYW ?? parameters.rotYW ?? 0,
+                    rotZW: parameters.rot4dZW ?? parameters.rotZW ?? 0,
+                    gridDensity: parameters.gridDensity ?? 15,
+                    morphFactor: parameters.morphFactor ?? 1,
+                    chaos: parameters.chaos ?? 0.2,
+                    speed: parameters.speed ?? 1,
+                    hue: parameters.hue ?? 200,
+                    intensity: parameters.intensity ?? 0.8,
+                    saturation: parameters.saturation ?? 0.7,
+                    scale: parameters.scale ?? 1
+                };
+
+                system.draw(gl, {
+                    time: timestamp * 0.001,
+                    params: mappedParams
+                }, 0);
+            },
+            updateParameter(name, value) {
+                const numericValue = typeof value === 'number' ? value : parseFloat(value);
+                if (!Number.isNaN(numericValue)) {
+                    engine.parameterState[name] = numericValue;
+                }
+            },
+            dispose() {
+                system.dispose(gl);
+            }
+        };
+    }
     
     setupTouchInteractions() {
         if (!this.touchController) return;
@@ -482,13 +547,9 @@ export class VIB34DUnifiedEngine {
     }
     
     getSystemParameters(systemName) {
-        // Return system-specific parameters
         return {
-            time: this.time,
-            gridDensity: 15,
-            morphFactor: 1.0,
-            intensity: 0.8,
-            // Add more parameters as needed
+            ...this.parameterState,
+            time: this.time
         };
     }
     
@@ -527,6 +588,22 @@ export class VIB34DUnifiedEngine {
         
         console.log(`✅ Switched to ${systemName} system`);
         return true;
+    }
+
+    updateParameter(name, value) {
+        if (value === undefined || value === null) {
+            return;
+        }
+
+        const numericValue = typeof value === 'number' ? value : parseFloat(value);
+        if (!Number.isNaN(numericValue)) {
+            this.parameterState[name] = numericValue;
+        }
+
+        const activeSystem = this.systems.get(this.activeSystem);
+        if (activeSystem && activeSystem.renderer && activeSystem.renderer.updateParameter) {
+            activeSystem.renderer.updateParameter(name, numericValue);
+        }
     }
     
     enableSystem(systemName) {

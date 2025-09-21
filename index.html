@@ -562,6 +562,9 @@
             <button class="system-btn" data-system="polychora" onclick="switchSystem('polychora')">
                 🔮 Polychora
             </button>
+            <button class="system-btn" data-system="aetheric" onclick="switchSystem('aetheric')">
+                🌈 Aetheric
+            </button>
         </div>
         
         <div class="action-buttons">
@@ -586,6 +589,9 @@
         
         <!-- Polychora System - canvases created dynamically -->
         <div class="holographic-layers" id="polychoraLayers" style="display: none;"></div>
+
+        <!-- Aetheric System - canvases created dynamically -->
+        <div class="holographic-layers" id="aethericLayers" style="display: none;"></div>
     </div>
     
     <!-- Control Panel -->
@@ -715,9 +721,18 @@
                     <span>Saturation</span>
                     <span class="control-value" id="saturationValue">0.8</span>
                 </div>
-                <input type="range" class="control-slider" id="saturation" 
-                       min="0" max="1" step="0.01" value="0.8" 
+                <input type="range" class="control-slider" id="saturation"
+                       min="0" max="1" step="0.01" value="0.8"
                        oninput="updateParameter('saturation', this.value)">
+            </div>
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Scale</span>
+                    <span class="control-value" id="scaleValue">1.0</span>
+                </div>
+                <input type="range" class="control-slider" id="scale"
+                       min="0.25" max="2" step="0.01" value="1"
+                       oninput="updateParameter('scale', this.value)">
             </div>
         </div>
         
@@ -965,7 +980,7 @@
                 
                 // CRITICAL FIX: Show correct system canvas layers immediately to prevent wrong visualizer flash
                 const showCorrectSystemLayers = () => {
-                    const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                    const systems = ['faceted', 'quantum', 'holographic', 'polychora', 'aetheric'];
                     systems.forEach(sys => {
                         const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
                         const layers = document.getElementById(layerId);
@@ -1089,9 +1104,10 @@
         // Get all current UI parameter values (prefers user-stored values)
         window.getCurrentUIParameterState = function() {
             const parameterIds = [
-                'rot4dXW', 'rot4dYW', 'rot4dZW', 
-                'gridDensity', 'morphFactor', 'chaos', 
-                'speed', 'hue', 'intensity', 'saturation'
+                'rot4dXW', 'rot4dYW', 'rot4dZW',
+                'gridDensity', 'morphFactor', 'chaos',
+                'speed', 'hue', 'intensity', 'saturation',
+                'scale'
             ];
             
             const currentState = {};
@@ -1826,7 +1842,7 @@
             }
             
             // CRITICAL FIX: Force canvas layer visibility for gallery previews WITH verification
-            const systems = ['faceted', 'quantum', 'holographic'];
+            const systems = ['faceted', 'quantum', 'holographic', 'aetheric'];
             systems.forEach(sys => {
                 const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
                 const layers = document.getElementById(layerId);
@@ -1851,7 +1867,7 @@
                 console.log('🔧 Forcing direct system switch for gallery preview...');
                 
                 // Force canvas visibility directly
-                const systems = ['faceted', 'quantum', 'holographic', 'polychora'];
+                const systems = ['faceted', 'quantum', 'holographic', 'polychora', 'aetheric'];
                 systems.forEach(sys => {
                     const layerId = sys === 'faceted' ? 'vib34dLayers' : `${sys}Layers`;
                     const layers = document.getElementById(layerId);
@@ -2776,7 +2792,7 @@
                     // Visual mode parameters
                     visualModes: {
                         color: ['hue', 'saturation', 'intensity'],
-                        geometry: ['morphFactor', 'gridDensity', 'chaos'],  
+                        geometry: ['morphFactor', 'gridDensity', 'chaos', 'scale'],
                         movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW']
                     },
                     // Active modes
@@ -3011,7 +3027,8 @@
                 speed: 1,
                 hue: 200,
                 intensity: 0.5,
-                saturation: 0.8
+                saturation: 0.8,
+                scale: 1
             };
             
             Object.entries(defaults).forEach(([id, value]) => {
@@ -3179,7 +3196,8 @@
                     speed: parseFloat(document.getElementById('speed').value),
                     hue: parseFloat(document.getElementById('hue').value),
                     intensity: parseFloat(document.getElementById('intensity').value),
-                    saturation: parseFloat(document.getElementById('saturation').value)
+                    saturation: parseFloat(document.getElementById('saturation').value),
+                    scale: parseFloat(document.getElementById('scale').value)
                 };
                 state.geometryName = geometries.faceted[getActiveGeometryIndex()];
                 
@@ -3197,7 +3215,8 @@
                     speed: parseFloat(document.getElementById('speed').value),
                     hue: parseFloat(document.getElementById('hue').value),
                     intensity: parseFloat(document.getElementById('intensity').value),
-                    saturation: parseFloat(document.getElementById('saturation').value)
+                    saturation: parseFloat(document.getElementById('saturation').value),
+                    scale: parseFloat(document.getElementById('scale').value)
                 };
                 state.geometryName = geometries.quantum[getActiveGeometryIndex()];
                 
@@ -3213,6 +3232,7 @@
                     hue: parseFloat(document.getElementById('hue').value),
                     intensity: parseFloat(document.getElementById('intensity').value),
                     saturation: parseFloat(document.getElementById('saturation').value),
+                    scale: parseFloat(document.getElementById('scale').value),
                     rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
                     rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
                     rot4dZW: parseFloat(document.getElementById('rot4dZW').value)
@@ -3231,6 +3251,7 @@
                     hue: parseFloat(document.getElementById('hue').value),
                     intensity: parseFloat(document.getElementById('intensity').value),
                     saturation: parseFloat(document.getElementById('saturation').value),
+                    scale: parseFloat(document.getElementById('scale').value),
                     rot4dXW: parseFloat(document.getElementById('rot4dXW').value),
                     rot4dYW: parseFloat(document.getElementById('rot4dYW').value),
                     rot4dZW: parseFloat(document.getElementById('rot4dZW').value)
@@ -3328,7 +3349,8 @@
                     speed: parseFloat(document.getElementById('speed').value),
                     hue: parseFloat(document.getElementById('hue').value),
                     intensity: parseFloat(document.getElementById('intensity').value),
-                    saturation: parseFloat(document.getElementById('saturation').value)
+                    saturation: parseFloat(document.getElementById('saturation').value),
+                    scale: parseFloat(document.getElementById('scale').value)
                 };
                 
                 // Generate system-specific trading card

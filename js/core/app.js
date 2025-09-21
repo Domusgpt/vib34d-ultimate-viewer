@@ -53,9 +53,10 @@ export class VIB34DApp {
                         // Update panel header
                         const headers = {
                             faceted: 'FACETED SYSTEM',
-                            quantum: 'QUANTUM SYSTEM', 
+                            quantum: 'QUANTUM SYSTEM',
                             holographic: 'HOLOGRAPHIC SYSTEM',
-                            polychora: 'POLYCHORA SYSTEM'
+                            polychora: 'POLYCHORA SYSTEM',
+                            aetheric: 'AETHERIC SYSTEM'
                         };
                         const panelHeader = document.getElementById('panelHeader');
                         if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
@@ -106,9 +107,10 @@ export class VIB34DApp {
         // Get all current UI parameter values (prefers user-stored values)
         window.getCurrentUIParameterState = () => {
             const parameterIds = [
-                'rot4dXW', 'rot4dYW', 'rot4dZW', 
-                'gridDensity', 'morphFactor', 'chaos', 
-                'speed', 'hue', 'intensity', 'saturation'
+                'rot4dXW', 'rot4dYW', 'rot4dZW',
+                'gridDensity', 'morphFactor', 'chaos',
+                'speed', 'hue', 'intensity', 'saturation',
+                'scale'
             ];
             
             const currentState = {};

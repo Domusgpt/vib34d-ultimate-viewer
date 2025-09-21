@@ -169,7 +169,8 @@ window.createTradingCard = async function(format = 'classic') {
             speed: parseFloat(document.getElementById('speed').value),
             hue: parseFloat(document.getElementById('hue').value),
             intensity: parseFloat(document.getElementById('intensity').value),
-            saturation: parseFloat(document.getElementById('saturation').value)
+            saturation: parseFloat(document.getElementById('saturation').value),
+            scale: parseFloat(document.getElementById('scale').value)
         };
         
         // Generate system-specific trading card
