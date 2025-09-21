@@ -403,6 +403,7 @@
                 <div id="quantum-container" class="system-container"></div>
                 <div id="holographic-container" class="system-container"></div>
                 <div id="polychora-container" class="system-container"></div>
+                <div id="aetheric-container" class="system-container"></div>
             </div>
         </div>
         
@@ -474,7 +475,7 @@
             const variation = {
                 id: urlParams.get('id') || 'preview',
                 name: urlParams.get('name') || 'VIB34D Variation',
-                system: urlParams.get('system') || 'faceted',
+                system: (urlParams.get('system') || 'faceted').toLowerCase(),
                 parameters: {}
             };
             
@@ -482,7 +483,7 @@
             const parameterNames = [
                 'geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW',
                 'gridDensity', 'morphFactor', 'chaos', 'speed',
-                'hue', 'intensity', 'saturation'
+                'hue', 'intensity', 'saturation', 'scale'
             ];
             
             parameterNames.forEach(name => {
@@ -509,7 +510,8 @@
                 speed: 1.0,
                 hue: 200,
                 intensity: 0.8,
-                saturation: 0.7
+                saturation: 0.7,
+                scale: 1.0
             };
             
             Object.entries(defaults).forEach(([key, value]) => {
@@ -523,14 +525,17 @@
         
         function updateViewerUI() {
             document.getElementById('variation-title').textContent = currentVariation.name;
-            document.getElementById('system-tag').textContent = currentVariation.system;
+            document.getElementById('system-tag').textContent = currentVariation.system.toUpperCase();
             document.getElementById('variation-id').textContent = currentVariation.id;
             
             // Update active system container
             document.querySelectorAll('.system-container').forEach(container => {
                 container.classList.remove('active');
             });
-            document.getElementById(`${currentVariation.system}-container`).classList.add('active');
+            const activeContainer = document.getElementById(`${currentVariation.system}-container`);
+            if (activeContainer) {
+                activeContainer.classList.add('active');
+            }
         }
         
         async function loadVariation() {
