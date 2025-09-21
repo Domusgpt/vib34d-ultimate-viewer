@@ -15,6 +15,19 @@ python3 -m http.server 8080
 http://localhost:8080/index-clean.html
 ```
 
+### 🎯 Lattice Pulse – Mobile Game
+
+The new **Lattice Pulse** mode turns the faceted/quantum/holographic renderers into a rhythm-arcade loop.
+
+- Launch the PWA: `http://localhost:8080/lattice-pulse.html`
+- Tap the start screen to unlock audio and begin.
+- **Tap** to pulse captures, **swipe** to rotate 4D planes, **pinch** to shift dimensional depth, **long-press** to enter a slow-motion phase, and **tilt** (optional) for drift correction.
+- Runs as a deterministic 60 Hz loop with beat-driven spawns (Suno BPM metadata) and offline caching via `sw-lattice-pulse.js`.
+- Progression currently ships with three seedable level JSONs covering Faceted Torus, Quantum Sphere, and Holographic Crystal lattices—each targeting 60 FPS on modern phones.
+- **Rogue-lite flow director** promotes endless depth climbs: difficulty, geometry biases, and score multipliers scale with every cleared section while preserving deterministic seeds.
+- Dynamic events trigger from the analyser (drops, surges, silence, vocals) introducing glitch rushes, reverse flicks, tempo flips, quick-draw taps, and charge/extra-life challenges with on-screen prompts.
+- Double taps bank slow-motion charges, long-press converts high combos into extra lives, and audio-reactive LOD ensures the lattice stays silky even when the beat hits.
+
 ## 🎮 The 4 Systems
 
 **🔷 FACETED** - Simple 2D geometric patterns  
