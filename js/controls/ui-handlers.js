@@ -27,7 +27,8 @@ window.updateParameter = function(param, value) {
         speed: 'speedValue',
         hue: 'hueValue',
         intensity: 'intensityValue',
-        saturation: 'saturationValue'
+        saturation: 'saturationValue',
+        scale: 'scaleValue'
     };
     
     const display = document.getElementById(displays[param]);
@@ -48,7 +49,8 @@ window.updateParameter = function(param, value) {
             faceted: window.engine,
             quantum: window.quantumEngine,
             holographic: window.holographicSystem,
-            polychora: window.polychoraSystem
+            polychora: window.polychoraSystem,
+            aetheric: window.aethericEngine
         };
         
         const engine = engines[activeSystem];
@@ -85,6 +87,8 @@ window.updateParameter = function(param, value) {
             engine.updateParameter(param, parseFloat(value));
         } else if (activeSystem === 'polychora') {
             engine.updateParameters({ [param]: parseFloat(value) });
+        } else if (activeSystem === 'aetheric') {
+            engine.updateParameter(param, parseFloat(value));
         }
         
         console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${value}`);
@@ -172,7 +176,8 @@ window.resetAll = function() {
         speed: 1,
         hue: 200,
         intensity: 0.5,
-        saturation: 0.8
+        saturation: 0.8,
+        scale: 1
     };
     
     Object.entries(defaults).forEach(([id, value]) => {
@@ -342,7 +347,7 @@ window.toggleAudioReactivity = function(sensitivity, visualMode, enabled) {
             // Visual mode parameters
             visualModes: {
                 color: ['hue', 'saturation', 'intensity'],
-                geometry: ['morphFactor', 'gridDensity', 'chaos'],  
+                geometry: ['morphFactor', 'gridDensity', 'chaos', 'scale'],
                 movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW']
             },
             // Active modes

@@ -3,6 +3,8 @@
  * No canvas destruction - HTML canvases stay put, just switch visibility
  */
 
+import AethericEngine from '../systems/aetheric/AethericEngine.js';
+
 export class CanvasManager {
   constructor() {
     this.currentSystem = null;
@@ -80,6 +82,10 @@ export class CanvasManager {
       console.log('💥 Clearing window.polychoraSystem');
       window.polychoraSystem = null;
     }
+    if (window.aethericEngine) {
+      console.log('💥 Clearing window.aethericEngine');
+      window.aethericEngine = null;
+    }
     
     console.log(`💥 DESTRUCTION COMPLETE: ${destroyedCount} WebGL contexts destroyed, all engine refs cleared`);
   }
@@ -94,6 +100,7 @@ export class CanvasManager {
     
     // STEP 2: Clear all containers
     const containers = ['vib34dLayers', 'quantumLayers', 'holographicLayers', 'polychoraLayers'];
+    containers.push('aethericLayers');
     containers.forEach(containerId => {
       const container = document.getElementById(containerId);
       if (container) {
@@ -156,6 +163,8 @@ export class CanvasManager {
         return baseIds.map(id => `holo-${id}`);
       case 'polychora':
         return baseIds.map(id => `polychora-${id}`);
+      case 'aetheric':
+        return baseIds.map(id => `aetheric-${id}`);
       default:
         return baseIds;
     }
@@ -199,7 +208,14 @@ export class CanvasManager {
             console.log('✅ Fresh TRUE 4D Polychora Engine with VIB34D DNA');
           }
           break;
-          
+
+        case 'aetheric':
+          engine = new AethericEngine();
+          await engine.initialize();
+          window.aethericEngine = engine;
+          console.log('✅ Fresh Aetheric engine');
+          break;
+
         default:
           console.error(`❌ Unknown system: ${systemName}`);
       }

@@ -177,6 +177,7 @@ export class GalleryPreviewFix {
                     hue: 0,
                     saturation: 0.8,
                     intensity: 0.5,
+                    scale: 1.0,
                     rot4dXW: 0.0,
                     rot4dYW: 0.0,
                     rot4dZW: 0.0,
