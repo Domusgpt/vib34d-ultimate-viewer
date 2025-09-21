@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lattice Pulse · VIB34D</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#050018" />
+  <meta name="description" content="Lattice Pulse turns the VIB34D visualizer into a beat-matched mobile web game." />
+  <link rel="manifest" href="./lattice-pulse.webmanifest" />
+  <link rel="stylesheet" href="./styles/lattice-pulse.css" />
+  <link rel="apple-touch-icon" href="./assets/icons/lattice-pulse-icon.svg" />
+</head>
+<body>
+  <div id="app">
+    <div id="visualizer" class="visualizer" aria-hidden="true"></div>
+    <div id="hud" class="hud" aria-live="polite">
+      <div class="hud-row">
+        <div class="hud-card">
+          <div class="hud-label">Score</div>
+          <div class="hud-value" data-hud="score">0</div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-label">Combo</div>
+          <div class="hud-value" data-hud="combo">—</div>
+          <div class="hud-meter" data-hud="pulse"></div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-label">Mode</div>
+          <div class="hud-value hud-small" data-hud="mode">FACETED</div>
+          <div class="hud-label">Geometry</div>
+          <div class="hud-value hud-small" data-hud="geometry">TORUS</div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-label">Level</div>
+          <div class="hud-value hud-small" data-hud="level">—</div>
+          <div class="hud-label">Tempo</div>
+          <div class="hud-value hud-small" data-hud="bpm">120 BPM</div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-label">Performance</div>
+          <div class="hud-value hud-small" data-hud="fps">60 FPS</div>
+          <div class="hud-meter" data-hud="shield"></div>
+        </div>
+      </div>
+    </div>
+    <div class="toast" data-hud="toast">Ready</div>
+    <div class="controls" aria-label="Game controls">
+      <button id="modeButton" class="control-button">Switch Mode</button>
+      <button id="geometryButton" class="control-button">Shift Geometry</button>
+      <button id="nextLevelButton" class="control-button">Next Level</button>
+    </div>
+  </div>
+  <script type="module" src="./js/lattice-pulse.js"></script>
+</body>
+</html>
