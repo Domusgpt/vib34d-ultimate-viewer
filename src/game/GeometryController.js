@@ -1,0 +1,281 @@
+import { createSeededRNG } from './utils/Random.js';
+
+const FACETED_GEOMETRIES = ['TETRA', 'CUBE', 'SPHERE', 'TORUS', 'KLEIN', 'FRACTAL', 'WAVE', 'CRYSTAL'];
+const HOLO_CATEGORY_MAP = [
+    0, 0, 0, 0,
+    1, 1, 1, 1,
+    2, 2, 2, 2,
+    3, 3, 3, 3,
+    4, 4, 4, 4,
+    5, 5, 5,
+    6, 6, 6,
+    7, 7, 7, 7
+];
+
+/**
+ * Geometry-driven spawn rules and visual tweaks.
+ */
+export class GeometryController {
+    constructor(seed = 1234) {
+        this.rng = createSeededRNG(seed);
+        this.mode = 'faceted';
+        this.geometryIndex = 0;
+    }
+
+    setMode(mode) {
+        this.mode = mode;
+    }
+
+    setGeometry(index) {
+        this.geometryIndex = index;
+    }
+
+    /**
+     * Determine geometry id across all systems.
+     */
+    getGeometryId() {
+        if (this.mode === 'holographic') {
+            const category = HOLO_CATEGORY_MAP[this.geometryIndex] ?? 0;
+            return FACETED_GEOMETRIES[Math.min(category, FACETED_GEOMETRIES.length - 1)];
+        }
+        return FACETED_GEOMETRIES[this.geometryIndex % FACETED_GEOMETRIES.length];
+    }
+
+    /**
+     * Generate spawn targets for a beat.
+     */
+    generateTargets(beat, difficulty, dynamics = {}, stageContext = {}) {
+        const geometry = this.getGeometryId();
+        const generator = GEOMETRY_GENERATORS[geometry] || GEOMETRY_GENERATORS.TETRA;
+        const density = difficulty?.density ?? 0.9;
+        const speed = difficulty?.speed ?? 1.0;
+        const chaos = difficulty?.chaos ?? 0.15;
+
+        const energy = dynamics?.energy ?? 0.5;
+        const stage = stageContext?.stage ?? 0;
+        const dropBoost = dynamics?.drop ? 1.35 : 1;
+        const vocalBoost = dynamics?.vocal ? 1.15 : 1;
+        const stageBoost = 1 + stage * 0.12;
+        const variance = this.rng.nextFloat() * 0.5;
+        const amount = Math.max(1, Math.round(density * (0.6 + energy * 1.2 + variance) * dropBoost * stageBoost * vocalBoost));
+        const targets = [];
+        const context = {
+            speed,
+            chaos,
+            dynamics,
+            stage,
+            rng: this.rng
+        };
+        for (let i = 0; i < amount; i++) {
+            targets.push(generator(this.rng, beat + i * 0.1, context));
+        }
+        return targets;
+    }
+
+    /**
+     * Provide per-geometry parameter biases.
+     */
+    getParameterBias() {
+        const geometry = this.getGeometryId();
+        return GEOMETRY_PARAMETER_BIAS[geometry] || { hueShift: 0, chaos: 1, speed: 1 };
+    }
+}
+
+function randomSign(rng) {
+    return rng.nextFloat() > 0.5 ? 1 : -1;
+}
+
+const GEOMETRY_GENERATORS = {
+    TETRA(rng, beat, context = {}) {
+        const energy = context.dynamics?.energy ?? 0.5;
+        const stage = context.stage ?? 0;
+        const chaos = context.chaos ?? 0.1;
+        const spread = 0.55 + energy * 0.25 + stage * 0.05;
+        const jitter = chaos * 0.2 + (context.dynamics?.glitch ? 0.15 : 0);
+        return {
+            id: `tetra-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'node',
+            vec4: {
+                x: randomSign(rng) * (spread + rng.nextRange(-jitter, jitter)),
+                y: randomSign(rng) * (spread + rng.nextRange(-jitter, jitter)),
+                z: randomSign(rng) * (spread + rng.nextRange(-jitter, jitter)),
+                w: randomSign(rng) * (0.5 + chaos * 0.4)
+            },
+            radius: 0.07 + energy * 0.05,
+            dueBeat: beat + 1.3 - Math.min(0.4, energy * 0.3) + chaos * 0.2,
+            behavior: 'pulse'
+        };
+    },
+    CUBE(rng, beat, context = {}) {
+        const axis = rng.choose(['x', 'y', 'z']);
+        const energy = context.dynamics?.energy ?? 0.5;
+        const chaos = context.chaos ?? 0.2;
+        const stretch = 0.3 + energy * 0.4;
+        const pos = {
+            x: rng.nextRange(-0.85, 0.85),
+            y: rng.nextRange(-0.85, 0.85),
+            z: rng.nextRange(-0.85, 0.85),
+            w: rng.nextRange(-0.6, 0.6)
+        };
+        const offset = rng.nextRange(stretch * 0.6, stretch + chaos * 0.4);
+        const other = { ...pos };
+        other[axis] += offset;
+        pos[axis] -= offset;
+        return {
+            id: `cube-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'lane',
+            vec4: pos,
+            vec4b: other,
+            radius: 0.045 + chaos * 0.02,
+            dueBeat: beat + 1.7 + chaos * 0.3,
+            behavior: 'slide'
+        };
+    },
+    SPHERE(rng, beat, context = {}) {
+        const theta = rng.nextRange(0, Math.PI);
+        const phi = rng.nextRange(0, Math.PI * 2);
+        const energy = context.dynamics?.energy ?? 0.5;
+        const high = context.dynamics?.high ?? 0.4;
+        const vocal = context.dynamics?.vocal;
+        const radius = 0.75 + energy * 0.2;
+        return {
+            id: `sphere-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'node',
+            vec4: {
+                x: radius * Math.sin(theta) * Math.cos(phi),
+                y: radius * Math.cos(theta),
+                z: radius * Math.sin(theta) * Math.sin(phi),
+                w: rng.nextRange(-0.4, 0.4 + high * 0.2)
+            },
+            radius: 0.08 + high * 0.04,
+            dueBeat: beat + 1.25 - Math.min(0.3, high * 0.25) - (vocal ? 0.18 : 0),
+            behavior: 'orbit'
+        };
+    },
+    TORUS(rng, beat, context = {}) {
+        const energy = context.dynamics?.energy ?? 0.5;
+        const bass = context.dynamics?.bass ?? 0.4;
+        const vocal = context.dynamics?.vocal;
+        const major = 0.7 + bass * 0.25;
+        const minor = 0.2 + energy * 0.15;
+        const angle = (beat * (0.8 + energy * 0.4) + rng.nextFloat()) * Math.PI * 2;
+        return {
+            id: `torus-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'lane',
+            vec4: {
+                x: (major + minor * Math.cos(angle)) * Math.cos(angle),
+                y: minor * Math.sin(angle * 2),
+                z: (major + minor * Math.cos(angle)) * Math.sin(angle),
+                w: rng.nextRange(-0.45, 0.45)
+            },
+            vec4b: {
+                x: (major + minor * Math.cos(angle + 0.35)) * Math.cos(angle + 0.35),
+                y: minor * Math.sin((angle + 0.35) * 2),
+                z: (major + minor * Math.cos(angle + 0.35)) * Math.sin(angle + 0.35),
+                w: rng.nextRange(-0.45, 0.45)
+            },
+            radius: 0.04 + bass * 0.015,
+            dueBeat: beat + 1.9 - Math.min(0.4, energy * 0.2) - (vocal ? 0.2 : 0),
+            behavior: 'belt'
+        };
+    },
+    KLEIN(rng, beat, context = {}) {
+        const u = rng.nextRange(0, Math.PI * 2);
+        const v = rng.nextRange(0, Math.PI * 2);
+        const r = 0.35 + (context.chaos || 0.1) * 0.3;
+        const cosU = Math.cos(u);
+        const sinU = Math.sin(u);
+        const cosV = Math.cos(v);
+        const sinV = Math.sin(v);
+        const x = (r + cosU / 2) * cosV;
+        const y = (r + cosU / 2) * sinV;
+        const z = sinU / 2;
+        const w = Math.sin(u) * Math.cos(v);
+        return {
+            id: `klein-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'node',
+            vec4: { x, y, z, w },
+            radius: 0.065 + (context.chaos || 0.1) * 0.03,
+            dueBeat: beat + 1.55 + (context.dynamics?.bridge ? 0.3 : 0),
+            behavior: 'invert'
+        };
+    },
+    FRACTAL(rng, beat, context = {}) {
+        const energy = context.dynamics?.energy ?? 0.5;
+        const depth = rng.nextInt(2, 5 + Math.floor(context.stage || 0));
+        const scale = 0.45 / depth;
+        const offsets = [rng.nextRange(-1, 1), rng.nextRange(-1, 1), rng.nextRange(-1, 1)];
+        return {
+            id: `fractal-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'cluster',
+            children: Array.from({ length: depth * 2 }, (_, idx) => ({
+                vec4: {
+                    x: offsets[0] + scale * ((idx % 2) ? 1 : -1),
+                    y: offsets[1] + scale * ((idx & 2) ? 1 : -1),
+                    z: offsets[2] + scale * ((idx & 4) ? 1 : -1),
+                    w: rng.nextRange(-0.6, 0.6 + energy * 0.2)
+                },
+                radius: 0.035 + energy * 0.015
+            })),
+            dueBeat: beat + 2 - Math.min(0.5, energy * 0.4),
+            radius: 0.04,
+            behavior: 'chain'
+        };
+    },
+    WAVE(rng, beat, context = {}) {
+        const phase = beat * 0.5 + rng.nextRange(0, Math.PI * 2);
+        const energy = context.dynamics?.energy ?? 0.5;
+        const amplitude = 0.6 + energy * 0.25;
+        const vocal = context.dynamics?.vocal;
+        return {
+            id: `wave-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'lane',
+            vec4: {
+                x: -0.9,
+                y: Math.sin(phase) * amplitude,
+                z: Math.cos(phase * 1.2) * (0.35 + energy * 0.1),
+                w: Math.sin(phase * 0.7) * (0.35 + (context.chaos || 0.1) * 0.1)
+            },
+            vec4b: {
+                x: 0.9,
+                y: Math.sin(phase + 0.45) * amplitude,
+                z: Math.cos((phase + 0.45) * 1.2) * (0.35 + energy * 0.1),
+                w: Math.sin((phase + 0.45) * 0.7) * (0.35 + (context.chaos || 0.1) * 0.1)
+            },
+            radius: 0.05 + energy * 0.02,
+            dueBeat: beat + 1.35 - (vocal ? 0.15 : 0),
+            behavior: 'sweep'
+        };
+    },
+    CRYSTAL(rng, beat, context = {}) {
+        const spikeDir = rng.nextRange(0, Math.PI * 2);
+        const high = context.dynamics?.high ?? 0.4;
+        const stage = context.stage ?? 0;
+        const vocal = context.dynamics?.vocal;
+        const height = rng.nextRange(0.45, 0.7 + high * 0.5 + stage * 0.08);
+        return {
+            id: `crystal-${beat.toFixed(2)}-${rng.nextInt(0, 9999)}`,
+            type: 'node',
+            vec4: {
+                x: Math.cos(spikeDir) * (0.35 + high * 0.1),
+                y: height,
+                z: Math.sin(spikeDir) * (0.35 + high * 0.1),
+                w: rng.nextRange(-0.3, 0.3)
+            },
+            radius: 0.055 + high * 0.03,
+            dueBeat: beat + 1.6 - Math.min(0.4, high * 0.25) - (vocal ? 0.2 : 0),
+            behavior: 'shard'
+        };
+    }
+};
+
+const GEOMETRY_PARAMETER_BIAS = {
+    TETRA: { hueShift: 0, chaos: 0.8, speed: 1.05 },
+    CUBE: { hueShift: 12, chaos: 1.0, speed: 1.0 },
+    SPHERE: { hueShift: 48, chaos: 0.9, speed: 0.95 },
+    TORUS: { hueShift: 84, chaos: 1.1, speed: 1.1 },
+    KLEIN: { hueShift: 132, chaos: 1.3, speed: 0.9 },
+    FRACTAL: { hueShift: 210, chaos: 1.5, speed: 0.85 },
+    WAVE: { hueShift: 280, chaos: 1.2, speed: 1.2 },
+    CRYSTAL: { hueShift: 320, chaos: 0.75, speed: 0.9 }
+};
