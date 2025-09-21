@@ -1,0 +1,73 @@
+{
+  "id": "rogue-endless",
+  "system": "faceted",
+  "geometryIndex": 3,
+  "variantIndex": 3,
+  "track": {
+    "url": null,
+    "id": "metronome"
+  },
+  "bpm": 128,
+  "seed": 4096,
+  "endless": true,
+  "stageBeats": 28,
+  "route": [
+    {
+      "id": "tetra-drift",
+      "label": "Tetra Drift",
+      "system": "faceted",
+      "geometryIndex": 0,
+      "variantIndex": 0,
+      "beats": 28,
+      "eventBias": ["quickdraw"]
+    },
+    {
+      "id": "hypercube-pressure",
+      "label": "Hypercube Pressure",
+      "system": "faceted",
+      "geometryIndex": 1,
+      "variantIndex": 5,
+      "beats": 32,
+      "eventBias": ["reverse"]
+    },
+    {
+      "id": "quantum-swell",
+      "label": "Quantum Swell",
+      "system": "quantum",
+      "geometryIndex": 2,
+      "variantIndex": 2,
+      "beats": 32,
+      "rhythm": 1.35,
+      "eventBias": ["glitch"]
+    },
+    {
+      "id": "wave-breach",
+      "label": "Wave Breach",
+      "system": "holographic",
+      "geometryIndex": 24,
+      "variantIndex": 24,
+      "beats": 34,
+      "rhythm": 0.85,
+      "eventBias": ["reverse", "rhythmShift"]
+    },
+    {
+      "id": "crystal-echo",
+      "label": "Crystal Echo",
+      "system": "holographic",
+      "geometryIndex": 27,
+      "variantIndex": 27,
+      "beats": 36,
+      "eventBias": ["quickdraw", "glitch"]
+    }
+  ],
+  "difficulty": {
+    "speed": 1.0,
+    "chaos": 0.22,
+    "density": 1.05
+  },
+  "color": {
+    "hue": 208,
+    "intensity": 0.62,
+    "saturation": 0.92
+  }
+}
