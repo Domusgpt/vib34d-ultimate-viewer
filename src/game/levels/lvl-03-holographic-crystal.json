@@ -1,0 +1,27 @@
+{
+  "id": "lvl-03-holographic-crystal",
+  "system": "holographic",
+  "geometryIndex": 28,
+  "variantIndex": 28,
+  "track": {
+    "id": "suno:track_024",
+    "url": null
+  },
+  "bpm": 110,
+  "seed": 2048,
+  "planes": ["YW", "ZW"],
+  "windowMs": 170,
+  "spawn": { "pattern": "shard", "density": 0.9 },
+  "powerups": ["pulse+", "phase"],
+  "targetBeats": 80,
+  "difficulty": {
+    "speed": 0.95,
+    "chaos": 0.28,
+    "density": 1.0
+  },
+  "color": {
+    "hue": 320,
+    "intensity": 0.65,
+    "saturation": 0.9
+  }
+}
