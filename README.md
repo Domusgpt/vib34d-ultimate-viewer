@@ -15,6 +15,18 @@ python3 -m http.server 8080
 http://localhost:8080/index-clean.html
 ```
 
+### 🎯 Lattice Pulse – Mobile Roguelite
+
+The **Lattice Pulse** mode now plays as an endless, audio-reactive roguelite run that reuses the faceted, quantum, and holographic renderers without spinning up extra WebGL contexts.
+
+- Launch the PWA: `http://localhost:8080/lattice-pulse.html` and tap the start screen to arm audio playback. The game now requests microphone access so every spawn, directive, and shader nudge flows from whatever music is in the room; if access is denied the run falls back to geometry-specific groove patterns that keep the lattice alive until live audio returns.
+- Each run descends through curated depth tiers—geometry + system pairings stay fixed per depth while difficulty, spawn density, and shader LOD scale dynamically with your score, combo, and survival time.
+- Faceted, Quantum, and Holographic geometries react uniquely to the analyser stream: bass-heavy inputs build torus belts and tetra bursts, mids weave cube slides, highs lace sphere flares, and silence triggers their bespoke fallback cadences so “no music” still feels intentional instead of dead air.
+- A new Event Director listens to bass/mid/high energy to schedule drops, glitch reversals, rhythm slowdowns, and quick-draw mini events that punctuate bridges and beat collapses.
+- Audio-reactive micro directives now pop up during drops and bridges—swipe, pinch, or hold on command to earn bonus score, shields, and difficulty surges while the HUD blasts out WarioWare-style prompts.
+- Controls: **tap** to pulse, **swipe** to steer 4D rotation, **pinch** for dimension shifts, **double-tap** to trigger a time-warp slow motion, **triple-tap** to cash in an extra life, **long-press** for a shielded phase shift, and optional **tilt** for drift correction.
+- Runs as a deterministic 60 Hz loop with audio-driven spawns, adaptive LOD, and offline caching via `sw-lattice-pulse.js`; progress and best depth/scores persist locally.
+
 ## 🎮 The 4 Systems
 
 **🔷 FACETED** - Simple 2D geometric patterns  
