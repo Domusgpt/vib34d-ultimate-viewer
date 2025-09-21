@@ -1,0 +1,18 @@
+{
+  "name": "Lattice Pulse",
+  "short_name": "Pulse",
+  "start_url": "./lattice-pulse.html",
+  "display": "standalone",
+  "background_color": "#050018",
+  "theme_color": "#050018",
+  "description": "Beat-driven lattice runner built on the VIB34D visualizer stack.",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/icons/lattice-pulse-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
