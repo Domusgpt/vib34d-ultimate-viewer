@@ -10,6 +10,7 @@ import UnifiedResourceManager from './UnifiedResourceManager.js';
 import MobileOptimizedRenderer from './MobileOptimizedRenderer.js';
 import MobileTouchController from './MobileTouchController.js';
 import EnhancedPolychoraSystem from './EnhancedPolychoraSystem.js';
+import createAethericModule from '../systems/aetheric/aetheric.js';
 
 export class VIB34DUnifiedEngine {
     constructor(config = {}) {
@@ -51,6 +52,7 @@ export class VIB34DUnifiedEngine {
         
         // SYSTEMS ARCHITECTURE: 4 visualization systems sharing single context
         this.systems = new Map();
+        this.systemParameterState = new Map();
         this.activeSystem = 'faceted';
         
         // Performance monitoring
@@ -107,7 +109,7 @@ export class VIB34DUnifiedEngine {
     }
     
     /**
-     * SYSTEM INITIALIZATION: Create 4 unified visualization systems
+     * SYSTEM INITIALIZATION: Create unified visualization systems
      */
     async initializeUnifiedSystems() {
         const gl = this.canvasManager.gl || this.canvasManager.getMasterGL();
@@ -123,8 +125,9 @@ export class VIB34DUnifiedEngine {
             memoryUsage: 0,
             renderTime: 0
         });
-        
-        // 2. QUANTUM SYSTEM: Complex 3D lattice with enhanced effects  
+        this.systemParameterState.set('faceted', this.createDefaultParameters());
+
+        // 2. QUANTUM SYSTEM: Complex 3D lattice with enhanced effects
         this.systems.set('quantum', {
             name: 'Quantum',
             renderer: await this.createQuantumSystem(gl),
@@ -133,17 +136,19 @@ export class VIB34DUnifiedEngine {
             memoryUsage: 0,
             renderTime: 0
         });
-        
+        this.systemParameterState.set('quantum', this.createDefaultParameters());
+
         // 3. HOLOGRAPHIC SYSTEM: Audio-reactive visualization
         this.systems.set('holographic', {
-            name: 'Holographic', 
+            name: 'Holographic',
             renderer: await this.createHolographicSystem(gl),
             active: false,
             priority: 3,
             memoryUsage: 0,
             renderTime: 0
         });
-        
+        this.systemParameterState.set('holographic', this.createDefaultParameters());
+
         // 4. POLYCHORA SYSTEM: True 4D polytope mathematics
         this.systems.set('polychora', {
             name: 'Polychora',
@@ -153,6 +158,18 @@ export class VIB34DUnifiedEngine {
             memoryUsage: 0,
             renderTime: 0
         });
+        this.systemParameterState.set('polychora', this.createDefaultParameters());
+
+        // 5. AETHERIC SYSTEM: Screen-space interference field with 4D shadows
+        this.systems.set('aetheric', {
+            name: 'Aetheric',
+            renderer: await this.createAethericSystem(gl),
+            active: false,
+            priority: 4,
+            memoryUsage: 0,
+            renderTime: 0
+        });
+        this.systemParameterState.set('aetheric', this.createDefaultParameters());
         
         // Register viewports with unified canvas manager
         if (this.canvasManager.registerVisualizationSystem) {
@@ -327,6 +344,88 @@ export class VIB34DUnifiedEngine {
             dispose: () => {}
         };
     }
+
+    async createAethericSystem(gl) {
+        const module = createAethericModule();
+        await module.init(gl);
+
+        if (module.resize) {
+            const width = gl.drawingBufferWidth || gl.canvas.width;
+            const height = gl.drawingBufferHeight || gl.canvas.height;
+            module.resize(gl, width, height);
+        }
+
+        const state = {
+            time: 0,
+            params: {
+                rotXW: 0,
+                rotYW: 0,
+                rotZW: 0,
+                gridDensity: 15,
+                morphFactor: 1,
+                chaos: 0.2,
+                speed: 1,
+                hue: 200,
+                intensity: 0.9,
+                saturation: 0.5,
+                scale: 1
+            }
+        };
+
+        const uiToModule = {
+            rot4dXW: 'rotXW',
+            rot4dYW: 'rotYW',
+            rot4dZW: 'rotZW',
+            gridDensity: 'gridDensity',
+            morphFactor: 'morphFactor',
+            chaos: 'chaos',
+            speed: 'speed',
+            hue: 'hue',
+            intensity: 'intensity',
+            saturation: 'saturation',
+            scale: 'scale'
+        };
+
+        let lastTime = 0;
+
+        const applyParameters = (parameters = {}) => {
+            Object.entries(parameters).forEach(([key, value]) => {
+                const mapped = uiToModule[key];
+                if (mapped && value !== undefined && value !== null) {
+                    state.params[mapped] = value;
+                }
+            });
+        };
+
+        return {
+            render: (timestamp, parameters = {}) => {
+                applyParameters(parameters);
+                const currentTime = timestamp * 0.001;
+                const dt = lastTime ? currentTime - lastTime : 0;
+                lastTime = currentTime;
+                state.time = currentTime;
+                module.draw(gl, state, dt);
+            },
+            updateParameter: (name, value) => {
+                const mapped = uiToModule[name];
+                if (mapped && value !== undefined && value !== null) {
+                    state.params[mapped] = value;
+                }
+            },
+            resize: () => {
+                if (module.resize) {
+                    const width = gl.drawingBufferWidth || gl.canvas.width;
+                    const height = gl.drawingBufferHeight || gl.canvas.height;
+                    module.resize(gl, width, height);
+                }
+            },
+            dispose: () => {
+                if (module.dispose) {
+                    module.dispose(gl);
+                }
+            }
+        };
+    }
     
     setupTouchInteractions() {
         if (!this.touchController) return;
@@ -477,19 +576,33 @@ export class VIB34DUnifiedEngine {
     renderSystemToFramebuffer(gl, systemId) {
         const system = this.systems.get(systemId);
         if (system && system.active && system.renderer) {
-            system.renderer.render(this.time, this.getSystemParameters(systemId));
+            system.renderer.render(this.time * 1000, this.getSystemParameters(systemId));
         }
     }
     
-    getSystemParameters(systemName) {
-        // Return system-specific parameters
+    createDefaultParameters() {
         return {
-            time: this.time,
+            rot4dXW: 0,
+            rot4dYW: 0,
+            rot4dZW: 0,
             gridDensity: 15,
             morphFactor: 1.0,
-            intensity: 0.8,
-            // Add more parameters as needed
+            chaos: 0.2,
+            speed: 1.0,
+            hue: 200,
+            intensity: 0.9,
+            saturation: 0.5,
+            scale: 1.0
         };
+    }
+
+    getSystemParameters(systemName) {
+        const params = this.systemParameterState.get(systemName);
+        if (!params) {
+            return {};
+        }
+
+        return { ...params };
     }
     
     markSystemsDirty() {
@@ -528,7 +641,34 @@ export class VIB34DUnifiedEngine {
         console.log(`✅ Switched to ${systemName} system`);
         return true;
     }
-    
+
+    updateParameter(name, value, systemName = this.activeSystem) {
+        if (!systemName || !this.systems.has(systemName)) {
+            console.warn(`⚠️ Cannot update parameter for unknown system: ${systemName}`);
+            return;
+        }
+
+        if (!this.systemParameterState.has(systemName)) {
+            this.systemParameterState.set(systemName, this.createDefaultParameters());
+        }
+
+        const params = this.systemParameterState.get(systemName);
+        params[name] = value;
+
+        const system = this.systems.get(systemName);
+        if (system?.renderer?.updateParameter) {
+            try {
+                system.renderer.updateParameter(name, value);
+            } catch (error) {
+                console.error(`❌ Failed to update ${name} for ${systemName}:`, error);
+            }
+        }
+
+        if (this.canvasManager?.markSystemDirty) {
+            this.canvasManager.markSystemDirty(systemName);
+        }
+    }
+
     enableSystem(systemName) {
         if (this.systems.has(systemName)) {
             this.systems.get(systemName).active = true;
