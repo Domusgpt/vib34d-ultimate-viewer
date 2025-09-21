@@ -1,0 +1,27 @@
+{
+  "id": "lvl-02-quantum-sphere",
+  "system": "quantum",
+  "geometryIndex": 2,
+  "variantIndex": 10,
+  "track": {
+    "id": "suno:track_009",
+    "url": null
+  },
+  "bpm": 140,
+  "seed": 9913,
+  "planes": ["XW", "ZW"],
+  "windowMs": 140,
+  "spawn": { "pattern": "orbit", "density": 1.05 },
+  "powerups": ["phase"],
+  "targetBeats": 72,
+  "difficulty": {
+    "speed": 1.15,
+    "chaos": 0.22,
+    "density": 1.1
+  },
+  "color": {
+    "hue": 32,
+    "intensity": 0.7,
+    "saturation": 0.92
+  }
+}

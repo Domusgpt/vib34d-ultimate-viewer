@@ -15,6 +15,19 @@ python3 -m http.server 8080
 http://localhost:8080/index-clean.html
 ```
 
+### 🎯 Lattice Pulse – Mobile Game
+
+The new **Lattice Pulse** mode turns the faceted/quantum/holographic renderers into a rhythm-arcade loop.
+
+- Launch the PWA: `http://localhost:8080/lattice-pulse.html`
+- Tap the start screen to unlock audio and begin.
+- **Tap** to pulse captures, **swipe** to rotate 4D planes, **pinch** to shift dimensional depth, **double-tap** to trigger slow-motion, **long-press** to enter a phase shield, and **tilt** (optional) for drift correction.
+- Stage-based **rogue-lite climb**: the selected geometry/system stays fixed for the run while beats, density, and chaos scale every stage.
+- Audio-reactive director now detects drops, bridges, lulls, silences, rhythm shifts, and vocal spikes to inject WarioWare-style directives—Pulse Blast bursts, Hold the Phase, Swipe Sync, Freeze windows, and Quick Draws—layered atop the beat grid with bombastic callouts, glitches, reverses, and tempo warps.
+- Earn and spend pulse charges for slow-motion or bonus lives via double-tap specials, bank directive rewards for density/tempo boosts, track local best stages/scores, and keep the run going endlessly on any track.
+- Runs as a deterministic 60 Hz loop with beat-driven spawns (Suno BPM metadata) and offline caching via `sw-lattice-pulse.js`.
+- Ships with faceted, quantum, and holographic templates seeded for the rogue run starter set—each targeting 60 FPS on modern phones.
+
 ## 🎮 The 4 Systems
 
 **🔷 FACETED** - Simple 2D geometric patterns  
