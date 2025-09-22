@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lattice Pulse Alpha Harness</title>
+    <link rel="stylesheet" href="styles/lattice-pulse.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Orbitron', 'Rajdhani', sans-serif;
+            background: radial-gradient(circle at 20% 0%, #1c2540 0%, #090b1a 40%, #04050d 100%);
+            color: #f5f7ff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .alpha-shell {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header.alpha-header {
+            padding: 24px clamp(18px, 6vw, 48px) 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .alpha-title {
+            font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: #7f9cff;
+            text-shadow: 0 0 28px rgba(127, 156, 255, 0.65);
+        }
+
+        .status-text {
+            font-size: clamp(0.85rem, 1.6vw, 1rem);
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            opacity: 0.58;
+            transition: opacity 200ms ease, transform 220ms ease;
+        }
+
+        .status-text.is-visible {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .alpha-grid {
+            flex: 1;
+            display: grid;
+            gap: clamp(20px, 4vw, 32px);
+            padding: 0 clamp(18px, 6vw, 48px) clamp(32px, 6vw, 64px);
+            grid-template-columns: minmax(0, 2.25fr) minmax(0, 1fr);
+        }
+
+        @media (max-width: 960px) {
+            .alpha-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alpha-stage {
+            position: relative;
+            border-radius: 30px;
+            overflow: hidden;
+            background: linear-gradient(145deg, rgba(14, 18, 30, 0.92), rgba(4, 6, 16, 0.9));
+            border: 1px solid rgba(127, 156, 255, 0.18);
+            box-shadow:
+                0 30px 90px rgba(8, 10, 24, 0.55),
+                inset 0 0 60px rgba(127, 156, 255, 0.08);
+        }
+
+        .stage-visual {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 35%, rgba(111, 214, 255, 0.18) 0%, transparent 60%),
+                radial-gradient(circle at 15% 80%, rgba(255, 113, 206, 0.16) 0%, transparent 55%),
+                linear-gradient(160deg, rgba(5, 8, 24, 0.85), rgba(12, 17, 38, 0.9));
+            mix-blend-mode: screen;
+            pointer-events: none;
+            animation: stageDrift 14s ease-in-out infinite alternate;
+        }
+
+        @keyframes stageDrift {
+            0% { transform: scale(1.02) translate3d(0, 0, 0); }
+            100% { transform: scale(1.06) translate3d(2%, -2%, 0); }
+        }
+
+        #hud-root {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .alpha-controls {
+            background: rgba(8, 12, 26, 0.72);
+            border-radius: 26px;
+            padding: clamp(18px, 4vw, 28px);
+            border: 1px solid rgba(127, 156, 255, 0.18);
+            box-shadow: 0 20px 60px rgba(6, 8, 20, 0.55);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(18px, 3vw, 26px);
+        }
+
+        .control-group {
+            display: grid;
+            gap: 12px;
+        }
+
+        .group-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        button.control-btn {
+            flex: 1 1 auto;
+            min-width: 120px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(127, 156, 255, 0.25);
+            background: linear-gradient(135deg, rgba(16, 24, 44, 0.82), rgba(18, 34, 58, 0.9));
+            color: #f5f7ff;
+            font-family: inherit;
+            font-size: 0.8rem;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 150ms ease, box-shadow 180ms ease, border-color 160ms ease;
+        }
+
+        button.control-btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(127, 156, 255, 0.6);
+            box-shadow: 0 12px 30px rgba(56, 96, 255, 0.28);
+        }
+
+        button.control-btn:active {
+            transform: translateY(1px);
+        }
+
+        .meter-block {
+            display: grid;
+            gap: 10px;
+        }
+
+        .meter-row {
+            display: grid;
+            grid-template-columns: 96px 1fr;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .meter-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .meter-track {
+            position: relative;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(20, 28, 56, 0.65);
+            overflow: hidden;
+        }
+
+        .meter-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 6%;
+            min-width: 6%;
+            border-radius: inherit;
+            transition: width 150ms ease;
+        }
+
+        .meter-bar[data-band="low"] {
+            background: linear-gradient(90deg, rgba(111, 255, 190, 0.9), rgba(0, 255, 163, 0.6));
+        }
+
+        .meter-bar[data-band="mid"] {
+            background: linear-gradient(90deg, rgba(127, 156, 255, 0.95), rgba(99, 123, 255, 0.6));
+        }
+
+        .meter-bar[data-band="high"] {
+            background: linear-gradient(90deg, rgba(255, 113, 206, 0.92), rgba(255, 86, 186, 0.55));
+        }
+
+        .meter-bar[data-band="level"] {
+            background: linear-gradient(90deg, rgba(255, 196, 86, 0.95), rgba(255, 146, 51, 0.55));
+        }
+
+        .tempo-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .tempo-row input[type="range"] {
+            width: 100%;
+        }
+
+        .tempo-value {
+            font-size: 0.75rem;
+            letter-spacing: 0.28em;
+        }
+
+        .log-panel {
+            display: grid;
+            gap: 10px;
+        }
+
+        .log-title {
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.72;
+        }
+
+        .spawn-log {
+            background: rgba(6, 10, 22, 0.65);
+            border-radius: 16px;
+            padding: 12px 16px;
+            min-height: 140px;
+            max-height: 220px;
+            overflow: auto;
+            border: 1px solid rgba(127, 156, 255, 0.12);
+        }
+
+        .log-entry {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px;
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            padding: 6px 0;
+            opacity: 0.82;
+        }
+
+        .log-entry.log-directive {
+            color: #7f9cff;
+        }
+
+        .log-entry.log-error {
+            color: #ff718a;
+        }
+
+        .log-time {
+            opacity: 0.7;
+        }
+
+        .mic-status {
+            font-size: 0.7rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            opacity: 0.68;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(127, 156, 255, 0.15);
+            border: 1px solid rgba(127, 156, 255, 0.25);
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+        }
+
+        .density-readout {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: rgba(10, 16, 30, 0.75);
+            border: 1px solid rgba(127, 156, 255, 0.18);
+            font-size: 0.75rem;
+            letter-spacing: 0.28em;
+        }
+
+        .density-value {
+            font-size: 1rem;
+            letter-spacing: 0.22em;
+            color: #7f9cff;
+        }
+
+        @media (max-width: 720px) {
+            header.alpha-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .control-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="alpha-shell">
+        <header class="alpha-header">
+            <div class="alpha-title">Lattice Pulse · Alpha Harness</div>
+            <div id="statusText" class="status-text">Waiting…</div>
+        </header>
+        <div class="alpha-grid">
+            <section class="alpha-stage">
+                <div class="stage-visual"></div>
+                <div id="hud-root"></div>
+            </section>
+            <aside class="alpha-controls">
+                <div class="control-group">
+                    <div class="group-label">Session</div>
+                    <div class="control-row">
+                        <button class="control-btn" id="startGame">Start</button>
+                        <button class="control-btn" id="stopGame">Stop</button>
+                        <button class="control-btn" id="resolveActive">Resolve Active</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="group-label">Manual directives</div>
+                    <div class="control-row">
+                        <button class="control-btn" id="triggerGesture">Launch Gesture</button>
+                        <button class="control-btn" id="triggerQuickDraw">Force Quick Draw</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="group-label">Audio</div>
+                    <div class="control-row">
+                        <button class="control-btn" id="toggleSynthetic">Synthetic Audio: On</button>
+                        <button class="control-btn" id="connectMic">Use Microphone</button>
+                    </div>
+                    <div class="mic-status" id="micStatus">Microphone disconnected</div>
+                    <div class="tempo-row">
+                        <label for="tempoSlider" class="meter-label">Synthetic Tempo</label>
+                        <input id="tempoSlider" type="range" min="80" max="180" value="120" />
+                        <div id="tempoValue" class="tempo-value">120 BPM</div>
+                    </div>
+                </div>
+                <div class="meter-block">
+                    <div class="group-label">Audio bands</div>
+                    <div class="meter-row">
+                        <span class="meter-label">Level</span>
+                        <div class="meter-track"><div class="meter-bar" data-band="level"></div></div>
+                    </div>
+                    <div class="meter-row">
+                        <span class="meter-label">Low</span>
+                        <div class="meter-track"><div class="meter-bar" data-band="low"></div></div>
+                    </div>
+                    <div class="meter-row">
+                        <span class="meter-label">Mid</span>
+                        <div class="meter-track"><div class="meter-bar" data-band="mid"></div></div>
+                    </div>
+                    <div class="meter-row">
+                        <span class="meter-label">High</span>
+                        <div class="meter-track"><div class="meter-bar" data-band="high"></div></div>
+                    </div>
+                </div>
+                <div class="density-readout">
+                    <span>Spawn density</span>
+                    <span class="density-value" id="densityValue">1.00</span>
+                </div>
+                <div class="log-panel">
+                    <div class="log-title">Recent events</div>
+                    <div class="spawn-log" id="spawnLog"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script type="module">
+        import { LatticePulseGame } from './src/game/LatticePulseGame.js';
+
+        const hudRoot = document.getElementById('hud-root');
+        const statusText = document.getElementById('statusText');
+        const spawnLog = document.getElementById('spawnLog');
+        const densityValue = document.getElementById('densityValue');
+        const tempoSlider = document.getElementById('tempoSlider');
+        const tempoValue = document.getElementById('tempoValue');
+        const syntheticToggle = document.getElementById('toggleSynthetic');
+        const micStatus = document.getElementById('micStatus');
+
+        const meterLevel = document.querySelector('.meter-bar[data-band="level"]');
+        const meterLow = document.querySelector('.meter-bar[data-band="low"]');
+        const meterMid = document.querySelector('.meter-bar[data-band="mid"]');
+        const meterHigh = document.querySelector('.meter-bar[data-band="high"]');
+
+        let statusTimer = null;
+        const setStatus = (message) => {
+            if (!statusText) return;
+            statusText.textContent = message;
+            statusText.classList.add('is-visible');
+            if (statusTimer) {
+                clearTimeout(statusTimer);
+            }
+            statusTimer = setTimeout(() => statusText.classList.remove('is-visible'), 2200);
+        };
+
+        const clamp01 = (value) => {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return 0;
+            return Math.min(1, Math.max(0, n));
+        };
+
+        const updateMeterBar = (element, value) => {
+            if (!element) return;
+            const ratio = clamp01(value);
+            element.style.width = `${Math.max(6, ratio * 100)}%`;
+        };
+
+        const addLogEntry = (message, type = 'spawn') => {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span><span class="log-body">${message}</span>`;
+            spawnLog.prepend(entry);
+            while (spawnLog.childElementCount > 6) {
+                spawnLog.removeChild(spawnLog.lastElementChild);
+            }
+        };
+
+        const game = new LatticePulseGame({
+            hudRoot,
+            eventOptions: {
+                baseDensity: 1.15,
+                densityRange: { min: 0.45, max: 3.25 },
+                autoQuickDraw: true,
+                quickDrawThreshold: 0.82,
+            },
+            spawnOptions: {
+                beatInterval: 0.58,
+                onSpawn: (spawnEvent) => {
+                    addLogEntry(`Beat #${spawnEvent.beat} · density ${spawnEvent.density.toFixed(2)}`);
+                },
+            },
+            effectsOptions: {
+                rootElement: document.documentElement,
+                onAudioFrame: (frame) => {
+                    updateMeterBar(meterLevel, frame?.level ?? frame?.rms ?? 0);
+                    updateMeterBar(meterLow, frame?.bands?.low ?? frame?.level ?? 0);
+                    updateMeterBar(meterMid, frame?.bands?.mid ?? frame?.level ?? 0);
+                    updateMeterBar(meterHigh, frame?.bands?.high ?? frame?.level ?? 0);
+                    densityValue.textContent = game.getSpawnDensity().toFixed(2);
+                },
+                onDirectiveStart: (directive) => {
+                    setStatus(`${directive.label} active`);
+                    addLogEntry(`Directive: ${directive.label}`, 'directive');
+                },
+                onDirectiveComplete: ({ directive, result, reason }) => {
+                    const label = directive?.label ?? 'Directive';
+                    const suffix = reason === 'timeout' ? 'timed out' : (result?.success === false ? 'failed' : 'resolved');
+                    setStatus(`${label} ${suffix}`);
+                    addLogEntry(`${label} ${suffix}`, reason === 'timeout' ? 'error' : 'directive');
+                },
+                onSpawnState: (spawnDirective) => {
+                    if (spawnDirective?.paused) {
+                        setStatus('Spawns paused for directive');
+                    }
+                },
+            },
+        });
+
+        window.latticePulseGame = game;
+
+        const syncDensity = () => {
+            densityValue.textContent = game.getSpawnDensity().toFixed(2);
+        };
+
+        setInterval(syncDensity, 350);
+
+        const syntheticState = () => game.isSyntheticAudioEnabled();
+        const updateSyntheticToggle = () => {
+            syntheticToggle.textContent = `Synthetic Audio: ${syntheticState() ? 'On' : 'Off'}`;
+        };
+
+        document.getElementById('startGame').addEventListener('click', () => {
+            game.start();
+            setStatus('Game running');
+        });
+
+        document.getElementById('stopGame').addEventListener('click', () => {
+            game.stop();
+            setStatus('Game paused');
+        });
+
+        document.getElementById('triggerGesture').addEventListener('click', () => {
+            game.startGestureDirective({
+                prompt: 'Swipe Arc Alignment',
+                duration: 4200,
+                metadata: {
+                    annotation: 'Gesture directive',
+                    hint: 'Swipe to align the lattice lane',
+                    countdownHint: 'seconds',
+                },
+            });
+        });
+
+        document.getElementById('triggerQuickDraw').addEventListener('click', () => {
+            game.startQuickDraw({
+                prompt: 'Pulse the lattice!',
+                duration: 3200,
+                metadata: {
+                    annotation: 'Quick draw',
+                    hint: 'Tap during the green flash',
+                    countdownHint: 'seconds',
+                },
+            });
+        });
+
+        document.getElementById('resolveActive').addEventListener('click', () => {
+            const active = game.getActiveDirectives();
+            if (!active.length) {
+                setStatus('No active directive');
+                return;
+            }
+            const directive = active[0];
+            game.resolveDirective(directive.type, { success: true });
+            setStatus(`${directive.label} resolved`);
+        });
+
+        syntheticToggle.addEventListener('click', () => {
+            const enabled = !syntheticState();
+            game.setSyntheticAudioEnabled(enabled);
+            updateSyntheticToggle();
+            setStatus(`Synthetic audio ${enabled ? 'enabled' : 'disabled'}`);
+        });
+
+        document.getElementById('connectMic').addEventListener('click', async () => {
+            try {
+                await game.connectToMicrophone();
+                game.setSyntheticAudioEnabled(false);
+                updateSyntheticToggle();
+                micStatus.textContent = 'Microphone connected';
+                setStatus('Microphone connected');
+            } catch (error) {
+                console.error(error);
+                micStatus.textContent = 'Microphone unavailable';
+                setStatus('Microphone unavailable');
+            }
+        });
+
+        tempoSlider.addEventListener('input', (event) => {
+            const tempo = Number(event.target.value);
+            game.setSyntheticTempo(tempo);
+            tempoValue.textContent = `${tempo} BPM`;
+        });
+
+        window.addEventListener('lattice:directive-start', (event) => {
+            if (event.detail?.directive) {
+                addLogEntry(`Directive start: ${event.detail.directive.label}`, 'directive');
+            }
+        });
+
+        window.addEventListener('lattice:directive-complete', (event) => {
+            if (event.detail?.directive) {
+                const suffix = event.detail?.reason === 'timeout' ? 'timed out' : 'completed';
+                addLogEntry(`Directive ${suffix}: ${event.detail.directive.label}`, event.detail?.reason === 'timeout' ? 'error' : 'directive');
+            }
+        });
+
+        game.start();
+        updateSyntheticToggle();
+        setStatus('Game running · synthetic audio demo');
+        syncDensity();
+    </script>
+</body>
+</html>

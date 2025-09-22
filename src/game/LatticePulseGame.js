@@ -5,6 +5,7 @@ import { HUDRenderer } from './ui/HUDRenderer.js';
 import { AudioReactivityEngine } from './AudioReactivityEngine.js';
 
 const defaultClock = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 export class LatticePulseGame {
     constructor(options = {}) {
@@ -21,6 +22,11 @@ export class LatticePulseGame {
             spawnOptions = {},
             effectsOptions = {},
             audioOptions = {},
+            onSpawn,
+            spawnCallback,
+            syntheticAudio = true,
+            syntheticTempo = 120,
+            syntheticVariance = 0.25,
         } = options;
 
         this.clock = typeof clock === 'function' ? clock : defaultClock;
@@ -35,12 +41,31 @@ export class LatticePulseGame {
         this.hudRenderer = hudRenderer || new HUDRenderer(hudRoot, hudOptions);
         this.effectsManager = effectsManager || new EffectsManager(effectsOptions);
 
+        const spawnHandler = typeof onSpawn === 'function'
+            ? onSpawn
+            : (typeof spawnCallback === 'function' ? spawnCallback : null);
+        if (spawnHandler) {
+            this.spawnSystem.setSpawnCallback(spawnHandler);
+        }
+
         this.spawnSystem.onPause = (directive) => this.handleSpawnPause(directive);
         this.spawnSystem.onResume = (directive) => this.handleSpawnResume(directive);
 
         this.isRunning = false;
         this.lastTick = null;
         this.loopHandle = null;
+
+        const resolvedTempo = Math.max(30, Number(syntheticTempo) || 120);
+        this.syntheticAudio = {
+            enabled: syntheticAudio !== false,
+            tempo: resolvedTempo,
+            variance: Math.max(0, Number(syntheticVariance) || 0.25),
+            accumulator: 0,
+            beat: 0,
+            lastFrame: null,
+        };
+
+        this.latestAudioFrame = null;
     }
 
     start() {
@@ -49,6 +74,14 @@ export class LatticePulseGame {
         }
         this.isRunning = true;
         this.lastTick = this.clock();
+        if (this.syntheticAudio) {
+            this.syntheticAudio.accumulator = 0;
+            this.syntheticAudio.beat = 0;
+            this.syntheticAudio.lastFrame = null;
+        }
+        if (typeof this.spawnSystem?.reset === 'function') {
+            this.spawnSystem.reset();
+        }
         this.scheduleNextFrame();
         if (this.audioEngine?.resume) {
             this.audioEngine.resume().catch(() => {});
@@ -67,6 +100,9 @@ export class LatticePulseGame {
         }
         if (this.audioEngine?.suspend) {
             this.audioEngine.suspend().catch(() => {});
+        }
+        if (typeof this.spawnSystem?.reset === 'function') {
+            this.spawnSystem.reset();
         }
     }
 
@@ -94,19 +130,88 @@ export class LatticePulseGame {
         this.scheduleNextFrame();
     }
 
+    shouldUseSyntheticAudio() {
+        if (!this.syntheticAudio?.enabled) {
+            return false;
+        }
+        if (!this.audioEngine) {
+            return true;
+        }
+        if (typeof this.audioEngine.isConnected === 'function') {
+            return !this.audioEngine.isConnected();
+        }
+        return false;
+    }
+
+    generateSyntheticAudioFrame(deltaSeconds, currentTime) {
+        if (!this.syntheticAudio || deltaSeconds <= 0) {
+            return this.syntheticAudio?.lastFrame || null;
+        }
+
+        const secondsPerBeat = 60 / this.syntheticAudio.tempo;
+        this.syntheticAudio.accumulator += deltaSeconds;
+
+        let beatImpulse = 0;
+        while (this.syntheticAudio.accumulator >= secondsPerBeat) {
+            this.syntheticAudio.accumulator -= secondsPerBeat;
+            this.syntheticAudio.beat += 1;
+            beatImpulse = 1;
+        }
+
+        const phase = clamp(this.syntheticAudio.accumulator / secondsPerBeat, 0, 1);
+        const envelope = Math.sin(Math.PI * phase);
+        const noise = (Math.random() * 2 - 1) * this.syntheticAudio.variance;
+        const baseLevel = clamp(envelope * 0.75 + beatImpulse * 0.3 + noise, 0, 1);
+
+        const frame = {
+            timestamp: currentTime,
+            level: baseLevel,
+            rms: baseLevel * 0.7,
+            peak: clamp(baseLevel + beatImpulse * 0.25, 0, 1),
+            bands: {
+                low: clamp(baseLevel * 0.9 + beatImpulse * 0.1, 0, 1),
+                mid: clamp((0.5 + envelope * 0.4) + noise * 0.2, 0, 1),
+                high: clamp((1 - phase) * 0.6 + beatImpulse * 0.3, 0, 1),
+            },
+        };
+
+        this.syntheticAudio.lastFrame = frame;
+        return frame;
+    }
+
     tick(deltaMs) {
         const currentTime = this.clock();
-        const { expired } = this.eventDirector.update(currentTime);
+        const deltaSeconds = Math.max(0, deltaMs / 1000);
+
+        if (this.shouldUseSyntheticAudio()) {
+            const syntheticFrame = this.generateSyntheticAudioFrame(deltaSeconds, currentTime);
+            if (syntheticFrame) {
+                this.eventDirector.submitAudioFrame(syntheticFrame, currentTime);
+                this.latestAudioFrame = syntheticFrame;
+            }
+        }
+
+        const { expired, audioFrame } = this.eventDirector.update(currentTime);
+        if (audioFrame) {
+            this.latestAudioFrame = audioFrame;
+        }
 
         expired.forEach((directive) => this.handleDirectiveExpired(directive));
         this.syncDirectiveOverlay(currentTime);
 
         const spawnDirective = this.eventDirector.getSpawnDirectives(currentTime);
-        const deltaSeconds = Math.max(0, deltaMs / 1000);
         this.spawnSystem.update(deltaSeconds, spawnDirective);
 
         if (typeof this.effectsManager.updateAmbientDirective === 'function') {
             this.effectsManager.updateAmbientDirective(spawnDirective);
+        }
+
+        const frameForEffects = spawnDirective?.audioFrame || audioFrame || this.latestAudioFrame;
+        if (frameForEffects) {
+            this.latestAudioFrame = frameForEffects;
+        }
+        if (frameForEffects && typeof this.effectsManager.updateAudioProfile === 'function') {
+            this.effectsManager.updateAudioProfile(frameForEffects);
         }
     }
 
@@ -136,7 +241,8 @@ export class LatticePulseGame {
     }
 
     resolveDirective(type, result = {}) {
-        const directive = this.eventDirector.resolveDirective(type, result);
+        const completedAt = this.clock();
+        const directive = this.eventDirector.resolveDirective(type, result, completedAt);
         if (!directive) {
             return null;
         }
@@ -233,8 +339,74 @@ export class LatticePulseGame {
         this.syncDirectiveOverlay(this.clock());
     }
 
+    setSpawnHandler(callback) {
+        if (this.spawnSystem) {
+            this.spawnSystem.setSpawnCallback(callback);
+        }
+    }
+
+    setSyntheticAudioEnabled(enabled) {
+        if (!this.syntheticAudio) {
+            return;
+        }
+        this.syntheticAudio.enabled = Boolean(enabled);
+    }
+
+    isSyntheticAudioEnabled() {
+        return Boolean(this.syntheticAudio?.enabled);
+    }
+
+    setSyntheticTempo(tempo) {
+        if (!this.syntheticAudio) {
+            return;
+        }
+        const resolved = Math.max(30, Number(tempo) || this.syntheticAudio.tempo || 120);
+        this.syntheticAudio.tempo = resolved;
+    }
+
+    async connectToMicrophone(constraints = { audio: true }) {
+        if (!this.audioEngine?.connectToMic) {
+            throw new Error('Audio engine does not support microphone connections in this environment.');
+        }
+        const stream = await this.audioEngine.connectToMic(constraints);
+        this.syntheticAudio.lastFrame = null;
+        return stream;
+    }
+
+    connectToAudioElement(element) {
+        if (!this.audioEngine?.connectToMediaElement) {
+            return null;
+        }
+        const frame = this.audioEngine.connectToMediaElement(element);
+        this.syntheticAudio.lastFrame = null;
+        return frame;
+    }
+
+    disconnectAudioSource() {
+        if (this.audioEngine?.disconnect) {
+            this.audioEngine.disconnect();
+        }
+    }
+
+    destroy() {
+        this.stop();
+        if (this.audioEngine?.dispose) {
+            this.audioEngine.dispose();
+        }
+        this.spawnSystem.onPause = null;
+        this.spawnSystem.onResume = null;
+    }
+
+    getActiveDirectives() {
+        return this.eventDirector.getActiveDirectives();
+    }
+
+    getSpawnDensity() {
+        return this.eventDirector.getCurrentDensity();
+    }
+
     getLatestAudioFrame() {
-        return this.eventDirector.getLastAudioFrame();
+        return this.latestAudioFrame || this.eventDirector.getLastAudioFrame();
     }
 }
 

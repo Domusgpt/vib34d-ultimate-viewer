@@ -26,6 +26,7 @@ export class AudioReactivityEngine {
         this.mediaElement = null;
         this.monitorNode = null;
         this.stream = null;
+        this.connected = false;
 
         this.timeDomainData = null;
         this.frequencyData = null;
@@ -99,6 +100,8 @@ export class AudioReactivityEngine {
             analyser.connect(this.context.destination);
         }
 
+        this.connected = true;
+
         return analyser;
     }
 
@@ -122,6 +125,7 @@ export class AudioReactivityEngine {
 
         this.timeDomainData = null;
         this.frequencyData = null;
+        this.connected = false;
     }
 
     async connectToMic(constraints = { audio: true }) {
@@ -165,6 +169,10 @@ export class AudioReactivityEngine {
         return this.frame;
     }
 
+    disconnect() {
+        this._disconnectSource();
+    }
+
     async resume() {
         if (!this.context) {
             return undefined;
@@ -199,6 +207,14 @@ export class AudioReactivityEngine {
             try { this.context.close(); } catch (error) { /* noop */ }
             this.context = null;
         }
+    }
+
+    isConnected() {
+        return this.connected;
+    }
+
+    getLastFrame() {
+        return this.frame;
     }
 
     _calculateBands() {

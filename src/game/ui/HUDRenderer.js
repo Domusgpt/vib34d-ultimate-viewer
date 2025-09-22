@@ -69,6 +69,8 @@ export class HUDRenderer {
         const label = createElement('div', 'directive-overlay__label');
         const prompt = createElement('div', 'directive-overlay__prompt');
         const annotation = createElement('div', 'directive-overlay__annotation', 'Directive Active');
+        const hint = createElement('div', 'directive-overlay__hint');
+        hint.classList.add(CLASS_HIDDEN);
 
         const badges = createElement('div', 'directive-overlay__badges');
         const difficultyBadge = createElement('div', 'directive-overlay__badge');
@@ -87,6 +89,7 @@ export class HUDRenderer {
         panel.appendChild(label);
         panel.appendChild(prompt);
         panel.appendChild(annotation);
+        panel.appendChild(hint);
         panel.appendChild(badges);
         panel.appendChild(countdown);
         overlay.appendChild(panel);
@@ -97,11 +100,13 @@ export class HUDRenderer {
         this.label = label;
         this.prompt = prompt;
         this.annotation = annotation;
+        this.hint = hint;
         this.badges = badges;
         this.difficultyBadge = difficultyBadge;
         this.countdown = countdown;
         this.countdownRing = countdownRing;
         this.countdownNumber = countdownNumber;
+        this.countdownHint = countdownHint;
     }
 
     getActiveDirective() {
@@ -151,6 +156,22 @@ export class HUDRenderer {
             this.annotation.textContent = directive.metadata?.annotation || 'Directive Active';
         }
 
+        if (this.hint) {
+            const hintText = directive.metadata?.hint || directive.metadata?.gesture || directive.metadata?.action || '';
+            if (hintText) {
+                this.hint.textContent = hintText;
+                this.hint.classList.remove(CLASS_HIDDEN);
+            } else {
+                this.hint.classList.add(CLASS_HIDDEN);
+                this.hint.textContent = '';
+            }
+        }
+
+        if (this.countdownHint) {
+            const hintLabel = directive.metadata?.countdownHint || 'seconds';
+            this.countdownHint.textContent = hintLabel;
+        }
+
         if (this.difficultyBadge) {
             if (directive.difficulty) {
                 this.difficultyBadge.textContent = String(directive.difficulty).toUpperCase();
@@ -191,6 +212,10 @@ export class HUDRenderer {
         const duration = target.duration ?? target.remainingMs ?? 0;
         const remaining = target.remainingMs ?? (target.countdownSeconds != null ? target.countdownSeconds * 1000 : duration);
 
+        if (this.countdownHint && target.metadata?.countdownHint) {
+            this.countdownHint.textContent = target.metadata.countdownHint;
+        }
+
         if (this.countdownRing) {
             if (duration > 0 && remaining != null) {
                 const progress = Math.max(0, Math.min(1, remaining / duration));
@@ -228,6 +253,10 @@ export class HUDRenderer {
             this.currentOverlayClass = null;
         }
         this.lastCountdownId = null;
+        if (this.hint) {
+            this.hint.classList.add(CLASS_HIDDEN);
+            this.hint.textContent = '';
+        }
     }
 }
 

@@ -4,6 +4,13 @@ const DEFAULT_COLORS = {
     fallback: '#7f9cff',
 };
 
+const clamp01 = (value) => {
+    if (!Number.isFinite(value)) {
+        return 0;
+    }
+    return Math.min(1, Math.max(0, value));
+};
+
 const getAccentColor = (directive) => {
     if (!directive) {
         return DEFAULT_COLORS.fallback;
@@ -122,6 +129,32 @@ export class EffectsManager {
         if (typeof this.options.onSpawnState === 'function') {
             this.options.onSpawnState(spawnDirective);
         }
+    }
+
+    updateAudioProfile(frame) {
+        if (typeof this.options.onAudioFrame === 'function') {
+            this.options.onAudioFrame(frame);
+        }
+
+        if (!this.rootElement) {
+            return;
+        }
+
+        if (!frame) {
+            this.rootElement.style.setProperty('--lp-audio-level', '0');
+            this.rootElement.style.setProperty('--lp-audio-band-low', '0');
+            this.rootElement.style.setProperty('--lp-audio-band-mid', '0');
+            this.rootElement.style.setProperty('--lp-audio-band-high', '0');
+            return;
+        }
+
+        const level = clamp01(frame.level ?? frame.rms ?? 0);
+        const bands = frame.bands || {};
+
+        this.rootElement.style.setProperty('--lp-audio-level', level.toFixed(3));
+        this.rootElement.style.setProperty('--lp-audio-band-low', clamp01(bands.low ?? level).toFixed(3));
+        this.rootElement.style.setProperty('--lp-audio-band-mid', clamp01(bands.mid ?? level).toFixed(3));
+        this.rootElement.style.setProperty('--lp-audio-band-high', clamp01(bands.high ?? level).toFixed(3));
     }
 }
 

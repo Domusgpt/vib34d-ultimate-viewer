@@ -19,6 +19,8 @@ export class SpawnSystem {
         this.paused = false;
         this.onPause = null;
         this.onResume = null;
+        this.totalSpawns = 0;
+        this.beatCounter = 0;
     }
 
     setSpawnCallback(callback) {
@@ -68,11 +70,28 @@ export class SpawnSystem {
         }
 
         for (let i = 0; i < spawnCount; i += 1) {
+            const timestamp = Date.now();
+            const index = this.totalSpawns;
+            this.totalSpawns += 1;
+            this.beatCounter += 1;
             this.onSpawn({
-                timestamp: Date.now(),
+                timestamp,
                 directive: spawnDirective?.directive || null,
+                density,
+                beatInterval,
+                index,
+                beat: this.beatCounter,
+                audioFrame: spawnDirective?.audioFrame || null,
             });
         }
+    }
+
+    reset() {
+        this.elapsed = 0;
+        this.lastDirective = null;
+        this.totalSpawns = 0;
+        this.beatCounter = 0;
+        this.paused = false;
     }
 }
 
