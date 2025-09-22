@@ -1,0 +1,85 @@
+.directive-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+    transition: opacity 180ms ease, transform 240ms ease;
+    font-family: 'Orbitron', 'Rajdhani', 'Montserrat', sans-serif;
+    --directive-accent: #6ea8ff;
+    z-index: 20;
+}
+
+.directive-overlay.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.directive-overlay__panel {
+    padding: clamp(24px, 6vw, 48px);
+    border-radius: 24px;
+    background: rgba(6, 10, 18, 0.86);
+    box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(0, 0, 0, 0.25);
+    min-width: min(420px, 90vw);
+    text-align: center;
+    backdrop-filter: blur(16px);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.directive-overlay__label {
+    font-size: clamp(0.8rem, 1.8vw, 1.1rem);
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--directive-accent);
+    opacity: 0.85;
+}
+
+.directive-overlay__prompt {
+    margin-top: clamp(12px, 2.4vw, 20px);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #f5f8ff;
+}
+
+.directive-overlay__annotation {
+    margin-top: clamp(8px, 1.8vw, 14px);
+    font-size: clamp(0.75rem, 1.4vw, 0.95rem);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.directive-overlay__countdown {
+    margin: clamp(20px, 3vw, 28px) auto 0;
+    width: clamp(120px, 22vw, 160px);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 0 40px rgba(30, 120, 255, 0.15);
+}
+
+.directive-overlay__countdown-number {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--directive-accent);
+}
+
+.directive-overlay[data-type='gestureDirective'] {
+    --directive-accent: #45ffe7;
+}
+
+.directive-overlay[data-type='quickDraw'] {
+    --directive-accent: #ff3a73;
+}
