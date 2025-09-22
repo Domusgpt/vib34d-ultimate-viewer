@@ -1,395 +1,128 @@
-/**
- * EffectsManager coordinates high-impact visuals that accompany directive prompts.
- * It attempts to notify shader controllers or active targets when directives begin
- * or conclude so the player receives unmistakable feedback.
- */
+const DEFAULT_COLORS = {
+    gestureDirective: '#45ffe7',
+    quickDraw: '#ff3a73',
+    fallback: '#7f9cff',
+};
+
+const getAccentColor = (directive) => {
+    if (!directive) {
+        return DEFAULT_COLORS.fallback;
+    }
+    if (directive.colorPalette?.accent) {
+        return directive.colorPalette.accent;
+    }
+    if (directive.color) {
+        return directive.color;
+    }
+    return DEFAULT_COLORS[directive.type] || DEFAULT_COLORS.fallback;
+};
+
+const ensureRootElement = (root) => {
+    if (root) {
+        return root;
+    }
+    if (typeof document === 'undefined') {
+        return null;
+    }
+    return document.documentElement;
+};
+
 export class EffectsManager {
     constructor(options = {}) {
-        const {
-            shaderController = null,
-            targetCollection = null,
-            onDirectiveStart = null,
-            onDirectiveComplete = null,
-            colors = {},
-            pulseDuration = 1200,
-        } = options;
-
-        this.shaderController = shaderController;
-        this.targetCollection = targetCollection;
-        this.onStartCallback = typeof onDirectiveStart === 'function' ? onDirectiveStart : null;
-        this.onCompleteCallback = typeof onDirectiveComplete === 'function' ? onDirectiveComplete : null;
-        this.pulseDuration = pulseDuration;
-
-        this.colors = {
-            gestureDirective: '#3fffe4',
-            quickDraw: '#ff2f6d',
-            resolve: '#66a5ff',
-            default: '#ffffff',
-            ...colors,
-        };
-
-        this.activeEffect = null;
-        this.ambientEffect = null;
+        this.options = { ...options };
+        this.rootElement = ensureRootElement(this.options.rootElement);
+        this.activeDirectiveId = null;
     }
 
-    getEffectColor(type) {
-        return this.colors[type] || this.colors.default;
+    dispatchEvent(name, detail) {
+        if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') {
+            return;
+        }
+        try {
+            let event;
+            if (typeof CustomEvent === 'function') {
+                event = new CustomEvent(name, { detail });
+            } else if (typeof document !== 'undefined' && document.createEvent) {
+                event = document.createEvent('CustomEvent');
+                event.initCustomEvent(name, false, false, detail);
+            }
+
+            if (event) {
+                window.dispatchEvent(event);
+            }
+        } catch (error) {
+            // Ignore dispatch errors in non-browser environments.
+        }
+    }
+
+    applyDirectiveTheme(directive) {
+        if (!this.rootElement) {
+            return;
+        }
+
+        const accent = getAccentColor(directive);
+        this.rootElement.classList.add('lp-directive-active');
+        this.rootElement.style.setProperty('--lp-directive-accent', accent);
+
+        if (directive?.colorPalette?.background) {
+            this.rootElement.style.setProperty('--lp-directive-overlay', directive.colorPalette.background);
+        }
+
+        if (typeof this.options.onDirectiveAccent === 'function') {
+            this.options.onDirectiveAccent({ accent, directive });
+        }
+    }
+
+    clearDirectiveTheme() {
+        if (!this.rootElement) {
+            return;
+        }
+        this.rootElement.classList.remove('lp-directive-active');
+        this.rootElement.classList.remove('lp-spawn-paused');
+        this.rootElement.style.removeProperty('--lp-directive-accent');
+        this.rootElement.style.removeProperty('--lp-directive-overlay');
     }
 
     handleDirectiveStart(directive) {
-        if (!directive) {
-            return;
+        this.activeDirectiveId = directive?.id || null;
+        this.applyDirectiveTheme(directive);
+        if (typeof this.options.onDirectiveStart === 'function') {
+            this.options.onDirectiveStart(directive);
         }
-
-        const color = this.getEffectColor(directive.type);
-        this.activeEffect = {
-            directive,
-            color,
-            startedAt: typeof performance !== 'undefined' ? performance.now() : Date.now(),
-            shaderEffect: directive.shaderEffect || directive.metadata?.shaderEffect || null,
-            pattern: directive.pattern || null,
-        };
-
-        this.applyShaderFlash(color, directive);
-        this.tintActiveTargets(color, directive);
-        this.applyAudioReactiveEffect(this.activeEffect.shaderEffect, directive);
-        this.broadcastPatternToTargets(this.activeEffect.pattern, directive);
-
-        if (this.onStartCallback) {
-            this.onStartCallback({ directive, color });
-        }
+        this.dispatchEvent('lattice:directive-start', { directive });
     }
 
-    handleDirectiveComplete(payload = {}) {
-        const directive = payload.directive || this.activeEffect?.directive;
-        const color = this.activeEffect?.color || this.getEffectColor('resolve');
-
-        this.releaseShaderFlash(directive, payload);
-        this.clearTargetTint(payload);
-        this.releaseAudioReactiveEffect(directive, payload);
-        this.broadcastPatternToTargets(null, directive, true);
-
-        if (this.onCompleteCallback) {
-            this.onCompleteCallback({ directive, color, payload });
+    handleDirectiveComplete(event = {}) {
+        const { directive } = event;
+        if (!directive || directive.id === this.activeDirectiveId) {
+            this.activeDirectiveId = null;
+            this.clearDirectiveTheme();
         }
 
-        this.activeEffect = null;
+        if (typeof this.options.onDirectiveComplete === 'function') {
+            this.options.onDirectiveComplete(event);
+        }
+        this.dispatchEvent('lattice:directive-complete', event);
     }
 
-    applyShaderFlash(color, directive) {
-        if (!this.shaderController) {
-            return;
-        }
-
-        if (typeof this.shaderController.triggerDirectiveStart === 'function') {
-            this.shaderController.triggerDirectiveStart({ color, directive });
-            return;
-        }
-
-        if (typeof this.shaderController.queueFlash === 'function') {
-            this.shaderController.queueFlash({
-                color,
-                duration: this.pulseDuration,
-                intensity: 1,
-                source: 'directive',
-            });
-            return;
-        }
-
-        if (typeof this.shaderController.setUniform === 'function') {
-            try {
-                this.shaderController.setUniform('uDirectiveFlashColor', color);
-                this.shaderController.setUniform('uDirectiveFlashStrength', 1.0);
-            } catch (error) {
-                // Ignore controllers that do not expose shader uniform setters.
-            }
-        }
-    }
-
-    releaseShaderFlash(directive, payload) {
-        if (!this.shaderController) {
-            return;
-        }
-
-        if (typeof this.shaderController.triggerDirectiveResolve === 'function') {
-            this.shaderController.triggerDirectiveResolve({ directive, payload });
-            return;
-        }
-
-        if (typeof this.shaderController.queueFlash === 'function') {
-            this.shaderController.queueFlash({
-                color: this.getEffectColor('resolve'),
-                duration: this.pulseDuration * 0.6,
-                intensity: 0.6,
-                source: 'directive-resolve',
-            });
-            return;
-        }
-
-        if (typeof this.shaderController.setUniform === 'function') {
-            try {
-                this.shaderController.setUniform('uDirectiveFlashStrength', 0.0);
-            } catch (error) {
-                // Ignore controllers that do not expose shader uniform setters.
-            }
-        }
-    }
-
-    tintActiveTargets(color, directive) {
-        if (!this.targetCollection) {
-            return;
-        }
-
-        if (typeof this.targetCollection.setDirectiveTint === 'function') {
-            this.targetCollection.setDirectiveTint(color, directive);
-            return;
-        }
-
-        if (Array.isArray(this.targetCollection)) {
-            this.targetCollection.forEach((target) => {
-                if (!target) {
-                    return;
-                }
-
-                if (typeof target.setTint === 'function') {
-                    target.setTint(color, this.pulseDuration);
-                } else if (target.material && 'tint' in target.material) {
-                    target.material.tint = color;
-                } else if (target.style) {
-                    target.style.setProperty('--directive-tint', color);
-                }
-            });
-            return;
-        }
-
-        if (typeof this.targetCollection === 'object' && typeof this.targetCollection.applyTint === 'function') {
-            this.targetCollection.applyTint(color, directive);
-        }
-    }
-
-    clearTargetTint(payload) {
-        if (!this.targetCollection) {
-            return;
-        }
-
-        if (typeof this.targetCollection.clearDirectiveTint === 'function') {
-            this.targetCollection.clearDirectiveTint(payload);
-            return;
-        }
-
-        if (Array.isArray(this.targetCollection)) {
-            this.targetCollection.forEach((target) => {
-                if (!target) {
-                    return;
-                }
-
-                if (typeof target.clearTint === 'function') {
-                    target.clearTint(payload);
-                } else if (target.material && 'tint' in target.material) {
-                    target.material.tint = null;
-                } else if (target.style) {
-                    target.style.removeProperty('--directive-tint');
-                    target.style.removeProperty('--directive-pattern-accent');
-                }
-            });
-        }
-    }
-
-    applyAudioReactiveEffect(effect, directive) {
-        const resolvedEffect = effect || directive?.shaderEffect || directive?.metadata?.shaderEffect;
-        if (!resolvedEffect) {
-            return;
-        }
-
-        if (this.shaderController) {
-            if (typeof this.shaderController.applyReactiveEffect === 'function') {
-                this.shaderController.applyReactiveEffect(resolvedEffect, directive);
-            } else if (typeof this.shaderController.setUniform === 'function') {
-                this.applyShaderEffectUniforms(resolvedEffect);
-            }
-        }
-
-        if (this.targetCollection) {
-            if (typeof this.targetCollection.applyShaderEffect === 'function') {
-                this.targetCollection.applyShaderEffect(resolvedEffect, directive);
-            } else if (Array.isArray(this.targetCollection)) {
-                this.targetCollection.forEach((target) => {
-                    if (target && typeof target.applyShaderEffect === 'function') {
-                        target.applyShaderEffect(resolvedEffect, directive);
-                    }
-                });
-            }
-        }
-    }
-
-    releaseAudioReactiveEffect(directive, payload) {
-        const effect = this.activeEffect?.shaderEffect || directive?.shaderEffect;
-        if (!effect) {
-            return;
-        }
-
-        if (this.shaderController) {
-            if (typeof this.shaderController.clearReactiveEffect === 'function') {
-                this.shaderController.clearReactiveEffect(effect, directive, payload);
-            } else if (typeof this.shaderController.setUniform === 'function') {
-                this.resetShaderEffectUniforms(effect);
-            }
-        }
-
-        if (this.targetCollection) {
-            if (typeof this.targetCollection.clearShaderEffect === 'function') {
-                this.targetCollection.clearShaderEffect(effect, directive, payload);
-            } else if (Array.isArray(this.targetCollection)) {
-                this.targetCollection.forEach((target) => {
-                    if (target && typeof target.clearShaderEffect === 'function') {
-                        target.clearShaderEffect(effect, directive, payload);
-                    }
-                });
-            }
-        }
-    }
-
-    applyShaderEffectUniforms(effect) {
-        try {
-            switch (effect.type) {
-            case 'color-invert':
-                this.shaderController.setUniform('uDirectiveInvertStrength', effect.intensity ?? 0.6);
-                break;
-            case 'chromatic-aberration':
-                this.shaderController.setUniform('uDirectiveChromatic', effect.intensity ?? 0.4);
-                break;
-            case 'bloom-pulse':
-                this.shaderController.setUniform('uDirectiveBloom', effect.intensity ?? 0.5);
-                break;
-            case 'glow-pulse':
-                this.shaderController.setUniform('uDirectiveGlow', effect.intensity ?? 0.6);
-                break;
-            default:
-                this.shaderController.setUniform('uDirectiveEffectIntensity', effect.intensity ?? 0.5);
-            }
-        } catch (error) {
-            // Ignore uniform application failures for controllers that do not expose setters.
-        }
-    }
-
-    resetShaderEffectUniforms(effect) {
-        try {
-            switch (effect.type) {
-            case 'color-invert':
-                this.shaderController.setUniform('uDirectiveInvertStrength', 0);
-                break;
-            case 'chromatic-aberration':
-                this.shaderController.setUniform('uDirectiveChromatic', 0);
-                break;
-            case 'bloom-pulse':
-                this.shaderController.setUniform('uDirectiveBloom', 0);
-                break;
-            case 'glow-pulse':
-                this.shaderController.setUniform('uDirectiveGlow', 0);
-                break;
-            default:
-                this.shaderController.setUniform('uDirectiveEffectIntensity', 0);
-            }
-        } catch (error) {
-            // Ignore uniform resets when unsupported.
-        }
-    }
-
-    broadcastPatternToTargets(pattern, directive, clear = false) {
-        if (!this.targetCollection) {
-            return;
-        }
-
-        if (typeof this.targetCollection.applyPattern === 'function') {
-            if (clear && typeof this.targetCollection.clearPattern === 'function') {
-                this.targetCollection.clearPattern(directive);
-            } else {
-                this.targetCollection.applyPattern(pattern, directive);
+    updateAmbientDirective(spawnDirective) {
+        if (!this.rootElement) {
+            if (typeof this.options.onSpawnState === 'function') {
+                this.options.onSpawnState(spawnDirective);
             }
             return;
         }
 
-        if (Array.isArray(this.targetCollection)) {
-            this.targetCollection.forEach((target) => {
-                if (!target) {
-                    return;
-                }
-
-                if (clear) {
-                    if (typeof target.clearPattern === 'function') {
-                        target.clearPattern(directive);
-                    } else if (target.style) {
-                        target.style.removeProperty('--directive-pattern-accent');
-                    }
-                    return;
-                }
-
-                if (typeof target.applyPattern === 'function') {
-                    target.applyPattern(pattern, directive);
-                } else if (target.style && pattern?.colorPalette?.accent) {
-                    target.style.setProperty('--directive-pattern-accent', pattern.colorPalette.accent);
-                }
-            });
-        }
-    }
-
-    updateAmbientDirective(spawnDirective = {}) {
-        const effect = spawnDirective?.shaderEffect;
-        if (!effect || spawnDirective.paused) {
-            this.releaseAmbientEffect();
-            return;
+        if (spawnDirective?.paused) {
+            this.rootElement.classList.add('lp-spawn-paused');
+        } else {
+            this.rootElement.classList.remove('lp-spawn-paused');
         }
 
-        if (this.ambientEffect && this.compareEffects(effect, this.ambientEffect.effect)) {
-            if (this.shaderController && typeof this.shaderController.updateAmbientEffect === 'function') {
-                this.shaderController.updateAmbientEffect(effect, spawnDirective);
-            }
-            this.ambientEffect.directive = spawnDirective;
-            return;
+        if (typeof this.options.onSpawnState === 'function') {
+            this.options.onSpawnState(spawnDirective);
         }
-
-        this.applyAmbientEffect(effect, spawnDirective);
-    }
-
-    applyAmbientEffect(effect, directive) {
-        this.releaseAmbientEffect();
-        this.ambientEffect = { effect: { ...effect }, directive };
-
-        if (this.shaderController) {
-            if (typeof this.shaderController.applyAmbientEffect === 'function') {
-                this.shaderController.applyAmbientEffect(effect, directive);
-            } else if (typeof this.shaderController.setUniform === 'function') {
-                this.applyShaderEffectUniforms(effect);
-            }
-        }
-    }
-
-    releaseAmbientEffect() {
-        if (!this.ambientEffect) {
-            return;
-        }
-
-        if (this.shaderController) {
-            if (typeof this.shaderController.clearAmbientEffect === 'function') {
-                this.shaderController.clearAmbientEffect(this.ambientEffect.effect, this.ambientEffect.directive);
-            } else if (typeof this.shaderController.setUniform === 'function') {
-                this.resetShaderEffectUniforms(this.ambientEffect.effect);
-            }
-        }
-
-        this.ambientEffect = null;
-    }
-
-    compareEffects(effectA, effectB) {
-        if (!effectA || !effectB) {
-            return false;
-        }
-        if (effectA.type !== effectB.type) {
-            return false;
-        }
-        if (effectA.variant && effectB.variant && effectA.variant !== effectB.variant) {
-            return false;
-        }
-        return true;
     }
 }
+
+export default EffectsManager;

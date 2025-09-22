@@ -4,66 +4,43 @@ import { EffectsManager } from './EffectsManager.js';
 import { HUDRenderer } from './ui/HUDRenderer.js';
 import { AudioReactivityEngine } from './AudioReactivityEngine.js';
 
-/**
- * LatticePulseGame orchestrates the interaction between the event director,
- * spawn system, HUD, and visual effects.
- */
+const defaultClock = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
 export class LatticePulseGame {
     constructor(options = {}) {
         const {
-            clock,
+            clock = defaultClock,
             eventDirector,
             spawnSystem,
             hudRenderer,
             effectsManager,
-            hudRoot,
-            hudOptions,
-            eventOptions,
-            spawnOptions,
-            effectsOptions,
             audioEngine,
-            audioOptions,
+            hudRoot = null,
+            hudOptions = {},
+            eventOptions = {},
+            spawnOptions = {},
+            effectsOptions = {},
+            audioOptions = {},
         } = options;
 
-        this.clock = typeof clock === 'function'
-            ? clock
-            : (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()));
+        this.clock = typeof clock === 'function' ? clock : defaultClock;
 
-        this.audioOptions = audioOptions || {};
-
-        let resolvedAudioEngine = audioEngine || null;
-        if (!resolvedAudioEngine && audioOptions !== false) {
-            try {
-                resolvedAudioEngine = new AudioReactivityEngine(audioOptions);
-            } catch (error) {
-                resolvedAudioEngine = null;
-            }
-        }
-
-        this.audioEngine = resolvedAudioEngine;
-
-        this.hudRenderer = hudRenderer || new HUDRenderer(hudRoot, hudOptions);
-        this.effectsManager = effectsManager || new EffectsManager(effectsOptions);
+        this.audioEngine = audioEngine || (audioOptions === false ? null : new AudioReactivityEngine(audioOptions));
         this.eventDirector = eventDirector || new EventDirector({
-            ...(eventOptions || {}),
+            ...eventOptions,
             clock: () => this.clock(),
             audioEngine: this.audioEngine,
         });
         this.spawnSystem = spawnSystem || new SpawnSystem(spawnOptions);
+        this.hudRenderer = hudRenderer || new HUDRenderer(hudRoot, hudOptions);
+        this.effectsManager = effectsManager || new EffectsManager(effectsOptions);
 
-        if (this.eventDirector && !this.eventDirector.audioEngine && this.audioEngine) {
-            this.eventDirector.audioEngine = this.audioEngine;
-        }
+        this.spawnSystem.onPause = (directive) => this.handleSpawnPause(directive);
+        this.spawnSystem.onResume = (directive) => this.handleSpawnResume(directive);
 
-        this.lastUpdateTimestamp = null;
         this.isRunning = false;
+        this.lastTick = null;
         this.loopHandle = null;
-        this.isSpawnPaused = false;
-
-        if (!spawnSystem) {
-            this.spawnSystem.onPause = (directive) => this.handleSpawnPause(directive);
-            this.spawnSystem.onResume = (directive) => this.handleSpawnResume(directive);
-        }
     }
 
     start() {
@@ -71,19 +48,21 @@ export class LatticePulseGame {
             return;
         }
         this.isRunning = true;
-        this.lastUpdateTimestamp = this.clock();
+        this.lastTick = this.clock();
+        this.scheduleNextFrame();
         if (this.audioEngine?.resume) {
             this.audioEngine.resume().catch(() => {});
-        }
-        if (typeof requestAnimationFrame === 'function') {
-            this.loopHandle = requestAnimationFrame(() => this.loop());
         }
     }
 
     stop() {
         this.isRunning = false;
-        if (typeof cancelAnimationFrame === 'function' && this.loopHandle) {
-            cancelAnimationFrame(this.loopHandle);
+        if (this.loopHandle != null) {
+            if (typeof cancelAnimationFrame === 'function') {
+                cancelAnimationFrame(this.loopHandle);
+            } else if (typeof clearTimeout === 'function') {
+                clearTimeout(this.loopHandle);
+            }
             this.loopHandle = null;
         }
         if (this.audioEngine?.suspend) {
@@ -91,38 +70,42 @@ export class LatticePulseGame {
         }
     }
 
-    loop() {
+    scheduleNextFrame() {
         if (!this.isRunning) {
             return;
         }
 
-        const now = this.clock();
-        const delta = this.lastUpdateTimestamp != null ? now - this.lastUpdateTimestamp : 0;
-        this.lastUpdateTimestamp = now;
-
-        this.tick(delta);
-
         if (typeof requestAnimationFrame === 'function') {
             this.loopHandle = requestAnimationFrame(() => this.loop());
+        } else {
+            this.loopHandle = setTimeout(() => this.loop(), 16);
         }
     }
 
-    tick(deltaMs = 0) {
-        const now = this.clock();
-        const updateResult = this.eventDirector.update(now) || {};
-        const activated = Array.isArray(updateResult) ? [] : (updateResult.activated || []);
-        const expired = Array.isArray(updateResult) ? updateResult : (updateResult.expired || []);
+    loop() {
+        if (!this.isRunning) {
+            return;
+        }
+        const currentTime = this.clock();
+        const deltaMs = this.lastTick != null ? currentTime - this.lastTick : 0;
+        this.lastTick = currentTime;
 
-        activated.forEach((directive) => this.announceDirectiveStart(directive));
+        this.tick(deltaMs);
+        this.scheduleNextFrame();
+    }
+
+    tick(deltaMs) {
+        const currentTime = this.clock();
+        const { expired } = this.eventDirector.update(currentTime);
+
         expired.forEach((directive) => this.handleDirectiveExpired(directive));
+        this.syncDirectiveOverlay(currentTime);
 
-        this.syncDirectiveOverlay(now);
+        const spawnDirective = this.eventDirector.getSpawnDirectives(currentTime);
+        const deltaSeconds = Math.max(0, deltaMs / 1000);
+        this.spawnSystem.update(deltaSeconds, spawnDirective);
 
-        const spawnDirective = this.eventDirector.getSpawnDirectives();
-        const deltaSeconds = deltaMs / 1000;
-        this.spawnSystem.update(Number.isFinite(deltaSeconds) ? deltaSeconds : 0, spawnDirective);
-
-        if (this.effectsManager?.updateAmbientDirective) {
+        if (typeof this.effectsManager.updateAmbientDirective === 'function') {
             this.effectsManager.updateAmbientDirective(spawnDirective);
         }
     }
@@ -135,17 +118,6 @@ export class LatticePulseGame {
         return this.startDirective('quickDraw', config);
     }
 
-    completeGesture(result = {}) {
-        const type = result.type || 'gestureDirective';
-        const outcome = { success: result.success ?? true, ...result };
-        return this.resolveDirective(type, outcome);
-    }
-
-    resolveQuickDraw(result = {}) {
-        const type = result.type || 'quickDraw';
-        return this.resolveDirective(type, { success: result.success ?? true, ...result });
-    }
-
     startDirective(type, config = {}) {
         const directive = this.eventDirector.activateDirective(type, config);
         if (!directive) {
@@ -155,19 +127,30 @@ export class LatticePulseGame {
         return directive;
     }
 
+    completeGesture(result = {}) {
+        return this.resolveDirective('gestureDirective', result);
+    }
+
+    resolveQuickDraw(result = {}) {
+        return this.resolveDirective('quickDraw', result);
+    }
+
     resolveDirective(type, result = {}) {
         const directive = this.eventDirector.resolveDirective(type, result);
         if (!directive) {
             return null;
         }
 
-        const hudActive = this.hudRenderer.getActiveDirective();
-        if (hudActive && hudActive.id === directive.id) {
+        const active = this.hudRenderer.getActiveDirective();
+        if (active?.id === directive.id) {
             this.hudRenderer.hideDirectiveOverlay();
         }
 
-        this.effectsManager.handleDirectiveComplete({ directive, result: directive.result });
-        this.syncDirectiveOverlay();
+        if (typeof this.effectsManager.handleDirectiveComplete === 'function') {
+            this.effectsManager.handleDirectiveComplete({ directive, result: directive.result });
+        }
+
+        this.syncDirectiveOverlay(this.clock());
         return directive;
     }
 
@@ -176,109 +159,83 @@ export class LatticePulseGame {
             return;
         }
 
-        const hudActive = this.hudRenderer.getActiveDirective();
-        if (hudActive && hudActive.id === directive.id) {
+        const active = this.hudRenderer.getActiveDirective();
+        if (active?.id === directive.id) {
             this.hudRenderer.hideDirectiveOverlay();
         }
 
-        this.effectsManager.handleDirectiveComplete({
-            directive,
-            result: directive.result,
-            reason: directive.reason || 'timeout',
-        });
-
-        this.syncDirectiveOverlay();
-    }
-
-    syncDirectiveOverlay(now = this.clock()) {
-        const directiveState = this.eventDirector.getPrimaryDirectiveState(now);
-        const hudActive = this.hudRenderer.getActiveDirective();
-
-        if (!directiveState) {
-            if (hudActive) {
-                this.hudRenderer.hideDirectiveOverlay();
-            }
-            return;
+        if (typeof this.effectsManager.handleDirectiveComplete === 'function') {
+            this.effectsManager.handleDirectiveComplete({
+                directive,
+                result: directive.result,
+                reason: 'timeout',
+            });
         }
-
-        if (!hudActive || hudActive.id !== directiveState.id) {
-            this.hudRenderer.showDirectiveOverlay(directiveState);
-        } else {
-            this.hudRenderer.updateDirectiveCountdown(directiveState);
-        }
-    }
-
-    handleSpawnPause(directive) {
-        this.isSpawnPaused = true;
-        if (directive?.directive) {
-            this.syncDirectiveOverlay();
-        }
-    }
-
-    handleSpawnResume() {
-        this.isSpawnPaused = false;
     }
 
     announceDirectiveStart(directive) {
         if (!directive) {
             return;
         }
+        this.hudRenderer.showDirectiveOverlay(directive);
+        if (typeof this.effectsManager.handleDirectiveStart === 'function') {
+            this.effectsManager.handleDirectiveStart(directive);
+        }
+    }
 
-        const hudActive = this.hudRenderer.getActiveDirective();
-        if (!hudActive || hudActive.id !== directive.id) {
+    syncDirectiveOverlay(currentTime = this.clock()) {
+        const directive = this.eventDirector.getPrimaryDirectiveState(currentTime);
+        const active = this.hudRenderer.getActiveDirective();
+
+        if (!directive) {
+            if (active) {
+                this.hudRenderer.hideDirectiveOverlay();
+            }
+            return;
+        }
+
+        if (!active || active.id !== directive.id) {
             this.hudRenderer.showDirectiveOverlay(directive);
         } else {
             this.hudRenderer.updateDirectiveCountdown(directive);
         }
-
-        this.effectsManager.handleDirectiveStart(directive);
     }
 
-    async connectMicrophone(constraints) {
-        if (!this.audioEngine) {
-            try {
-                this.audioEngine = new AudioReactivityEngine(this.audioOptions);
-            } catch (error) {
-                throw error;
-            }
-            if (this.eventDirector) {
-                this.eventDirector.audioEngine = this.audioEngine;
-            }
+    handleSpawnPause(spawnDirective) {
+        const directiveState = spawnDirective?.directive;
+        if (!directiveState) {
+            return;
         }
 
-        if (!this.audioEngine?.connectToMic) {
-            throw new Error('Microphone capture is not available in this environment.');
+        const active = this.hudRenderer.getActiveDirective();
+        if (!active || active.id !== directiveState.id) {
+            this.hudRenderer.showDirectiveOverlay(directiveState);
+        } else {
+            this.hudRenderer.updateDirectiveCountdown(directiveState);
         }
 
-        return this.audioEngine.connectToMic(constraints);
+        if (typeof this.effectsManager.handleDirectiveStart === 'function'
+            && this.effectsManager.activeDirectiveId !== directiveState.id) {
+            this.effectsManager.handleDirectiveStart(directiveState);
+        }
     }
 
-    connectAudioElement(element) {
-        if (!this.audioEngine) {
-            try {
-                this.audioEngine = new AudioReactivityEngine(this.audioOptions);
-            } catch (error) {
-                this.audioEngine = null;
-            }
-            if (this.eventDirector && this.audioEngine) {
-                this.eventDirector.audioEngine = this.audioEngine;
+    handleSpawnResume(spawnDirective) {
+        const directiveState = spawnDirective?.directive;
+        if (directiveState) {
+            const active = this.hudRenderer.getActiveDirective();
+            if (!active || active.id !== directiveState.id) {
+                this.hudRenderer.showDirectiveOverlay(directiveState);
+            } else {
+                this.hudRenderer.updateDirectiveCountdown(directiveState);
             }
         }
-
-        if (!this.audioEngine?.connectToMediaElement) {
-            return null;
-        }
-
-        return this.audioEngine.connectToMediaElement(element);
+        this.syncDirectiveOverlay(this.clock());
     }
 
     getLatestAudioFrame() {
-        return this.eventDirector?.getLastAudioFrame() || null;
-    }
-
-    setDifficulty(level) {
-        if (this.eventDirector?.setDifficulty) {
-            this.eventDirector.setDifficulty(level);
-        }
+        return this.eventDirector.getLastAudioFrame();
     }
 }
+
+export default LatticePulseGame;

@@ -1,351 +1,234 @@
-/**
- * HUDRenderer builds the heads-up display for the Lattice Pulse game. In addition
- * to the baseline status line it now provides a directive overlay that splashes
- * event prompts across the play field.
- */
+const CLASS_VISIBLE = 'is-visible';
+const CLASS_HIDDEN = 'is-hidden';
+
+const createElement = (tag, className, text = '') => {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+    const el = document.createElement(tag);
+    if (className) {
+        el.className = className;
+    }
+    if (text) {
+        el.textContent = text;
+    }
+    return el;
+};
+
+const resolveRoot = (root) => {
+    if (root) {
+        return root;
+    }
+    if (typeof document === 'undefined') {
+        return null;
+    }
+    return document.getElementById('hud-root')
+        || document.querySelector('.hud-root')
+        || document.body;
+};
+
+const formatCountdown = (directive) => {
+    if (!directive) {
+        return '';
+    }
+    if (directive.countdownSeconds != null) {
+        return String(Math.max(0, Math.ceil(directive.countdownSeconds)));
+    }
+    if (directive.remainingMs != null) {
+        return String(Math.max(0, Math.ceil(directive.remainingMs / 1000)));
+    }
+    return '';
+};
+
 export class HUDRenderer {
-    constructor(rootElement = null, options = {}) {
-        this.rootElement = rootElement || (typeof document !== 'undefined' ? document.body : null);
-        this.options = {
-            overlayId: 'directive-overlay',
-            ...options,
-        };
+    constructor(root = null, options = {}) {
+        this.root = resolveRoot(root);
+        this.options = options;
 
-        this.overlayElements = null;
-        this.countdownRaf = null;
+        this.overlay = null;
         this.activeDirective = null;
+        this.currentOverlayClass = null;
+        this.lastCountdownId = null;
 
-        if (this.rootElement && typeof document !== 'undefined') {
-            this.overlayElements = this.buildDirectiveOverlay();
+        if (this.root) {
+            this.ensureOverlay();
         }
     }
 
-    buildDirectiveOverlay() {
-        if (typeof document === 'undefined') {
-            return null;
+    ensureOverlay() {
+        if (this.overlay || !this.root) {
+            return;
         }
 
-        const overlay = document.createElement('div');
-        overlay.className = 'directive-overlay directive-overlay--generic';
-        overlay.id = this.options.overlayId;
-        overlay.setAttribute('aria-live', 'assertive');
+        const overlay = createElement('div', 'directive-overlay');
+        if (!overlay) {
+            return;
+        }
 
-        const panel = document.createElement('div');
-        panel.className = 'directive-overlay__panel';
+        const panel = createElement('div', 'directive-overlay__panel');
+        const label = createElement('div', 'directive-overlay__label');
+        const prompt = createElement('div', 'directive-overlay__prompt');
+        const annotation = createElement('div', 'directive-overlay__annotation', 'Directive Active');
 
-        const label = document.createElement('div');
-        label.className = 'directive-overlay__label';
-        panel.appendChild(label);
-
-        const prompt = document.createElement('div');
-        prompt.className = 'directive-overlay__prompt';
-        panel.appendChild(prompt);
-
-        const countdown = document.createElement('div');
-        countdown.className = 'directive-overlay__countdown';
-
-        const ring = document.createElement('div');
-        ring.className = 'directive-overlay__countdown-ring';
-        countdown.appendChild(ring);
-
-        const number = document.createElement('span');
-        number.className = 'directive-overlay__countdown-number';
-        countdown.appendChild(number);
-
-        const hint = document.createElement('span');
-        hint.className = 'directive-overlay__countdown-hint';
-        hint.textContent = 'SECONDS';
-        countdown.appendChild(hint);
-
-        panel.appendChild(countdown);
-
-        const annotation = document.createElement('div');
-        annotation.className = 'directive-overlay__annotation';
-        panel.appendChild(annotation);
-
-        const badges = document.createElement('div');
-        badges.className = 'directive-overlay__badges';
-
-        const patternBadge = document.createElement('span');
-        patternBadge.className = 'directive-overlay__badge directive-overlay__badge--pattern';
-        badges.appendChild(patternBadge);
-
-        const difficultyBadge = document.createElement('span');
-        difficultyBadge.className = 'directive-overlay__badge directive-overlay__badge--difficulty';
+        const badges = createElement('div', 'directive-overlay__badges');
+        const difficultyBadge = createElement('div', 'directive-overlay__badge');
+        difficultyBadge.classList.add(CLASS_HIDDEN);
         badges.appendChild(difficultyBadge);
 
-        panel.appendChild(badges);
+        const countdown = createElement('div', 'directive-overlay__countdown');
+        const countdownRing = createElement('div', 'directive-overlay__countdown-ring');
+        const countdownNumber = createElement('div', 'directive-overlay__countdown-number');
+        const countdownHint = createElement('div', 'directive-overlay__countdown-hint', 'seconds');
 
+        countdown.appendChild(countdownRing);
+        countdown.appendChild(countdownNumber);
+        countdown.appendChild(countdownHint);
+
+        panel.appendChild(label);
+        panel.appendChild(prompt);
+        panel.appendChild(annotation);
+        panel.appendChild(badges);
+        panel.appendChild(countdown);
         overlay.appendChild(panel);
 
-        this.rootElement.appendChild(overlay);
+        this.root.appendChild(overlay);
 
-        return {
-            overlay,
-            panel,
-            label,
-            prompt,
-            countdown,
-            ring,
-            number,
-            hint,
-            annotation,
-            badges,
-            patternBadge,
-            difficultyBadge,
-        };
-    }
-
-    showDirectiveOverlay(directive = {}) {
-        if (!this.overlayElements?.overlay) {
-            return;
-        }
-
-        const {
-            overlay,
-            label,
-            prompt,
-            number,
-            ring,
-            annotation,
-            badges,
-            patternBadge,
-            difficultyBadge,
-        } = this.overlayElements;
-
-        this.activeDirective = directive;
-
-        overlay.classList.add('is-visible');
-        overlay.dataset.type = directive.type || 'directive';
-        overlay.dataset.pattern = directive.pattern?.type || '';
-        overlay.dataset.difficulty = (directive.difficultyLabel || '').toLowerCase();
-
-        overlay.classList.remove(
-            'directive-overlay--gesture',
-            'directive-overlay--quickDraw',
-            'directive-overlay--generic',
-        );
-        overlay.classList.add(`directive-overlay--${directive.type || 'generic'}`);
-
-        const accentColor = directive.color || directive.colorPalette?.primary;
-        if (accentColor) {
-            overlay.style.setProperty('--directive-accent', accentColor);
-            overlay.style.setProperty('--directive-accent-glow', this.buildGlowColor(accentColor));
-        } else {
-            overlay.style.removeProperty('--directive-accent');
-            overlay.style.removeProperty('--directive-accent-glow');
-        }
-
-        if (directive.colorPalette) {
-            if (directive.colorPalette.secondary) {
-                overlay.style.setProperty('--directive-secondary', directive.colorPalette.secondary);
-            }
-            if (directive.colorPalette.tertiary) {
-                overlay.style.setProperty('--directive-tertiary', directive.colorPalette.tertiary);
-            }
-        } else {
-            overlay.style.removeProperty('--directive-secondary');
-            overlay.style.removeProperty('--directive-tertiary');
-        }
-
-        label.textContent = (directive.label || 'Directive').toUpperCase();
-        prompt.textContent = directive.prompt || directive.description || '';
-        annotation.textContent = directive.annotation || directive.subtitle || '';
-
-        const patternLabel = this.formatPatternLabel(directive.pattern);
-        const difficultyLabel = this.formatDifficultyLabel(directive);
-        if (patternBadge) {
-            patternBadge.textContent = patternLabel || '';
-            patternBadge.classList.toggle('is-hidden', !patternLabel);
-        }
-        if (difficultyBadge) {
-            difficultyBadge.textContent = difficultyLabel || '';
-            difficultyBadge.classList.toggle('is-hidden', !difficultyLabel);
-        }
-        if (badges) {
-            const hideBadges = !patternLabel && !difficultyLabel;
-            badges.classList.toggle('is-hidden', hideBadges);
-        }
-
-        const duration = directive.duration
-            ?? (directive.countdownSeconds ? directive.countdownSeconds * 1000 : null);
-        const countdownSeconds = directive.countdownSeconds
-            ?? (duration ? Math.ceil(duration / 1000) : null);
-
-        number.textContent = countdownSeconds != null ? countdownSeconds : '';
-        overlay.style.setProperty('--directive-duration', duration ? `${duration}ms` : '0ms');
-        overlay.style.setProperty('--directive-progress', '1');
-        if (directive.intensity != null) {
-            overlay.style.setProperty('--directive-intensity', Number.parseFloat(directive.intensity).toFixed(3));
-        } else if (directive.audioFrame?.energy != null) {
-            overlay.style.setProperty('--directive-intensity', Number.parseFloat(directive.audioFrame.energy).toFixed(3));
-        } else {
-            overlay.style.removeProperty('--directive-intensity');
-        }
-
-        if (ring) {
-            ring.classList.remove('is-animating');
-            ring.style.animationDuration = duration ? `${duration}ms` : '';
-            // Force reflow to restart the animation.
-            void ring.offsetWidth; // eslint-disable-line no-void
-            ring.classList.add('is-animating');
-        }
-
-        this.beginCountdown(duration, directive);
-    }
-
-    updateDirectiveCountdown(state) {
-        if (!this.activeDirective || !this.overlayElements?.overlay) {
-            return;
-        }
-
-        if (state.type !== this.activeDirective.type) {
-            return;
-        }
-
-        const { overlay, number } = this.overlayElements;
-
-        if (state.remaining != null && number) {
-            const remainingSeconds = Math.max(0, Math.ceil(state.remaining / 1000));
-            number.textContent = remainingSeconds.toString();
-
-            if (state.duration) {
-                const progress = 1 - (state.remaining / state.duration);
-                overlay.style.setProperty('--directive-progress', Math.min(1, Math.max(0, progress)).toFixed(3));
-            }
-        }
-    }
-
-    hideDirectiveOverlay() {
-        if (!this.overlayElements?.overlay) {
-            return;
-        }
-
-        const { overlay } = this.overlayElements;
-        overlay.classList.remove('is-visible');
-        overlay.dataset.type = '';
-        overlay.classList.remove(
-            'directive-overlay--gesture',
-            'directive-overlay--quickDraw',
-            'directive-overlay--generic',
-        );
-        overlay.classList.add('directive-overlay--generic');
-        overlay.dataset.pattern = '';
-        overlay.dataset.difficulty = '';
-        overlay.style.removeProperty('--directive-accent');
-        overlay.style.removeProperty('--directive-accent-glow');
-        overlay.style.removeProperty('--directive-secondary');
-        overlay.style.removeProperty('--directive-tertiary');
-        overlay.style.setProperty('--directive-progress', '1');
-        overlay.style.removeProperty('--directive-intensity');
-
-        this.cancelCountdown();
-        this.activeDirective = null;
-    }
-
-    beginCountdown(duration, directive) {
-        this.cancelCountdown();
-        if (!duration || typeof requestAnimationFrame !== 'function') {
-            return;
-        }
-
-        const start = this.timestamp();
-        const tick = (now) => {
-            const elapsed = now - start;
-            const remaining = Math.max(0, duration - elapsed);
-            const secondsDisplay = Math.ceil(remaining / 1000);
-
-            if (this.overlayElements?.number) {
-                this.overlayElements.number.textContent = secondsDisplay.toString();
-            }
-
-            if (this.overlayElements?.overlay) {
-                const progress = remaining / duration;
-                this.overlayElements.overlay.style.setProperty('--directive-progress', progress.toFixed(3));
-            }
-
-            if (remaining > 0 && this.activeDirective === directive) {
-                this.countdownRaf = requestAnimationFrame(tick);
-            }
-        };
-
-        this.countdownRaf = requestAnimationFrame(tick);
-    }
-
-    cancelCountdown() {
-        if (typeof cancelAnimationFrame === 'function' && this.countdownRaf) {
-            cancelAnimationFrame(this.countdownRaf);
-        }
-        this.countdownRaf = null;
-    }
-
-    timestamp() {
-        return typeof performance !== 'undefined' ? performance.now() : Date.now();
-    }
-
-    buildGlowColor(hexColor) {
-        if (typeof hexColor !== 'string' || !hexColor.startsWith('#')) {
-            return 'rgba(255, 255, 255, 0.45)';
-        }
-
-        const raw = hexColor.slice(1);
-        const isShort = raw.length === 3;
-        const value = Number.parseInt(raw, 16);
-        if (Number.isNaN(value)) {
-            return 'rgba(255, 255, 255, 0.45)';
-        }
-
-        const r = isShort ? ((value >> 8) & 0xf) * 17 : (value >> 16) & 255;
-        const g = isShort ? ((value >> 4) & 0xf) * 17 : (value >> 8) & 255;
-        const b = isShort ? (value & 0xf) * 17 : value & 255;
-        return `rgba(${r}, ${g}, ${b}, 0.45)`;
+        this.overlay = overlay;
+        this.label = label;
+        this.prompt = prompt;
+        this.annotation = annotation;
+        this.badges = badges;
+        this.difficultyBadge = difficultyBadge;
+        this.countdown = countdown;
+        this.countdownRing = countdownRing;
+        this.countdownNumber = countdownNumber;
     }
 
     getActiveDirective() {
         return this.activeDirective;
     }
 
-    formatPatternLabel(pattern) {
-        if (!pattern) {
-            return '';
-        }
-        if (pattern.displayName) {
-            return pattern.displayName.toUpperCase();
-        }
-        if (pattern.type) {
-            return pattern.type.replace(/[-_]/g, ' ').toUpperCase();
-        }
-        return '';
-    }
-
-    formatDifficultyLabel(directive) {
+    showDirectiveOverlay(directive) {
         if (!directive) {
-            return '';
+            return;
         }
-        if (directive.difficultyLabel) {
-            return directive.difficultyLabel.toUpperCase();
+        this.ensureOverlay();
+        if (!this.overlay) {
+            this.activeDirective = directive;
+            return;
         }
-        if (Number.isFinite(directive.difficulty)) {
-            if (directive.difficulty >= 3) {
-                return 'ZENITH';
-            }
-            if (directive.difficulty >= 2) {
-                return 'SURGE';
-            }
-            if (directive.difficulty >= 1.2) {
-                return 'PULSE';
-            }
-            return 'FLOW';
+
+        this.activeDirective = directive;
+        this.overlay.classList.add(CLASS_VISIBLE);
+        this.overlay.dataset.type = directive.type || 'generic';
+        if (directive.pattern?.id) {
+            this.overlay.dataset.pattern = directive.pattern.id;
+        } else {
+            delete this.overlay.dataset.pattern;
         }
-        return '';
+        if (directive.difficulty) {
+            this.overlay.dataset.difficulty = String(directive.difficulty).toLowerCase();
+        } else {
+            delete this.overlay.dataset.difficulty;
+        }
+
+        const overlayClass = `directive-overlay--${directive.type || 'generic'}`;
+        if (this.currentOverlayClass && this.currentOverlayClass !== overlayClass) {
+            this.overlay.classList.remove(this.currentOverlayClass);
+        }
+        this.overlay.classList.add(overlayClass);
+        this.currentOverlayClass = overlayClass;
+
+        if (this.label) {
+            this.label.textContent = directive.label || '';
+        }
+
+        if (this.prompt) {
+            this.prompt.textContent = directive.prompt || directive.description || '';
+        }
+
+        if (this.annotation) {
+            this.annotation.textContent = directive.metadata?.annotation || 'Directive Active';
+        }
+
+        if (this.difficultyBadge) {
+            if (directive.difficulty) {
+                this.difficultyBadge.textContent = String(directive.difficulty).toUpperCase();
+                this.difficultyBadge.classList.remove(CLASS_HIDDEN);
+            } else if (directive.metadata?.difficultyLabel) {
+                this.difficultyBadge.textContent = directive.metadata.difficultyLabel;
+                this.difficultyBadge.classList.remove(CLASS_HIDDEN);
+            } else {
+                this.difficultyBadge.classList.add(CLASS_HIDDEN);
+            }
+        }
+
+        if (this.badges) {
+            if (this.difficultyBadge && this.difficultyBadge.classList.contains(CLASS_HIDDEN)) {
+                this.badges.classList.add(CLASS_HIDDEN);
+            } else {
+                this.badges.classList.remove(CLASS_HIDDEN);
+            }
+        }
+
+        this.lastCountdownId = directive.id || null;
+        this.updateDirectiveCountdown(directive);
     }
 
-    destroy() {
-        this.cancelCountdown();
-        if (this.overlayElements?.overlay?.parentNode) {
-            this.overlayElements.overlay.parentNode.removeChild(this.overlayElements.overlay);
+    updateDirectiveCountdown(directive = null) {
+        if (!this.overlay || !this.countdownNumber) {
+            return;
         }
-        this.overlayElements = null;
+
+        const target = directive || this.activeDirective;
+        if (!target) {
+            return;
+        }
+
+        const countdownValue = formatCountdown(target);
+        this.countdownNumber.textContent = countdownValue;
+
+        const duration = target.duration ?? target.remainingMs ?? 0;
+        const remaining = target.remainingMs ?? (target.countdownSeconds != null ? target.countdownSeconds * 1000 : duration);
+
+        if (this.countdownRing) {
+            if (duration > 0 && remaining != null) {
+                const progress = Math.max(0, Math.min(1, remaining / duration));
+                const shouldRestart = target.id && this.lastCountdownId !== target.id;
+
+                this.countdownRing.style.setProperty('--directive-progress', String(progress));
+                this.countdownRing.style.setProperty('--directive-duration', `${duration}ms`);
+
+                if (shouldRestart) {
+                    this.countdownRing.classList.remove('is-animating');
+                    void this.countdownRing.offsetWidth;
+                    this.lastCountdownId = target.id;
+                }
+
+                this.countdownRing.classList.add('is-animating');
+            } else {
+                this.countdownRing.style.removeProperty('--directive-progress');
+                this.countdownRing.classList.remove('is-animating');
+            }
+        }
+    }
+
+    hideDirectiveOverlay() {
+        if (!this.overlay) {
+            this.activeDirective = null;
+            return;
+        }
+        this.overlay.classList.remove(CLASS_VISIBLE);
+        this.overlay.dataset.type = '';
+        delete this.overlay.dataset.pattern;
+        delete this.overlay.dataset.difficulty;
         this.activeDirective = null;
+        if (this.currentOverlayClass) {
+            this.overlay.classList.remove(this.currentOverlayClass);
+            this.currentOverlayClass = null;
+        }
+        this.lastCountdownId = null;
     }
 }
+
+export default HUDRenderer;
