@@ -86,10 +86,51 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
-        
+
         .action-btn:hover {
             background: rgba(255, 0, 255, 0.3);
             box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+
+        .action-btn[data-game-state="running"] {
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.3), rgba(0, 255, 200, 0.25));
+            border-color: rgba(0, 200, 255, 0.65);
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+            color: #00f5ff;
+        }
+
+        .action-btn[data-game-state="running"][data-auto-start="1"] {
+            background: linear-gradient(135deg, rgba(0, 220, 255, 0.38), rgba(0, 255, 200, 0.32));
+            border-color: rgba(0, 235, 255, 0.85);
+            box-shadow: 0 0 20px rgba(0, 230, 255, 0.6);
+            color: #c8faff;
+        }
+
+        .action-btn[data-auto-start="1"] {
+            position: relative;
+        }
+
+        .action-btn[data-auto-start="1"]::after {
+            content: 'AUTO';
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 0.45rem;
+            letter-spacing: 0.16em;
+            color: rgba(210, 255, 255, 0.85);
+            text-shadow: 0 0 6px rgba(0, 220, 255, 0.55);
+        }
+
+        .action-btn[data-game-state="start-screen"] {
+            background: rgba(255, 150, 0, 0.2);
+            border-color: rgba(255, 150, 0, 0.5);
+            color: #ffba4a;
+        }
+
+        .action-btn[data-game-state="paused"] {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(200, 200, 200, 0.25);
+            color: #e0e0e0;
         }
         
         @keyframes fadeInOut {
@@ -565,6 +606,10 @@
         </div>
         
         <div class="action-buttons">
+            <button class="action-btn" data-action="lattice-game" data-game-state="idle"
+                    onclick="openLatticePulse()"
+                    title="Lattice Pulse Game"
+                    aria-label="Open the Lattice Pulse audio game">🎮</button>
             <button class="action-btn" onclick="openGallery()" title="Gallery">🖼️</button>
             <button class="action-btn" onclick="toggleAudio()" title="Audio">🎵</button>
             <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters">🤖</button>
@@ -1007,7 +1052,7 @@
                         
                         // Update global state and UI
                         window.currentSystem = system;
-                        
+
                         // Update ReactivityManager with new active system
                         if (window.reactivityManager) {
                             window.reactivityManager.setActiveSystem(system, newEngine);
@@ -1041,7 +1086,15 @@
                         };
                         const panelHeader = document.getElementById('panelHeader');
                         if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
-                        
+
+                        if (!window.isGalleryPreview) {
+                            if (system === 'faceted' && typeof window.setupLatticePulseGame === 'function') {
+                                window.setupLatticePulseGame(newEngine);
+                            } else if (window.latticePulseGame && typeof window.latticePulseGame.handleSystemChange === 'function') {
+                                window.latticePulseGame.handleSystemChange(system, newEngine);
+                            }
+                        }
+
                         console.log(`✅ Switched to ${system} system successfully`);
                         return; // Success - exit early
                     } else if (system === 'polychora') {
@@ -1569,6 +1622,7 @@
         import { CanvasManager } from './src/core/CanvasManager.js';
         import { TradingCardGenerator } from './src/export/TradingCardGenerator.js';
         import { ReactivityManager } from './src/core/ReactivityManager.js';
+        import { LatticePulseGame } from './src/game/LatticePulseGame.js';
         // Universal reactivity system removed - implementing modular reactivity system
         
         // Global state - CRITICAL FIX: Check for gallery preview data FIRST
@@ -1586,6 +1640,221 @@
         let parameterMapper = null;
         let savedVariationsCount = 0;
         let reactivityManager = null;
+        let latticePulseGame = null;
+
+        const LATTICE_PULSE_STORAGE = {
+            introSeen: 'latticePulseIntroSeen',
+            autoStart: 'latticePulseAutoStart'
+        };
+
+        function readLatticePulsePreference(key) {
+            if (typeof window === 'undefined') return null;
+            try {
+                if (window.localStorage) {
+                    return window.localStorage.getItem(key);
+                }
+            } catch (error) {
+                console.warn('🎮 Unable to read Lattice Pulse preference:', error);
+            }
+            return null;
+        }
+
+        function shouldAutoLaunchLatticePulse() {
+            if (window.isGalleryPreview) return false;
+            const host = window.location?.hostname || '';
+            const protocol = window.location?.protocol || '';
+            const isLocal = protocol === 'file:' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+            if (isLocal) return false;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+            const stored = readLatticePulsePreference(LATTICE_PULSE_STORAGE.autoStart);
+            if (stored === '0') return false;
+            return true;
+        }
+
+        function maybeAutoStartLatticePulse(gameInstance, reason = 'pages-auto') {
+            if (!gameInstance || typeof gameInstance.autoStartSignature !== 'function') {
+                return false;
+            }
+
+            if (!shouldAutoLaunchLatticePulse()) {
+                return false;
+            }
+
+            try {
+                const started = gameInstance.autoStartSignature(reason);
+                if (started) {
+                    console.log('🎮 Lattice Pulse auto-started using signature rhythm.');
+                }
+                return started;
+            } catch (error) {
+                console.warn('🎮 Failed to auto-start Lattice Pulse:', error);
+                return false;
+            }
+        }
+
+        function updateGameButtonState(state, detail = {}) {
+            const gameBtn = document.querySelector('[data-action="lattice-game"]');
+            if (!gameBtn) return;
+
+            const normalizedState = state || 'idle';
+            const isAuto = !!(detail.autoStart || detail.startReason === 'auto' || detail.startReason === 'pages-auto' || detail.startReason === 'deploy-auto' || detail.autoStartEnabled);
+            gameBtn.dataset.gameState = normalizedState;
+            if (isAuto) {
+                gameBtn.dataset.autoStart = '1';
+            } else {
+                gameBtn.removeAttribute('data-auto-start');
+            }
+
+            if (detail.mode) {
+                gameBtn.dataset.mode = detail.mode;
+            } else {
+                gameBtn.removeAttribute('data-mode');
+            }
+
+            const titles = {
+                running: 'Lattice Pulse: Running (click to adjust audio)',
+                'running-auto': 'Lattice Pulse: Auto-running signature rhythm (tap to link audio)',
+                'start-screen': 'Lattice Pulse: Choose an audio source',
+                paused: 'Lattice Pulse: Paused while exploring other systems',
+                idle: 'Lattice Pulse: Launch the audio-driven game',
+                'idle-auto': 'Lattice Pulse: Auto-start ready (tap to preview or configure)',
+                stopped: 'Lattice Pulse: Stopped'
+            };
+
+            const titleKey = (() => {
+                if (normalizedState === 'running') {
+                    return isAuto ? 'running-auto' : 'running';
+                }
+                if (normalizedState === 'idle' && (isAuto || detail.autoStartEnabled)) {
+                    return 'idle-auto';
+                }
+                return normalizedState;
+            })();
+            const title = titles[titleKey] || titles.idle;
+            gameBtn.title = title;
+            gameBtn.setAttribute('aria-label', title);
+        }
+
+        function setupLatticePulseGame(engineInstance) {
+            if (window.isGalleryPreview) {
+                console.log('🎮 Lattice Pulse skipped in gallery preview mode.');
+                return null;
+            }
+
+            if (!engineInstance) {
+                console.warn('🎮 Lattice Pulse requires a faceted engine instance.');
+                return null;
+            }
+
+            const host = document.getElementById('canvasContainer') || document.body;
+            let autoStarted = false;
+
+            if (!latticePulseGame) {
+                try {
+                    latticePulseGame = new LatticePulseGame(engineInstance, {
+                        container: host,
+                        energySmoothing: 0.78,
+                        storageKeys: LATTICE_PULSE_STORAGE
+                    });
+                    window.latticePulseGame = latticePulseGame;
+                    console.log('🎮 Lattice Pulse game initialized.');
+                } catch (error) {
+                    console.error('❌ Failed to initialize Lattice Pulse game:', error);
+                    latticePulseGame = null;
+                    return null;
+                }
+
+                latticePulseGame.init();
+
+                if (typeof latticePulseGame.minimizeStartScreen === 'function') {
+                    latticePulseGame.minimizeStartScreen();
+                }
+
+                const introSeen = readLatticePulsePreference(LATTICE_PULSE_STORAGE.introSeen) === '1';
+                if (!introSeen) {
+                    autoStarted = maybeAutoStartLatticePulse(latticePulseGame, 'deploy-auto');
+                    if (!autoStarted) {
+                        latticePulseGame.showStartScreen('Choose how you want to feed the visuals.', 'info');
+                        updateGameButtonState('start-screen', {
+                            autoStartEnabled: latticePulseGame.getAutoStartPreference?.(),
+                            mode: latticePulseGame.mode
+                        });
+                    }
+                    try {
+                        if (window.localStorage) {
+                            window.localStorage.setItem(LATTICE_PULSE_STORAGE.introSeen, '1');
+                        }
+                    } catch (error) {
+                        console.warn('🎮 Failed to persist Lattice Pulse intro flag:', error);
+                    }
+                } else {
+                    autoStarted = maybeAutoStartLatticePulse(latticePulseGame);
+                }
+            } else {
+                latticePulseGame.attachEngine(engineInstance);
+                autoStarted = maybeAutoStartLatticePulse(latticePulseGame);
+            }
+
+            if (typeof latticePulseGame?.handleSystemChange === 'function') {
+                latticePulseGame.handleSystemChange('faceted', engineInstance);
+            }
+
+            const currentState = latticePulseGame?.state || (autoStarted ? 'running' : 'idle');
+            updateGameButtonState(currentState, {
+                autoStart: autoStarted,
+                autoStartEnabled: latticePulseGame?.getAutoStartPreference?.(),
+                mode: latticePulseGame?.mode
+            });
+
+            return latticePulseGame;
+        }
+
+        window.addEventListener('latticepulse:state', (event) => {
+            if (!event || !event.detail) return;
+            updateGameButtonState(event.detail.state, event.detail);
+        });
+
+        window.addEventListener('latticepulse:autostart-preference', (event) => {
+            const enabled = event?.detail?.enabled;
+            if (!latticePulseGame) return;
+            updateGameButtonState(latticePulseGame.state || 'idle', {
+                autoStartEnabled: enabled,
+                mode: latticePulseGame.mode
+            });
+        });
+
+        window.openLatticePulse = async function() {
+            if (window.isGalleryPreview) {
+                console.warn('🎮 Lattice Pulse is disabled in gallery preview mode.');
+                return;
+            }
+
+            if (window.currentSystem !== 'faceted' && typeof window.switchSystem === 'function') {
+                console.log('🎮 Switching to faceted system for Lattice Pulse.');
+                await window.switchSystem('faceted');
+            }
+
+            if (!latticePulseGame) {
+                if (window.engine) {
+                    setupLatticePulseGame(window.engine);
+                } else {
+                    console.warn('🎮 Lattice Pulse game not ready yet.');
+                    return;
+                }
+            }
+
+            try {
+                latticePulseGame.showStartScreen('Choose how you want to feed the visuals.', 'info');
+                updateGameButtonState('start-screen', {
+                    autoStartEnabled: latticePulseGame.getAutoStartPreference?.(),
+                    mode: latticePulseGame.mode
+                });
+            } catch (error) {
+                console.error('❌ Unable to open Lattice Pulse start screen:', error);
+            }
+        };
+
+        window.setupLatticePulseGame = setupLatticePulseGame;
         
         // Geometry configurations
         const geometries = {
@@ -1609,7 +1878,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             setupGeometry('faceted');
             const success = await initializeEngine();
-            
+
             // Make engines globally accessible for switchSystem function
             window.engine = engine;
             window.quantumEngine = quantumEngine;
@@ -1620,7 +1889,13 @@
             window.geometries = geometries;
             window.initializePolychora = initializePolychora;
             window.updateParameter = updateParameter;
-            
+
+            if (success && engine && !window.isGalleryPreview) {
+                setupLatticePulseGame(engine);
+            } else if (window.isGalleryPreview) {
+                updateGameButtonState('paused');
+            }
+
             // Initialize ReactivityManager
             reactivityManager = new ReactivityManager();
             window.reactivityManager = reactivityManager;
