@@ -7,6 +7,7 @@
 // Global state variables
 let audioEnabled = window.audioEnabled || false;
 let interactivityEnabled = false;
+let manualPanelPreference = null;
 
 /**
  * Main parameter update function - CRITICAL for all visualizers
@@ -596,16 +597,91 @@ window.setupGeometry = function(system) {
 /**
  * Mobile panel toggle function
  */
-window.toggleMobilePanel = function() {
+window.toggleMobilePanel = function(forceState, options = {}) {
     const controlPanel = document.getElementById('controlPanel');
     const collapseBtn = document.querySelector('.mobile-collapse-btn');
-    
-    if (controlPanel && collapseBtn) {
-        controlPanel.classList.toggle('collapsed');
-        collapseBtn.textContent = controlPanel.classList.contains('collapsed') ? '▲' : '▼';
-        console.log('📱 Mobile panel toggled');
+
+    if (!controlPanel || !collapseBtn) {
+        return false;
+    }
+
+    const { silent = false, updatePreference = !silent } = options;
+    const shouldCollapse = typeof forceState === 'boolean'
+        ? forceState
+        : !controlPanel.classList.contains('collapsed');
+
+    controlPanel.classList.toggle('collapsed', shouldCollapse);
+
+    collapseBtn.textContent = shouldCollapse ? '▲' : '▼';
+    collapseBtn.setAttribute('aria-expanded', String(!shouldCollapse));
+    collapseBtn.setAttribute('aria-label', shouldCollapse ? 'Expand control panel' : 'Collapse control panel');
+
+    controlPanel.setAttribute('aria-hidden', shouldCollapse ? 'true' : 'false');
+
+    if (document.body) {
+        document.body.classList.toggle('panel-collapsed', shouldCollapse);
+        document.body.classList.toggle('panel-expanded', !shouldCollapse);
+    }
+
+    if (updatePreference) {
+        manualPanelPreference = shouldCollapse ? 'collapsed' : 'expanded';
+    }
+
+    if (!silent && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('controlpanel:toggle', { detail: { collapsed: shouldCollapse } }));
+    }
+
+    console.log('📱 Mobile panel toggled', shouldCollapse ? 'collapsed' : 'expanded');
+    return shouldCollapse;
+};
+
+window.initializeControlPanelLayout = function() {
+    const controlPanel = document.getElementById('controlPanel');
+    const collapseBtn = document.querySelector('.mobile-collapse-btn');
+
+    if (!controlPanel || !collapseBtn || typeof window === 'undefined') {
+        return;
+    }
+
+    if (document.body && !document.body.classList.contains('panel-expanded') && !document.body.classList.contains('panel-collapsed')) {
+        document.body.classList.add('panel-expanded');
+    }
+
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+
+    const applyState = (isMobile) => {
+        if (isMobile) {
+            const preferredCollapsed = manualPanelPreference === 'expanded' ? false : true;
+            window.toggleMobilePanel(preferredCollapsed, { silent: true, updatePreference: false });
+        } else {
+            manualPanelPreference = null;
+            window.toggleMobilePanel(false, { silent: true, updatePreference: false });
+        }
+    };
+
+    applyState(mobileQuery.matches);
+
+    const handleChange = (event) => {
+        applyState(event.matches);
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('controlpanel:viewport', { detail: { matches: event.matches } }));
+        }
+    };
+
+    if (typeof mobileQuery.addEventListener === 'function') {
+        mobileQuery.addEventListener('change', handleChange);
+    } else if (typeof mobileQuery.addListener === 'function') {
+        mobileQuery.addListener(handleChange);
     }
 };
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.initializeControlPanelLayout === 'function') {
+            window.initializeControlPanelLayout();
+        }
+    });
+}
 
 // Note: createTradingCard is defined in gallery-manager.js
 
