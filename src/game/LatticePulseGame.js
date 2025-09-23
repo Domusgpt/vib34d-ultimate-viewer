@@ -104,6 +104,11 @@ export class LatticePulseGame {
         this.bandSmoothedLevels = { bass: 0, mid: 0, treble: 0 };
         this.bandMomentum = { bass: 0, mid: 0, treble: 0 };
         this.hudPulseTimer = null;
+        this.hudPlacement = null;
+        this.hudLayoutReady = false;
+        this.boundHudLayoutHandler = null;
+        this.boundPanelToggleHandler = null;
+        this.hudLayoutQueries = [];
 
         this.beatUnsubscribe = this.audioService.onBeat(this.handleBeat);
         this.energyUnsubscribe = this.audioService.onEnergy(payload => this.handleEnergy(payload));
@@ -524,6 +529,40 @@ export class LatticePulseGame {
                 pointer-events: none;
                 filter: blur(24px);
             }
+            .lp-hud.lp-hud-inline {
+                position: relative;
+                top: auto;
+                right: auto;
+                left: auto;
+                bottom: auto;
+                width: 100%;
+                margin: 0 0 1.5rem 0;
+                box-shadow: none;
+                z-index: 1;
+                background: linear-gradient(145deg, rgba(10, 12, 26, 0.92), rgba(16, 20, 34, 0.9));
+            }
+            .lp-hud.lp-hud-inline::before,
+            .lp-hud.lp-hud-inline::after {
+                display: none;
+            }
+            .lp-hud.lp-hud-compact {
+                width: min(320px, 92vw);
+                padding: 1rem 1.1rem;
+                background: linear-gradient(155deg, rgba(8, 12, 26, 0.9), rgba(14, 18, 32, 0.88));
+                border-radius: 18px;
+            }
+            .lp-hud.lp-hud-compact .lp-hud-grid {
+                grid-template-columns: 1fr;
+            }
+            .lp-hud.lp-hud-compact .lp-hud-reactor {
+                grid-template-columns: 1fr;
+            }
+            .lp-hud.lp-hud-compact .lp-hud-bands {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .lp-hud.lp-hud-inline.lp-hud-compact {
+                width: 100%;
+            }
             .lp-hud[data-intensity="eruption"] {
                 transform: translateY(-4px);
             }
@@ -924,8 +963,8 @@ export class LatticePulseGame {
             @media (max-width: 640px) {
                 .lp-start { padding: 1.3rem; }
                 .lp-start-panel { padding: 1.75rem; gap: 1rem; }
-                .lp-hud { left: 0.75rem; right: 0.75rem; top: auto; bottom: 0.85rem; width: auto; }
-                .lp-hud::after { inset: 18% 18%; }
+                .lp-hud:not(.lp-hud-inline) { left: 0.75rem; right: 0.75rem; top: auto; bottom: 0.85rem; width: auto; }
+                .lp-hud:not(.lp-hud-inline)::after { inset: 18% 18%; }
                 .lp-hud-reactor { grid-template-columns: 1fr; }
                 .lp-hud-bands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
                 .lp-hud-combo { justify-content: space-between; }
@@ -1159,6 +1198,12 @@ export class LatticePulseGame {
         hud.append(title, status, grid, bandGroup, reactor, timeline, pulseMeter, failure);
         this.container.appendChild(hud);
 
+        if (!this.hudPlacement) {
+            const anchor = document.createComment('lp-hud-anchor');
+            hud.before(anchor);
+            this.hudPlacement = { anchor, home: this.container };
+        }
+
         this.hudElements = {
             root: hud,
             status,
@@ -1198,6 +1243,82 @@ export class LatticePulseGame {
         this.updateComboDisplay({ analysisQuality: 0 }, null, this.currentECT ?? 0);
         this.updateCalloutDisplay(null, this.currentECT ?? 0, 0, { energy: 0, analysisQuality: 0 });
         this.updateTimeline();
+        this.setupHudLayout();
+    }
+
+    setupHudLayout() {
+        if (typeof window === 'undefined' || !this.hudElements?.root) return;
+
+        const hud = this.hudElements.root;
+
+        if (!this.hudPlacement?.anchor || !this.hudPlacement.anchor.isConnected) {
+            const anchor = document.createComment('lp-hud-anchor');
+            hud.before(anchor);
+            this.hudPlacement = { anchor, home: this.container };
+        }
+
+        if (!this.boundHudLayoutHandler) {
+            this.boundHudLayoutHandler = () => this.updateHudLayout('resize');
+            window.addEventListener('resize', this.boundHudLayoutHandler, { passive: true });
+        }
+
+        if (!this.boundPanelToggleHandler) {
+            this.boundPanelToggleHandler = () => this.updateHudLayout('panel');
+            window.addEventListener('control-panel:toggle', this.boundPanelToggleHandler);
+        }
+
+        if (!this.hudLayoutReady && typeof window.matchMedia === 'function') {
+            const queries = ['(max-width: 1100px)', '(max-width: 720px)'];
+            this.hudLayoutQueries = queries.map(media => {
+                const mql = window.matchMedia(media);
+                const handler = () => this.updateHudLayout('media');
+                if (typeof mql.addEventListener === 'function') {
+                    mql.addEventListener('change', handler);
+                } else if (typeof mql.addListener === 'function') {
+                    mql.addListener(handler);
+                }
+                return { mql, handler };
+            });
+        }
+
+        this.hudLayoutReady = true;
+        this.updateHudLayout('init');
+    }
+
+    updateHudLayout(reason = 'update') {
+        if (typeof document === 'undefined' || !this.hudElements?.root) return;
+
+        const hud = this.hudElements.root;
+
+        if (!this.hudPlacement?.anchor || !this.hudPlacement.anchor.isConnected) {
+            const anchor = document.createComment('lp-hud-anchor');
+            hud.before(anchor);
+            this.hudPlacement = { anchor, home: this.container };
+        }
+
+        const dock = document.getElementById('hudDock');
+        const body = document.body;
+        const panelOpen = !!body && body.classList.contains('panel-open') && !body.classList.contains('panel-collapsed');
+        const compactViewport = typeof window !== 'undefined' ? window.innerWidth <= 900 : false;
+        const shouldDock = !!dock && panelOpen;
+
+        if (shouldDock && dock && !dock.contains(hud)) {
+            dock.appendChild(hud);
+        } else if (!shouldDock && this.hudPlacement?.anchor?.parentNode && hud.parentNode !== this.hudPlacement.anchor.parentNode) {
+            this.hudPlacement.anchor.after(hud);
+        }
+
+        hud.classList.toggle('lp-hud-inline', shouldDock && !!dock);
+        hud.classList.toggle('lp-hud-compact', compactViewport);
+
+        if (dock) {
+            dock.classList.toggle('is-active', shouldDock);
+            dock.setAttribute('aria-hidden', shouldDock ? 'false' : 'true');
+        }
+
+        if (!panelOpen && !compactViewport) {
+            hud.classList.remove('lp-hud-inline');
+        }
     }
 
     createGeometryDefaults() {
@@ -1328,6 +1449,7 @@ export class LatticePulseGame {
 
             const nextState = this.active ? 'running' : (this.state === 'start-screen' ? 'start-screen' : 'idle');
             this.emitStateChange(nextState, { system: systemName, reason: 'attach' });
+            this.updateHudLayout('system');
         } else {
             this.attachEngine(null);
 
@@ -1340,6 +1462,7 @@ export class LatticePulseGame {
             }
 
             this.emitStateChange('paused', { system: systemName });
+            this.updateHudLayout('system');
         }
     }
 

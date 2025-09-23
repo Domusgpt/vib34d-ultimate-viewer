@@ -166,6 +166,7 @@
         
         /* ========== CONTROL PANEL ========== */
         .control-panel {
+            --panel-handle: 56px;
             position: fixed;
             top: 50px;
             right: 0;
@@ -174,37 +175,134 @@
             background: rgba(0, 0, 0, 0.95);
             border-left: 2px solid #00ffff;
             padding: 20px;
-            overflow-y: auto;
+            overflow: hidden;
             backdrop-filter: blur(10px);
             z-index: 100;
-            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            transition: none;
+        }
+
+        .panel-ready .control-panel {
+            transition: transform 0.35s ease;
+        }
+
+        .control-panel.collapsed {
+            transform: translateX(calc(100% - var(--panel-handle)));
+        }
+
+        .control-panel.collapsed .panel-header {
+            pointer-events: auto;
+        }
+
+        .control-panel.collapsed .panel-body {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+            overflow: hidden;
+        }
+
+        .panel-body {
+            flex: 1;
+            display: block;
+            overflow-y: auto;
+            transition: opacity 0.3s ease;
+            padding-right: 4px;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .panel-body[aria-hidden="true"] {
+            pointer-events: none;
+        }
+
+        .control-panel:not(.collapsed) .panel-body {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s;
+        }
+
+        .hud-dock {
+            margin-bottom: 20px;
+        }
+
+        .hud-dock:empty {
+            display: none;
+        }
+
+        .hud-dock.is-active {
+            margin-bottom: 24px;
+        }
+
+        body.panel-collapsed .canvas-container {
+            right: 0;
+        }
+
+        body.panel-open .canvas-container {
+            right: 300px;
         }
         
         @media (max-width: 768px) {
+            body {
+                --panel-height-mobile: min(55vh, 460px);
+            }
+
             .control-panel {
+                --panel-handle: 52px;
                 width: 100vw;
-                height: 40vh;
+                height: var(--panel-height-mobile);
                 top: auto;
                 bottom: 0;
                 right: 0;
                 left: 0;
                 border-left: none;
                 border-top: 2px solid #00ffff;
+                transform: translateY(0);
             }
-            
+
+            .control-panel.collapsed {
+                transform: translateY(calc(100% - var(--panel-handle)));
+            }
+
+            .control-panel.collapsed .panel-body {
+                transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+            }
+
             .canvas-container {
                 right: 0;
-                bottom: 60px;
+                bottom: 0;
+                top: 0;
             }
-            
+
+            body.panel-open .canvas-container {
+                right: 0;
+                bottom: var(--panel-height-mobile);
+            }
+
+            body.panel-collapsed .canvas-container {
+                right: 0;
+                bottom: 0;
+            }
+
             .system-selector {
                 flex-wrap: wrap;
                 gap: 5px;
+            }
+
+            .panel-body {
+                padding-right: 0;
             }
             
             .system-btn {
                 font-size: 0.8rem;
                 padding: 6px 12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .control-panel,
+            .panel-body {
+                transition: none !important;
             }
         }
         
@@ -217,21 +315,40 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
+        }
+
+        .panel-title {
+            flex: 1;
+            text-align: left;
         }
         
         .mobile-collapse-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
             background: rgba(255, 0, 255, 0.2);
             border: 1px solid #ff00ff;
             color: #ff00ff;
-            padding: 8px 12px;
             cursor: pointer;
-            font-size: 1.2rem;
-            border-radius: 5px;
+            font-size: 1rem;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
-        
+
+        .mobile-collapse-btn span {
+            pointer-events: none;
+        }
+
         .mobile-collapse-btn:hover {
             background: rgba(255, 0, 255, 0.4);
+        }
+
+        .mobile-collapse-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 0, 255, 0.35);
         }
         
         @media (max-width: 768px) {
@@ -685,10 +802,16 @@
     <!-- Control Panel -->
     <div class="control-panel" id="controlPanel">
         <div class="panel-header" id="panelHeader">
-            <span>FACETED SYSTEM</span>
+            <span class="panel-title" id="panelTitle">FACETED SYSTEM</span>
+            <button class="mobile-collapse-btn" id="mobileCollapseBtn" type="button" aria-controls="controlPanel" aria-expanded="true" aria-label="Collapse control panel">
+                <span aria-hidden="true">▼</span>
+            </button>
         </div>
 
-        <div class="control-section" id="feedbackSection">
+        <div class="panel-body" id="panelBody" aria-hidden="false">
+            <div class="hud-dock" id="hudDock" aria-live="polite"></div>
+
+            <div class="control-section" id="feedbackSection">
             <div class="section-title">HUD FEEDBACK MAP</div>
             <div class="hud-summary">
                 <p><span class="hud-chip energy">Band Flares</span>Follow bass, mid, and treble surges to see which spectrum is steering each geometry shift.</p>
@@ -976,6 +1099,7 @@
             <button class="panel-btn" onclick="createTradingCard('classic')" style="background: rgba(255, 150, 0, 0.1); border-color: rgba(255, 150, 0, 0.3); color: #ff9600;">🎴 Trading Card</button>
             <button class="panel-btn" onclick="createTradingCard('social')" style="background: rgba(255, 100, 255, 0.1); border-color: rgba(255, 100, 255, 0.3); color: #ff64ff;">📱 Social Card</button>
         </div>
+        </div>
     </div>
     
     <!-- CRITICAL BUG FIX: Move switchSystem function outside ES6 module for global access -->
@@ -1142,8 +1266,8 @@
                             holographic: 'HOLOGRAPHIC SYSTEM',
                             polychora: 'POLYCHORA SYSTEM'
                         };
-                        const panelHeader = document.getElementById('panelHeader');
-                        if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
+                        const panelTitle = document.getElementById('panelTitle');
+                        if (panelTitle) panelTitle.textContent = headers[system] || 'VIB34D SYSTEM';
 
                         if (!window.isGalleryPreview) {
                             if (system === 'faceted' && typeof window.setupLatticePulseGame === 'function') {
@@ -1635,7 +1759,7 @@
         window.updateAllParameterDisplays = function(uiState) {
             const displayMappings = {
                 rot4dXW: 'xwValue',
-                rot4dYW: 'ywValue', 
+                rot4dYW: 'ywValue',
                 rot4dZW: 'zwValue',
                 gridDensity: 'densityValue',
                 morphFactor: 'morphValue',
@@ -1662,10 +1786,94 @@
             }
         }
 
+        // Control panel responsiveness
+        const controlPanelEl = document.getElementById('controlPanel');
+        const panelBody = document.getElementById('panelBody');
+        const collapseBtn = document.getElementById('mobileCollapseBtn');
+        const panelState = {
+            collapsed: false
+        };
+
+        function emitPanelToggle(collapsed, reason) {
+            try {
+                window.dispatchEvent(new CustomEvent('control-panel:toggle', {
+                    detail: { collapsed, reason }
+                }));
+            } catch (error) {
+                console.warn('⚠️ Unable to dispatch control panel toggle event', error);
+            }
+        }
+
+        function setPanelCollapsed(collapsed, { reason = 'manual', silent = false } = {}) {
+            if (!controlPanelEl) return;
+
+            const nextState = !!collapsed;
+            const changed = panelState.collapsed !== nextState;
+            panelState.collapsed = nextState;
+
+            controlPanelEl.classList.toggle('collapsed', nextState);
+            controlPanelEl.dataset.state = nextState ? 'collapsed' : 'expanded';
+            document.body.classList.toggle('panel-collapsed', nextState);
+            document.body.classList.toggle('panel-open', !nextState);
+
+            if (panelBody) {
+                panelBody.setAttribute('aria-hidden', nextState ? 'true' : 'false');
+            }
+
+            if (collapseBtn) {
+                collapseBtn.setAttribute('aria-expanded', (!nextState).toString());
+                collapseBtn.setAttribute('aria-label', nextState ? 'Expand control panel' : 'Collapse control panel');
+                collapseBtn.dataset.state = nextState ? 'collapsed' : 'expanded';
+                const icon = collapseBtn.querySelector('span');
+                if (icon) {
+                    icon.textContent = nextState ? '▲' : '▼';
+                } else {
+                    collapseBtn.textContent = nextState ? '▲' : '▼';
+                }
+            }
+
+            if (!silent || changed) {
+                emitPanelToggle(nextState, reason);
+            }
+        }
+
+        window.setPanelCollapsed = function(forceState, options = {}) {
+            setPanelCollapsed(forceState, options);
+        };
+
+        window.toggleMobilePanel = function(forceState, options = {}) {
+            if (!controlPanelEl) return;
+            const target = typeof forceState === 'boolean' ? forceState : !panelState.collapsed;
+            const reason = options.reason || 'toggle';
+            const silent = !!options.silent;
+            setPanelCollapsed(target, { reason, silent });
+        };
+
+        if (collapseBtn) {
+            collapseBtn.addEventListener('click', () => window.toggleMobilePanel(undefined, { reason: 'button' }));
+        }
+
+        const collapseMediaQuery = window.matchMedia('(max-width: 900px)');
+        const handlePanelMedia = event => {
+            const preferCollapsed = !!event.matches;
+            setPanelCollapsed(preferCollapsed, { reason: 'media' });
+        };
+
+        handlePanelMedia(collapseMediaQuery);
+        if (typeof collapseMediaQuery.addEventListener === 'function') {
+            collapseMediaQuery.addEventListener('change', handlePanelMedia);
+        } else if (typeof collapseMediaQuery.addListener === 'function') {
+            collapseMediaQuery.addListener(handlePanelMedia);
+        }
+
+        document.body.classList.add('panel-ready');
+        document.body.classList.toggle('panel-open', !panelState.collapsed);
+        document.body.classList.toggle('panel-collapsed', panelState.collapsed);
+
         // Global flag to indicate module readiness
         window.moduleReady = false;
         window.currentSystem = 'faceted';
-        
+
     </script>
     
     <script type="module">
