@@ -109,6 +109,43 @@ export class LatticePulseGame {
         this.state = 'start-screen';
     }
 
+    presentStartScreen({ reset = false } = {}) {
+        if (!this.initialized) {
+            this.init();
+        }
+
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+
+        this.active = false;
+        this.mode = 'idle';
+
+        if (this.hudElements?.root) {
+            this.hudElements.root.classList.add('lp-hidden');
+        }
+
+        if (this.startScreen) {
+            this.startScreen.classList.remove('lp-hidden');
+        }
+
+        if (reset && this.startMessage) {
+            this.setStartMessage('Microphone mode provides the richest experience.', 'info');
+        }
+
+        this.setHudStatus('Awaiting audio source…', 'info');
+        this.beatCounter = 0;
+        this.lastBeat = null;
+        this.displayEnergy = 0;
+        this.currentModeName = null;
+        this.currentDominantBand = null;
+        this.failureState = null;
+
+        this.state = 'start-screen';
+        return true;
+    }
+
     injectStyles() {
         if (typeof document === 'undefined') return;
         if (document.getElementById('lattice-pulse-styles')) return;
@@ -1149,6 +1186,32 @@ export class LatticePulseGame {
             saturationBoost: 0.1,
             paletteHue: defaultMode.hueShift ?? signature.paletteHue
         };
+    }
+
+    attachEngine(engine) {
+        if (!engine) {
+            console.warn('[LatticePulseGame] Detaching from rendering engine.');
+            this.engine = null;
+            return false;
+        }
+
+        if (this.engine === engine) {
+            return true;
+        }
+
+        this.engine = engine;
+        console.log('[LatticePulseGame] Attached to holographic engine');
+
+        if (this.state === 'running') {
+            if (typeof this.engine.updateVisualizers === 'function') {
+                this.engine.updateVisualizers();
+            }
+            if (typeof this.engine.updateDisplayValues === 'function') {
+                this.engine.updateDisplayValues();
+            }
+        }
+
+        return true;
     }
 
     applyGeometryEvent(event, beat) {
