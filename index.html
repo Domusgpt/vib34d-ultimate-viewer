@@ -282,7 +282,56 @@
             margin-bottom: 10px;
             text-transform: uppercase;
         }
-        
+
+        .hud-summary {
+            display: grid;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: rgba(200, 255, 255, 0.72);
+            line-height: 1.45;
+        }
+
+        .hud-summary p {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.12);
+            border: 1px solid rgba(0, 255, 255, 0.28);
+            color: #c8ffff;
+            white-space: nowrap;
+        }
+
+        .hud-chip.energy {
+            background: rgba(255, 120, 180, 0.14);
+            border-color: rgba(255, 120, 180, 0.32);
+            color: rgba(255, 210, 230, 0.9);
+        }
+
+        .hud-chip.ect {
+            background: rgba(120, 200, 255, 0.14);
+            border-color: rgba(120, 200, 255, 0.32);
+            color: rgba(210, 235, 255, 0.92);
+        }
+
+        .hud-chip.combo {
+            background: rgba(255, 180, 120, 0.14);
+            border-color: rgba(255, 180, 120, 0.32);
+            color: rgba(255, 232, 210, 0.92);
+        }
+
         /* Geometry Grid */
         .geometry-grid {
             display: grid;
@@ -638,7 +687,16 @@
         <div class="panel-header" id="panelHeader">
             <span>FACETED SYSTEM</span>
         </div>
-        
+
+        <div class="control-section" id="feedbackSection">
+            <div class="section-title">HUD FEEDBACK MAP</div>
+            <div class="hud-summary">
+                <p><span class="hud-chip energy">Band Flares</span>Follow bass, mid, and treble surges to see which spectrum is steering each geometry shift.</p>
+                <p><span class="hud-chip ect">ECT Reactor</span>Watch coherence rise and fall so you know when visuals are stabilizing or about to bloom.</p>
+                <p><span class="hud-chip combo">Combo Chain</span>Track streaks and timeline callouts to anticipate signature bursts and rescue moments.</p>
+            </div>
+        </div>
+
         <!-- GEOMETRY SECTION (Faceted & Polychora) -->
         <div class="control-section" id="geometrySection">
             <div class="section-title">GEOMETRY</div>

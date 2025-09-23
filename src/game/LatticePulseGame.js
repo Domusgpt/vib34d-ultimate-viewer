@@ -99,6 +99,11 @@ export class LatticePulseGame {
         this.hudElements = null;
         this.onStateChange = typeof options.onStateChange === 'function' ? options.onStateChange : null;
         this.lastGeometryEvent = null;
+        this.reactionHistory = [];
+        this.comboState = { streak: 0, lastIntensity: null, lastTempo: null };
+        this.bandSmoothedLevels = { bass: 0, mid: 0, treble: 0 };
+        this.bandMomentum = { bass: 0, mid: 0, treble: 0 };
+        this.hudPulseTimer = null;
 
         this.beatUnsubscribe = this.audioService.onBeat(this.handleBeat);
         this.energyUnsubscribe = this.audioService.onEnergy(payload => this.handleEnergy(payload));
@@ -595,6 +600,294 @@ export class LatticePulseGame {
                 min-height: 1.2rem;
                 color: rgba(255, 200, 200, 0.92);
             }
+            .lp-hud-bands {
+                margin-top: 1.1rem;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.75rem;
+            }
+            .lp-band-meter {
+                position: relative;
+                padding: 0.65rem 0.75rem 0.8rem;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+                transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+            }
+            .lp-band-meter::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 60%);
+                pointer-events: none;
+                opacity: 0.5;
+            }
+            .lp-band-meter strong {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: rgba(210, 220, 255, 0.72);
+            }
+            .lp-band-meter span {
+                position: relative;
+                display: block;
+                height: 8px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.14);
+                overflow: hidden;
+            }
+            .lp-band-meter span::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                transform-origin: left center;
+                transform: scaleX(var(--lp-level, 0));
+                transition: transform 0.22s ease, filter 0.3s ease;
+                background: linear-gradient(90deg, rgba(255, 125, 200, 0.8), rgba(90, 200, 255, 0.85));
+                filter: drop-shadow(0 0 calc(8px + var(--lp-level, 0) * 16px) rgba(140, 200, 255, 0.55));
+            }
+            .lp-band-meter[data-band="bass"] span::after {
+                background: linear-gradient(90deg, rgba(255, 120, 160, 0.85), rgba(255, 90, 90, 0.8));
+            }
+            .lp-band-meter[data-band="mid"] span::after {
+                background: linear-gradient(90deg, rgba(110, 200, 255, 0.85), rgba(90, 160, 255, 0.8));
+            }
+            .lp-band-meter[data-band="treble"] span::after {
+                background: linear-gradient(90deg, rgba(200, 140, 255, 0.85), rgba(120, 90, 255, 0.78));
+            }
+            .lp-band-meter small {
+                font-size: 0.78rem;
+                letter-spacing: 0.04em;
+                color: rgba(245, 248, 255, 0.82);
+            }
+            .lp-band-meter[data-state="surge"] {
+                border-color: rgba(140, 200, 255, 0.45);
+                box-shadow: 0 10px 24px rgba(90, 160, 255, 0.25);
+            }
+            .lp-band-meter[data-state="eruption"] {
+                transform: translateY(-2px);
+                border-color: rgba(255, 150, 210, 0.55);
+                box-shadow: 0 14px 32px rgba(255, 120, 200, 0.3);
+            }
+            .lp-band-meter[data-state="ambient"] {
+                opacity: 0.8;
+            }
+            .lp-band-meter[data-momentum="up"] small::after {
+                content: ' ▲';
+            }
+            .lp-band-meter[data-momentum="down"] small::after {
+                content: ' ▼';
+            }
+            .lp-hud-reactor {
+                margin-top: 1.15rem;
+                display: grid;
+                grid-template-columns: 140px 1fr;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            .lp-hud-ect-meter {
+                position: relative;
+                padding: 1rem;
+                border-radius: 18px;
+                background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 55%), rgba(8, 12, 26, 0.8);
+                border: 1px solid rgba(110, 140, 255, 0.35);
+                display: grid;
+                place-items: center;
+                gap: 0.75rem;
+                transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            }
+            .lp-ect-ring {
+                position: relative;
+                width: 88px;
+                height: 88px;
+                border-radius: 999px;
+                display: grid;
+                place-items: center;
+                filter: drop-shadow(0 0 18px rgba(150, 200, 255, 0.35));
+            }
+            .lp-ect-ring span {
+                position: absolute;
+                inset: 12px;
+                border-radius: 999px;
+                border: 2px solid rgba(180, 200, 255, 0.25);
+                opacity: 0.25;
+                transform: rotate(calc(var(--i) * 30deg)) translateY(-32px);
+                transform-origin: center 44px;
+                transition: opacity 0.3s ease, border-color 0.3s ease;
+            }
+            .lp-ect-ring span[data-active="1"] {
+                opacity: 1;
+                border-color: rgba(120, 220, 255, 0.85);
+            }
+            .lp-ect-label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-transform: uppercase;
+                letter-spacing: 0.16em;
+                gap: 0.25rem;
+            }
+            .lp-ect-label strong {
+                font-size: 0.75rem;
+                color: rgba(210, 224, 255, 0.72);
+            }
+            .lp-ect-label em {
+                font-style: normal;
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: rgba(245, 250, 255, 0.95);
+            }
+            .lp-ect-label span {
+                font-size: 0.62rem;
+                letter-spacing: 0.14em;
+                color: rgba(200, 210, 245, 0.68);
+            }
+            .lp-hud-ect-meter[data-trend="up"] {
+                border-color: rgba(110, 240, 200, 0.55);
+                box-shadow: 0 12px 28px rgba(110, 240, 200, 0.2);
+            }
+            .lp-hud-ect-meter[data-trend="down"] {
+                border-color: rgba(255, 160, 160, 0.55);
+                box-shadow: 0 12px 28px rgba(255, 160, 160, 0.2);
+            }
+            .lp-hud-reactor-info {
+                display: flex;
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            .lp-hud-combo {
+                display: flex;
+                align-items: baseline;
+                gap: 0.5rem;
+                padding: 0.65rem 0.9rem;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: rgba(255, 255, 255, 0.05);
+                transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+            }
+            .lp-combo-count {
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: rgba(245, 250, 255, 0.96);
+            }
+            .lp-combo-label {
+                font-size: 0.76rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: rgba(210, 220, 255, 0.75);
+            }
+            .lp-hud-combo[data-streak="build"] {
+                border-color: rgba(120, 190, 255, 0.45);
+                box-shadow: 0 10px 24px rgba(120, 190, 255, 0.25);
+            }
+            .lp-hud-combo[data-streak="peak"] {
+                transform: translateY(-2px);
+                border-color: rgba(255, 150, 210, 0.55);
+                box-shadow: 0 14px 28px rgba(255, 150, 210, 0.3);
+            }
+            .lp-hud-callout {
+                padding: 0.85rem 1rem;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(90, 120, 255, 0.08));
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+                transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            }
+            .lp-hud-callout strong {
+                font-size: 0.95rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: rgba(240, 244, 255, 0.95);
+            }
+            .lp-hud-callout span {
+                font-size: 0.78rem;
+                color: rgba(210, 220, 255, 0.82);
+            }
+            .lp-hud-callout[data-energy="surge"] {
+                border-color: rgba(120, 190, 255, 0.5);
+                box-shadow: 0 12px 26px rgba(120, 190, 255, 0.22);
+            }
+            .lp-hud-callout[data-energy="eruption"] {
+                border-color: rgba(255, 150, 210, 0.58);
+                box-shadow: 0 16px 32px rgba(255, 150, 210, 0.28);
+            }
+            .lp-hud-callout[data-trend="up"] strong::after {
+                content: ' +';
+            }
+            .lp-hud-callout[data-trend="down"] strong::after {
+                content: ' –';
+            }
+            .lp-hud-timeline {
+                margin: 1.1rem 0 0;
+                padding: 0.75rem 0 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 0.55rem;
+                max-height: 160px;
+                overflow: hidden;
+            }
+            .lp-hud-timeline li {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                padding: 0.35rem 0.5rem 0.45rem;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                font-size: 0.78rem;
+                letter-spacing: 0.04em;
+                transition: border-color 0.25s ease, transform 0.25s ease;
+            }
+            .lp-hud-timeline li[data-intensity="surge"],
+            .lp-hud-timeline li[data-intensity="eruption"] {
+                border-color: rgba(140, 200, 255, 0.45);
+            }
+            .lp-hud-timeline li[data-intensity="eruption"] {
+                transform: translateX(4px);
+                border-color: rgba(255, 150, 210, 0.55);
+                box-shadow: 0 10px 24px rgba(255, 150, 210, 0.28);
+            }
+            .lp-hud-timeline li[data-band="bass"] {
+                background: linear-gradient(135deg, rgba(255, 120, 160, 0.18), rgba(255, 255, 255, 0.02));
+            }
+            .lp-hud-timeline li[data-band="mid"] {
+                background: linear-gradient(135deg, rgba(110, 200, 255, 0.18), rgba(255, 255, 255, 0.02));
+            }
+            .lp-hud-timeline li[data-band="treble"] {
+                background: linear-gradient(135deg, rgba(200, 140, 255, 0.2), rgba(255, 255, 255, 0.02));
+            }
+            .lp-timeline-label {
+                font-weight: 600;
+                color: rgba(240, 244, 255, 0.92);
+            }
+            .lp-timeline-meta {
+                color: rgba(210, 220, 255, 0.7);
+                font-size: 0.7rem;
+            }
+            .lp-timeline-empty {
+                font-size: 0.76rem;
+                color: rgba(200, 210, 240, 0.6);
+                text-align: center;
+                padding: 0.25rem 0;
+            }
+            .lp-hud.lp-hud-pulse {
+                animation: lpHudPulseFlash 0.32s ease-out;
+            }
+            .lp-hud.lp-hud-pulse[data-pulse="bass"] .lp-band-meter[data-band="bass"],
+            .lp-hud.lp-hud-pulse[data-pulse="mid"] .lp-band-meter[data-band="mid"],
+            .lp-hud.lp-hud-pulse[data-pulse="treble"] .lp-band-meter[data-band="treble"],
+            .lp-hud.lp-hud-pulse[data-pulse="energy"] .lp-hud-callout {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 32px rgba(255, 255, 255, 0.25);
+            }
             .lp-hud[data-band="bass"] { border-color: rgba(255, 150, 170, 0.38); }
             .lp-hud[data-band="mid"] { border-color: rgba(140, 200, 255, 0.38); }
             .lp-hud[data-band="treble"] { border-color: rgba(170, 140, 255, 0.4); }
@@ -623,11 +916,19 @@ export class LatticePulseGame {
                 0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
                 50% { filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.35)); }
             }
+            @keyframes lpHudPulseFlash {
+                0% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+                40% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.35); }
+                100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+            }
             @media (max-width: 640px) {
                 .lp-start { padding: 1.3rem; }
                 .lp-start-panel { padding: 1.75rem; gap: 1rem; }
                 .lp-hud { left: 0.75rem; right: 0.75rem; top: auto; bottom: 0.85rem; width: auto; }
                 .lp-hud::after { inset: 18% 18%; }
+                .lp-hud-reactor { grid-template-columns: 1fr; }
+                .lp-hud-bands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                .lp-hud-combo { justify-content: space-between; }
             }
         `
         document.head.appendChild(style);
@@ -765,6 +1066,87 @@ export class LatticePulseGame {
         const geometry = createRow('Geometry', 'lp-hud-geometry');
         const mode = createRow('Mode', 'lp-hud-mode');
 
+        const bandGroup = document.createElement('div');
+        bandGroup.className = 'lp-hud-bands';
+
+        const bandMeters = {};
+        const bandLabels = { bass: 'Bass', mid: 'Mid', treble: 'Treble' };
+        Object.entries(bandLabels).forEach(([key, label]) => {
+            const meter = document.createElement('div');
+            meter.className = 'lp-band-meter';
+            meter.dataset.band = key;
+
+            const heading = document.createElement('strong');
+            heading.textContent = label;
+
+            const bar = document.createElement('span');
+            bar.style.setProperty('--lp-level', '0');
+
+            const value = document.createElement('small');
+            value.textContent = '0%';
+
+            meter.append(heading, bar, value);
+            bandGroup.appendChild(meter);
+            bandMeters[key] = { root: meter, bar, label: heading, value };
+        });
+
+        const ectMeter = document.createElement('div');
+        ectMeter.className = 'lp-hud-ect-meter';
+
+        const ectRing = document.createElement('div');
+        ectRing.className = 'lp-ect-ring';
+        const ectSegments = [];
+        for (let i = 0; i < 12; i += 1) {
+            const segment = document.createElement('span');
+            segment.style.setProperty('--i', String(i));
+            segment.dataset.active = '0';
+            ectRing.appendChild(segment);
+            ectSegments.push(segment);
+        }
+
+        const ectLabel = document.createElement('div');
+        ectLabel.className = 'lp-ect-label';
+        const ectHeading = document.createElement('strong');
+        ectHeading.textContent = 'ECT';
+        const ectValueLabel = document.createElement('em');
+        ectValueLabel.textContent = '0%';
+        const ectDescriptor = document.createElement('span');
+        ectDescriptor.textContent = 'Calibration pending';
+        ectLabel.append(ectHeading, ectValueLabel, ectDescriptor);
+        ectMeter.append(ectRing, ectLabel);
+
+        const combo = document.createElement('div');
+        combo.className = 'lp-hud-combo';
+        combo.dataset.streak = 'base';
+        const comboCount = document.createElement('span');
+        comboCount.className = 'lp-combo-count';
+        comboCount.textContent = 'x0';
+        const comboLabel = document.createElement('span');
+        comboLabel.className = 'lp-combo-label';
+        comboLabel.textContent = 'Rhythm Link';
+        combo.append(comboCount, comboLabel);
+
+        const callout = document.createElement('div');
+        callout.className = 'lp-hud-callout';
+        callout.dataset.energy = 'ambient';
+        const calloutHeadline = document.createElement('strong');
+        calloutHeadline.textContent = 'Awaiting impact';
+        const calloutDetail = document.createElement('span');
+        calloutDetail.textContent = 'No beats detected yet.';
+        callout.append(calloutHeadline, calloutDetail);
+
+        const reactorInfo = document.createElement('div');
+        reactorInfo.className = 'lp-hud-reactor-info';
+        reactorInfo.append(combo, callout);
+
+        const reactor = document.createElement('div');
+        reactor.className = 'lp-hud-reactor';
+        reactor.append(ectMeter, reactorInfo);
+
+        const timeline = document.createElement('ol');
+        timeline.className = 'lp-hud-timeline';
+        timeline.setAttribute('aria-live', 'polite');
+
         const failure = document.createElement('div');
         failure.className = 'lp-hud-warning';
         failure.textContent = '';
@@ -774,7 +1156,7 @@ export class LatticePulseGame {
         const pulseBar = document.createElement('span');
         pulseMeter.appendChild(pulseBar);
 
-        hud.append(title, status, grid, pulseMeter, failure);
+        hud.append(title, status, grid, bandGroup, reactor, timeline, pulseMeter, failure);
         this.container.appendChild(hud);
 
         this.hudElements = {
@@ -789,8 +1171,33 @@ export class LatticePulseGame {
             geometry,
             mode,
             failure,
-            meter: pulseBar
+            meter: pulseBar,
+            bandMeters,
+            ectMeter: {
+                root: ectMeter,
+                ring: ectRing,
+                segments: ectSegments,
+                value: ectValueLabel,
+                descriptor: ectDescriptor
+            },
+            combo: {
+                root: combo,
+                count: comboCount,
+                label: comboLabel
+            },
+            callout: {
+                root: callout,
+                headline: calloutHeadline,
+                detail: calloutDetail
+            },
+            timeline
         };
+
+        this.updateBandMeters(this.lastBandLevels);
+        this.updateEctVisual(this.currentECT ?? 0, 0);
+        this.updateComboDisplay({ analysisQuality: 0 }, null, this.currentECT ?? 0);
+        this.updateCalloutDisplay(null, this.currentECT ?? 0, 0, { energy: 0, analysisQuality: 0 });
+        this.updateTimeline();
     }
 
     createGeometryDefaults() {
@@ -1142,6 +1549,7 @@ export class LatticePulseGame {
         }
 
         this.refreshHud(beat, event);
+        this.triggerHudPulse(event, beat?.bandLevels || this.lastBandLevels);
         return event;
     }
 
@@ -1320,6 +1728,16 @@ export class LatticePulseGame {
             this.currentModeName = modeName;
         }
 
+        this.updateBandMeters(beat?.bandLevels || this.lastBandLevels, event);
+        this.updateEctVisual(ectValue, trend);
+        this.updateComboDisplay(beat, event, ectValue);
+        this.updateCalloutDisplay(event, ectValue, trend, beat);
+        if (event) {
+            this.updateTimeline(event, beat);
+        } else if (!this.reactionHistory.length) {
+            this.updateTimeline();
+        }
+
         if (this.hudElements.root) {
             this.hudElements.root.dataset.state = this.mode;
             this.hudElements.root.dataset.ect = ectValue >= 0.75 ? 'high' : ectValue >= 0.45 ? 'medium' : 'low';
@@ -1376,6 +1794,227 @@ export class LatticePulseGame {
             this.hudElements.meter.style.width = `${Math.round(energyValue * 100)}%`;
             this.hudElements.meter.style.filter = `drop-shadow(0 0 ${Math.round(10 + ectValue * 22)}px hsla(${Math.round(hue)}, 95%, 70%, ${0.35 + ectValue * 0.25}))`;
         }
+    }
+
+    updateBandMeters(bandLevels = {}, event = null) {
+        if (!this.hudElements?.bandMeters) return;
+        const keys = ['bass', 'mid', 'treble'];
+        keys.forEach(key => {
+            const meter = this.hudElements.bandMeters[key];
+            if (!meter) return;
+            const value = clamp(bandLevels?.[key] ?? 0, 0, 1);
+            const previous = this.bandSmoothedLevels?.[key] ?? value;
+            const smoothed = previous * 0.6 + value * 0.4;
+            this.bandSmoothedLevels[key] = smoothed;
+            const momentum = smoothed - previous;
+            this.bandMomentum[key] = momentum;
+
+            meter.bar.style.setProperty('--lp-level', value.toFixed(3));
+            meter.value.textContent = `${Math.round(value * 100)}%`;
+
+            if (value >= 0.8) {
+                meter.root.dataset.state = 'eruption';
+            } else if (value >= 0.55) {
+                meter.root.dataset.state = 'surge';
+            } else if (value <= 0.22) {
+                meter.root.dataset.state = 'ambient';
+            } else {
+                meter.root.dataset.state = 'groove';
+            }
+
+            if (momentum > 0.025) {
+                meter.root.dataset.momentum = 'up';
+            } else if (momentum < -0.025) {
+                meter.root.dataset.momentum = 'down';
+            } else {
+                delete meter.root.dataset.momentum;
+            }
+        });
+    }
+
+    updateEctVisual(ectValue, trend) {
+        const meter = this.hudElements?.ectMeter;
+        if (!meter) return;
+        if (meter.value) {
+            meter.value.textContent = `${Math.round(ectValue * 100)}%`;
+        }
+        if (meter.descriptor) {
+            let descriptor = 'Coherence steady';
+            if (trend > 0.02) {
+                descriptor = 'Coherence rising';
+            } else if (trend < -0.02) {
+                descriptor = 'Stabilizing flow';
+            }
+            meter.descriptor.textContent = descriptor;
+        }
+        if (meter.root) {
+            if (trend > 0.02) {
+                meter.root.dataset.trend = 'up';
+            } else if (trend < -0.02) {
+                meter.root.dataset.trend = 'down';
+            } else {
+                meter.root.dataset.trend = 'steady';
+            }
+        }
+        const segments = meter.segments || [];
+        const activeCount = Math.round(clamp(ectValue, 0, 1) * segments.length);
+        segments.forEach((segment, index) => {
+            segment.dataset.active = index < activeCount ? '1' : '0';
+        });
+    }
+
+    updateComboDisplay(beat, event, ectValue) {
+        const combo = this.hudElements?.combo;
+        if (!combo) return;
+        const signalValue = clamp(beat?.analysisQuality ?? this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const intensityClass = event?.intensityClass || this.classifyIntensity(beat?.energy ?? this.audioService.getEnergy());
+        const tempoClass = event?.tempoClass || this.classifyTempo(beat?.bpm || this.audioService.getCurrentBpm());
+
+        if (!this.comboState) {
+            this.comboState = { streak: 0, lastIntensity: null, lastTempo: null };
+        }
+
+        if (signalValue < 0.2) {
+            this.comboState.streak = 0;
+            this.comboState.lastIntensity = null;
+            this.comboState.lastTempo = null;
+        } else {
+            if (this.comboState.lastIntensity === intensityClass && this.comboState.lastTempo === tempoClass && signalValue > 0.45) {
+                this.comboState.streak = Math.min((this.comboState.streak || 0) + 1, 12);
+            } else {
+                this.comboState.streak = 1;
+            }
+            this.comboState.lastIntensity = intensityClass;
+            this.comboState.lastTempo = tempoClass;
+        }
+
+        const streak = Math.max(this.comboState.streak, 0);
+        combo.count.textContent = `x${streak}`;
+
+        const labelMap = {
+            ambient: 'Ambient Link',
+            groove: 'Groove Chain',
+            surge: 'Surge Chain',
+            eruption: 'Eruption Chain'
+        };
+        combo.label.textContent = labelMap[intensityClass] || 'Rhythm Link';
+
+        const streakState = streak >= 6 ? 'peak' : streak >= 3 ? 'build' : 'base';
+        combo.root.dataset.streak = streakState;
+        combo.root.dataset.intensity = intensityClass;
+        combo.root.dataset.tempo = tempoClass;
+        combo.root.style.setProperty('--lp-ect', ectValue.toFixed(3));
+    }
+
+    updateCalloutDisplay(event, ectValue, trend, beat) {
+        const callout = this.hudElements?.callout;
+        if (!callout) return;
+
+        const energyValue = clamp(beat?.energy ?? this.displayEnergy, 0, 1);
+        const signalValue = clamp(beat?.analysisQuality ?? this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const streak = Math.max(this.comboState?.streak ?? 0, 0);
+
+        let headline = 'Ambient drift';
+        if (energyValue >= 0.82) {
+            headline = 'Visual eruption';
+        } else if (energyValue >= 0.6) {
+            headline = 'Energy surge';
+        } else if (energyValue >= 0.35) {
+            headline = 'Rhythmic groove';
+        }
+
+        let detail = `${Math.round(signalValue * 100)}% signal lock · ${Math.round(ectValue * 100)}% coherence`;
+        if (event?.modeName) {
+            const dominantLabel = toLabel(event.dominantBand || this.currentDominantBand || 'mid');
+            detail = `${event.modeName} • ${dominantLabel}`;
+        }
+        if (streak >= 3) {
+            detail = `Combo x${streak} — ${detail}`;
+        }
+
+        callout.headline.textContent = headline;
+        callout.detail.textContent = detail;
+
+        const energyState = energyValue >= 0.82 ? 'eruption' : energyValue >= 0.6 ? 'surge' : energyValue >= 0.35 ? 'groove' : 'ambient';
+        callout.root.dataset.energy = energyState;
+        if (trend > 0.015) {
+            callout.root.dataset.trend = 'up';
+        } else if (trend < -0.015) {
+            callout.root.dataset.trend = 'down';
+        } else {
+            callout.root.dataset.trend = 'steady';
+        }
+    }
+
+    updateTimeline(event = null, beat = null) {
+        if (event) {
+            const energyValue = clamp(beat?.energy ?? this.displayEnergy, 0, 1);
+            const ectValue = clamp(this.currentECT ?? this.targetECT ?? energyValue, 0, 1);
+            const tempoClass = event.tempoClass || this.classifyTempo(beat?.bpm || this.audioService.getCurrentBpm());
+            const entry = {
+                label: event.modeName || 'Geometry Shift',
+                band: event.dominantBand || this.currentDominantBand || 'mid',
+                intensity: event.intensityClass || this.classifyIntensity(energyValue),
+                tempo: tempoClass,
+                energy: energyValue,
+                ect: ectValue
+            };
+            this.reactionHistory.unshift(entry);
+            if (this.reactionHistory.length > 6) {
+                this.reactionHistory.pop();
+            }
+        }
+
+        const timeline = this.hudElements?.timeline;
+        if (!timeline) return;
+
+        while (timeline.firstChild) {
+            timeline.removeChild(timeline.firstChild);
+        }
+
+        if (!this.reactionHistory.length) {
+            const placeholder = document.createElement('li');
+            placeholder.className = 'lp-timeline-empty';
+            placeholder.textContent = 'Awaiting first beat…';
+            timeline.appendChild(placeholder);
+            return;
+        }
+
+        this.reactionHistory.forEach(entry => {
+            const item = document.createElement('li');
+            item.dataset.band = entry.band || 'mid';
+            item.dataset.intensity = entry.intensity || 'groove';
+            item.dataset.tempo = entry.tempo || 'moderate';
+
+            const label = document.createElement('span');
+            label.className = 'lp-timeline-label';
+            label.textContent = entry.label;
+
+            const meta = document.createElement('span');
+            meta.className = 'lp-timeline-meta';
+            const tempoLabel = (entry.tempo || 'moderate').toString().toUpperCase();
+            meta.textContent = `${Math.round(entry.energy * 100)}% energy · ${Math.round(entry.ect * 100)}% coherence · ${tempoLabel}`;
+
+            item.append(label, meta);
+            timeline.appendChild(item);
+        });
+    }
+
+    triggerHudPulse(event, bandLevels = {}) {
+        if (!this.hudElements?.root) return;
+        const root = this.hudElements.root;
+        const band = event?.dominantBand || this.getDominantBand(bandLevels) || 'energy';
+        root.dataset.pulse = band;
+        root.classList.add('lp-hud-pulse');
+        if (this.hudPulseTimer) {
+            clearTimeout(this.hudPulseTimer);
+        }
+        this.hudPulseTimer = setTimeout(() => {
+            if (root) {
+                root.classList.remove('lp-hud-pulse');
+                root.dataset.pulse = '';
+            }
+        }, 360);
     }
     computeAudioRandom(...values) {
         let seed = 0;
@@ -1619,6 +2258,10 @@ export class LatticePulseGame {
         }
         if (this.hudElements?.root) {
             this.hudElements.root.classList.add('lp-hidden');
+        }
+        if (this.hudPulseTimer) {
+            clearTimeout(this.hudPulseTimer);
+            this.hudPulseTimer = null;
         }
         this.emitStateChange('stopped', { reason: 'stop' });
     }
