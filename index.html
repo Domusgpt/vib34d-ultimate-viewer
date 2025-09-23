@@ -86,10 +86,51 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
-        
+
         .action-btn:hover {
             background: rgba(255, 0, 255, 0.3);
             box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+
+        .action-btn[data-game-state="running"] {
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.3), rgba(0, 255, 200, 0.25));
+            border-color: rgba(0, 200, 255, 0.65);
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+            color: #00f5ff;
+        }
+
+        .action-btn[data-game-state="running"][data-auto-start="1"] {
+            background: linear-gradient(135deg, rgba(0, 220, 255, 0.38), rgba(0, 255, 200, 0.32));
+            border-color: rgba(0, 235, 255, 0.85);
+            box-shadow: 0 0 20px rgba(0, 230, 255, 0.6);
+            color: #c8faff;
+        }
+
+        .action-btn[data-auto-start="1"] {
+            position: relative;
+        }
+
+        .action-btn[data-auto-start="1"]::after {
+            content: 'AUTO';
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 0.45rem;
+            letter-spacing: 0.16em;
+            color: rgba(210, 255, 255, 0.85);
+            text-shadow: 0 0 6px rgba(0, 220, 255, 0.55);
+        }
+
+        .action-btn[data-game-state="start-screen"] {
+            background: rgba(255, 150, 0, 0.2);
+            border-color: rgba(255, 150, 0, 0.5);
+            color: #ffba4a;
+        }
+
+        .action-btn[data-game-state="paused"] {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(200, 200, 200, 0.25);
+            color: #e0e0e0;
         }
         
         @keyframes fadeInOut {
@@ -114,6 +155,15 @@
                 top: 0;
             }
         }
+
+        .system-btn:focus-visible,
+        .action-btn:focus-visible,
+        .geom-btn:focus-visible,
+        .panel-btn:focus-visible,
+        .mobile-collapse-btn:focus-visible {
+            outline: 2px solid rgba(0, 255, 255, 0.65);
+            outline-offset: 2px;
+        }
         
         .visualization-canvas {
             position: absolute;
@@ -136,7 +186,21 @@
             overflow-y: auto;
             backdrop-filter: blur(10px);
             z-index: 100;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .control-panel.collapsed {
+            transform: translateY(0);
+        }
+
+        .control-panel .lp-hud.is-inline {
+            width: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            .control-panel {
+                width: min(320px, 46vw);
+            }
         }
         
         @media (max-width: 768px) {
@@ -149,21 +213,12 @@
                 left: 0;
                 border-left: none;
                 border-top: 2px solid #00ffff;
+                box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.6);
             }
-            
+
             .canvas-container {
                 right: 0;
                 bottom: 60px;
-            }
-            
-            .system-selector {
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-            
-            .system-btn {
-                font-size: 0.8rem;
-                padding: 6px 12px;
             }
         }
         
@@ -176,52 +231,91 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
-        
+
         .mobile-collapse-btn {
+            display: none;
             background: rgba(255, 0, 255, 0.2);
             border: 1px solid #ff00ff;
             color: #ff00ff;
-            padding: 8px 12px;
+            padding: 10px 14px;
             cursor: pointer;
-            font-size: 1.2rem;
-            border-radius: 5px;
+            font-size: 1.1rem;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            line-height: 1;
+            min-width: 44px;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .mobile-collapse-btn:hover {
-            background: rgba(255, 0, 255, 0.4);
+
+        .mobile-collapse-btn:hover,
+        .mobile-collapse-btn:focus-visible {
+            background: rgba(255, 0, 255, 0.35);
         }
         
         @media (max-width: 768px) {
             .mobile-collapse-btn {
-                display: block !important;
+                display: inline-flex;
             }
-            
+
             .panel-header {
                 text-align: left;
             }
-            
+
+            .system-selector {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
             .system-btn, .action-btn, .geom-btn, .panel-btn {
                 min-height: 44px;
                 font-size: 0.9rem;
                 touch-action: manipulation;
             }
-            
+
             .control-slider {
                 height: 8px;
                 min-height: 44px;
             }
-            
+
             .control-slider::-webkit-slider-thumb {
                 width: 24px;
                 height: 24px;
             }
-            
+
             /* Touch feedback */
             .touch-active {
                 opacity: 0.7;
                 transform: scale(0.95);
+            }
+
+            .control-panel {
+                box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.6);
+            }
+
+            .control-panel.collapsed {
+                transform: translateY(calc(100% - 56px));
+                pointer-events: none;
+            }
+
+            .control-panel.collapsed .panel-header {
+                pointer-events: auto;
+            }
+
+            .control-panel.collapsed .control-section,
+            .control-panel.collapsed .action-row,
+            .control-panel.collapsed .hud-summary {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+            }
+
+            body.mobile-panel-collapsed .canvas-container {
+                bottom: 0;
             }
         }
         
@@ -241,7 +335,56 @@
             margin-bottom: 10px;
             text-transform: uppercase;
         }
-        
+
+        .hud-summary {
+            display: grid;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: rgba(200, 255, 255, 0.72);
+            line-height: 1.45;
+        }
+
+        .hud-summary p {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.12);
+            border: 1px solid rgba(0, 255, 255, 0.28);
+            color: #c8ffff;
+            white-space: nowrap;
+        }
+
+        .hud-chip.energy {
+            background: rgba(255, 120, 180, 0.14);
+            border-color: rgba(255, 120, 180, 0.32);
+            color: rgba(255, 210, 230, 0.9);
+        }
+
+        .hud-chip.ect {
+            background: rgba(120, 200, 255, 0.14);
+            border-color: rgba(120, 200, 255, 0.32);
+            color: rgba(210, 235, 255, 0.92);
+        }
+
+        .hud-chip.combo {
+            background: rgba(255, 180, 120, 0.14);
+            border-color: rgba(255, 180, 120, 0.32);
+            color: rgba(255, 232, 210, 0.92);
+        }
+
         /* Geometry Grid */
         .geometry-grid {
             display: grid;
@@ -565,6 +708,10 @@
         </div>
         
         <div class="action-buttons">
+            <button class="action-btn" data-action="lattice-game" data-game-state="idle"
+                    onclick="openLatticePulse()"
+                    title="Lattice Pulse Game"
+                    aria-label="Open the Lattice Pulse audio game">🎮</button>
             <button class="action-btn" onclick="openGallery()" title="Gallery">🖼️</button>
             <button class="action-btn" onclick="toggleAudio()" title="Audio">🎵</button>
             <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters">🤖</button>
@@ -591,9 +738,24 @@
     <!-- Control Panel -->
     <div class="control-panel" id="controlPanel">
         <div class="panel-header" id="panelHeader">
-            <span>FACETED SYSTEM</span>
+            <span id="panelHeaderLabel">FACETED SYSTEM</span>
+            <button class="mobile-collapse-btn"
+                    type="button"
+                    aria-controls="controlPanel"
+                    aria-expanded="true"
+                    aria-label="Collapse control panel"
+                    onclick="toggleMobilePanel()">▼</button>
         </div>
-        
+
+        <div class="control-section" id="feedbackSection">
+            <div class="section-title">HUD FEEDBACK MAP</div>
+            <div class="hud-summary">
+                <p><span class="hud-chip energy">Band Flares</span>Follow bass, mid, and treble surges to see which spectrum is steering each geometry shift.</p>
+                <p><span class="hud-chip ect">ECT Reactor</span>Watch coherence rise and fall so you know when visuals are stabilizing or about to bloom.</p>
+                <p><span class="hud-chip combo">Combo Chain</span>Track streaks and timeline callouts to anticipate signature bursts and rescue moments.</p>
+            </div>
+        </div>
+
         <!-- GEOMETRY SECTION (Faceted & Polychora) -->
         <div class="control-section" id="geometrySection">
             <div class="section-title">GEOMETRY</div>
@@ -1007,7 +1169,7 @@
                         
                         // Update global state and UI
                         window.currentSystem = system;
-                        
+
                         // Update ReactivityManager with new active system
                         if (window.reactivityManager) {
                             window.reactivityManager.setActiveSystem(system, newEngine);
@@ -1039,9 +1201,19 @@
                             holographic: 'HOLOGRAPHIC SYSTEM',
                             polychora: 'POLYCHORA SYSTEM'
                         };
-                        const panelHeader = document.getElementById('panelHeader');
-                        if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
-                        
+                        const panelHeaderLabel = document.getElementById('panelHeaderLabel');
+                        if (panelHeaderLabel) {
+                            panelHeaderLabel.textContent = headers[system] || 'VIB34D SYSTEM';
+                        }
+
+                        if (!window.isGalleryPreview) {
+                            if (system === 'faceted' && typeof window.setupLatticePulseGame === 'function') {
+                                window.setupLatticePulseGame(newEngine);
+                            } else if (window.latticePulseGame && typeof window.latticePulseGame.handleSystemChange === 'function') {
+                                window.latticePulseGame.handleSystemChange(system, newEngine);
+                            }
+                        }
+
                         console.log(`✅ Switched to ${system} system successfully`);
                         return; // Success - exit early
                     } else if (system === 'polychora') {
@@ -1064,9 +1236,77 @@
             document.querySelectorAll('.geom-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.index == index);
             });
-            
+
             if (window.updateParameter) {
                 window.updateParameter('geometry', index);
+            }
+        }
+
+        const MOBILE_PANEL_QUERY = window.matchMedia('(max-width: 768px)');
+        let mobilePanelInitialized = false;
+
+        function setControlPanelCollapsed(collapsed, { silent } = {}) {
+            const controlPanel = document.getElementById('controlPanel');
+            const collapseBtn = document.querySelector('.mobile-collapse-btn');
+            if (!controlPanel || !collapseBtn) return null;
+
+            const nextState = typeof collapsed === 'boolean'
+                ? collapsed
+                : !controlPanel.classList.contains('collapsed');
+            controlPanel.classList.toggle('collapsed', nextState);
+            controlPanel.dataset.collapsed = nextState ? 'true' : 'false';
+            document.body.classList.toggle('mobile-panel-collapsed', nextState);
+
+            collapseBtn.setAttribute('aria-expanded', nextState ? 'false' : 'true');
+            collapseBtn.setAttribute('aria-label', nextState ? 'Expand control panel' : 'Collapse control panel');
+            collapseBtn.textContent = nextState ? '▲' : '▼';
+
+            if (!silent) {
+                try {
+                    window.dispatchEvent(new CustomEvent('latticepulse:panel-toggle', { detail: { collapsed: nextState } }));
+                } catch (error) {
+                    console.warn('⚠️ Unable to dispatch panel toggle event:', error);
+                }
+            }
+
+            return nextState;
+        }
+
+        window.setControlPanelCollapsed = setControlPanelCollapsed;
+
+        window.toggleMobilePanel = function(forceState) {
+            return setControlPanelCollapsed(forceState, { silent: false });
+        }
+
+        function syncMobilePanelForViewport(mediaQuery) {
+            const collapseBtn = document.querySelector('.mobile-collapse-btn');
+            const controlPanel = document.getElementById('controlPanel');
+            if (!collapseBtn || !controlPanel) return;
+
+            const isMobile = mediaQuery.matches;
+            collapseBtn.hidden = !isMobile;
+
+            if (!isMobile) {
+                mobilePanelInitialized = false;
+                setControlPanelCollapsed(false, { silent: false });
+                return;
+            }
+
+            if (!mobilePanelInitialized) {
+                mobilePanelInitialized = true;
+                setControlPanelCollapsed(true, { silent: false });
+            } else {
+                const currentState = controlPanel.classList.contains('collapsed');
+                setControlPanelCollapsed(currentState, { silent: true });
+            }
+        }
+
+        if (MOBILE_PANEL_QUERY) {
+            syncMobilePanelForViewport(MOBILE_PANEL_QUERY);
+            if (typeof MOBILE_PANEL_QUERY.addEventListener === 'function') {
+                MOBILE_PANEL_QUERY.addEventListener('change', syncMobilePanelForViewport);
+            } else if (typeof MOBILE_PANEL_QUERY.addListener === 'function') {
+                MOBILE_PANEL_QUERY.addListener(syncMobilePanelForViewport);
             }
         }
         
@@ -1569,6 +1809,7 @@
         import { CanvasManager } from './src/core/CanvasManager.js';
         import { TradingCardGenerator } from './src/export/TradingCardGenerator.js';
         import { ReactivityManager } from './src/core/ReactivityManager.js';
+        import { LatticePulseGame } from './src/game/LatticePulseGame.js';
         // Universal reactivity system removed - implementing modular reactivity system
         
         // Global state - CRITICAL FIX: Check for gallery preview data FIRST
@@ -1586,6 +1827,221 @@
         let parameterMapper = null;
         let savedVariationsCount = 0;
         let reactivityManager = null;
+        let latticePulseGame = null;
+
+        const LATTICE_PULSE_STORAGE = {
+            introSeen: 'latticePulseIntroSeen',
+            autoStart: 'latticePulseAutoStart'
+        };
+
+        function readLatticePulsePreference(key) {
+            if (typeof window === 'undefined') return null;
+            try {
+                if (window.localStorage) {
+                    return window.localStorage.getItem(key);
+                }
+            } catch (error) {
+                console.warn('🎮 Unable to read Lattice Pulse preference:', error);
+            }
+            return null;
+        }
+
+        function shouldAutoLaunchLatticePulse() {
+            if (window.isGalleryPreview) return false;
+            const host = window.location?.hostname || '';
+            const protocol = window.location?.protocol || '';
+            const isLocal = protocol === 'file:' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+            if (isLocal) return false;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+            const stored = readLatticePulsePreference(LATTICE_PULSE_STORAGE.autoStart);
+            if (stored === '0') return false;
+            return true;
+        }
+
+        function maybeAutoStartLatticePulse(gameInstance, reason = 'pages-auto') {
+            if (!gameInstance || typeof gameInstance.autoStartSignature !== 'function') {
+                return false;
+            }
+
+            if (!shouldAutoLaunchLatticePulse()) {
+                return false;
+            }
+
+            try {
+                const started = gameInstance.autoStartSignature(reason);
+                if (started) {
+                    console.log('🎮 Lattice Pulse auto-started using signature rhythm.');
+                }
+                return started;
+            } catch (error) {
+                console.warn('🎮 Failed to auto-start Lattice Pulse:', error);
+                return false;
+            }
+        }
+
+        function updateGameButtonState(state, detail = {}) {
+            const gameBtn = document.querySelector('[data-action="lattice-game"]');
+            if (!gameBtn) return;
+
+            const normalizedState = state || 'idle';
+            const isAuto = !!(detail.autoStart || detail.startReason === 'auto' || detail.startReason === 'pages-auto' || detail.startReason === 'deploy-auto' || detail.autoStartEnabled);
+            gameBtn.dataset.gameState = normalizedState;
+            if (isAuto) {
+                gameBtn.dataset.autoStart = '1';
+            } else {
+                gameBtn.removeAttribute('data-auto-start');
+            }
+
+            if (detail.mode) {
+                gameBtn.dataset.mode = detail.mode;
+            } else {
+                gameBtn.removeAttribute('data-mode');
+            }
+
+            const titles = {
+                running: 'Lattice Pulse: Running (click to adjust audio)',
+                'running-auto': 'Lattice Pulse: Auto-running signature rhythm (tap to link audio)',
+                'start-screen': 'Lattice Pulse: Choose an audio source',
+                paused: 'Lattice Pulse: Paused while exploring other systems',
+                idle: 'Lattice Pulse: Launch the audio-driven game',
+                'idle-auto': 'Lattice Pulse: Auto-start ready (tap to preview or configure)',
+                stopped: 'Lattice Pulse: Stopped'
+            };
+
+            const titleKey = (() => {
+                if (normalizedState === 'running') {
+                    return isAuto ? 'running-auto' : 'running';
+                }
+                if (normalizedState === 'idle' && (isAuto || detail.autoStartEnabled)) {
+                    return 'idle-auto';
+                }
+                return normalizedState;
+            })();
+            const title = titles[titleKey] || titles.idle;
+            gameBtn.title = title;
+            gameBtn.setAttribute('aria-label', title);
+        }
+
+        function setupLatticePulseGame(engineInstance) {
+            if (window.isGalleryPreview) {
+                console.log('🎮 Lattice Pulse skipped in gallery preview mode.');
+                return null;
+            }
+
+            if (!engineInstance) {
+                console.warn('🎮 Lattice Pulse requires a faceted engine instance.');
+                return null;
+            }
+
+            const host = document.getElementById('canvasContainer') || document.body;
+            let autoStarted = false;
+
+            if (!latticePulseGame) {
+                try {
+                    latticePulseGame = new LatticePulseGame(engineInstance, {
+                        container: host,
+                        energySmoothing: 0.78,
+                        storageKeys: LATTICE_PULSE_STORAGE
+                    });
+                    window.latticePulseGame = latticePulseGame;
+                    console.log('🎮 Lattice Pulse game initialized.');
+                } catch (error) {
+                    console.error('❌ Failed to initialize Lattice Pulse game:', error);
+                    latticePulseGame = null;
+                    return null;
+                }
+
+                latticePulseGame.init();
+
+                if (typeof latticePulseGame.minimizeStartScreen === 'function') {
+                    latticePulseGame.minimizeStartScreen();
+                }
+
+                const introSeen = readLatticePulsePreference(LATTICE_PULSE_STORAGE.introSeen) === '1';
+                if (!introSeen) {
+                    autoStarted = maybeAutoStartLatticePulse(latticePulseGame, 'deploy-auto');
+                    if (!autoStarted) {
+                        latticePulseGame.showStartScreen('Choose how you want to feed the visuals.', 'info');
+                        updateGameButtonState('start-screen', {
+                            autoStartEnabled: latticePulseGame.getAutoStartPreference?.(),
+                            mode: latticePulseGame.mode
+                        });
+                    }
+                    try {
+                        if (window.localStorage) {
+                            window.localStorage.setItem(LATTICE_PULSE_STORAGE.introSeen, '1');
+                        }
+                    } catch (error) {
+                        console.warn('🎮 Failed to persist Lattice Pulse intro flag:', error);
+                    }
+                } else {
+                    autoStarted = maybeAutoStartLatticePulse(latticePulseGame);
+                }
+            } else {
+                latticePulseGame.attachEngine(engineInstance);
+                autoStarted = maybeAutoStartLatticePulse(latticePulseGame);
+            }
+
+            if (typeof latticePulseGame?.handleSystemChange === 'function') {
+                latticePulseGame.handleSystemChange('faceted', engineInstance);
+            }
+
+            const currentState = latticePulseGame?.state || (autoStarted ? 'running' : 'idle');
+            updateGameButtonState(currentState, {
+                autoStart: autoStarted,
+                autoStartEnabled: latticePulseGame?.getAutoStartPreference?.(),
+                mode: latticePulseGame?.mode
+            });
+
+            return latticePulseGame;
+        }
+
+        window.addEventListener('latticepulse:state', (event) => {
+            if (!event || !event.detail) return;
+            updateGameButtonState(event.detail.state, event.detail);
+        });
+
+        window.addEventListener('latticepulse:autostart-preference', (event) => {
+            const enabled = event?.detail?.enabled;
+            if (!latticePulseGame) return;
+            updateGameButtonState(latticePulseGame.state || 'idle', {
+                autoStartEnabled: enabled,
+                mode: latticePulseGame.mode
+            });
+        });
+
+        window.openLatticePulse = async function() {
+            if (window.isGalleryPreview) {
+                console.warn('🎮 Lattice Pulse is disabled in gallery preview mode.');
+                return;
+            }
+
+            if (window.currentSystem !== 'faceted' && typeof window.switchSystem === 'function') {
+                console.log('🎮 Switching to faceted system for Lattice Pulse.');
+                await window.switchSystem('faceted');
+            }
+
+            if (!latticePulseGame) {
+                if (window.engine) {
+                    setupLatticePulseGame(window.engine);
+                } else {
+                    console.warn('🎮 Lattice Pulse game not ready yet.');
+                    return;
+                }
+            }
+
+            try {
+                latticePulseGame.showStartScreen('Choose how you want to feed the visuals.', 'info');
+                updateGameButtonState('start-screen', {
+                    autoStartEnabled: latticePulseGame.getAutoStartPreference?.(),
+                    mode: latticePulseGame.mode
+                });
+            } catch (error) {
+                console.error('❌ Unable to open Lattice Pulse start screen:', error);
+            }
+        };
+
+        window.setupLatticePulseGame = setupLatticePulseGame;
         
         // Geometry configurations
         const geometries = {
@@ -1609,7 +2065,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             setupGeometry('faceted');
             const success = await initializeEngine();
-            
+
             // Make engines globally accessible for switchSystem function
             window.engine = engine;
             window.quantumEngine = quantumEngine;
@@ -1620,7 +2076,13 @@
             window.geometries = geometries;
             window.initializePolychora = initializePolychora;
             window.updateParameter = updateParameter;
-            
+
+            if (success && engine && !window.isGalleryPreview) {
+                setupLatticePulseGame(engine);
+            } else if (window.isGalleryPreview) {
+                updateGameButtonState('paused');
+            }
+
             // Initialize ReactivityManager
             reactivityManager = new ReactivityManager();
             window.reactivityManager = reactivityManager;

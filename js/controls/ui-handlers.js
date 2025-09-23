@@ -596,15 +596,39 @@ window.setupGeometry = function(system) {
 /**
  * Mobile panel toggle function
  */
-window.toggleMobilePanel = function() {
+window.toggleMobilePanel = function(forceState) {
+    if (typeof window.setControlPanelCollapsed === 'function') {
+        return window.setControlPanelCollapsed(forceState, { silent: false });
+    }
+
     const controlPanel = document.getElementById('controlPanel');
     const collapseBtn = document.querySelector('.mobile-collapse-btn');
-    
-    if (controlPanel && collapseBtn) {
-        controlPanel.classList.toggle('collapsed');
-        collapseBtn.textContent = controlPanel.classList.contains('collapsed') ? '▲' : '▼';
-        console.log('📱 Mobile panel toggled');
+    if (!controlPanel || !collapseBtn) {
+        return null;
     }
+
+    const nextState = typeof forceState === 'boolean'
+        ? forceState
+        : !controlPanel.classList.contains('collapsed');
+
+    controlPanel.classList.toggle('collapsed', nextState);
+    controlPanel.dataset.collapsed = nextState ? 'true' : 'false';
+    if (document.body && document.body.classList) {
+        document.body.classList.toggle('mobile-panel-collapsed', nextState);
+    }
+
+    collapseBtn.setAttribute('aria-expanded', nextState ? 'false' : 'true');
+    collapseBtn.setAttribute('aria-label', nextState ? 'Expand control panel' : 'Collapse control panel');
+    collapseBtn.textContent = nextState ? '▲' : '▼';
+
+    try {
+        window.dispatchEvent(new CustomEvent('latticepulse:panel-toggle', { detail: { collapsed: nextState } }));
+    } catch (error) {
+        console.warn('⚠️ Unable to dispatch panel toggle event:', error);
+    }
+
+    console.log(`📱 Mobile panel toggled → ${nextState ? 'collapsed' : 'expanded'}`);
+    return nextState;
 };
 
 // Note: createTradingCard is defined in gallery-manager.js
