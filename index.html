@@ -6,6 +6,9 @@
     <title>VIB34D Engine - Canvas Explosion FIXED</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --panel-collapsed-height: 52px;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -47,8 +50,21 @@
         .system-selector {
             display: flex;
             gap: 10px;
+            overflow-x: auto;
+            padding: 4px 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 255, 255, 0.3) transparent;
         }
-        
+
+        .system-selector::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .system-selector::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 999px;
+        }
+
         .system-btn {
             background: rgba(0, 255, 255, 0.1);
             border: 2px solid rgba(0, 255, 255, 0.3);
@@ -58,6 +74,7 @@
             font-family: 'Orbitron', monospace;
             font-size: 0.9rem;
             transition: all 0.3s;
+            flex: 0 0 auto;
         }
         
         .system-btn:hover {
@@ -86,10 +103,60 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
-        
+
         .action-btn:hover {
             background: rgba(255, 0, 255, 0.3);
             box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+
+        .system-btn:focus-visible,
+        .action-btn:focus-visible,
+        .panel-btn:focus-visible,
+        .geom-btn:focus-visible,
+        .mobile-collapse-btn:focus-visible {
+            outline: 2px solid rgba(0, 255, 255, 0.85);
+            outline-offset: 2px;
+        }
+
+        .action-btn[data-game-state="running"] {
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.3), rgba(0, 255, 200, 0.25));
+            border-color: rgba(0, 200, 255, 0.65);
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+            color: #00f5ff;
+        }
+
+        .action-btn[data-game-state="running"][data-auto-start="1"] {
+            background: linear-gradient(135deg, rgba(0, 220, 255, 0.38), rgba(0, 255, 200, 0.32));
+            border-color: rgba(0, 235, 255, 0.85);
+            box-shadow: 0 0 20px rgba(0, 230, 255, 0.6);
+            color: #c8faff;
+        }
+
+        .action-btn[data-auto-start="1"] {
+            position: relative;
+        }
+
+        .action-btn[data-auto-start="1"]::after {
+            content: 'AUTO';
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            font-size: 0.45rem;
+            letter-spacing: 0.16em;
+            color: rgba(210, 255, 255, 0.85);
+            text-shadow: 0 0 6px rgba(0, 220, 255, 0.55);
+        }
+
+        .action-btn[data-game-state="start-screen"] {
+            background: rgba(255, 150, 0, 0.2);
+            border-color: rgba(255, 150, 0, 0.5);
+            color: #ffba4a;
+        }
+
+        .action-btn[data-game-state="paused"] {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(200, 200, 200, 0.25);
+            color: #e0e0e0;
         }
         
         @keyframes fadeInOut {
@@ -136,10 +203,21 @@
             overflow-y: auto;
             backdrop-filter: blur(10px);
             z-index: 100;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform: translateY(0);
+            will-change: transform;
+        }
+
+        .control-panel.collapsed {
+            transform: translateY(0);
         }
         
         @media (max-width: 768px) {
+            .top-bar {
+                padding: 0 12px;
+                gap: 6px;
+            }
+
             .control-panel {
                 width: 100vw;
                 height: 40vh;
@@ -149,18 +227,30 @@
                 left: 0;
                 border-left: none;
                 border-top: 2px solid #00ffff;
+                box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.35);
             }
-            
+
+            .control-panel.collapsed {
+                transform: translateY(calc(100% - var(--panel-collapsed-height)));
+                box-shadow: none;
+            }
+
             .canvas-container {
                 right: 0;
-                bottom: 60px;
+                top: 50px;
+                bottom: 40vh;
+                transition: bottom 0.3s ease;
             }
-            
+
+            body.panel-collapsed .canvas-container {
+                bottom: 0;
+            }
+
             .system-selector {
-                flex-wrap: wrap;
-                gap: 5px;
+                flex-wrap: nowrap;
+                gap: 6px;
             }
-            
+
             .system-btn {
                 font-size: 0.8rem;
                 padding: 6px 12px;
@@ -187,6 +277,7 @@
             font-size: 1.2rem;
             border-radius: 5px;
             transition: all 0.3s ease;
+            display: none;
         }
         
         .mobile-collapse-btn:hover {
@@ -241,7 +332,67 @@
             margin-bottom: 10px;
             text-transform: uppercase;
         }
-        
+
+        .hud-summary {
+            display: grid;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: rgba(200, 255, 255, 0.72);
+            line-height: 1.45;
+        }
+
+        .hud-summary p {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-dock {
+            display: none;
+            padding: 0;
+            margin-bottom: 0;
+        }
+
+        .hud-dock.active {
+            display: block;
+            margin-bottom: 24px;
+        }
+
+        .hud-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.12);
+            border: 1px solid rgba(0, 255, 255, 0.28);
+            color: #c8ffff;
+            white-space: nowrap;
+        }
+
+        .hud-chip.energy {
+            background: rgba(255, 120, 180, 0.14);
+            border-color: rgba(255, 120, 180, 0.32);
+            color: rgba(255, 210, 230, 0.9);
+        }
+
+        .hud-chip.ect {
+            background: rgba(120, 200, 255, 0.14);
+            border-color: rgba(120, 200, 255, 0.32);
+            color: rgba(210, 235, 255, 0.92);
+        }
+
+        .hud-chip.combo {
+            background: rgba(255, 180, 120, 0.14);
+            border-color: rgba(255, 180, 120, 0.32);
+            color: rgba(255, 232, 210, 0.92);
+        }
+
         /* Geometry Grid */
         .geometry-grid {
             display: grid;
@@ -542,6 +693,25 @@
         .modal.gallery-modal.active {
             display: block;
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .top-bar,
+            .control-panel,
+            .system-btn,
+            .action-btn,
+            .panel-btn,
+            .geom-btn,
+            .mobile-collapse-btn,
+            .canvas-container {
+                transition-duration: 0.01ms !important;
+            }
+
+            .control-panel,
+            .canvas-container,
+            .top-bar {
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -565,11 +735,15 @@
         </div>
         
         <div class="action-buttons">
-            <button class="action-btn" onclick="openGallery()" title="Gallery">🖼️</button>
-            <button class="action-btn" onclick="toggleAudio()" title="Audio">🎵</button>
-            <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters">🤖</button>
-            <button class="action-btn" onclick="toggleInteractivity()" title="Interactivity Menu (Press I)">I</button>
-            <button class="action-btn" id="tiltBtn" onclick="toggleDeviceTilt()" title="Device Tilt (4D Rotation)">📱</button>
+            <button class="action-btn" data-action="lattice-game" data-game-state="idle"
+                    onclick="openLatticePulse()"
+                    title="Lattice Pulse Game"
+                    aria-label="Open the Lattice Pulse audio game">🎮</button>
+            <button class="action-btn" onclick="openGallery()" title="Gallery" aria-label="Open gallery">🖼️</button>
+            <button class="action-btn" onclick="toggleAudio()" title="Audio" aria-label="Toggle audio reactivity">🎵</button>
+            <button class="action-btn" onclick="showLLMInterface()" title="AI Parameters" aria-label="Open AI parameter interface">🤖</button>
+            <button class="action-btn" onclick="toggleInteractivity()" title="Interactivity Menu (Press I)" aria-label="Toggle interactivity menu">I</button>
+            <button class="action-btn" id="tiltBtn" onclick="toggleDeviceTilt()" title="Device Tilt (4D Rotation)" aria-label="Toggle device tilt rotation">📱</button>
         </div>
     </div>
     
@@ -592,8 +766,23 @@
     <div class="control-panel" id="controlPanel">
         <div class="panel-header" id="panelHeader">
             <span>FACETED SYSTEM</span>
+            <button class="mobile-collapse-btn" id="mobileCollapseBtn" type="button"
+                    aria-controls="controlPanel" aria-expanded="true"
+                    aria-label="Collapse control panel"
+                    onclick="toggleMobilePanel()">▼</button>
         </div>
-        
+
+        <div class="control-section" id="feedbackSection">
+            <div class="section-title">HUD FEEDBACK MAP</div>
+            <div class="hud-summary">
+                <p><span class="hud-chip energy">Band Flares</span>Follow bass, mid, and treble surges to see which spectrum is steering each geometry shift.</p>
+                <p><span class="hud-chip ect">ECT Reactor</span>Watch coherence rise and fall so you know when visuals are stabilizing or about to bloom.</p>
+                <p><span class="hud-chip combo">Combo Chain</span>Track streaks and timeline callouts to anticipate signature bursts and rescue moments.</p>
+            </div>
+        </div>
+
+        <div class="hud-dock" id="hudDock" aria-live="polite"></div>
+
         <!-- GEOMETRY SECTION (Faceted & Polychora) -->
         <div class="control-section" id="geometrySection">
             <div class="section-title">GEOMETRY</div>
@@ -985,10 +1174,82 @@
                 }
             }
         }
-        
+
         // Parse URL parameters immediately
         parseURLParameters();
-        
+
+        const MOBILE_PANEL_MEDIA = window.matchMedia ? window.matchMedia('(max-width: 768px)') : null;
+        let currentPanelCollapsed = null;
+
+        function updatePanelCollapseState(collapsed, options = {}) {
+            const controlPanel = document.getElementById('controlPanel');
+            const collapseBtn = document.getElementById('mobileCollapseBtn') || document.querySelector('.mobile-collapse-btn');
+
+            if (!controlPanel || !collapseBtn) {
+                return;
+            }
+
+            const normalized = !!collapsed;
+            controlPanel.classList.toggle('collapsed', normalized);
+
+            if (document.body) {
+                document.body.classList.toggle('panel-collapsed', normalized);
+            }
+
+            collapseBtn.textContent = normalized ? '▲' : '▼';
+            collapseBtn.setAttribute('aria-expanded', (!normalized).toString());
+            collapseBtn.setAttribute('aria-label', normalized ? 'Expand control panel' : 'Collapse control panel');
+
+            if (!options.silent) {
+                try {
+                    window.dispatchEvent(new CustomEvent('controlpanel:toggle', { detail: { collapsed: normalized } }));
+                } catch (error) {
+                    console.warn('controlpanel:toggle dispatch failed', error);
+                }
+            }
+
+            currentPanelCollapsed = normalized;
+            return normalized;
+        }
+
+        window.toggleMobilePanel = function() {
+            const controlPanel = document.getElementById('controlPanel');
+            const isCollapsed = controlPanel ? controlPanel.classList.contains('collapsed') : false;
+            updatePanelCollapseState(!isCollapsed);
+            console.log('📱 Mobile panel toggled');
+        };
+
+        window.setMobilePanelState = function(collapsed, options = {}) {
+            updatePanelCollapseState(collapsed, options);
+        };
+
+        window.__mobilePanelLogicInitialized = true;
+
+        function handleMobilePanelMatch(event) {
+            if (!event) return;
+            const shouldCollapse = !!event.matches;
+            if (currentPanelCollapsed === shouldCollapse) {
+                return;
+            }
+            updatePanelCollapseState(shouldCollapse);
+        }
+
+        if (MOBILE_PANEL_MEDIA) {
+            if (typeof MOBILE_PANEL_MEDIA.addEventListener === 'function') {
+                MOBILE_PANEL_MEDIA.addEventListener('change', handleMobilePanelMatch);
+            } else if (typeof MOBILE_PANEL_MEDIA.addListener === 'function') {
+                MOBILE_PANEL_MEDIA.addListener(handleMobilePanelMatch);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (MOBILE_PANEL_MEDIA) {
+                updatePanelCollapseState(MOBILE_PANEL_MEDIA.matches, { silent: true });
+            } else {
+                updatePanelCollapseState(false, { silent: true });
+            }
+        });
+
         // SURGICAL FIX: Smart Canvas Management
         // Simple CanvasManager handles all layer management
         
@@ -1007,7 +1268,7 @@
                         
                         // Update global state and UI
                         window.currentSystem = system;
-                        
+
                         // Update ReactivityManager with new active system
                         if (window.reactivityManager) {
                             window.reactivityManager.setActiveSystem(system, newEngine);
@@ -1041,7 +1302,15 @@
                         };
                         const panelHeader = document.getElementById('panelHeader');
                         if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
-                        
+
+                        if (!window.isGalleryPreview) {
+                            if (system === 'faceted' && typeof window.setupLatticePulseGame === 'function') {
+                                window.setupLatticePulseGame(newEngine);
+                            } else if (window.latticePulseGame && typeof window.latticePulseGame.handleSystemChange === 'function') {
+                                window.latticePulseGame.handleSystemChange(system, newEngine);
+                            }
+                        }
+
                         console.log(`✅ Switched to ${system} system successfully`);
                         return; // Success - exit early
                     } else if (system === 'polychora') {
@@ -1569,6 +1838,7 @@
         import { CanvasManager } from './src/core/CanvasManager.js';
         import { TradingCardGenerator } from './src/export/TradingCardGenerator.js';
         import { ReactivityManager } from './src/core/ReactivityManager.js';
+        import { LatticePulseGame } from './src/game/LatticePulseGame.js';
         // Universal reactivity system removed - implementing modular reactivity system
         
         // Global state - CRITICAL FIX: Check for gallery preview data FIRST
@@ -1586,6 +1856,221 @@
         let parameterMapper = null;
         let savedVariationsCount = 0;
         let reactivityManager = null;
+        let latticePulseGame = null;
+
+        const LATTICE_PULSE_STORAGE = {
+            introSeen: 'latticePulseIntroSeen',
+            autoStart: 'latticePulseAutoStart'
+        };
+
+        function readLatticePulsePreference(key) {
+            if (typeof window === 'undefined') return null;
+            try {
+                if (window.localStorage) {
+                    return window.localStorage.getItem(key);
+                }
+            } catch (error) {
+                console.warn('🎮 Unable to read Lattice Pulse preference:', error);
+            }
+            return null;
+        }
+
+        function shouldAutoLaunchLatticePulse() {
+            if (window.isGalleryPreview) return false;
+            const host = window.location?.hostname || '';
+            const protocol = window.location?.protocol || '';
+            const isLocal = protocol === 'file:' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+            if (isLocal) return false;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+            const stored = readLatticePulsePreference(LATTICE_PULSE_STORAGE.autoStart);
+            if (stored === '0') return false;
+            return true;
+        }
+
+        function maybeAutoStartLatticePulse(gameInstance, reason = 'pages-auto') {
+            if (!gameInstance || typeof gameInstance.autoStartSignature !== 'function') {
+                return false;
+            }
+
+            if (!shouldAutoLaunchLatticePulse()) {
+                return false;
+            }
+
+            try {
+                const started = gameInstance.autoStartSignature(reason);
+                if (started) {
+                    console.log('🎮 Lattice Pulse auto-started using signature rhythm.');
+                }
+                return started;
+            } catch (error) {
+                console.warn('🎮 Failed to auto-start Lattice Pulse:', error);
+                return false;
+            }
+        }
+
+        function updateGameButtonState(state, detail = {}) {
+            const gameBtn = document.querySelector('[data-action="lattice-game"]');
+            if (!gameBtn) return;
+
+            const normalizedState = state || 'idle';
+            const isAuto = !!(detail.autoStart || detail.startReason === 'auto' || detail.startReason === 'pages-auto' || detail.startReason === 'deploy-auto' || detail.autoStartEnabled);
+            gameBtn.dataset.gameState = normalizedState;
+            if (isAuto) {
+                gameBtn.dataset.autoStart = '1';
+            } else {
+                gameBtn.removeAttribute('data-auto-start');
+            }
+
+            if (detail.mode) {
+                gameBtn.dataset.mode = detail.mode;
+            } else {
+                gameBtn.removeAttribute('data-mode');
+            }
+
+            const titles = {
+                running: 'Lattice Pulse: Running (click to adjust audio)',
+                'running-auto': 'Lattice Pulse: Auto-running signature rhythm (tap to link audio)',
+                'start-screen': 'Lattice Pulse: Choose an audio source',
+                paused: 'Lattice Pulse: Paused while exploring other systems',
+                idle: 'Lattice Pulse: Launch the audio-driven game',
+                'idle-auto': 'Lattice Pulse: Auto-start ready (tap to preview or configure)',
+                stopped: 'Lattice Pulse: Stopped'
+            };
+
+            const titleKey = (() => {
+                if (normalizedState === 'running') {
+                    return isAuto ? 'running-auto' : 'running';
+                }
+                if (normalizedState === 'idle' && (isAuto || detail.autoStartEnabled)) {
+                    return 'idle-auto';
+                }
+                return normalizedState;
+            })();
+            const title = titles[titleKey] || titles.idle;
+            gameBtn.title = title;
+            gameBtn.setAttribute('aria-label', title);
+        }
+
+        function setupLatticePulseGame(engineInstance) {
+            if (window.isGalleryPreview) {
+                console.log('🎮 Lattice Pulse skipped in gallery preview mode.');
+                return null;
+            }
+
+            if (!engineInstance) {
+                console.warn('🎮 Lattice Pulse requires a faceted engine instance.');
+                return null;
+            }
+
+            const host = document.getElementById('canvasContainer') || document.body;
+            let autoStarted = false;
+
+            if (!latticePulseGame) {
+                try {
+                    latticePulseGame = new LatticePulseGame(engineInstance, {
+                        container: host,
+                        energySmoothing: 0.78,
+                        storageKeys: LATTICE_PULSE_STORAGE
+                    });
+                    window.latticePulseGame = latticePulseGame;
+                    console.log('🎮 Lattice Pulse game initialized.');
+                } catch (error) {
+                    console.error('❌ Failed to initialize Lattice Pulse game:', error);
+                    latticePulseGame = null;
+                    return null;
+                }
+
+                latticePulseGame.init();
+
+                if (typeof latticePulseGame.minimizeStartScreen === 'function') {
+                    latticePulseGame.minimizeStartScreen();
+                }
+
+                const introSeen = readLatticePulsePreference(LATTICE_PULSE_STORAGE.introSeen) === '1';
+                if (!introSeen) {
+                    autoStarted = maybeAutoStartLatticePulse(latticePulseGame, 'deploy-auto');
+                    if (!autoStarted) {
+                        latticePulseGame.showStartScreen('Choose how you want to feed the visuals.', 'info');
+                        updateGameButtonState('start-screen', {
+                            autoStartEnabled: latticePulseGame.getAutoStartPreference?.(),
+                            mode: latticePulseGame.mode
+                        });
+                    }
+                    try {
+                        if (window.localStorage) {
+                            window.localStorage.setItem(LATTICE_PULSE_STORAGE.introSeen, '1');
+                        }
+                    } catch (error) {
+                        console.warn('🎮 Failed to persist Lattice Pulse intro flag:', error);
+                    }
+                } else {
+                    autoStarted = maybeAutoStartLatticePulse(latticePulseGame);
+                }
+            } else {
+                latticePulseGame.attachEngine(engineInstance);
+                autoStarted = maybeAutoStartLatticePulse(latticePulseGame);
+            }
+
+            if (typeof latticePulseGame?.handleSystemChange === 'function') {
+                latticePulseGame.handleSystemChange('faceted', engineInstance);
+            }
+
+            const currentState = latticePulseGame?.state || (autoStarted ? 'running' : 'idle');
+            updateGameButtonState(currentState, {
+                autoStart: autoStarted,
+                autoStartEnabled: latticePulseGame?.getAutoStartPreference?.(),
+                mode: latticePulseGame?.mode
+            });
+
+            return latticePulseGame;
+        }
+
+        window.addEventListener('latticepulse:state', (event) => {
+            if (!event || !event.detail) return;
+            updateGameButtonState(event.detail.state, event.detail);
+        });
+
+        window.addEventListener('latticepulse:autostart-preference', (event) => {
+            const enabled = event?.detail?.enabled;
+            if (!latticePulseGame) return;
+            updateGameButtonState(latticePulseGame.state || 'idle', {
+                autoStartEnabled: enabled,
+                mode: latticePulseGame.mode
+            });
+        });
+
+        window.openLatticePulse = async function() {
+            if (window.isGalleryPreview) {
+                console.warn('🎮 Lattice Pulse is disabled in gallery preview mode.');
+                return;
+            }
+
+            if (window.currentSystem !== 'faceted' && typeof window.switchSystem === 'function') {
+                console.log('🎮 Switching to faceted system for Lattice Pulse.');
+                await window.switchSystem('faceted');
+            }
+
+            if (!latticePulseGame) {
+                if (window.engine) {
+                    setupLatticePulseGame(window.engine);
+                } else {
+                    console.warn('🎮 Lattice Pulse game not ready yet.');
+                    return;
+                }
+            }
+
+            try {
+                latticePulseGame.showStartScreen('Choose how you want to feed the visuals.', 'info');
+                updateGameButtonState('start-screen', {
+                    autoStartEnabled: latticePulseGame.getAutoStartPreference?.(),
+                    mode: latticePulseGame.mode
+                });
+            } catch (error) {
+                console.error('❌ Unable to open Lattice Pulse start screen:', error);
+            }
+        };
+
+        window.setupLatticePulseGame = setupLatticePulseGame;
         
         // Geometry configurations
         const geometries = {
@@ -1609,7 +2094,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             setupGeometry('faceted');
             const success = await initializeEngine();
-            
+
             // Make engines globally accessible for switchSystem function
             window.engine = engine;
             window.quantumEngine = quantumEngine;
@@ -1620,7 +2105,13 @@
             window.geometries = geometries;
             window.initializePolychora = initializePolychora;
             window.updateParameter = updateParameter;
-            
+
+            if (success && engine && !window.isGalleryPreview) {
+                setupLatticePulseGame(engine);
+            } else if (window.isGalleryPreview) {
+                updateGameButtonState('paused');
+            }
+
             // Initialize ReactivityManager
             reactivityManager = new ReactivityManager();
             window.reactivityManager = reactivityManager;

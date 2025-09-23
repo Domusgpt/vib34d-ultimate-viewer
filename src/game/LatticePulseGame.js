@@ -77,6 +77,17 @@ export class LatticePulseGame {
         this.currentHue = 200;
         this.startControls = null;
         this.linkedTrackLabel = null;
+        this.currentECT = 0;
+        this.targetECT = 0;
+        this.ectHistory = [];
+        this.lastECTTrend = 0;
+        this.ectSmoothing = options.ectSmoothing ?? 0.68;
+        this.lastStartReason = 'init';
+        this.storageKeys = {
+            introSeen: options.storageKeys?.introSeen || 'latticePulseIntroSeen',
+            autoStart: options.storageKeys?.autoStart || 'latticePulseAutoStart'
+        };
+        this.autoStartPreference = null;
 
         this.geometryDefaults = this.createGeometryDefaults();
         this.visualizerRules = this.createVisualizerRules();
@@ -86,11 +97,164 @@ export class LatticePulseGame {
         this.trackInput = null;
         this.fileInput = null;
         this.hudElements = null;
+        this.onStateChange = typeof options.onStateChange === 'function' ? options.onStateChange : null;
+        this.lastGeometryEvent = null;
+        this.reactionHistory = [];
+        this.comboState = { streak: 0, lastIntensity: null, lastTempo: null };
+        this.bandSmoothedLevels = { bass: 0, mid: 0, treble: 0 };
+        this.bandMomentum = { bass: 0, mid: 0, treble: 0 };
+        this.hudPulseTimer = null;
+        this.hudPlacementMode = null;
+        this.hudMediaQuery = null;
+        this.hudPlacementRaf = null;
+        this.hudDock = null;
+        this.hudPlacementListenersAttached = false;
+        this.boundHandleHudResize = () => this.scheduleHudPlacementUpdate();
+        this.boundHandlePanelToggle = () => this.scheduleHudPlacementUpdate();
+        this.boundHandleHudMediaChange = () => this.scheduleHudPlacementUpdate();
 
         this.beatUnsubscribe = this.audioService.onBeat(this.handleBeat);
         this.energyUnsubscribe = this.audioService.onEnergy(payload => this.handleEnergy(payload));
         this.stateUnsubscribe = this.audioService.onStateChange((state, detail) => this.handleAudioStateChange(state, detail));
         this.errorUnsubscribe = this.audioService.onError(error => this.handleAudioError(error));
+    }
+
+    emitStateChange(state, detail = {}) {
+        const previous = this.state;
+        this.state = state;
+
+        const payload = {
+            previous,
+            mode: this.mode,
+            ect: this.currentECT,
+            autoStartEnabled: this.getAutoStartPreference(),
+            ...detail
+        };
+
+        if (typeof this.onStateChange === 'function') {
+            try {
+                this.onStateChange(state, payload);
+            } catch (error) {
+                console.error('[LatticePulseGame] onStateChange callback error', error);
+            }
+        }
+
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+            try {
+                window.dispatchEvent(new CustomEvent('latticepulse:state', { detail: { state, ...payload } }));
+            } catch (error) {
+                console.error('[LatticePulseGame] Failed to dispatch state event', error);
+            }
+        }
+    }
+
+    getAutoStartPreference() {
+        if (this.autoStartPreference !== null) {
+            return this.autoStartPreference;
+        }
+
+        if (typeof window === 'undefined' || !window.localStorage) {
+            return null;
+        }
+
+        try {
+            const stored = window.localStorage.getItem(this.storageKeys.autoStart);
+            if (stored === '1') {
+                this.autoStartPreference = true;
+            } else if (stored === '0') {
+                this.autoStartPreference = false;
+            }
+        } catch (error) {
+            console.warn('[LatticePulseGame] Unable to read auto-start preference', error);
+            this.autoStartPreference = null;
+        }
+
+        return this.autoStartPreference;
+    }
+
+    persistAutoStartPreference(enabled) {
+        this.autoStartPreference = typeof enabled === 'boolean' ? enabled : null;
+
+        if (typeof window === 'undefined' || !window.localStorage) {
+            return;
+        }
+
+        try {
+            if (enabled === null) {
+                window.localStorage.removeItem(this.storageKeys.autoStart);
+            } else {
+                window.localStorage.setItem(this.storageKeys.autoStart, enabled ? '1' : '0');
+            }
+        } catch (error) {
+            console.warn('[LatticePulseGame] Unable to persist auto-start preference', error);
+        }
+
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+            try {
+                window.dispatchEvent(new CustomEvent('latticepulse:autostart-preference', { detail: { enabled } }));
+            } catch (error) {
+                console.error('[LatticePulseGame] Failed to dispatch auto-start preference event', error);
+            }
+        }
+    }
+
+    autoStartSignature(reason = 'auto') {
+        if (this.active || this.state === 'running') {
+            return false;
+        }
+
+        const preference = this.getAutoStartPreference();
+        if (preference === false) {
+            return false;
+        }
+
+        this.lastStartReason = reason;
+        this.startWithMetronome(reason);
+        return true;
+    }
+
+    updateECT(payload = {}, options = {}) {
+        const { immediate = false } = options || {};
+        const lastEnergyPayload = this.audioService.getLastEnergyPayload?.() || {};
+
+        const energy = clamp(payload.energy ?? this.audioService.getEnergy?.() ?? 0, 0, 1);
+        const analysisQuality = clamp(payload.analysisQuality ?? this.audioService.getAnalysisQuality?.() ?? 0, 0, 1);
+        const spectralFlux = clamp(payload.spectralFlux ?? lastEnergyPayload.spectralFlux ?? 0, 0, 1);
+        const fluxConfidence = clamp(payload.fluxConfidence ?? payload.confidence ?? lastEnergyPayload.fluxConfidence ?? 0, 0, 1);
+        const state = payload.state || this.audioService.getState?.() || this.mode;
+        const overlay = payload.metronomeOverlay ?? payload.overlay ?? lastEnergyPayload.metronomeOverlay ?? false;
+
+        const dynamicFlux = Math.max(spectralFlux, fluxConfidence * 0.85);
+        const stability = 1 - Math.min(1, Math.abs(this.displayEnergy - energy) * 1.35);
+
+        let target = (energy * 0.36) + (analysisQuality * 0.34) + (dynamicFlux * 0.22) + (stability * 0.08);
+
+        if (state === 'metronome') {
+            target = Math.min(1, target * (overlay ? 0.94 : 0.9) + 0.12);
+        } else if (state === 'microphone') {
+            target = target * 0.98 + 0.02;
+        } else if (state === 'track') {
+            target = target * 0.95 + fluxConfidence * 0.05;
+        }
+
+        const smoothing = immediate ? Math.min(this.ectSmoothing, 0.52) : this.ectSmoothing;
+        this.targetECT = target;
+        this.currentECT = this.currentECT * smoothing + target * (1 - smoothing);
+
+        this.ectHistory.push(this.currentECT);
+        if (this.ectHistory.length > 64) {
+            this.ectHistory.shift();
+        }
+
+        const historyLength = this.ectHistory.length;
+        if (historyLength >= 2) {
+            const previousValue = this.ectHistory[historyLength - 2];
+            this.lastECTTrend = this.currentECT - previousValue;
+        } else {
+            this.lastECTTrend = 0;
+        }
+
+        return this.currentECT;
     }
 
     init() {
@@ -106,7 +270,8 @@ export class LatticePulseGame {
             this.setHudStatus('Awaiting audio source…', 'info');
         }
 
-        this.state = 'start-screen';
+        this.updateECT({ energy: 0, analysisQuality: 0, spectralFlux: 0 }, { immediate: true });
+        this.emitStateChange('idle', { initial: true });
     }
 
     injectStyles() {
@@ -272,6 +437,22 @@ export class LatticePulseGame {
                 background: rgba(22, 26, 46, 0.7);
                 color: rgba(230, 236, 255, 0.88);
             }
+            .lp-link {
+                background: none;
+                border: none;
+                color: rgba(220, 226, 255, 0.7);
+                font-size: 0.8rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                cursor: pointer;
+                padding: 0.35rem 0;
+                align-self: center;
+                transition: opacity 0.2s ease;
+                opacity: 0.75;
+            }
+            .lp-link:hover {
+                opacity: 1;
+            }
             .lp-track-row {
                 display: flex;
                 align-items: center;
@@ -331,6 +512,43 @@ export class LatticePulseGame {
                 z-index: 9980;
                 font-family: var(--lp-font);
                 transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            }
+            .lp-hud.is-inline {
+                position: relative;
+                top: 0;
+                right: auto;
+                left: auto;
+                bottom: auto;
+                width: 100%;
+                max-width: none;
+                margin: 0 0 1.5rem;
+                border-radius: 20px;
+                border-color: rgba(120, 150, 255, 0.24);
+                background: linear-gradient(155deg, rgba(10, 14, 28, 0.92), rgba(18, 22, 38, 0.9));
+                box-shadow: none;
+                z-index: auto;
+            }
+            .lp-hud.is-inline::before {
+                opacity: 0.35;
+            }
+            .lp-hud.is-inline::after {
+                display: none;
+            }
+            .lp-hud.is-inline .lp-hud-grid {
+                grid-template-columns: 1fr;
+                gap: 0.6rem 0.8rem;
+            }
+            .lp-hud.is-inline .lp-hud-reactor {
+                grid-template-columns: 1fr;
+            }
+            .lp-hud.is-inline .lp-hud-bands {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+            .lp-hud.is-inline .lp-hud-status {
+                margin-bottom: 0.75rem;
+            }
+            .lp-hud.is-inline .lp-hud-timeline {
+                max-height: none;
             }
             .lp-hud::before {
                 content: '';
@@ -418,7 +636,8 @@ export class LatticePulseGame {
                 width: 0%;
                 background: linear-gradient(90deg, rgba(255, 110, 220, 0.7), rgba(110, 170, 255, 0.85));
                 box-shadow: 0 0 18px rgba(120, 150, 255, 0.55);
-                transition: width 0.18s ease, filter 0.28s ease;
+                transition: width 0.18s ease, filter 0.28s ease, opacity 0.28s ease;
+                opacity: calc(0.55 + var(--lp-ect, 0.35) * 0.4);
             }
             .lp-hud-warning {
                 margin-top: 0.85rem;
@@ -426,9 +645,303 @@ export class LatticePulseGame {
                 min-height: 1.2rem;
                 color: rgba(255, 200, 200, 0.92);
             }
+            .lp-hud-bands {
+                margin-top: 1.1rem;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.75rem;
+            }
+            .lp-band-meter {
+                position: relative;
+                padding: 0.65rem 0.75rem 0.8rem;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+                transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+            }
+            .lp-band-meter::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 60%);
+                pointer-events: none;
+                opacity: 0.5;
+            }
+            .lp-band-meter strong {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: rgba(210, 220, 255, 0.72);
+            }
+            .lp-band-meter span {
+                position: relative;
+                display: block;
+                height: 8px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.14);
+                overflow: hidden;
+            }
+            .lp-band-meter span::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                transform-origin: left center;
+                transform: scaleX(var(--lp-level, 0));
+                transition: transform 0.22s ease, filter 0.3s ease;
+                background: linear-gradient(90deg, rgba(255, 125, 200, 0.8), rgba(90, 200, 255, 0.85));
+                filter: drop-shadow(0 0 calc(8px + var(--lp-level, 0) * 16px) rgba(140, 200, 255, 0.55));
+            }
+            .lp-band-meter[data-band="bass"] span::after {
+                background: linear-gradient(90deg, rgba(255, 120, 160, 0.85), rgba(255, 90, 90, 0.8));
+            }
+            .lp-band-meter[data-band="mid"] span::after {
+                background: linear-gradient(90deg, rgba(110, 200, 255, 0.85), rgba(90, 160, 255, 0.8));
+            }
+            .lp-band-meter[data-band="treble"] span::after {
+                background: linear-gradient(90deg, rgba(200, 140, 255, 0.85), rgba(120, 90, 255, 0.78));
+            }
+            .lp-band-meter small {
+                font-size: 0.78rem;
+                letter-spacing: 0.04em;
+                color: rgba(245, 248, 255, 0.82);
+            }
+            .lp-band-meter[data-state="surge"] {
+                border-color: rgba(140, 200, 255, 0.45);
+                box-shadow: 0 10px 24px rgba(90, 160, 255, 0.25);
+            }
+            .lp-band-meter[data-state="eruption"] {
+                transform: translateY(-2px);
+                border-color: rgba(255, 150, 210, 0.55);
+                box-shadow: 0 14px 32px rgba(255, 120, 200, 0.3);
+            }
+            .lp-band-meter[data-state="ambient"] {
+                opacity: 0.8;
+            }
+            .lp-band-meter[data-momentum="up"] small::after {
+                content: ' ▲';
+            }
+            .lp-band-meter[data-momentum="down"] small::after {
+                content: ' ▼';
+            }
+            .lp-hud-reactor {
+                margin-top: 1.15rem;
+                display: grid;
+                grid-template-columns: 140px 1fr;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            .lp-hud-ect-meter {
+                position: relative;
+                padding: 1rem;
+                border-radius: 18px;
+                background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 55%), rgba(8, 12, 26, 0.8);
+                border: 1px solid rgba(110, 140, 255, 0.35);
+                display: grid;
+                place-items: center;
+                gap: 0.75rem;
+                transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            }
+            .lp-ect-ring {
+                position: relative;
+                width: 88px;
+                height: 88px;
+                border-radius: 999px;
+                display: grid;
+                place-items: center;
+                filter: drop-shadow(0 0 18px rgba(150, 200, 255, 0.35));
+            }
+            .lp-ect-ring span {
+                position: absolute;
+                inset: 12px;
+                border-radius: 999px;
+                border: 2px solid rgba(180, 200, 255, 0.25);
+                opacity: 0.25;
+                transform: rotate(calc(var(--i) * 30deg)) translateY(-32px);
+                transform-origin: center 44px;
+                transition: opacity 0.3s ease, border-color 0.3s ease;
+            }
+            .lp-ect-ring span[data-active="1"] {
+                opacity: 1;
+                border-color: rgba(120, 220, 255, 0.85);
+            }
+            .lp-ect-label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-transform: uppercase;
+                letter-spacing: 0.16em;
+                gap: 0.25rem;
+            }
+            .lp-ect-label strong {
+                font-size: 0.75rem;
+                color: rgba(210, 224, 255, 0.72);
+            }
+            .lp-ect-label em {
+                font-style: normal;
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: rgba(245, 250, 255, 0.95);
+            }
+            .lp-ect-label span {
+                font-size: 0.62rem;
+                letter-spacing: 0.14em;
+                color: rgba(200, 210, 245, 0.68);
+            }
+            .lp-hud-ect-meter[data-trend="up"] {
+                border-color: rgba(110, 240, 200, 0.55);
+                box-shadow: 0 12px 28px rgba(110, 240, 200, 0.2);
+            }
+            .lp-hud-ect-meter[data-trend="down"] {
+                border-color: rgba(255, 160, 160, 0.55);
+                box-shadow: 0 12px 28px rgba(255, 160, 160, 0.2);
+            }
+            .lp-hud-reactor-info {
+                display: flex;
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            .lp-hud-combo {
+                display: flex;
+                align-items: baseline;
+                gap: 0.5rem;
+                padding: 0.65rem 0.9rem;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: rgba(255, 255, 255, 0.05);
+                transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+            }
+            .lp-combo-count {
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: rgba(245, 250, 255, 0.96);
+            }
+            .lp-combo-label {
+                font-size: 0.76rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: rgba(210, 220, 255, 0.75);
+            }
+            .lp-hud-combo[data-streak="build"] {
+                border-color: rgba(120, 190, 255, 0.45);
+                box-shadow: 0 10px 24px rgba(120, 190, 255, 0.25);
+            }
+            .lp-hud-combo[data-streak="peak"] {
+                transform: translateY(-2px);
+                border-color: rgba(255, 150, 210, 0.55);
+                box-shadow: 0 14px 28px rgba(255, 150, 210, 0.3);
+            }
+            .lp-hud-callout {
+                padding: 0.85rem 1rem;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(90, 120, 255, 0.08));
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+                transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            }
+            .lp-hud-callout strong {
+                font-size: 0.95rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: rgba(240, 244, 255, 0.95);
+            }
+            .lp-hud-callout span {
+                font-size: 0.78rem;
+                color: rgba(210, 220, 255, 0.82);
+            }
+            .lp-hud-callout[data-energy="surge"] {
+                border-color: rgba(120, 190, 255, 0.5);
+                box-shadow: 0 12px 26px rgba(120, 190, 255, 0.22);
+            }
+            .lp-hud-callout[data-energy="eruption"] {
+                border-color: rgba(255, 150, 210, 0.58);
+                box-shadow: 0 16px 32px rgba(255, 150, 210, 0.28);
+            }
+            .lp-hud-callout[data-trend="up"] strong::after {
+                content: ' +';
+            }
+            .lp-hud-callout[data-trend="down"] strong::after {
+                content: ' –';
+            }
+            .lp-hud-timeline {
+                margin: 1.1rem 0 0;
+                padding: 0.75rem 0 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 0.55rem;
+                max-height: 160px;
+                overflow: hidden;
+            }
+            .lp-hud-timeline li {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                padding: 0.35rem 0.5rem 0.45rem;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                font-size: 0.78rem;
+                letter-spacing: 0.04em;
+                transition: border-color 0.25s ease, transform 0.25s ease;
+            }
+            .lp-hud-timeline li[data-intensity="surge"],
+            .lp-hud-timeline li[data-intensity="eruption"] {
+                border-color: rgba(140, 200, 255, 0.45);
+            }
+            .lp-hud-timeline li[data-intensity="eruption"] {
+                transform: translateX(4px);
+                border-color: rgba(255, 150, 210, 0.55);
+                box-shadow: 0 10px 24px rgba(255, 150, 210, 0.28);
+            }
+            .lp-hud-timeline li[data-band="bass"] {
+                background: linear-gradient(135deg, rgba(255, 120, 160, 0.18), rgba(255, 255, 255, 0.02));
+            }
+            .lp-hud-timeline li[data-band="mid"] {
+                background: linear-gradient(135deg, rgba(110, 200, 255, 0.18), rgba(255, 255, 255, 0.02));
+            }
+            .lp-hud-timeline li[data-band="treble"] {
+                background: linear-gradient(135deg, rgba(200, 140, 255, 0.2), rgba(255, 255, 255, 0.02));
+            }
+            .lp-timeline-label {
+                font-weight: 600;
+                color: rgba(240, 244, 255, 0.92);
+            }
+            .lp-timeline-meta {
+                color: rgba(210, 220, 255, 0.7);
+                font-size: 0.7rem;
+            }
+            .lp-timeline-empty {
+                font-size: 0.76rem;
+                color: rgba(200, 210, 240, 0.6);
+                text-align: center;
+                padding: 0.25rem 0;
+            }
+            .lp-hud.lp-hud-pulse {
+                animation: lpHudPulseFlash 0.32s ease-out;
+            }
+            .lp-hud.lp-hud-pulse[data-pulse="bass"] .lp-band-meter[data-band="bass"],
+            .lp-hud.lp-hud-pulse[data-pulse="mid"] .lp-band-meter[data-band="mid"],
+            .lp-hud.lp-hud-pulse[data-pulse="treble"] .lp-band-meter[data-band="treble"],
+            .lp-hud.lp-hud-pulse[data-pulse="energy"] .lp-hud-callout {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 32px rgba(255, 255, 255, 0.25);
+            }
             .lp-hud[data-band="bass"] { border-color: rgba(255, 150, 170, 0.38); }
             .lp-hud[data-band="mid"] { border-color: rgba(140, 200, 255, 0.38); }
             .lp-hud[data-band="treble"] { border-color: rgba(170, 140, 255, 0.4); }
+            .lp-hud[data-ect="high"] { border-color: rgba(90, 220, 255, 0.45); }
+            .lp-hud[data-ect="medium"] { border-color: rgba(170, 200, 255, 0.4); }
+            .lp-hud[data-ect="low"] { border-color: rgba(255, 150, 130, 0.48); }
+            .lp-hud[data-ect="high"] .lp-hud-status { color: rgba(190, 248, 255, 0.95); }
+            .lp-hud[data-ect="medium"] .lp-hud-status { color: rgba(220, 232, 255, 0.9); }
+            .lp-hud[data-ect="low"] .lp-hud-status { color: rgba(255, 215, 190, 0.94); }
             .lp-hud[data-state="metronome"] .lp-hud-status { animation: lpStatusPulse 2.8s ease-in-out infinite; }
             @keyframes lpStartPulse {
                 0% { opacity: 0.4; }
@@ -448,11 +961,46 @@ export class LatticePulseGame {
                 0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
                 50% { filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.35)); }
             }
+            @keyframes lpHudPulseFlash {
+                0% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+                40% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.35); }
+                100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .lp-hud,
+                .lp-hud * {
+                    transition-duration: 0.01ms !important;
+                    animation-duration: 0.01ms !important;
+                    animation-iteration-count: 1 !important;
+                }
+            }
+            @media (max-width: 1100px) {
+                .lp-hud {
+                    right: 1rem;
+                    width: min(340px, 92vw);
+                }
+            }
+            @media (max-width: 900px) {
+                .lp-hud {
+                    top: 0.75rem;
+                    right: 0.75rem;
+                    width: min(300px, 92vw);
+                }
+                .lp-hud .lp-hud-grid {
+                    grid-template-columns: 1fr;
+                }
+                .lp-hud .lp-hud-bands {
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                }
+            }
             @media (max-width: 640px) {
                 .lp-start { padding: 1.3rem; }
                 .lp-start-panel { padding: 1.75rem; gap: 1rem; }
                 .lp-hud { left: 0.75rem; right: 0.75rem; top: auto; bottom: 0.85rem; width: auto; }
                 .lp-hud::after { inset: 18% 18%; }
+                .lp-hud-reactor { grid-template-columns: 1fr; }
+                .lp-hud-bands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                .lp-hud-combo { justify-content: space-between; }
             }
         `
         document.head.appendChild(style);
@@ -462,7 +1010,7 @@ export class LatticePulseGame {
         if (!this.container || typeof document === 'undefined') return;
 
         const overlay = document.createElement('div');
-        overlay.className = 'lp-start';
+        overlay.className = 'lp-start lp-hidden';
 
         const panel = document.createElement('div');
         panel.className = 'lp-start-panel';
@@ -530,6 +1078,12 @@ export class LatticePulseGame {
         fallbackButton.textContent = 'Signature Metronome Mode';
         fallbackButton.addEventListener('click', () => this.startWithMetronome('manual'));
 
+        const skipButton = document.createElement('button');
+        skipButton.className = 'lp-link';
+        skipButton.type = 'button';
+        skipButton.textContent = 'Skip for now';
+        skipButton.addEventListener('click', () => this.skipForNow());
+
         const message = document.createElement('div');
         message.className = 'lp-start-message lp-message-info';
         message.textContent = 'Microphone mode provides the richest experience.';
@@ -537,11 +1091,11 @@ export class LatticePulseGame {
         message.setAttribute('aria-live', 'polite');
         this.startMessage = message;
 
-        panel.append(title, tagline, description, spectrum, micButton, trackRow, fileInput, fallbackButton, message);
+        panel.append(title, tagline, description, spectrum, micButton, trackRow, fileInput, fallbackButton, skipButton, message);
         overlay.appendChild(panel);
         this.container.appendChild(overlay);
         this.startScreen = overlay;
-        this.startControls = { mic: micButton, track: trackButton, fallback: fallbackButton };
+        this.startControls = { mic: micButton, track: trackButton, fallback: fallbackButton, skip: skipButton };
     }
 
     createHud() {
@@ -579,9 +1133,91 @@ export class LatticePulseGame {
         const bpm = createRow('Tempo', 'lp-hud-bpm');
         const energy = createRow('Energy', 'lp-hud-energy');
         const signal = createRow('Signal Lock', 'lp-hud-signal');
+        const ect = createRow('ECT', 'lp-hud-ect');
         const dominant = createRow('Dominant', 'lp-hud-dominant');
         const geometry = createRow('Geometry', 'lp-hud-geometry');
         const mode = createRow('Mode', 'lp-hud-mode');
+
+        const bandGroup = document.createElement('div');
+        bandGroup.className = 'lp-hud-bands';
+
+        const bandMeters = {};
+        const bandLabels = { bass: 'Bass', mid: 'Mid', treble: 'Treble' };
+        Object.entries(bandLabels).forEach(([key, label]) => {
+            const meter = document.createElement('div');
+            meter.className = 'lp-band-meter';
+            meter.dataset.band = key;
+
+            const heading = document.createElement('strong');
+            heading.textContent = label;
+
+            const bar = document.createElement('span');
+            bar.style.setProperty('--lp-level', '0');
+
+            const value = document.createElement('small');
+            value.textContent = '0%';
+
+            meter.append(heading, bar, value);
+            bandGroup.appendChild(meter);
+            bandMeters[key] = { root: meter, bar, label: heading, value };
+        });
+
+        const ectMeter = document.createElement('div');
+        ectMeter.className = 'lp-hud-ect-meter';
+
+        const ectRing = document.createElement('div');
+        ectRing.className = 'lp-ect-ring';
+        const ectSegments = [];
+        for (let i = 0; i < 12; i += 1) {
+            const segment = document.createElement('span');
+            segment.style.setProperty('--i', String(i));
+            segment.dataset.active = '0';
+            ectRing.appendChild(segment);
+            ectSegments.push(segment);
+        }
+
+        const ectLabel = document.createElement('div');
+        ectLabel.className = 'lp-ect-label';
+        const ectHeading = document.createElement('strong');
+        ectHeading.textContent = 'ECT';
+        const ectValueLabel = document.createElement('em');
+        ectValueLabel.textContent = '0%';
+        const ectDescriptor = document.createElement('span');
+        ectDescriptor.textContent = 'Calibration pending';
+        ectLabel.append(ectHeading, ectValueLabel, ectDescriptor);
+        ectMeter.append(ectRing, ectLabel);
+
+        const combo = document.createElement('div');
+        combo.className = 'lp-hud-combo';
+        combo.dataset.streak = 'base';
+        const comboCount = document.createElement('span');
+        comboCount.className = 'lp-combo-count';
+        comboCount.textContent = 'x0';
+        const comboLabel = document.createElement('span');
+        comboLabel.className = 'lp-combo-label';
+        comboLabel.textContent = 'Rhythm Link';
+        combo.append(comboCount, comboLabel);
+
+        const callout = document.createElement('div');
+        callout.className = 'lp-hud-callout';
+        callout.dataset.energy = 'ambient';
+        const calloutHeadline = document.createElement('strong');
+        calloutHeadline.textContent = 'Awaiting impact';
+        const calloutDetail = document.createElement('span');
+        calloutDetail.textContent = 'No beats detected yet.';
+        callout.append(calloutHeadline, calloutDetail);
+
+        const reactorInfo = document.createElement('div');
+        reactorInfo.className = 'lp-hud-reactor-info';
+        reactorInfo.append(combo, callout);
+
+        const reactor = document.createElement('div');
+        reactor.className = 'lp-hud-reactor';
+        reactor.append(ectMeter, reactorInfo);
+
+        const timeline = document.createElement('ol');
+        timeline.className = 'lp-hud-timeline';
+        timeline.setAttribute('aria-live', 'polite');
 
         const failure = document.createElement('div');
         failure.className = 'lp-hud-warning';
@@ -592,7 +1228,7 @@ export class LatticePulseGame {
         const pulseBar = document.createElement('span');
         pulseMeter.appendChild(pulseBar);
 
-        hud.append(title, status, grid, pulseMeter, failure);
+        hud.append(title, status, grid, bandGroup, reactor, timeline, pulseMeter, failure);
         this.container.appendChild(hud);
 
         this.hudElements = {
@@ -602,12 +1238,114 @@ export class LatticePulseGame {
             bpm,
             energy,
             signal,
+            ect,
             dominant,
             geometry,
             mode,
             failure,
-            meter: pulseBar
+            meter: pulseBar,
+            bandMeters,
+            ectMeter: {
+                root: ectMeter,
+                ring: ectRing,
+                segments: ectSegments,
+                value: ectValueLabel,
+                descriptor: ectDescriptor
+            },
+            combo: {
+                root: combo,
+                count: comboCount,
+                label: comboLabel
+            },
+            callout: {
+                root: callout,
+                headline: calloutHeadline,
+                detail: calloutDetail
+            },
+            timeline
         };
+
+        this.updateBandMeters(this.lastBandLevels);
+        this.updateEctVisual(this.currentECT ?? 0, 0);
+        this.updateComboDisplay({ analysisQuality: 0 }, null, this.currentECT ?? 0);
+        this.updateCalloutDisplay(null, this.currentECT ?? 0, 0, { energy: 0, analysisQuality: 0 });
+        this.updateTimeline();
+
+        if (typeof document !== 'undefined') {
+            this.hudDock = document.getElementById('hudDock') || this.hudDock;
+        }
+
+        if (typeof window !== 'undefined' && !this.hudPlacementListenersAttached) {
+            if (!this.hudMediaQuery && typeof window.matchMedia === 'function') {
+                this.hudMediaQuery = window.matchMedia('(max-width: 900px)');
+                if (typeof this.hudMediaQuery.addEventListener === 'function') {
+                    this.hudMediaQuery.addEventListener('change', this.boundHandleHudMediaChange);
+                } else if (typeof this.hudMediaQuery.addListener === 'function') {
+                    this.hudMediaQuery.addListener(this.boundHandleHudMediaChange);
+                }
+            }
+
+            window.addEventListener('resize', this.boundHandleHudResize);
+            window.addEventListener('controlpanel:toggle', this.boundHandlePanelToggle);
+            this.hudPlacementListenersAttached = true;
+        }
+
+        this.scheduleHudPlacementUpdate();
+    }
+
+    scheduleHudPlacementUpdate() {
+        if (typeof window === 'undefined' || !this.hudElements || !this.hudElements.root) {
+            return;
+        }
+
+        if (this.hudPlacementRaf) {
+            return;
+        }
+
+        this.hudPlacementRaf = window.requestAnimationFrame(() => {
+            this.hudPlacementRaf = null;
+            this.updateHudPlacement();
+        });
+    }
+
+    updateHudPlacement() {
+        if (typeof document === 'undefined' || !this.hudElements || !this.hudElements.root) {
+            return;
+        }
+
+        const hudRoot = this.hudElements.root;
+        const controlPanel = document.getElementById('controlPanel');
+        const dock = document.getElementById('hudDock');
+
+        if (dock) {
+            this.hudDock = dock;
+        }
+
+        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+        const mediaMatches = this.hudMediaQuery ? this.hudMediaQuery.matches : viewportWidth <= 900;
+        const panelCollapsed = !controlPanel || controlPanel.classList.contains('collapsed');
+        const shouldInline = Boolean(this.hudDock && controlPanel && !panelCollapsed && (mediaMatches || viewportWidth <= 1200));
+
+        const host = (this.container && this.container.appendChild) ? this.container : document.body;
+        const targetParent = shouldInline ? (this.hudDock || controlPanel || host) : host;
+
+        if (hudRoot.parentElement !== targetParent && targetParent) {
+            targetParent.appendChild(hudRoot);
+        }
+
+        if (shouldInline) {
+            hudRoot.classList.add('is-inline');
+            if (this.hudDock) {
+                this.hudDock.classList.add('active');
+            }
+        } else {
+            hudRoot.classList.remove('is-inline');
+            if (this.hudDock) {
+                this.hudDock.classList.remove('active');
+            }
+        }
+
+        this.hudPlacementMode = shouldInline ? 'inline' : 'floating';
     }
 
     createGeometryDefaults() {
@@ -681,6 +1419,82 @@ export class LatticePulseGame {
         });
     }
 
+    showStartScreen(message = 'Choose how you want to feed the visuals.', type = 'info') {
+        this.stop();
+        this.init();
+
+        if (this.startScreen) {
+            this.startScreen.classList.remove('lp-hidden');
+        }
+        if (this.hudElements?.root) {
+            this.hudElements.root.classList.add('lp-hidden');
+        }
+
+        this.setStartMessage(message, type);
+        this.emitStateChange('start-screen', { reason: 'manual' });
+    }
+
+    minimizeStartScreen() {
+        if (this.startScreen) {
+            this.startScreen.classList.add('lp-hidden');
+        }
+    }
+
+    skipForNow() {
+        this.stop();
+        if (this.startScreen) {
+            this.startScreen.classList.add('lp-hidden');
+        }
+        this.persistAutoStartPreference(false);
+        this.emitStateChange('idle', { reason: 'skip' });
+        this.setHudStatus('Game paused. Use the 🎮 control to resume.', 'info');
+    }
+
+    attachEngine(engine) {
+        this.engine = engine || null;
+
+        if (this.engine && this.active && this.lastGeometryEvent?.event) {
+            try {
+                this.applyGeometryEvent(this.lastGeometryEvent.event, this.lastGeometryEvent.beat, { record: false });
+            } catch (error) {
+                console.error('[LatticePulseGame] Failed to synchronize engine after reattachment.', error);
+            }
+        }
+    }
+
+    handleSystemChange(systemName, engineInstance = null) {
+        if (systemName === 'faceted') {
+            if (engineInstance) {
+                this.attachEngine(engineInstance);
+            } else if (!this.engine) {
+                this.attachEngine(engineInstance);
+            }
+
+            if (this.active && this.hudElements?.root) {
+                this.hudElements.root.classList.remove('lp-hidden');
+            }
+
+            const nextState = this.active ? 'running' : (this.state === 'start-screen' ? 'start-screen' : 'idle');
+            this.emitStateChange(nextState, { system: systemName, reason: 'attach' });
+        } else {
+            this.attachEngine(null);
+
+            if (this.active) {
+                this.setHudStatus('Paused while exploring other systems.', 'warning');
+            }
+
+            if (this.hudElements?.root) {
+                this.hudElements.root.dataset.pausedSystem = systemName;
+            }
+
+            this.emitStateChange('paused', { system: systemName });
+        }
+    }
+
+    isRunning() {
+        return !!this.engine && !!this.active;
+    }
+
     setHudStatus(message, type = 'info') {
         if (!this.hudElements?.status) return;
         const statusEl = this.hudElements.status;
@@ -698,12 +1512,15 @@ export class LatticePulseGame {
                 this.mode = 'microphone';
                 this.linkedTrackLabel = 'Live microphone';
                 this.setStartMessage('Microphone linked. Listening for live tempo…', 'success');
+                this.lastStartReason = 'microphone';
                 this.beginGame(false);
             } else {
-                const reason = this.describeMetronomeReason(this.audioService.getMetronomeReason());
+                const metronomeReason = this.audioService.getMetronomeReason();
+                const reason = this.describeMetronomeReason(metronomeReason);
                 this.mode = 'metronome';
                 this.linkedTrackLabel = null;
                 this.setStartMessage(`Microphone unavailable${reason ? ` (${reason})` : ''}. Using signature rhythms instead.`, 'error');
+                this.lastStartReason = metronomeReason || 'microphone-fallback';
                 this.beginGame(true);
             }
         } finally {
@@ -745,11 +1562,14 @@ export class LatticePulseGame {
             this.mode = 'track';
             this.linkedTrackLabel = extraOptions.sourceLabel || this.formatSourceLabel(trimmed);
             this.setStartMessage('Audio stream connected. Detecting beat phase…', 'success');
+            this.lastStartReason = 'track';
             this.beginGame(false);
         } else {
+            const metronomeReason = this.audioService.getMetronomeReason();
             this.mode = 'metronome';
             this.linkedTrackLabel = null;
             this.setStartMessage('Failed to play the audio stream. Engaging signature fallback.', 'error');
+            this.lastStartReason = metronomeReason || 'track-failed';
             this.beginGame(true);
         }
     }
@@ -758,7 +1578,14 @@ export class LatticePulseGame {
         this.audioService.enableMetronome(reason);
         this.mode = 'metronome';
         this.linkedTrackLabel = null;
-        this.setStartMessage('Signature rhythm activated. Visuals will use emergent defaults.', 'warning');
+        if (reason === 'auto' || reason === 'pages-auto' || reason === 'deploy-auto') {
+            this.setStartMessage('Signature rhythm preview engaged automatically.', 'info');
+        } else if (reason === 'silence') {
+            this.setStartMessage('Live input quiet. Signature rhythm sustaining visuals.', 'warning');
+        } else {
+            this.setStartMessage('Signature rhythm activated. Visuals will use emergent defaults.', 'warning');
+        }
+        this.lastStartReason = reason;
         this.beginGame(true);
     }
 
@@ -770,7 +1597,6 @@ export class LatticePulseGame {
             this.hudElements.root.classList.remove('lp-hidden');
         }
 
-        this.state = 'running';
         this.active = true;
         this.beatCounter = 0;
         this.geometryDefaults.forEach(mode => { mode.step = 0; });
@@ -781,6 +1607,7 @@ export class LatticePulseGame {
         this.displayEnergy = 0;
         this.lastSignalQuality = 0;
         this.currentHue = 200;
+        this.lastGeometryEvent = null;
         this.lastFrameTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
         if (this.rafId) {
@@ -788,8 +1615,27 @@ export class LatticePulseGame {
         }
         this.rafId = requestAnimationFrame(this.loop);
 
+        const autoStart = ['auto', 'pages-auto', 'deploy-auto'].includes(this.lastStartReason);
+        this.persistAutoStartPreference(true);
+        this.emitStateChange('running', {
+            fallback: isFallback,
+            mode: this.mode,
+            startReason: this.lastStartReason,
+            autoStart
+        });
+
         if (isFallback) {
-            this.setHudStatus('Fallback signature rhythm active.', 'warning');
+            if (autoStart) {
+                this.setHudStatus('Signature rhythm auto-started. Tap 🎮 to link live audio.', 'info');
+            } else if (this.lastStartReason === 'silence') {
+                this.setHudStatus('Live input silent – signature rescue engaged.', 'warning');
+            } else if (this.lastStartReason === 'track-failed' || this.lastStartReason === 'track-fallback') {
+                this.setHudStatus('Linked track unavailable. Signature rhythm sustaining visuals.', 'warning');
+            } else if (this.lastStartReason === 'microphone-fallback' || this.lastStartReason === 'permission-denied' || this.lastStartReason === 'hardware-busy') {
+                this.setHudStatus('Microphone unavailable. Signature rhythm sustaining visuals.', 'warning');
+            } else {
+                this.setHudStatus('Fallback signature rhythm active.', 'warning');
+            }
         } else if (this.mode === 'microphone') {
             this.setHudStatus('Microphone tempo tracking active.', 'success');
         } else {
@@ -798,6 +1644,7 @@ export class LatticePulseGame {
 
         if (this.hudElements?.root) {
             this.hudElements.root.dataset.state = this.mode;
+            this.hudElements.root.dataset.autoStart = autoStart ? '1' : '0';
         }
     }
     loop(timestamp) {
@@ -829,6 +1676,15 @@ export class LatticePulseGame {
             this.lastSignalQuality = beat.analysisQuality;
         }
 
+        this.updateECT({
+            energy: beat?.energy,
+            analysisQuality: beat?.analysisQuality,
+            spectralFlux: beat?.spectralFlux,
+            fluxConfidence: beat?.fluxConfidence,
+            state: beat?.source === 'metronome' ? 'metronome' : this.audioService.getState?.(),
+            metronomeOverlay: beat?.metronomeOverlay || beat?.overlay
+        }, { immediate: true });
+
         let event;
         if (beat?.source === 'metronome' && beat.signature) {
             event = this.buildFallbackEvent(beat);
@@ -837,10 +1693,11 @@ export class LatticePulseGame {
         }
 
         if (event) {
-            this.applyGeometryEvent(event, beat);
+            this.applyGeometryEvent(event, beat, { record: true });
         }
 
         this.refreshHud(beat, event);
+        this.triggerHudPulse(event, beat?.bandLevels || this.lastBandLevels);
         return event;
     }
 
@@ -852,17 +1709,23 @@ export class LatticePulseGame {
         if (typeof payload.analysisQuality === 'number') {
             this.lastSignalQuality = payload.analysisQuality;
         }
+        this.updateECT(payload);
         this.refreshHud();
     }
 
     handleAudioStateChange(state, detail) {
         this.mode = state;
         if (state === 'metronome' && detail?.reason) {
-            this.failureState = this.describeMetronomeReason(detail.reason);
-            if (detail.reason === 'silence') {
-                this.setHudStatus('Live input silent – signature rescue engaged.', 'warning');
+            if (detail.reason === 'auto' || detail.reason === 'pages-auto' || detail.reason === 'deploy-auto') {
+                this.failureState = null;
+                this.setHudStatus('Signature rhythm auto-started. Tap 🎮 to link audio.', 'info');
             } else {
-                this.setHudStatus(`Fallback mode: ${this.failureState || 'signature sequence'}`, 'warning');
+                this.failureState = this.describeMetronomeReason(detail.reason);
+                if (detail.reason === 'silence') {
+                    this.setHudStatus('Live input silent – signature rescue engaged.', 'warning');
+                } else {
+                    this.setHudStatus(`Fallback mode: ${this.failureState || 'signature sequence'}`, 'warning');
+                }
             }
         } else if (state === 'microphone') {
             this.failureState = null;
@@ -881,6 +1744,9 @@ export class LatticePulseGame {
         }
         if (this.hudElements?.root) {
             this.hudElements.root.dataset.state = state;
+            if (typeof detail?.autoStart === 'boolean') {
+                this.hudElements.root.dataset.autoStart = detail.autoStart ? '1' : '0';
+            }
         }
         this.refreshHud();
     }
@@ -913,6 +1779,11 @@ export class LatticePulseGame {
                 return 'live input silent';
             case 'manual':
                 return 'manual selection';
+            case 'auto':
+                return 'automatic preview';
+            case 'pages-auto':
+            case 'deploy-auto':
+                return 'deployment auto-start';
             default:
                 return toLabel(reason);
         }
@@ -965,6 +1836,9 @@ export class LatticePulseGame {
     refreshHud(beat = null, event = null) {
         if (!this.hudElements) return;
 
+        const ectValue = clamp(this.currentECT ?? this.targetECT ?? 0, 0, 1);
+        const trend = this.lastECTTrend ?? 0;
+
         if (this.hudElements.source) {
             this.hudElements.source.textContent = this.describeSource();
         }
@@ -978,6 +1852,15 @@ export class LatticePulseGame {
         if (this.hudElements.signal) {
             const signalValue = clamp(this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
             this.hudElements.signal.textContent = signalValue ? `${Math.round(signalValue * 100)}%` : '—';
+        }
+        if (this.hudElements.ect) {
+            let indicator = '•';
+            if (trend > 0.015) {
+                indicator = '▲';
+            } else if (trend < -0.015) {
+                indicator = '▼';
+            }
+            this.hudElements.ect.textContent = `${Math.round(ectValue * 100)}% ${indicator}`;
         }
         if (this.hudElements.dominant) {
             const dominant = event?.dominantBand || this.getDominantBand(this.lastBandLevels);
@@ -993,8 +1876,20 @@ export class LatticePulseGame {
             this.currentModeName = modeName;
         }
 
+        this.updateBandMeters(beat?.bandLevels || this.lastBandLevels, event);
+        this.updateEctVisual(ectValue, trend);
+        this.updateComboDisplay(beat, event, ectValue);
+        this.updateCalloutDisplay(event, ectValue, trend, beat);
+        if (event) {
+            this.updateTimeline(event, beat);
+        } else if (!this.reactionHistory.length) {
+            this.updateTimeline();
+        }
+
         if (this.hudElements.root) {
             this.hudElements.root.dataset.state = this.mode;
+            this.hudElements.root.dataset.ect = ectValue >= 0.75 ? 'high' : ectValue >= 0.45 ? 'medium' : 'low';
+            this.hudElements.root.style.setProperty('--lp-ect', ectValue.toFixed(3));
         }
 
         this.updateHudTheme(event);
@@ -1004,7 +1899,19 @@ export class LatticePulseGame {
 
     updateFailureHud() {
         if (!this.hudElements?.failure) return;
-        this.hudElements.failure.textContent = this.failureState ? this.failureState : '';
+        if (this.failureState) {
+            this.hudElements.failure.textContent = this.failureState;
+            return;
+        }
+
+        const ectValue = clamp(this.currentECT ?? this.targetECT ?? 0, 0, 1);
+        if (ectValue < 0.32) {
+            this.hudElements.failure.textContent = 'ECT low – stabilizing geometry. Tap 🎮 to link audio.';
+        } else if (ectValue > 0.78) {
+            this.hudElements.failure.textContent = 'ECT locked in – geometry coherence optimal.';
+        } else {
+            this.hudElements.failure.textContent = '';
+        }
     }
 
     updateHudTheme(event = null) {
@@ -1012,6 +1919,7 @@ export class LatticePulseGame {
         const root = this.hudElements.root;
         const energyValue = clamp(this.displayEnergy, 0, 1);
         const signalValue = clamp(this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const ectValue = clamp(this.currentECT ?? this.targetECT ?? energyValue, 0, 1);
         const dominant = event?.dominantBand || this.currentDominantBand || 'none';
         root.dataset.band = dominant;
         const tempoClass = event?.tempoClass || this.classifyTempo(this.audioService.getCurrentBpm());
@@ -1025,13 +1933,236 @@ export class LatticePulseGame {
 
         root.style.setProperty('--lp-energy', energyValue.toFixed(3));
         root.style.setProperty('--lp-signal', signalValue.toFixed(3));
+        root.style.setProperty('--lp-ect', ectValue.toFixed(3));
         root.style.setProperty('--lp-accent', accentBase);
         root.style.boxShadow = `0 24px 60px rgba(0, 0, 0, 0.45), 0 0 ${Math.round(24 + energyValue * 80)}px ${accentGlow}`;
         root.style.borderColor = `hsla(${Math.round(hue)}, 85%, 68%, ${0.3 + signalValue * 0.3})`;
 
         if (this.hudElements.meter) {
             this.hudElements.meter.style.width = `${Math.round(energyValue * 100)}%`;
+            this.hudElements.meter.style.filter = `drop-shadow(0 0 ${Math.round(10 + ectValue * 22)}px hsla(${Math.round(hue)}, 95%, 70%, ${0.35 + ectValue * 0.25}))`;
         }
+    }
+
+    updateBandMeters(bandLevels = {}, event = null) {
+        if (!this.hudElements?.bandMeters) return;
+        const keys = ['bass', 'mid', 'treble'];
+        keys.forEach(key => {
+            const meter = this.hudElements.bandMeters[key];
+            if (!meter) return;
+            const value = clamp(bandLevels?.[key] ?? 0, 0, 1);
+            const previous = this.bandSmoothedLevels?.[key] ?? value;
+            const smoothed = previous * 0.6 + value * 0.4;
+            this.bandSmoothedLevels[key] = smoothed;
+            const momentum = smoothed - previous;
+            this.bandMomentum[key] = momentum;
+
+            meter.bar.style.setProperty('--lp-level', value.toFixed(3));
+            meter.value.textContent = `${Math.round(value * 100)}%`;
+
+            if (value >= 0.8) {
+                meter.root.dataset.state = 'eruption';
+            } else if (value >= 0.55) {
+                meter.root.dataset.state = 'surge';
+            } else if (value <= 0.22) {
+                meter.root.dataset.state = 'ambient';
+            } else {
+                meter.root.dataset.state = 'groove';
+            }
+
+            if (momentum > 0.025) {
+                meter.root.dataset.momentum = 'up';
+            } else if (momentum < -0.025) {
+                meter.root.dataset.momentum = 'down';
+            } else {
+                delete meter.root.dataset.momentum;
+            }
+        });
+    }
+
+    updateEctVisual(ectValue, trend) {
+        const meter = this.hudElements?.ectMeter;
+        if (!meter) return;
+        if (meter.value) {
+            meter.value.textContent = `${Math.round(ectValue * 100)}%`;
+        }
+        if (meter.descriptor) {
+            let descriptor = 'Coherence steady';
+            if (trend > 0.02) {
+                descriptor = 'Coherence rising';
+            } else if (trend < -0.02) {
+                descriptor = 'Stabilizing flow';
+            }
+            meter.descriptor.textContent = descriptor;
+        }
+        if (meter.root) {
+            if (trend > 0.02) {
+                meter.root.dataset.trend = 'up';
+            } else if (trend < -0.02) {
+                meter.root.dataset.trend = 'down';
+            } else {
+                meter.root.dataset.trend = 'steady';
+            }
+        }
+        const segments = meter.segments || [];
+        const activeCount = Math.round(clamp(ectValue, 0, 1) * segments.length);
+        segments.forEach((segment, index) => {
+            segment.dataset.active = index < activeCount ? '1' : '0';
+        });
+    }
+
+    updateComboDisplay(beat, event, ectValue) {
+        const combo = this.hudElements?.combo;
+        if (!combo) return;
+        const signalValue = clamp(beat?.analysisQuality ?? this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const intensityClass = event?.intensityClass || this.classifyIntensity(beat?.energy ?? this.audioService.getEnergy());
+        const tempoClass = event?.tempoClass || this.classifyTempo(beat?.bpm || this.audioService.getCurrentBpm());
+
+        if (!this.comboState) {
+            this.comboState = { streak: 0, lastIntensity: null, lastTempo: null };
+        }
+
+        if (signalValue < 0.2) {
+            this.comboState.streak = 0;
+            this.comboState.lastIntensity = null;
+            this.comboState.lastTempo = null;
+        } else {
+            if (this.comboState.lastIntensity === intensityClass && this.comboState.lastTempo === tempoClass && signalValue > 0.45) {
+                this.comboState.streak = Math.min((this.comboState.streak || 0) + 1, 12);
+            } else {
+                this.comboState.streak = 1;
+            }
+            this.comboState.lastIntensity = intensityClass;
+            this.comboState.lastTempo = tempoClass;
+        }
+
+        const streak = Math.max(this.comboState.streak, 0);
+        combo.count.textContent = `x${streak}`;
+
+        const labelMap = {
+            ambient: 'Ambient Link',
+            groove: 'Groove Chain',
+            surge: 'Surge Chain',
+            eruption: 'Eruption Chain'
+        };
+        combo.label.textContent = labelMap[intensityClass] || 'Rhythm Link';
+
+        const streakState = streak >= 6 ? 'peak' : streak >= 3 ? 'build' : 'base';
+        combo.root.dataset.streak = streakState;
+        combo.root.dataset.intensity = intensityClass;
+        combo.root.dataset.tempo = tempoClass;
+        combo.root.style.setProperty('--lp-ect', ectValue.toFixed(3));
+    }
+
+    updateCalloutDisplay(event, ectValue, trend, beat) {
+        const callout = this.hudElements?.callout;
+        if (!callout) return;
+
+        const energyValue = clamp(beat?.energy ?? this.displayEnergy, 0, 1);
+        const signalValue = clamp(beat?.analysisQuality ?? this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const streak = Math.max(this.comboState?.streak ?? 0, 0);
+
+        let headline = 'Ambient drift';
+        if (energyValue >= 0.82) {
+            headline = 'Visual eruption';
+        } else if (energyValue >= 0.6) {
+            headline = 'Energy surge';
+        } else if (energyValue >= 0.35) {
+            headline = 'Rhythmic groove';
+        }
+
+        let detail = `${Math.round(signalValue * 100)}% signal lock · ${Math.round(ectValue * 100)}% coherence`;
+        if (event?.modeName) {
+            const dominantLabel = toLabel(event.dominantBand || this.currentDominantBand || 'mid');
+            detail = `${event.modeName} • ${dominantLabel}`;
+        }
+        if (streak >= 3) {
+            detail = `Combo x${streak} — ${detail}`;
+        }
+
+        callout.headline.textContent = headline;
+        callout.detail.textContent = detail;
+
+        const energyState = energyValue >= 0.82 ? 'eruption' : energyValue >= 0.6 ? 'surge' : energyValue >= 0.35 ? 'groove' : 'ambient';
+        callout.root.dataset.energy = energyState;
+        if (trend > 0.015) {
+            callout.root.dataset.trend = 'up';
+        } else if (trend < -0.015) {
+            callout.root.dataset.trend = 'down';
+        } else {
+            callout.root.dataset.trend = 'steady';
+        }
+    }
+
+    updateTimeline(event = null, beat = null) {
+        if (event) {
+            const energyValue = clamp(beat?.energy ?? this.displayEnergy, 0, 1);
+            const ectValue = clamp(this.currentECT ?? this.targetECT ?? energyValue, 0, 1);
+            const tempoClass = event.tempoClass || this.classifyTempo(beat?.bpm || this.audioService.getCurrentBpm());
+            const entry = {
+                label: event.modeName || 'Geometry Shift',
+                band: event.dominantBand || this.currentDominantBand || 'mid',
+                intensity: event.intensityClass || this.classifyIntensity(energyValue),
+                tempo: tempoClass,
+                energy: energyValue,
+                ect: ectValue
+            };
+            this.reactionHistory.unshift(entry);
+            if (this.reactionHistory.length > 6) {
+                this.reactionHistory.pop();
+            }
+        }
+
+        const timeline = this.hudElements?.timeline;
+        if (!timeline) return;
+
+        while (timeline.firstChild) {
+            timeline.removeChild(timeline.firstChild);
+        }
+
+        if (!this.reactionHistory.length) {
+            const placeholder = document.createElement('li');
+            placeholder.className = 'lp-timeline-empty';
+            placeholder.textContent = 'Awaiting first beat…';
+            timeline.appendChild(placeholder);
+            return;
+        }
+
+        this.reactionHistory.forEach(entry => {
+            const item = document.createElement('li');
+            item.dataset.band = entry.band || 'mid';
+            item.dataset.intensity = entry.intensity || 'groove';
+            item.dataset.tempo = entry.tempo || 'moderate';
+
+            const label = document.createElement('span');
+            label.className = 'lp-timeline-label';
+            label.textContent = entry.label;
+
+            const meta = document.createElement('span');
+            meta.className = 'lp-timeline-meta';
+            const tempoLabel = (entry.tempo || 'moderate').toString().toUpperCase();
+            meta.textContent = `${Math.round(entry.energy * 100)}% energy · ${Math.round(entry.ect * 100)}% coherence · ${tempoLabel}`;
+
+            item.append(label, meta);
+            timeline.appendChild(item);
+        });
+    }
+
+    triggerHudPulse(event, bandLevels = {}) {
+        if (!this.hudElements?.root) return;
+        const root = this.hudElements.root;
+        const band = event?.dominantBand || this.getDominantBand(bandLevels) || 'energy';
+        root.dataset.pulse = band;
+        root.classList.add('lp-hud-pulse');
+        if (this.hudPulseTimer) {
+            clearTimeout(this.hudPulseTimer);
+        }
+        this.hudPulseTimer = setTimeout(() => {
+            if (root) {
+                root.classList.remove('lp-hud-pulse');
+                root.dataset.pulse = '';
+            }
+        }, 360);
     }
     computeAudioRandom(...values) {
         let seed = 0;
@@ -1151,60 +2282,102 @@ export class LatticePulseGame {
         };
     }
 
-    applyGeometryEvent(event, beat) {
+    applyGeometryEvent(event, beat, options = {}) {
         if (!event) return;
 
+        const { record = true } = options;
         const geometry = event.geometry;
         const normalizedLevel = this.normalizeLevel(geometry, event.level);
         const variationIndex = this.getVariationIndex(geometry, normalizedLevel);
         const baseParams = GeometryLibrary.getVariationParameters(geometry, normalizedLevel) || {};
 
-        const bandLevels = beat?.bandLevels || this.lastBandLevels || { bass: 0, mid: 0, treble: 0 };
-        const energy = clamp(beat?.energy ?? this.audioService.getEnergy(), 0, 1);
-        const bpm = beat?.bpm || this.audioService.getCurrentBpm() || 120;
+        const beatData = beat || this.lastGeometryEvent?.beat || null;
+        const bandLevels = beatData?.bandLevels || this.lastBandLevels || { bass: 0, mid: 0, treble: 0 };
+        const energy = clamp(beatData?.energy ?? this.audioService.getEnergy(), 0, 1);
+        const bpm = beatData?.bpm || this.audioService.getCurrentBpm() || 120;
         const tempoFactor = clamp(bpm / 120, 0.5, 2.2);
         const lastEnergyPayload = this.audioService.getLastEnergyPayload?.();
-        const fluxSource = beat?.spectralFlux ?? lastEnergyPayload?.spectralFlux ?? 0;
+        const fluxSource = beatData?.spectralFlux ?? lastEnergyPayload?.spectralFlux ?? 0;
         const fluxFactor = clamp(fluxSource * 4, 0, 1);
-        const signalQuality = clamp(beat?.analysisQuality ?? this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const signalQuality = clamp(beatData?.analysisQuality ?? this.lastSignalQuality ?? this.audioService.getAnalysisQuality(), 0, 1);
+        const ectValue = clamp(this.currentECT ?? this.targetECT ?? energy, 0, 1);
 
-        const previous = this.engine?.parameterManager?.getAllParameters?.() || {};
+        if (record) {
+            const beatSnapshot = beatData ? {
+                energy: beatData.energy,
+                bpm: beatData.bpm,
+                analysisQuality: beatData.analysisQuality,
+                spectralFlux: beatData.spectralFlux,
+                source: beatData.source,
+                signature: beatData.signature ? { ...beatData.signature } : undefined,
+                bandLevels: beatData.bandLevels ? { ...beatData.bandLevels } : undefined
+            } : null;
+
+            this.lastGeometryEvent = {
+                event: { ...event, level: normalizedLevel },
+                beat: beatSnapshot
+            };
+        }
+
+        const engineInstance = this.engine;
+        const previous = engineInstance?.parameterManager?.getAllParameters?.() || {};
 
         const newParams = {
             ...previous,
             ...baseParams,
             geometry,
             variation: variationIndex,
-            chaos: clamp((baseParams.chaos ?? 0.2) * (0.7 + bandLevels.treble * 0.85 + fluxFactor * 0.2) + event.chaosBoost * energy, 0, 1),
-            speed: clamp((baseParams.speed ?? 1) * (0.65 + tempoFactor * 0.5 + bandLevels.bass * 0.4 + signalQuality * 0.3), 0.1, 3),
-            morphFactor: clamp((baseParams.morphFactor ?? 1) * (0.8 + bandLevels.mid * 0.55 + event.morphBoost * energy + signalQuality * 0.25), 0, 2),
-            gridDensity: clamp((baseParams.gridDensity ?? 12) * (0.75 + bandLevels.treble * 0.6 + energy * 0.35 + fluxFactor * 0.3), 4, 100),
-            intensity: clamp(0.28 + energy * 0.6 + signalQuality * 0.25, 0, 1),
-            saturation: clamp(0.45 + bandLevels.mid * 0.35 + event.saturationBoost * 0.5 + fluxFactor * 0.18, 0, 1),
-            dimension: clamp((previous.dimension ?? 3.5) + (signalQuality - 0.5) * 0.18 + (bandLevels.mid - 0.5) * 0.1, 3, 4.5),
-            hue: this.computeHue(baseParams.hue ?? previous.hue ?? 200, event, beat),
+            chaos: clamp(
+                (baseParams.chaos ?? 0.2) * (0.65 + bandLevels.treble * 0.75 + fluxFactor * 0.2) * (0.6 + ectValue * 0.55) +
+                event.chaosBoost * energy * (0.7 + ectValue * 0.4),
+                0,
+                1
+            ),
+            speed: clamp(
+                (baseParams.speed ?? 1) * (0.65 + tempoFactor * 0.5 + bandLevels.bass * 0.4 + signalQuality * 0.3) * (0.85 + ectValue * 0.2),
+                0.1,
+                3
+            ),
+            morphFactor: clamp(
+                (baseParams.morphFactor ?? 1) * (0.8 + bandLevels.mid * 0.55 + event.morphBoost * energy + signalQuality * 0.25) * (0.85 + ectValue * 0.4),
+                0,
+                2
+            ),
+            gridDensity: clamp(
+                (baseParams.gridDensity ?? 12) * (0.75 + bandLevels.treble * 0.6 + energy * 0.35 + fluxFactor * 0.3) * (0.82 + ectValue * 0.45),
+                4,
+                100
+            ),
+            intensity: clamp(0.28 + energy * 0.6 + signalQuality * 0.25 + ectValue * 0.18, 0, 1),
+            saturation: clamp(0.45 + bandLevels.mid * 0.35 + event.saturationBoost * 0.5 + fluxFactor * 0.18 + ectValue * 0.12, 0, 1),
+            dimension: clamp((previous.dimension ?? 3.5) + (signalQuality - 0.5) * 0.18 + (bandLevels.mid - 0.5) * 0.1 + (ectValue - 0.5) * 0.18, 3, 4.5),
+            hue: this.computeHue(baseParams.hue ?? previous.hue ?? 200, event, beatData),
             rot4dXW: clamp((previous.rot4dXW ?? 0) + (bandLevels.mid - 0.5) * 0.12 + (fluxFactor - 0.3) * 0.05, -2, 2),
             rot4dYW: clamp((previous.rot4dYW ?? 0) + (bandLevels.treble - 0.5) * 0.14 + (signalQuality - 0.5) * 0.04, -2, 2),
             rot4dZW: clamp((previous.rot4dZW ?? 0) + (bandLevels.bass - 0.5) * 0.1 + (fluxFactor - 0.3) * 0.04, -2, 2)
         };
 
-        if (this.engine?.parameterManager?.setParameters) {
-            this.engine.parameterManager.setParameters(newParams);
-        }
-        if (typeof this.engine.updateVisualizers === 'function') {
-            this.engine.updateVisualizers();
-        }
-        if (typeof this.engine.updateDisplayValues === 'function') {
-            this.engine.updateDisplayValues();
-        }
-        if (typeof this.engine.currentVariation === 'number') {
-            this.engine.currentVariation = variationIndex;
-        }
-
         this.currentGeometry = geometry;
         this.currentLevel = normalizedLevel;
         this.currentModeName = event.modeName;
         this.currentHue = newParams.hue;
+
+        if (!engineInstance) {
+            return;
+        }
+
+        if (engineInstance.parameterManager?.setParameters) {
+            engineInstance.parameterManager.setParameters(newParams);
+        }
+        if (typeof engineInstance.updateVisualizers === 'function') {
+            engineInstance.updateVisualizers();
+        }
+        if (typeof engineInstance.updateDisplayValues === 'function') {
+            engineInstance.updateDisplayValues();
+        }
+        if (typeof engineInstance.currentVariation === 'number') {
+            engineInstance.currentVariation = variationIndex;
+        }
     }
 
     computeHue(baseHue, event, beat) {
@@ -1219,8 +2392,10 @@ export class LatticePulseGame {
         const signalShift = clamp(beat?.analysisQuality ?? this.audioService.getAnalysisQuality(), 0, 1) * 24;
         const fluxShift = clamp((beat?.spectralFlux ?? this.audioService.getLastEnergyPayload?.()?.spectralFlux ?? 0) * 12, 0, 1) * 18;
         const paletteHue = event?.paletteHue ?? baseHue;
+        const ectValue = clamp(this.currentECT ?? this.targetECT ?? this.displayEnergy, 0, 1);
+        const coherenceShift = (ectValue - 0.5) * 36;
 
-        return Math.round((paletteHue + offset + tempoShift + energyShift + signalShift + fluxShift) % 360);
+        return Math.round((paletteHue + offset + tempoShift + energyShift + signalShift + fluxShift + coherenceShift) % 360);
     }
 
     stop() {
@@ -1229,10 +2404,14 @@ export class LatticePulseGame {
             cancelAnimationFrame(this.rafId);
             this.rafId = null;
         }
-        this.state = 'stopped';
         if (this.hudElements?.root) {
             this.hudElements.root.classList.add('lp-hidden');
         }
+        if (this.hudPulseTimer) {
+            clearTimeout(this.hudPulseTimer);
+            this.hudPulseTimer = null;
+        }
+        this.emitStateChange('stopped', { reason: 'stop' });
     }
 
     destroy() {
