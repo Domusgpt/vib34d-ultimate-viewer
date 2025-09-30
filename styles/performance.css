@@ -1,0 +1,353 @@
+.performance-suite {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    font-family: 'Orbitron', sans-serif;
+    color: #e8f6ff;
+}
+
+.performance-suite__columns {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .performance-suite__columns {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.performance-suite__column {
+    background: rgba(8, 20, 32, 0.55);
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0, 40, 80, 0.25);
+}
+
+.performance-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.performance-block__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.performance-block__title {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7ffcff;
+    margin-bottom: 4px;
+}
+
+.performance-block__subtitle {
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: rgba(231, 248, 255, 0.65);
+}
+
+.touchpad-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.touchpad-card {
+    background: rgba(2, 12, 24, 0.6);
+    border: 1px solid rgba(127, 252, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.touchpad-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.touchpad-card__header h4 {
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: #bffaff;
+}
+
+.touchpad-card__status {
+    font-size: 0.65rem;
+    color: rgba(191, 250, 255, 0.7);
+    text-transform: uppercase;
+}
+
+.touchpad-surface {
+    position: relative;
+    border-radius: 10px;
+    background: radial-gradient(circle at center, rgba(127, 252, 255, 0.22), rgba(0, 20, 40, 0.9));
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    touch-action: none;
+}
+
+.touchpad-indicator {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #7ffcff;
+    box-shadow: 0 0 12px rgba(127, 252, 255, 0.8);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.touchpad-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.touchpad-controls__row {
+    display: flex;
+    gap: 8px;
+}
+
+.touchpad-select {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-select select {
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    color: #e8f6ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+}
+
+.touchpad-controls__row--toggles {
+    align-items: center;
+}
+
+.touchpad-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-toggle input {
+    accent-color: #7ffcff;
+}
+
+.touchpad-swap {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid rgba(127, 252, 255, 0.35);
+    color: #7ffcff;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.touchpad-swap:hover {
+    background: rgba(127, 252, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.audio-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.audio-fieldset {
+    border: 1px solid rgba(127, 252, 255, 0.16);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(0, 20, 32, 0.45);
+}
+
+.audio-fieldset legend {
+    padding: 0 6px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #bffaff;
+}
+
+.toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 24, 36, 0.8);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    color: rgba(231, 248, 255, 0.8);
+}
+
+.toggle-pill input {
+    accent-color: #7ffcff;
+}
+
+.slider-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.slider-control input[type="range"] {
+    width: 100%;
+    accent-color: #7ffcff;
+}
+
+.audio-select {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.audio-select select {
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    color: #e8f6ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+}
+
+.preset-create-row {
+    display: flex;
+    gap: 8px;
+}
+
+.preset-input {
+    flex: 1;
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #e8f6ff;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+}
+
+.preset-input.is-invalid {
+    border-color: #ff6f91;
+    box-shadow: 0 0 0 1px rgba(255, 111, 145, 0.5);
+}
+
+.preset-save {
+    background: linear-gradient(135deg, rgba(127, 252, 255, 0.8), rgba(0, 140, 255, 0.9));
+    border: none;
+    border-radius: 6px;
+    color: #001422;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.preset-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.preset-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(2, 12, 24, 0.6);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 8px;
+    padding: 8px 10px;
+    gap: 12px;
+}
+
+.preset-item__details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.7rem;
+}
+
+.preset-item__details strong {
+    color: #bffaff;
+    letter-spacing: 0.05em;
+}
+
+.preset-item__details span {
+    color: rgba(231, 248, 255, 0.55);
+    font-size: 0.6rem;
+}
+
+.preset-item__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.preset-item__actions button {
+    background: rgba(8, 24, 36, 0.85);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #7ffcff;
+    font-size: 0.65rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.preset-item__actions button:hover {
+    background: rgba(127, 252, 255, 0.12);
+}
+
+.preset-empty {
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(231, 248, 255, 0.5);
+    padding: 16px 0;
+}
+
+@media (max-width: 768px) {
+    .performance-suite__columns {
+        grid-template-columns: 1fr;
+    }
+
+    .touchpad-controls__row,
+    .preset-create-row {
+        flex-direction: column;
+    }
+
+    .touchpad-swap {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+    }
+}
