@@ -5,6 +5,7 @@
  */
 
 import { GeometryLibrary } from '../geometry/GeometryLibrary.js';
+import { AudioReactivityController } from '../core/AudioReactivityController.js';
 
 export class QuantumHolographicVisualizer {
     constructor(canvasId, role, reactivity, variant) {
@@ -897,16 +898,17 @@ void main() {
         let hue = this.params.hue;
         let chaos = this.params.chaos;
         
-        if (window.audioEnabled && window.audioReactive) {
+        const audioBands = AudioReactivityController.getFilteredBands();
+        if (audioBands) {
             // Quantum audio mapping: Enhanced complex lattice response
-            gridDensity += window.audioReactive.bass * 40;      // Bass creates dense lattice structures
-            morphFactor += window.audioReactive.mid * 1.2;      // Mid frequencies morph the geometry
-            hue += window.audioReactive.high * 120;             // High frequencies shift colors dramatically
-            chaos += window.audioReactive.energy * 0.6;         // Overall energy adds chaos/complexity
-            
+            gridDensity += audioBands.bass * 40;      // Bass creates dense lattice structures
+            morphFactor += audioBands.mid * 1.2;      // Mid frequencies morph the geometry
+            hue += audioBands.high * 120;             // High frequencies shift colors dramatically
+            chaos += audioBands.energy * 0.6;         // Overall energy adds chaos/complexity
+
             // Debug logging every 10 seconds to verify audio reactivity is working
             if (Date.now() % 10000 < 16) {
-                console.log(`🌌 Quantum audio reactivity: Density+${(window.audioReactive.bass * 40).toFixed(1)} Morph+${(window.audioReactive.mid * 1.2).toFixed(2)} Hue+${(window.audioReactive.high * 120).toFixed(1)} Chaos+${(window.audioReactive.energy * 0.6).toFixed(2)}`);
+                console.log(`🌌 Quantum audio reactivity: Density+${(audioBands.bass * 40).toFixed(1)} Morph+${(audioBands.mid * 1.2).toFixed(2)} Hue+${(audioBands.high * 120).toFixed(1)} Chaos+${(audioBands.energy * 0.6).toFixed(2)}`);
             }
         }
         

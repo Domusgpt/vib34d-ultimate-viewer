@@ -1,6 +1,8 @@
+import { AudioReactivityController } from './AudioReactivityController.js';
+
 /**
  * Polychora System - 5-Layer Glassmorphic 4D Polytope Renderer
- * 
+ *
  * Features:
  * - 5 layered canvases (background, shadow, content, highlight, accent)
  * - Real 4D polytope mathematics with proper distance functions
@@ -394,13 +396,14 @@ class PolychoraVisualizer {
         let dimension = parameters.dimension || 3.8;
         let hue = parameters.hue || 280;
         
-        if (window.audioEnabled && window.audioReactive) {
+        const audioBands = AudioReactivityController.getFilteredBands();
+        if (audioBands) {
             // Polychora audio mapping: Bass drives 4D rotation, Mid affects cross-section, High affects glow
-            rot4dXW += window.audioReactive.bass * 3.0;        // Bass rotates through XW plane
-            rot4dYW += window.audioReactive.mid * 2.5;         // Mid rotates through YW plane  
-            rot4dZW += window.audioReactive.high * 2.0;        // High rotates through ZW plane
-            dimension += window.audioReactive.energy * 0.5;    // Energy affects 4D cross-section depth
-            hue += window.audioReactive.bass * 60;             // Bass affects polytope color
+            rot4dXW += audioBands.bass * 3.0;        // Bass rotates through XW plane
+            rot4dYW += audioBands.mid * 2.5;         // Mid rotates through YW plane
+            rot4dZW += audioBands.high * 2.0;        // High rotates through ZW plane
+            dimension += audioBands.energy * 0.5;    // Energy affects 4D cross-section depth
+            hue += audioBands.bass * 60;             // Bass affects polytope color
         }
         
         // Set uniforms with audio-reactive 4D rotation and advanced glass effects

@@ -1,3 +1,5 @@
+import { AudioReactivityController } from './AudioReactivityController.js';
+
 /**
  * Unified Reactivity Manager for VIB34D
  * Handles reactivity parameters for all 4 systems consistently
@@ -12,6 +14,7 @@ export class UnifiedReactivityManager {
             click: { faceted: true, quantum: false, holographic: false, polychora: false, mixed: false },
             scroll: { faceted: true, quantum: false, holographic: false, polychora: false, mixed: false },
             audio: false,
+            audioBands: { bass: true, mid: true, high: true, energy: true },
             interactivity: true,
             deviceTilt: false
         };
@@ -37,6 +40,7 @@ export class UnifiedReactivityManager {
             click: { ...this.reactivityState.click },
             scroll: { ...this.reactivityState.scroll },
             audio: this.reactivityState.audio,
+            audioBands: { ...this.reactivityState.audioBands },
             interactivity: this.reactivityState.interactivity,
             deviceTilt: this.reactivityState.deviceTilt,
             
@@ -65,6 +69,7 @@ export class UnifiedReactivityManager {
         if (state.click) this.reactivityState.click = { ...state.click };
         if (state.scroll) this.reactivityState.scroll = { ...state.scroll };
         if (typeof state.audio === 'boolean') this.reactivityState.audio = state.audio;
+        if (state.audioBands) this.reactivityState.audioBands = { ...this.reactivityState.audioBands, ...state.audioBands };
         if (typeof state.interactivity === 'boolean') this.reactivityState.interactivity = state.interactivity;
         if (typeof state.deviceTilt === 'boolean') this.reactivityState.deviceTilt = state.deviceTilt;
         
@@ -100,9 +105,10 @@ export class UnifiedReactivityManager {
         this.reactivityState.mouse[systemDefaults.mouse] = true;
         this.reactivityState.click[systemDefaults.click] = true;
         this.reactivityState.scroll[systemDefaults.scroll] = true;
-        
+
         // Audio defaults
         this.reactivityState.audio = system === 'holographic';
+        this.reactivityState.audioBands = { bass: true, mid: true, high: true, energy: true };
         
         this.currentSystem = system;
         this.syncToGlobals();
@@ -129,6 +135,7 @@ export class UnifiedReactivityManager {
     syncToGlobals() {
         // Sync to window globals for engine integration
         window.audioEnabled = this.reactivityState.audio;
+        AudioReactivityController.setBands(this.reactivityState.audioBands);
         window.interactivityEnabled = this.reactivityState.interactivity;
         
         // Device tilt integration

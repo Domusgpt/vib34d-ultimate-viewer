@@ -12,6 +12,7 @@
  */
 
 import { ParameterManager } from './Parameters.js';
+import { AudioReactivityController } from './AudioReactivityController.js';
 
 /**
  * True4DPolychoraVisualizer - Individual layer renderer for 4D polytopes
@@ -439,9 +440,9 @@ class True4DPolychoraVisualizer {
         this.setUniform('u_layerColor', this.layerColor);
         
         // Audio reactivity - DNA pattern
-        this.setUniform('u_bass', window.audioReactive?.bass || 0);
-        this.setUniform('u_mid', window.audioReactive?.mid || 0);
-        this.setUniform('u_high', window.audioReactive?.high || 0);
+        this.setUniform('u_bass', AudioReactivityController.getBandValue('bass'));
+        this.setUniform('u_mid', AudioReactivityController.getBandValue('mid'));
+        this.setUniform('u_high', AudioReactivityController.getBandValue('high'));
         
         // Draw quad
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
@@ -611,19 +612,20 @@ export class NewPolychoraEngine {
             };
             
             // Audio-reactive 4D rotation enhancement
-            if (window.audioReactive) {
+            const audioBands = AudioReactivityController.getFilteredBands();
+            if (audioBands) {
                 // Bass drives 4D rotation through XW plane
-                params.rot4dXW += window.audioReactive.bass * 2.0;
+                params.rot4dXW += audioBands.bass * 2.0;
                 // Mid drives YW plane rotation
-                params.rot4dYW += window.audioReactive.mid * 1.5;
+                params.rot4dYW += audioBands.mid * 1.5;
                 // High drives ZW plane rotation
-                params.rot4dZW += window.audioReactive.high * 1.0;
-                
+                params.rot4dZW += audioBands.high * 1.0;
+
                 // Audio affects polytope morphing
-                params.morphFactor += window.audioReactive.bass * 0.5;
-                
+                params.morphFactor += audioBands.bass * 0.5;
+
                 // Color shifting based on audio
-                params.hue += (window.audioReactive.mid + window.audioReactive.high) * 30;
+                params.hue += (audioBands.mid + audioBands.high) * 30;
             }
             
             // Render all layers - DNA pattern
