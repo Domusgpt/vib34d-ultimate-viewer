@@ -1,3 +1,5 @@
+import { AudioReactivityController } from '../core/AudioReactivityController.js';
+
 /**
  * Core Holographic Visualizer - Clean WebGL rendering engine
  * Extracted from working system, no debugging mess
@@ -785,14 +787,15 @@ export class HolographicVisualizer {
         // 🎵 HOLOGRAPHIC AUDIO REACTIVITY - Direct and beautiful
         let audioDensity = 0, audioMorph = 0, audioSpeed = 0, audioChaos = 0, audioColor = 0;
         
-        if (window.audioEnabled && window.audioReactive) {
+        const audioBands = AudioReactivityController.getFilteredBands();
+        if (audioBands) {
             // Holographic audio mapping: Rich volumetric effects
-            audioDensity = window.audioReactive.bass * 1.5;     // Bass creates density in holographic layers
-            audioMorph = window.audioReactive.mid * 1.2;        // Mid frequencies morph the hologram
-            audioSpeed = window.audioReactive.high * 0.8;       // High frequencies speed up animation
-            audioChaos = window.audioReactive.energy * 0.6;     // Energy creates chaotic holographic distortion
-            audioColor = window.audioReactive.bass * 45;        // Bass affects holographic color shifts
-            
+            audioDensity = audioBands.bass * 1.5;     // Bass creates density in holographic layers
+            audioMorph = audioBands.mid * 1.2;        // Mid frequencies morph the hologram
+            audioSpeed = audioBands.high * 0.8;       // High frequencies speed up animation
+            audioChaos = audioBands.energy * 0.6;     // Energy creates chaotic holographic distortion
+            audioColor = audioBands.bass * 45;        // Bass affects holographic color shifts
+
             // Debug logging every 10 seconds to verify holographic audio reactivity
             if (Date.now() % 10000 < 16) {
                 console.log(`✨ Holographic audio reactivity: Density+${audioDensity.toFixed(2)} Morph+${audioMorph.toFixed(2)} Speed+${audioSpeed.toFixed(2)} Chaos+${audioChaos.toFixed(2)} Color+${audioColor.toFixed(1)}`);

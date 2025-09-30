@@ -9,11 +9,13 @@ export class ReactivityManager {
         
         // Global reactivity state
         this.enabled = true; // Master toggle (controlled by existing global toggle)
-        
+
         // Individual category toggles
         this.mouseEnabled = true;
         this.clickEnabled = true;
         this.scrollEnabled = true;
+        this.audioEnabled = false;
+        this.audioBands = { bass: true, mid: true, high: true, energy: true };
         
         // Current active system (receives parameter updates)
         this.activeSystem = null;
@@ -310,6 +312,32 @@ export class ReactivityManager {
     setEnabled(enabled) {
         this.enabled = enabled;
         console.log(`⚡ Global reactivity: ${enabled ? 'ON' : 'OFF'}`);
+    }
+
+    /**
+     * Receive updates from UnifiedReactivityManager for audio/device state
+     */
+    updateReactivityState(state) {
+        if (!state) return;
+
+        if (typeof state.interactivity === 'boolean') {
+            this.enabled = state.interactivity;
+        }
+
+        if (typeof state.audio === 'boolean') {
+            this.audioEnabled = state.audio;
+        }
+
+        if (state.audioBands) {
+            this.audioBands = {
+                ...this.audioBands,
+                ...state.audioBands
+            };
+        }
+
+        if (state.system) {
+            this.activeSystemName = state.system;
+        }
     }
 }
 

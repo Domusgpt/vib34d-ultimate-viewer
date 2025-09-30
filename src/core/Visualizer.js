@@ -4,6 +4,7 @@
  */
 
 import { GeometryLibrary } from '../geometry/GeometryLibrary.js';
+import { AudioReactivityController } from './AudioReactivityController.js';
 
 export class IntegratedHolographicVisualizer {
     constructor(canvasId, role, reactivity, variant) {
@@ -596,11 +597,12 @@ void main() {
         let hue = this.params.hue;
         let intensity = this.params.intensity;
         
-        if (window.audioEnabled && window.audioReactive) {
+        const audioBands = AudioReactivityController.getFilteredBands();
+        if (audioBands) {
             // Faceted audio mapping: Bass affects grid density, Mid affects hue, High affects intensity
-            gridDensity += window.audioReactive.bass * 30;  // Bass makes patterns denser
-            hue += window.audioReactive.mid * 60;           // Mid frequencies shift colors
-            intensity += window.audioReactive.high * 0.4;   // High frequencies brighten
+            gridDensity += audioBands.bass * 30;  // Bass makes patterns denser
+            hue += audioBands.mid * 60;           // Mid frequencies shift colors
+            intensity += audioBands.high * 0.4;   // High frequencies brighten
         }
         
         this.gl.uniform1f(this.uniforms.gridDensity, Math.min(100, gridDensity));
