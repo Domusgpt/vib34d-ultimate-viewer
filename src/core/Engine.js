@@ -11,6 +11,7 @@ import { GallerySystem } from '../gallery/GallerySystem.js';
 import { ExportManager } from '../export/ExportManager.js';
 // InteractionHandler removed - each system handles its own interactions
 import { StatusManager } from '../ui/StatusManager.js';
+import { PerformanceSuite } from '../ui/PerformanceSuite.js';
 
 export class VIB34DIntegratedEngine {
     constructor() {
@@ -22,6 +23,12 @@ export class VIB34DIntegratedEngine {
         this.exportManager = new ExportManager(this);
         // Each system handles its own interactions - no central handler needed
         this.statusManager = new StatusManager();
+
+        // Live performance controls
+        this.performanceSuite = null;
+        this.liveAudioSettings = null;
+        this.audioSmoothingState = {};
+        this.lastFlourishTrigger = 0;
         
         // Active state for reactivity
         this.isActive = false;
@@ -59,6 +66,7 @@ export class VIB34DIntegratedEngine {
             this.setupInteractions();
             this.loadCustomVariations();
             this.populateVariationGrid();
+            this.initializePerformanceSuite();
             this.startRenderLoop();
             
             this.statusManager.setStatus('VIB34D Engine initialized successfully', 'success');
@@ -142,7 +150,38 @@ export class VIB34DIntegratedEngine {
             });
         });
     }
-    
+
+    initializePerformanceSuite() {
+        if (typeof document === 'undefined') return;
+
+        try {
+            if (this.performanceSuite) {
+                this.performanceSuite.destroy();
+            }
+            this.performanceSuite = new PerformanceSuite({
+                engine: this,
+                parameterManager: this.parameterManager
+            });
+        } catch (error) {
+            console.warn('⚠️ Performance suite initialization failed:', error);
+        }
+    }
+
+    setLiveAudioSettings(settings) {
+        if (!settings) {
+            this.liveAudioSettings = null;
+            return;
+        }
+
+        try {
+            this.liveAudioSettings = JSON.parse(JSON.stringify(settings));
+        } catch (error) {
+            this.liveAudioSettings = settings;
+        }
+
+        this.audioSmoothingState = {};
+    }
+
     /**
      * Set up mouse/touch interactions
      */
@@ -605,88 +644,202 @@ export class VIB34DIntegratedEngine {
     /**
      * Apply audio reactivity grid settings (similar to holographic system)
      */
-    applyAudioReactivityGrid(audioData) {
-        const settings = this.audioReactivitySettings || window.audioReactivitySettings;
-        if (!settings) return;
-        
-        // Get sensitivity multiplier
-        const sensitivityMultiplier = settings.sensitivity[settings.activeSensitivity];
-        
-        // Apply audio changes to different visual modes based on grid selection
-        settings.activeVisualModes.forEach(modeKey => {
-            const [sensitivity, visualMode] = modeKey.split('-');
-            
-            if (visualMode === 'color') {
-                // COLOR MODE: Affect hue, saturation, intensity
-                const audioIntensity = (audioData.energy * sensitivityMultiplier);
-                const bassIntensity = (audioData.bass * sensitivityMultiplier);
-                const rhythmIntensity = (audioData.rhythm * sensitivityMultiplier);
-                
-                // Modulate hue based on audio frequency spread
-                if (audioData.mid > 0.2) {
-                    const currentHue = this.parameterManager.getParameter('hue') || 180;
-                    const hueShift = audioData.mid * sensitivityMultiplier * 30;
-                    this.parameterManager.setParameter('hue', (currentHue + hueShift) % 360);
-                }
-                
-                // Boost intensity on energy spikes
-                if (audioIntensity > 0.3) {
-                    this.parameterManager.setParameter('intensity', Math.min(1.0, 0.5 + audioIntensity * 0.8));
-                }
-                
-                // Boost saturation on bass hits
-                if (bassIntensity > 0.4) {
-                    this.parameterManager.setParameter('saturation', Math.min(1.0, 0.7 + bassIntensity * 0.3));
-                }
-                
-            } else if (visualMode === 'geometry') {
-                // GEOMETRY MODE: Affect morphFactor, gridDensity, chaos
-                const bassIntensity = (audioData.bass * sensitivityMultiplier);
-                const highIntensity = (audioData.high * sensitivityMultiplier);
-                
-                // Bass affects grid density
-                if (bassIntensity > 0.3) {
-                    const currentDensity = this.parameterManager.getParameter('gridDensity') || 15;
-                    this.parameterManager.setParameter('gridDensity', Math.min(100, currentDensity + bassIntensity * 25));
-                }
-                
-                // Mid frequencies affect morph factor
-                if (audioData.mid > 0.2) {
-                    const morphBoost = audioData.mid * sensitivityMultiplier * 0.5;
-                    this.parameterManager.setParameter('morphFactor', Math.min(2.0, morphBoost));
-                }
-                
-                // High frequencies add chaos
-                if (highIntensity > 0.4) {
-                    this.parameterManager.setParameter('chaos', Math.min(1.0, highIntensity * 0.6));
-                }
-                
-            } else if (visualMode === 'movement') {
-                // MOVEMENT MODE: Affect speed, 4D rotations
-                const energyIntensity = (audioData.energy * sensitivityMultiplier);
-                
-                // Energy affects animation speed
-                if (energyIntensity > 0.2) {
-                    this.parameterManager.setParameter('speed', Math.min(3.0, 0.5 + energyIntensity * 1.5));
-                }
-                
-                // Audio frequencies affect 4D rotations
-                if (audioData.bass > 0.3) {
-                    const currentXW = this.parameterManager.getParameter('rot4dXW') || 0;
-                    this.parameterManager.setParameter('rot4dXW', currentXW + audioData.bass * sensitivityMultiplier * 0.1);
-                }
-                
-                if (audioData.mid > 0.3) {
-                    const currentYW = this.parameterManager.getParameter('rot4dYW') || 0;
-                    this.parameterManager.setParameter('rot4dYW', currentYW + audioData.mid * sensitivityMultiplier * 0.08);
-                }
-                
-                if (audioData.high > 0.3) {
-                    const currentZW = this.parameterManager.getParameter('rot4dZW') || 0;
-                    this.parameterManager.setParameter('rot4dZW', currentZW + audioData.high * sensitivityMultiplier * 0.06);
-                }
+    applyAudioReactivityGrid(audioData = {}) {
+        const settings = this.liveAudioSettings;
+        if (!settings || !settings.enabled || !this.parameterManager) return;
+
+        let sensitivity = this.clamp01(typeof settings.sensitivity === 'number' ? settings.sensitivity : 0.75);
+        const baseSmoothing = this.clamp01(typeof settings.smoothing === 'number' ? settings.smoothing : 0.3);
+        const advanced = settings.advanced || {};
+        const envelope = advanced.envelope || {};
+        const dynamicSmoothing = Boolean(advanced.dynamicSmoothing);
+        const autoGain = Boolean(advanced.autoGain);
+        const tempoFollow = Boolean(advanced.tempoFollow);
+
+        const computeSmoothing = (raw) => {
+            if (!dynamicSmoothing) return baseSmoothing;
+            const factor = 0.35 + (1 - this.clamp01(raw)) * 0.65;
+            return this.clamp01(baseSmoothing * factor);
+        };
+
+        const readBand = (bandKey, sourceKey) => {
+            const raw = typeof audioData?.[sourceKey] === 'number' ? audioData[sourceKey] : 0;
+            const smoothingForBand = computeSmoothing(raw);
+            return this.smoothBandValue(bandKey, raw, smoothingForBand, envelope);
+        };
+
+        const bass = settings.bands?.bass ? readBand('bass', 'bass') : 0;
+        const mid = settings.bands?.mid ? readBand('mid', 'mid') : 0;
+        const treble = settings.bands?.treble ? readBand('treble', 'high') : 0;
+        const energy = settings.bands?.energy ? readBand('energy', 'energy') : 0;
+
+        const activeLevels = [];
+        if (settings.bands?.bass) activeLevels.push(bass);
+        if (settings.bands?.mid) activeLevels.push(mid);
+        if (settings.bands?.treble) activeLevels.push(treble);
+        if (settings.bands?.energy) activeLevels.push(energy);
+
+        if (autoGain && activeLevels.length) {
+            const average = activeLevels.reduce((acc, value) => acc + value, 0) / activeLevels.length;
+            const compensation = average > 0.6 ? 0.65 + (1 - average) * 0.35 : 1 + (0.5 - average) * 0.4;
+            sensitivity = this.clamp01(sensitivity * compensation);
+        }
+
+        const applyBand = (bandKey, level, fallback) => {
+            const mapping = settings.bandMappings?.[bandKey];
+            const mapped = this.applyBandMapping(bandKey, level, sensitivity, mapping);
+            if (!mapped && typeof fallback === 'function') {
+                fallback(level);
             }
-        });
+        };
+
+        if (settings.bands?.bass) {
+            applyBand('bass', bass, (value) => {
+                this.setParameterNormalized('gridDensity', 0.25 + value * sensitivity, 'audio');
+                this.setParameterNormalized('morphFactor', 0.2 + value * sensitivity, 'audio');
+            });
+        }
+
+        if (settings.bands?.mid) {
+            applyBand('mid', mid, (value) => {
+                const baseHue = this.parameterManager.getParameter('hue') || 0;
+                const hueShift = (value - 0.5) * 120 * sensitivity;
+                const nextHue = (baseHue + hueShift + 360) % 360;
+                this.parameterManager.setParameter('hue', nextHue, 'audio');
+            });
+        }
+
+        if (settings.bands?.treble) {
+            applyBand('treble', treble, (value) => {
+                this.setParameterNormalized('intensity', 0.4 + value * 0.6 * sensitivity, 'audio');
+                this.setParameterNormalized('saturation', 0.45 + value * 0.5 * sensitivity, 'audio');
+            });
+        }
+
+        if (settings.bands?.energy) {
+            applyBand('energy', energy, (value) => {
+                this.setParameterNormalized('speed', 0.35 + value * 0.65 * sensitivity, 'audio');
+            });
+        }
+
+        if (settings.beatSync && energy > 0.35) {
+            const wobble = (energy - 0.35) * 0.12 * sensitivity;
+            const base = this.parameterManager.getParameter('rot4dXW') || 0;
+            const def = this.parameterManager.getParameterDefinition('rot4dXW');
+            if (def) {
+                this.parameterManager.setParameter('rot4dXW', this.clampToRange(base + wobble, def), 'audio');
+            }
+        }
+
+        if (tempoFollow && energy > 0) {
+            const tempoWave = (Math.sin(this.time * Math.PI) + 1) * 0.5;
+            const tempoEnergy = this.clamp01((tempoWave * 0.6 + energy * 0.4) * sensitivity);
+            const def = this.parameterManager.getParameterDefinition('rot4dZW');
+            if (def) {
+                const current = this.parameterManager.getParameter('rot4dZW') ?? def.min;
+                const span = def.max - def.min;
+                const delta = (tempoEnergy - 0.5) * span * 0.15;
+                this.parameterManager.setParameter('rot4dZW', this.clampToRange(current + delta, def), 'audio-tempo');
+            }
+        }
+
+        this.triggerFlourish(settings, energy);
+    }
+
+    smoothBandValue(band, value, smoothing, envelope = {}) {
+        if (!Number.isFinite(value)) return 0;
+        if (!smoothing) {
+            this.audioSmoothingState[band] = value;
+            return value;
+        }
+
+        const previous = this.audioSmoothingState[band];
+        if (previous === undefined) {
+            this.audioSmoothingState[band] = value;
+            return value;
+        }
+
+        const attack = envelope.attack !== undefined ? envelope.attack : smoothing;
+        const release = envelope.release !== undefined ? envelope.release : smoothing;
+        const blend = this.clamp01(value > previous ? attack : release);
+        const smoothed = previous + (value - previous) * (1 - blend);
+        this.audioSmoothingState[band] = smoothed;
+        return smoothed;
+    }
+
+    applyBandMapping(band, level, sensitivity, mapping) {
+        if (!mapping || !mapping.parameter) return false;
+        const amount = this.clamp01(typeof mapping.amount === 'number' ? mapping.amount : 1);
+        if (amount === 0) return true;
+
+        const definition = this.parameterManager.getParameterDefinition(mapping.parameter);
+        if (!definition) return false;
+
+        const normalized = this.clamp01(level * sensitivity * amount);
+        const value = definition.min + (definition.max - definition.min) * normalized;
+        this.parameterManager.setParameter(mapping.parameter, value, `audio-${band}`);
+        return true;
+    }
+
+    setParameterNormalized(name, normalized, source = 'audio') {
+        const definition = this.parameterManager.getParameterDefinition(name);
+        if (!definition) return;
+        const value = definition.min + (definition.max - definition.min) * this.clamp01(normalized);
+        this.parameterManager.setParameter(name, value, source);
+    }
+
+    triggerFlourish(settings, energyLevel) {
+        const flourish = settings.flourish;
+        if (!flourish?.enabled) return;
+
+        const threshold = typeof flourish.threshold === 'number' ? flourish.threshold : 0.65;
+        if (energyLevel < threshold) return;
+
+        const cooldown = Math.max(200, Number(flourish.cooldown) || 900);
+        const now = performance.now();
+        if (now - this.lastFlourishTrigger < cooldown) return;
+
+        const parameter = flourish.parameter || 'intensity';
+        const definition = this.parameterManager.getParameterDefinition(parameter);
+        if (!definition) return;
+
+        const current = this.parameterManager.getParameter(parameter) ?? definition.min;
+        const span = definition.max - definition.min;
+        const boost = this.clamp01(typeof flourish.amount === 'number' ? flourish.amount : 0.35);
+        const mode = flourish.mode || 'boost';
+
+        if (mode === 'pulse') {
+            const pulseTarget = Math.min(definition.max, current + span * boost * 1.2);
+            this.parameterManager.setParameter(parameter, pulseTarget, 'audio-flourish');
+            setTimeout(() => {
+                this.parameterManager.setParameter(parameter, this.clampToRange(current, definition), 'audio-flourish-return');
+            }, Math.max(140, cooldown * 0.25));
+        } else if (mode === 'swell') {
+            const swellTarget = Math.min(definition.max, current + span * boost * 0.85);
+            this.parameterManager.setParameter(parameter, swellTarget, 'audio-flourish');
+            setTimeout(() => {
+                const settle = current + (swellTarget - current) * 0.55;
+                this.parameterManager.setParameter(parameter, this.clampToRange(settle, definition), 'audio-flourish-return');
+            }, Math.max(320, cooldown * 0.5));
+        } else {
+            const boosted = Math.min(definition.max, current + span * boost);
+            this.parameterManager.setParameter(parameter, boosted, 'audio-flourish');
+            setTimeout(() => {
+                const relaxed = current + (boosted - current) * 0.35;
+                this.parameterManager.setParameter(parameter, this.clampToRange(relaxed, definition), 'audio-flourish-return');
+            }, 420);
+        }
+
+        this.lastFlourishTrigger = now;
+    }
+
+    clampToRange(value, definition) {
+        if (!definition) return value;
+        return Math.max(definition.min, Math.min(definition.max, value));
+    }
+
+    clamp01(value) {
+        return Math.max(0, Math.min(1, value));
     }
     
     /**
@@ -730,7 +883,12 @@ export class VIB34DIntegratedEngine {
         if (window.universalReactivity) {
             window.universalReactivity.disconnectSystem('faceted');
         }
-        
+
+        if (this.performanceSuite) {
+            this.performanceSuite.destroy();
+            this.performanceSuite = null;
+        }
+
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
