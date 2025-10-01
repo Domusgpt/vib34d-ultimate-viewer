@@ -3,131 +3,250 @@
  * Unified parameter control for both holographic and polytopal systems
  */
 
+const PARAMETER_GROUPS = {
+    show: 'Show Control',
+    rotation: '4D Rotation',
+    structure: 'Structure',
+    dynamics: 'Dynamics',
+    color: 'Color'
+};
+
 export class ParameterManager {
     constructor() {
         // Default parameter set combining both systems
         this.params = {
             // Current variation
             variation: 0,
-            
+
             // 4D Polytopal Mathematics
             rot4dXW: 0.0,      // X-W plane rotation (-2 to 2)
-            rot4dYW: 0.0,      // Y-W plane rotation (-2 to 2) 
+            rot4dYW: 0.0,      // Y-W plane rotation (-2 to 2)
             rot4dZW: 0.0,      // Z-W plane rotation (-2 to 2)
             dimension: 3.5,    // Dimensional level (3.0 to 4.5)
-            
+
             // Holographic Visualization
-            gridDensity: 15,   // Geometric detail (4 to 30)
+            gridDensity: 15,   // Geometric detail (4 to 100)
             morphFactor: 1.0,  // Shape transformation (0 to 2)
             chaos: 0.2,        // Randomization level (0 to 1)
             speed: 1.0,        // Animation speed (0.1 to 3)
             hue: 200,          // Color rotation (0 to 360)
             intensity: 0.5,    // Visual intensity (0 to 1)
             saturation: 0.8,   // Color saturation (0 to 1)
-            
+
             // Geometry selection
             geometry: 0        // Current geometry type (0-7)
         };
-        
+
         // Parameter definitions for validation and UI
         this.parameterDefs = {
-            variation: { min: 0, max: 99, step: 1, type: 'int' },
-            rot4dXW: { min: -2, max: 2, step: 0.01, type: 'float' },
-            rot4dYW: { min: -2, max: 2, step: 0.01, type: 'float' },
-            rot4dZW: { min: -2, max: 2, step: 0.01, type: 'float' },
-            dimension: { min: 3.0, max: 4.5, step: 0.01, type: 'float' },
-            gridDensity: { min: 4, max: 100, step: 0.1, type: 'float' },
-            morphFactor: { min: 0, max: 2, step: 0.01, type: 'float' },
-            chaos: { min: 0, max: 1, step: 0.01, type: 'float' },
-            speed: { min: 0.1, max: 3, step: 0.01, type: 'float' },
-            hue: { min: 0, max: 360, step: 1, type: 'int' },
-            intensity: { min: 0, max: 1, step: 0.01, type: 'float' },
-            saturation: { min: 0, max: 1, step: 0.01, type: 'float' },
-            geometry: { min: 0, max: 7, step: 1, type: 'int' }
+            variation: {
+                min: 0,
+                max: 99,
+                step: 1,
+                type: 'int',
+                label: 'Variation Index',
+                group: PARAMETER_GROUPS.show,
+                tags: ['variation', 'preset']
+            },
+            rot4dXW: {
+                min: -2,
+                max: 2,
+                step: 0.01,
+                type: 'float',
+                label: 'Rotation X↔W',
+                group: PARAMETER_GROUPS.rotation,
+                tags: ['rotation', 'performance']
+            },
+            rot4dYW: {
+                min: -2,
+                max: 2,
+                step: 0.01,
+                type: 'float',
+                label: 'Rotation Y↔W',
+                group: PARAMETER_GROUPS.rotation,
+                tags: ['rotation', 'performance']
+            },
+            rot4dZW: {
+                min: -2,
+                max: 2,
+                step: 0.01,
+                type: 'float',
+                label: 'Rotation Z↔W',
+                group: PARAMETER_GROUPS.rotation,
+                tags: ['rotation', 'performance']
+            },
+            dimension: {
+                min: 3.0,
+                max: 4.5,
+                step: 0.01,
+                type: 'float',
+                label: 'Dimensional Blend',
+                group: PARAMETER_GROUPS.rotation,
+                tags: ['geometry', 'morph']
+            },
+            gridDensity: {
+                min: 4,
+                max: 100,
+                step: 0.1,
+                type: 'float',
+                label: 'Grid Density',
+                group: PARAMETER_GROUPS.structure,
+                tags: ['structure', 'resolution', 'audio']
+            },
+            morphFactor: {
+                min: 0,
+                max: 2,
+                step: 0.01,
+                type: 'float',
+                label: 'Morph Factor',
+                group: PARAMETER_GROUPS.structure,
+                tags: ['morph', 'performance']
+            },
+            chaos: {
+                min: 0,
+                max: 1,
+                step: 0.01,
+                type: 'float',
+                label: 'Chaos',
+                group: PARAMETER_GROUPS.dynamics,
+                tags: ['randomness', 'audio']
+            },
+            speed: {
+                min: 0.1,
+                max: 3,
+                step: 0.01,
+                type: 'float',
+                label: 'Animation Speed',
+                group: PARAMETER_GROUPS.dynamics,
+                tags: ['tempo', 'audio', 'performance']
+            },
+            hue: {
+                min: 0,
+                max: 360,
+                step: 1,
+                type: 'int',
+                label: 'Hue Rotation',
+                group: PARAMETER_GROUPS.color,
+                tags: ['color', 'audio']
+            },
+            intensity: {
+                min: 0,
+                max: 1,
+                step: 0.01,
+                type: 'float',
+                label: 'Light Intensity',
+                group: PARAMETER_GROUPS.color,
+                tags: ['color', 'dynamics', 'audio']
+            },
+            saturation: {
+                min: 0,
+                max: 1,
+                step: 0.01,
+                type: 'float',
+                label: 'Saturation',
+                group: PARAMETER_GROUPS.color,
+                tags: ['color']
+            },
+            geometry: {
+                min: 0,
+                max: 7,
+                step: 1,
+                type: 'int',
+                label: 'Geometry Index',
+                group: PARAMETER_GROUPS.structure,
+                tags: ['structure', 'preset']
+            }
         };
-        
+
         // Default parameter backup for reset
         this.defaults = { ...this.params };
+
+        // Registered listeners for live control modules
+        this.listeners = new Set();
     }
-    
+
     /**
      * Get all current parameters
      */
     getAllParameters() {
         return { ...this.params };
     }
-    
-    /**
-     * Set a specific parameter with validation
-     */
-    setParameter(name, value) {
-        if (this.parameterDefs[name]) {
-            const def = this.parameterDefs[name];
-            
-            // Clamp value to valid range
-            value = Math.max(def.min, Math.min(def.max, value));
-            
-            // Apply type conversion
-            if (def.type === 'int') {
-                value = Math.round(value);
-            }
-            
-            this.params[name] = value;
-            return true;
-        }
-        
-        console.warn(`Unknown parameter: ${name}`);
-        return false;
-    }
-    
-    /**
-     * Set multiple parameters at once
-     */
-    setParameters(paramObj) {
-        for (const [name, value] of Object.entries(paramObj)) {
-            this.setParameter(name, value);
-        }
-    }
-    
+
     /**
      * Get a specific parameter value
      */
     getParameter(name) {
         return this.params[name];
     }
-    
+
     /**
-     * Set geometry type with validation
+     * Retrieve the definition for a parameter
      */
-    setGeometry(geometryType) {
-        this.setParameter('geometry', geometryType);
+    getParameterDefinition(name) {
+        return this.parameterDefs[name] || null;
     }
-    
+
+    /**
+     * Set a specific parameter with validation
+     */
+    setParameter(name, value, source = 'manual') {
+        if (!this.parameterDefs[name]) {
+            console.warn(`Unknown parameter: ${name}`);
+            return false;
+        }
+
+        const def = this.parameterDefs[name];
+        const clampedValue = this.clampToDefinition(def, value);
+        const previousValue = this.params[name];
+
+        if (!this.hasMeaningfulChange(previousValue, clampedValue, def)) {
+            return false;
+        }
+
+        this.params[name] = clampedValue;
+        this.emitChange(name, clampedValue, source);
+        return true;
+    }
+
+    /**
+     * Set multiple parameters at once
+     */
+    setParameters(paramObj, options = {}) {
+        if (!paramObj || typeof paramObj !== 'object') return;
+        const { source = 'manual' } = options;
+
+        Object.entries(paramObj).forEach(([name, value]) => {
+            this.setParameter(name, value, source);
+        });
+    }
+
+    /**
+     * Helper used by geometry button controls
+     */
+    setGeometry(geometryType, source = 'manual') {
+        this.setParameter('geometry', geometryType, source);
+    }
+
     /**
      * Update parameters from UI controls
      */
     updateFromControls() {
         const controlIds = [
             'variationSlider', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'dimension',
-            'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue'
+            'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue',
+            'intensity', 'saturation'
         ];
-        
+
         controlIds.forEach(id => {
             const element = document.getElementById(id);
-            if (element) {
-                const value = parseFloat(element.value);
-                
-                // Map slider IDs to parameter names
-                let paramName = id;
-                if (id === 'variationSlider') {
-                    paramName = 'variation';
-                }
-                
-                this.setParameter(paramName, value);
-            }
+            if (!element) return;
+
+            const value = parseFloat(element.value);
+            const paramName = id === 'variationSlider' ? 'variation' : id;
+            this.setParameter(paramName, value, 'ui');
         });
     }
-    
+
     /**
      * Update UI display values from current parameters
      */
@@ -143,7 +262,9 @@ export class ParameterManager {
         this.updateSliderValue('chaos', this.params.chaos);
         this.updateSliderValue('speed', this.params.speed);
         this.updateSliderValue('hue', this.params.hue);
-        
+        this.updateSliderValue('intensity', this.params.intensity);
+        this.updateSliderValue('saturation', this.params.saturation);
+
         // Update display texts
         this.updateDisplayText('rot4dXWDisplay', this.params.rot4dXW.toFixed(2));
         this.updateDisplayText('rot4dYWDisplay', this.params.rot4dYW.toFixed(2));
@@ -153,219 +274,207 @@ export class ParameterManager {
         this.updateDisplayText('morphFactorDisplay', this.params.morphFactor.toFixed(2));
         this.updateDisplayText('chaosDisplay', this.params.chaos.toFixed(2));
         this.updateDisplayText('speedDisplay', this.params.speed.toFixed(2));
-        this.updateDisplayText('hueDisplay', this.params.hue + '°');
-        
+        this.updateDisplayText('hueDisplay', `${this.params.hue}°`);
+
         // Update variation info
         this.updateVariationInfo();
-        
+
         // Update geometry preset buttons
         this.updateGeometryButtons();
     }
-    
+
     updateSliderValue(id, value) {
         const element = document.getElementById(id);
         if (element) {
             element.value = value;
         }
     }
-    
+
     updateDisplayText(id, text) {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = text;
         }
     }
-    
+
     updateVariationInfo() {
         const variationDisplay = document.getElementById('currentVariationDisplay');
-        if (variationDisplay) {
-            const geometryNames = [
-                'TETRAHEDRON LATTICE', 'HYPERCUBE LATTICE', 'SPHERE LATTICE', 'TORUS LATTICE',
-                'KLEIN BOTTLE LATTICE', 'FRACTAL LATTICE', 'WAVE LATTICE', 'CRYSTAL LATTICE'
-            ];
-            
-            const geometryType = Math.floor(this.params.variation / 4);
-            const geometryLevel = (this.params.variation % 4) + 1;
-            const geometryName = geometryNames[geometryType] || 'CUSTOM VARIATION';
-            
-            variationDisplay.textContent = `${this.params.variation + 1} - ${geometryName}`;
-            
-            if (this.params.variation < 30) {
-                variationDisplay.textContent += ` ${geometryLevel}`;
-            }
+        if (!variationDisplay) return;
+
+        const geometryNames = [
+            'TETRAHEDRON LATTICE', 'HYPERCUBE LATTICE', 'SPHERE LATTICE', 'TORUS LATTICE',
+            'KLEIN BOTTLE LATTICE', 'FRACTAL LATTICE', 'WAVE LATTICE', 'CRYSTAL LATTICE'
+        ];
+
+        const geometryType = Math.floor(this.params.variation / 4);
+        const geometryLevel = (this.params.variation % 4) + 1;
+        const geometryName = geometryNames[geometryType] || 'CUSTOM VARIATION';
+
+        variationDisplay.textContent = `${this.params.variation + 1} - ${geometryName}`;
+
+        if (this.params.variation < 30) {
+            variationDisplay.textContent += ` ${geometryLevel}`;
         }
     }
-    
+
     updateGeometryButtons() {
         document.querySelectorAll('[data-geometry]').forEach(btn => {
-            btn.classList.toggle('active', parseInt(btn.dataset.geometry) === this.params.geometry);
+            btn.classList.toggle('active', parseInt(btn.dataset.geometry, 10) === this.params.geometry);
         });
     }
-    
+
     /**
      * Randomize all parameters
      */
     randomizeAll() {
-        this.params.rot4dXW = Math.random() * 4 - 2;
-        this.params.rot4dYW = Math.random() * 4 - 2;
-        this.params.rot4dZW = Math.random() * 4 - 2;
-        this.params.dimension = 3.0 + Math.random() * 1.5;
-        this.params.gridDensity = 4 + Math.random() * 26;
-        this.params.morphFactor = Math.random() * 2;
-        this.params.chaos = Math.random();
-        this.params.speed = 0.1 + Math.random() * 2.9;
-        this.params.hue = Math.random() * 360;
-        this.params.geometry = Math.floor(Math.random() * 8);
+        this.setParameter('rot4dXW', Math.random() * 4 - 2, 'randomize');
+        this.setParameter('rot4dYW', Math.random() * 4 - 2, 'randomize');
+        this.setParameter('rot4dZW', Math.random() * 4 - 2, 'randomize');
+        this.setParameter('dimension', 3.0 + Math.random() * 1.5, 'randomize');
+        this.setParameter('gridDensity', 4 + Math.random() * 96, 'randomize');
+        this.setParameter('morphFactor', Math.random() * 2, 'randomize');
+        this.setParameter('chaos', Math.random(), 'randomize');
+        this.setParameter('speed', 0.1 + Math.random() * 2.9, 'randomize');
+        this.setParameter('hue', Math.random() * 360, 'randomize');
+        this.setParameter('geometry', Math.floor(Math.random() * 8), 'randomize');
     }
-    
+
     /**
      * Reset to default parameters
      */
     resetToDefaults() {
-        this.params = { ...this.defaults };
+        this.setParameters(this.defaults, { source: 'reset' });
     }
-    
+
     /**
      * Load parameter configuration
      */
-    loadConfiguration(config) {
-        if (config && typeof config === 'object') {
-            // Validate and apply configuration
-            for (const [key, value] of Object.entries(config)) {
-                if (this.parameterDefs[key]) {
-                    this.setParameter(key, value);
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * Export current configuration
-     */
-    exportConfiguration() {
-        return {
-            type: 'vib34d-integrated-config',
-            version: '1.0.0',
-            timestamp: new Date().toISOString(),
-            name: `VIB34D Config ${new Date().toLocaleDateString()}`,
-            parameters: { ...this.params }
-        };
-    }
-    
-    /**
-     * Generate variation-specific parameters
-     */
-    generateVariationParameters(variationIndex) {
-        if (variationIndex < 30) {
-            // Default variations with consistent patterns
-            const geometryType = Math.floor(variationIndex / 4);
-            const level = variationIndex % 4;
-            
-            return {
-                geometry: geometryType,
-                gridDensity: 8 + (level * 4),
-                morphFactor: 0.5 + (level * 0.3),
-                chaos: level * 0.15,
-                speed: 0.8 + (level * 0.2),
-                hue: (geometryType * 45 + level * 15) % 360,
-                rot4dXW: (level - 1.5) * 0.5,
-                rot4dYW: (geometryType % 2) * 0.3,
-                rot4dZW: ((geometryType + level) % 3) * 0.2,
-                dimension: 3.2 + (level * 0.2)
-            };
-        } else {
-            // Custom variations - return current parameters
-            return { ...this.params };
-        }
-    }
-    
-    /**
-     * Apply variation to current parameters
-     */
-    applyVariation(variationIndex) {
-        const variationParams = this.generateVariationParameters(variationIndex);
-        this.setParameters(variationParams);
-        this.params.variation = variationIndex;
-    }
-    
-    /**
-     * Get HSV color values for current hue
-     */
-    getColorHSV() {
-        return {
-            h: this.params.hue,
-            s: 0.8, // Fixed saturation
-            v: 0.9  // Fixed value
-        };
-    }
-    
-    /**
-     * Get RGB color values for current hue
-     */
-    getColorRGB() {
-        const hsv = this.getColorHSV();
-        return this.hsvToRgb(hsv.h, hsv.s, hsv.v);
-    }
-    
-    /**
-     * Convert HSV to RGB
-     */
-    hsvToRgb(h, s, v) {
-        h = h / 60;
-        const c = v * s;
-        const x = c * (1 - Math.abs((h % 2) - 1));
-        const m = v - c;
-        
-        let r, g, b;
-        if (h < 1) {
-            [r, g, b] = [c, x, 0];
-        } else if (h < 2) {
-            [r, g, b] = [x, c, 0];
-        } else if (h < 3) {
-            [r, g, b] = [0, c, x];
-        } else if (h < 4) {
-            [r, g, b] = [0, x, c];
-        } else if (h < 5) {
-            [r, g, b] = [x, 0, c];
-        } else {
-            [r, g, b] = [c, 0, x];
-        }
-        
-        return {
-            r: Math.round((r + m) * 255),
-            g: Math.round((g + m) * 255),
-            b: Math.round((b + m) * 255)
-        };
-    }
-    
-    /**
-     * Validate parameter configuration
-     */
-    validateConfiguration(config) {
+    loadConfiguration(config, options = {}) {
         if (!config || typeof config !== 'object') {
-            return { valid: false, error: 'Configuration must be an object' };
+            return false;
         }
-        
-        if (config.type !== 'vib34d-integrated-config') {
-            return { valid: false, error: 'Invalid configuration type' };
-        }
-        
-        if (!config.parameters) {
-            return { valid: false, error: 'Missing parameters object' };
-        }
-        
-        // Validate individual parameters
-        for (const [key, value] of Object.entries(config.parameters)) {
+
+        const { source = 'import' } = options;
+        Object.entries(config).forEach(([key, value]) => {
             if (this.parameterDefs[key]) {
-                const def = this.parameterDefs[key];
-                if (typeof value !== 'number' || value < def.min || value > def.max) {
-                    return { valid: false, error: `Invalid value for parameter ${key}: ${value}` };
-                }
+                this.setParameter(key, value, source);
             }
+        });
+        return true;
+    }
+
+    /**
+     * Register a listener that fires whenever a parameter changes.
+     */
+    addChangeListener(listener) {
+        if (typeof listener !== 'function') {
+            return () => {};
         }
-        
-        return { valid: true };
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+    }
+
+    emitChange(name, value, source) {
+        const payload = { name, value, source };
+        this.listeners.forEach(listener => {
+            try {
+                listener(payload);
+            } catch (error) {
+                console.warn('Parameter listener error', error);
+            }
+        });
+    }
+
+    /**
+     * List parameter keys for UI builders
+     */
+    listParameters() {
+        return Object.keys(this.parameterDefs);
+    }
+
+    /**
+     * Retrieve metadata for a parameter key
+     */
+    getParameterMetadata(name) {
+        const def = this.parameterDefs[name];
+        if (!def) return null;
+
+        return {
+            id: name,
+            key: name,
+            label: def.label || this.formatParameterLabel(name),
+            group: def.group || 'General',
+            min: def.min,
+            max: def.max,
+            step: def.step,
+            type: def.type,
+            tags: Array.isArray(def.tags) ? [...def.tags] : []
+        };
+    }
+
+    /**
+     * List parameter metadata for UI builders with optional filtering
+     */
+    listParameterMetadata(filter = {}) {
+        const { groups = null, tags = null } = filter;
+        const groupFilter = Array.isArray(groups) && groups.length ? new Set(groups) : null;
+        const tagFilter = Array.isArray(tags) && tags.length ? new Set(tags) : null;
+
+        return Object.keys(this.parameterDefs)
+            .map(name => this.getParameterMetadata(name))
+            .filter(meta => {
+                if (!meta) return false;
+                if (groupFilter && !groupFilter.has(meta.group)) return false;
+                if (tagFilter) {
+                    const hasTag = meta.tags.some(tag => tagFilter.has(tag));
+                    if (!hasTag) return false;
+                }
+                return true;
+            })
+            .sort((a, b) => {
+                if (a.group === b.group) {
+                    return a.label.localeCompare(b.label);
+                }
+                return a.group.localeCompare(b.group);
+            });
+    }
+
+    /**
+     * Format a readable parameter label from its key
+     */
+    formatParameterLabel(name) {
+        if (!name) return '';
+        return name
+            .replace(/rot4d/gi, '4D ')
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/_/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/^./, char => char.toUpperCase());
+    }
+
+    /**
+     * Clamp a value according to its parameter definition
+     */
+    clampToDefinition(def, value) {
+        if (!def) return value;
+
+        let clampedValue = Math.max(def.min, Math.min(def.max, value));
+        if (def.type === 'int') {
+            clampedValue = Math.round(clampedValue);
+        }
+        return clampedValue;
+    }
+
+    /**
+     * Determine if a change is meaningful (prevents micro-noise)
+     */
+    hasMeaningfulChange(previousValue, nextValue, def) {
+        if (previousValue === undefined) return true;
+        if (def?.type === 'int') {
+            return previousValue !== nextValue;
+        }
+        const epsilon = def?.step ? def.step / 10 : 1e-4;
+        return Math.abs(previousValue - nextValue) > epsilon;
     }
 }
