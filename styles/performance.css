@@ -1,0 +1,1026 @@
+.performance-suite {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    font-family: 'Orbitron', sans-serif;
+    color: #e8f6ff;
+}
+
+.performance-suite__columns {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .performance-suite__columns {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.performance-suite__column {
+    background: rgba(8, 20, 32, 0.55);
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0, 40, 80, 0.25);
+}
+
+.performance-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.performance-block__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.performance-block__title {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7ffcff;
+    margin-bottom: 4px;
+}
+
+.performance-block__subtitle {
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: rgba(231, 248, 255, 0.65);
+}
+
+.touchpad-grid {
+    display: grid;
+    gap: var(--touchpad-grid-gap, 12px);
+    grid-template-columns: repeat(auto-fit, minmax(var(--touchpad-min-width, 220px), 1fr));
+}
+
+.touchpad-card {
+    background: rgba(2, 12, 24, 0.6);
+    border: 1px solid rgba(127, 252, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.touchpad-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.touchpad-card__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.touchpad-card__name {
+    background: rgba(6, 18, 32, 0.85);
+    border: 1px solid rgba(127, 252, 255, 0.25);
+    color: #e8f6ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+}
+
+.touchpad-card__name:focus {
+    outline: none;
+    border-color: rgba(127, 252, 255, 0.6);
+    box-shadow: 0 0 0 2px rgba(127, 252, 255, 0.15);
+}
+
+.touchpad-card__header h4 {
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: #bffaff;
+}
+
+.touchpad-card__status {
+    font-size: 0.65rem;
+    color: rgba(191, 250, 255, 0.7);
+    text-transform: uppercase;
+}
+
+.touchpad-surface {
+    position: relative;
+    border-radius: 10px;
+    background: radial-gradient(circle at center, rgba(127, 252, 255, 0.22), rgba(0, 20, 40, 0.9));
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    overflow: hidden;
+    aspect-ratio: var(--touchpad-aspect, 1);
+    touch-action: none;
+}
+
+.touchpad-indicator {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #7ffcff;
+    box-shadow: 0 0 12px rgba(127, 252, 255, 0.8);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.touchpad-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.touchpad-controls__row {
+    display: flex;
+    gap: 8px;
+}
+
+.touchpad-template {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.touchpad-template__description {
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.6);
+    margin: 0;
+}
+
+.touchpad-template--custom .touchpad-template__description {
+    color: rgba(191, 250, 255, 0.7);
+}
+
+.touchpad-parameter-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(4, 18, 32, 0.55);
+    border: 1px solid rgba(127, 252, 255, 0.14);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.touchpad-parameter-filter--active {
+    border-color: rgba(127, 252, 255, 0.32);
+    box-shadow: 0 0 0 1px rgba(127, 252, 255, 0.08);
+}
+
+.touchpad-parameter-filter__search {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-parameter-filter__search input[type="search"] {
+    background: rgba(6, 20, 32, 0.9);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: #e7f8ff;
+    font-size: 0.8rem;
+}
+
+.touchpad-parameter-filter__search input[type="search"]::placeholder {
+    color: rgba(231, 248, 255, 0.45);
+}
+
+.touchpad-parameter-filter__tags {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(231, 248, 255, 0.7);
+}
+
+.touchpad-parameter-filter__tags-label {
+    color: rgba(231, 248, 255, 0.6);
+}
+
+.touchpad-parameter-filter__tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.touchpad-tag {
+    border: 1px solid rgba(127, 252, 255, 0.2);
+    background: rgba(8, 28, 40, 0.8);
+    color: rgba(231, 248, 255, 0.8);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.touchpad-tag:hover {
+    border-color: rgba(127, 252, 255, 0.45);
+}
+
+.touchpad-tag--active {
+    background: rgba(127, 252, 255, 0.18);
+    border-color: rgba(127, 252, 255, 0.6);
+    color: #7ffcff;
+}
+
+.touchpad-tag--reset {
+    background: transparent;
+    border-color: rgba(127, 252, 255, 0.25);
+    color: rgba(231, 248, 255, 0.6);
+}
+
+.touchpad-tag--reset:hover {
+    border-color: rgba(127, 252, 255, 0.45);
+    color: #7ffcff;
+}
+
+.touchpad-parameter-filter__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.touchpad-parameter-filter__summary {
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.6);
+}
+
+.touchpad-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(4, 18, 32, 0.6);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.touchpad-layout__header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(231, 248, 255, 0.8);
+}
+
+.touchpad-layout__header strong {
+    color: #7ffcff;
+    font-weight: 600;
+}
+
+.touchpad-layout__header span {
+    font-size: 0.65rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: rgba(231, 248, 255, 0.6);
+}
+
+.touchpad-layout__controls {
+    display: grid;
+    gap: 10px;
+}
+
+.touchpad-layout__preset {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.touchpad-layout__preset-description {
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.6);
+    margin: 0;
+}
+
+@media (min-width: 720px) {
+    .touchpad-layout__controls {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.touchpad-layout__control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-layout__control--pads .touchpad-layout__row {
+    align-items: center;
+}
+
+.touchpad-layout__control--pads .touchpad-layout__value {
+    min-width: 72px;
+}
+
+.touchpad-layout__label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-layout__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.touchpad-layout__row input[type="range"] {
+    flex: 1;
+    accent-color: #7ffcff;
+}
+
+.touchpad-layout__value {
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.65);
+    min-width: 60px;
+    text-align: right;
+}
+
+.touchpad-select {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-select select {
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    color: #e8f6ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    width: 100%;
+}
+
+.touchpad-controls__row--toggles {
+    align-items: center;
+}
+
+.touchpad-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-toggle input {
+    accent-color: #7ffcff;
+}
+
+.touchpad-swap {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid rgba(127, 252, 255, 0.35);
+    color: #7ffcff;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.touchpad-response-group {
+    display: grid;
+    gap: 10px;
+}
+
+@media (min-width: 720px) {
+    .touchpad-response-group {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.touchpad-response {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(6, 20, 34, 0.7);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 8px;
+}
+
+.touchpad-response__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.touchpad-response__value {
+    font-size: 0.6rem;
+    color: rgba(231, 248, 255, 0.6);
+}
+
+.touchpad-response__select {
+    background: rgba(4, 16, 30, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    color: #e8f6ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+    width: 100%;
+}
+
+.touchpad-response__slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.touchpad-response__slider {
+    flex: 1;
+    accent-color: #7ffcff;
+}
+
+.touchpad-swap:hover {
+    background: rgba(127, 252, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.audio-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.audio-fieldset {
+    border: 1px solid rgba(127, 252, 255, 0.16);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(0, 20, 32, 0.45);
+}
+
+.audio-band {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(127, 252, 255, 0.15);
+    background: rgba(4, 18, 32, 0.55);
+    transition: opacity 0.2s ease;
+}
+
+.audio-band--disabled {
+    opacity: 0.6;
+}
+
+.audio-band__weight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: rgba(231, 248, 255, 0.7);
+}
+
+.audio-band__weight input[type="range"] {
+    flex: 1;
+    accent-color: #7ffcff;
+}
+
+.audio-band__value {
+    font-size: 0.7rem;
+    color: rgba(191, 250, 255, 0.85);
+    min-width: 38px;
+    text-align: right;
+}
+
+.audio-fieldset legend {
+    padding: 0 6px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #bffaff;
+}
+
+.toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8, 24, 36, 0.8);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    color: rgba(231, 248, 255, 0.8);
+}
+
+.toggle-pill input {
+    accent-color: #7ffcff;
+}
+
+.slider-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.slider-control input[type="range"] {
+    width: 100%;
+    accent-color: #7ffcff;
+}
+
+.audio-select {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.audio-select select {
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    color: #e8f6ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+}
+
+.preset-create-row {
+    display: flex;
+    gap: 8px;
+}
+
+.preset-input {
+    flex: 1;
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #e8f6ff;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+}
+
+.preset-input.is-invalid {
+    border-color: #ff6f91;
+    box-shadow: 0 0 0 1px rgba(255, 111, 145, 0.5);
+}
+
+.preset-save {
+    background: linear-gradient(135deg, rgba(127, 252, 255, 0.8), rgba(0, 140, 255, 0.9));
+    border: none;
+    border-radius: 6px;
+    color: #001422;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.preset-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.preset-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(2, 12, 24, 0.6);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 8px;
+    padding: 8px 10px;
+    gap: 12px;
+}
+
+.preset-item__details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.7rem;
+}
+
+.preset-item__details strong {
+    color: #bffaff;
+    letter-spacing: 0.05em;
+}
+
+.preset-item__details span {
+    color: rgba(231, 248, 255, 0.55);
+    font-size: 0.6rem;
+}
+
+.preset-item__summary {
+    display: block;
+    font-size: 0.6rem;
+    color: rgba(191, 250, 255, 0.75);
+}
+
+.preset-item__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.preset-item__actions button {
+    background: rgba(8, 24, 36, 0.85);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #7ffcff;
+    font-size: 0.65rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.preset-item__actions button:hover {
+    background: rgba(127, 252, 255, 0.12);
+}
+
+.preset-empty {
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(231, 248, 255, 0.5);
+    padding: 16px 0;
+}
+
+.show-planner__run {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(2, 14, 26, 0.55);
+    border: 1px solid rgba(127, 252, 255, 0.22);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 18px rgba(0, 18, 36, 0.35);
+}
+
+.show-planner__run-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.show-planner__run-button {
+    background: rgba(8, 24, 36, 0.85);
+    border: 1px solid rgba(127, 252, 255, 0.32);
+    border-radius: 6px;
+    color: #7ffcff;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.show-planner__run-button:hover:not([disabled]) {
+    background: rgba(127, 252, 255, 0.18);
+    border-color: rgba(127, 252, 255, 0.55);
+}
+
+.show-planner__run-button[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.show-planner__run-button--stop {
+    background: rgba(221, 72, 84, 0.18);
+    border-color: rgba(221, 72, 84, 0.55);
+    color: #ff9aa2;
+}
+
+.show-planner__run-button--stop:hover:not([disabled]) {
+    background: rgba(221, 72, 84, 0.26);
+}
+
+.show-planner__timer {
+    margin-left: auto;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    color: #bffaff;
+    background: rgba(8, 24, 36, 0.9);
+    border: 1px solid rgba(127, 252, 255, 0.35);
+    border-radius: 8px;
+    padding: 6px 16px;
+    min-width: 88px;
+    text-align: center;
+}
+
+.show-planner__timer--warning {
+    background: linear-gradient(135deg, rgba(255, 214, 102, 0.22), rgba(255, 115, 87, 0.3));
+    color: #ffeada;
+    border-color: rgba(255, 168, 98, 0.55);
+}
+
+.show-planner__run-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.show-planner__run-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.show-planner__run-setting input[type="number"] {
+    width: 72px;
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #e8f6ff;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+}
+
+.show-planner__run-toggle {
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: 0.65rem;
+}
+
+.show-planner__run-toggle input {
+    margin-right: 6px;
+}
+
+.show-planner__form {
+    display: grid;
+    gap: 12px;
+    background: rgba(2, 14, 26, 0.4);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.show-planner__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: rgba(231, 248, 255, 0.75);
+}
+
+.show-planner__field span {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.show-planner__field input,
+.show-planner__field select,
+.show-planner__field textarea {
+    background: rgba(6, 18, 32, 0.95);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #e8f6ff;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+}
+
+.show-planner__field textarea {
+    resize: vertical;
+    min-height: 64px;
+}
+
+.show-planner__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.show-planner__actions button {
+    background: rgba(8, 24, 36, 0.85);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #7ffcff;
+    font-size: 0.65rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.show-planner__actions button[type="submit"] {
+    background: linear-gradient(135deg, rgba(127, 252, 255, 0.8), rgba(0, 140, 255, 0.9));
+    color: #001422;
+    border: none;
+}
+
+.show-planner__list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(191, 250, 255, 0.7);
+}
+
+.show-planner__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.show-planner__empty {
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(231, 248, 255, 0.55);
+    padding: 16px 0;
+    border: 1px dashed rgba(127, 252, 255, 0.25);
+    border-radius: 8px;
+    background: rgba(2, 12, 24, 0.35);
+}
+
+.show-planner__item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    background: rgba(2, 12, 24, 0.6);
+    border: 1px solid rgba(127, 252, 255, 0.18);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.show-planner__item--active {
+    border-color: rgba(127, 252, 255, 0.6);
+    box-shadow: 0 0 12px rgba(127, 252, 255, 0.25);
+}
+
+.show-planner__item--up-next {
+    border-color: rgba(127, 252, 255, 0.32);
+    border-style: dashed;
+    background: rgba(2, 20, 34, 0.55);
+}
+
+.show-planner__item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.7rem;
+}
+
+.show-planner__item-details strong {
+    color: #bffaff;
+    letter-spacing: 0.06em;
+}
+
+.show-planner__item-details span {
+    color: rgba(231, 248, 255, 0.55);
+    font-size: 0.6rem;
+}
+
+.show-planner__item-details p {
+    margin: 0;
+    font-size: 0.65rem;
+    line-height: 1.4;
+    color: rgba(231, 248, 255, 0.7);
+}
+
+.show-planner__item-status {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.show-planner__chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(127, 252, 255, 0.2);
+    color: #7ffcff;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.show-planner__chip--active {
+    background: linear-gradient(135deg, rgba(127, 252, 255, 0.9), rgba(0, 140, 255, 0.9));
+    color: #001422;
+    font-weight: 600;
+}
+
+.show-planner__item-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.show-planner__item-actions button {
+    background: rgba(8, 24, 36, 0.85);
+    border: 1px solid rgba(127, 252, 255, 0.28);
+    border-radius: 6px;
+    color: #7ffcff;
+    font-size: 0.6rem;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.show-planner__item-actions button[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.show-planner__item-actions button:hover:not([disabled]) {
+    background: rgba(127, 252, 255, 0.12);
+}
+
+@media (max-width: 768px) {
+    .show-planner__run {
+        gap: 10px;
+    }
+
+    .show-planner__run-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .show-planner__timer {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .show-planner__run-settings {
+        grid-template-columns: 1fr;
+    }
+
+    .show-planner__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .show-planner__item {
+        flex-direction: column;
+    }
+
+    .show-planner__item-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 768px) {
+    .performance-suite__columns {
+        grid-template-columns: 1fr;
+    }
+
+    .touchpad-controls__row,
+    .preset-create-row {
+        flex-direction: column;
+    }
+
+    .touchpad-swap {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+    }
+}
