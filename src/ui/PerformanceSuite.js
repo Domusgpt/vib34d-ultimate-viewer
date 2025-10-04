@@ -6,6 +6,7 @@ import { mergePerformanceConfig } from './PerformanceConfig.js';
 import { PerformanceShowPlanner } from './PerformanceShowPlanner.js';
 import { PerformanceThemePanel } from './PerformanceThemePanel.js';
 import { normalizeThemeState, normalizeThemeTransition, DEFAULT_THEME_TRANSITION } from './PerformanceThemeUtils.js';
+import { PerformanceMidiBridge } from './PerformanceMidiBridge.js';
 
 export class PerformanceSuite {
     constructor({ engine = null, parameterManager = null, config = {}, themeContext = {} } = {}) {
@@ -26,6 +27,7 @@ export class PerformanceSuite {
         this.subscriptions = [];
         this.showPlanner = null;
         this.themePanel = null;
+        this.hardwareBridge = null;
 
         this.mountLayout();
         this.initModules();
@@ -49,6 +51,7 @@ export class PerformanceSuite {
                 <section class="performance-suite__column performance-suite__column--audio">
                     <div class="performance-suite__stack" data-role="theme"></div>
                     <div class="performance-suite__stack" data-role="audio"></div>
+                    <div class="performance-suite__stack" data-role="hardware"></div>
                 </section>
                 <section class="performance-suite__column performance-suite__column--presets">
                     <div class="performance-suite__stack" data-role="presets"></div>
@@ -63,6 +66,7 @@ export class PerformanceSuite {
         this.audioColumn = this.root.querySelector('.performance-suite__column--audio');
         this.themeContainer = this.root.querySelector('[data-role="theme"]');
         this.audioContainer = this.root.querySelector('[data-role="audio"]');
+        this.hardwareContainer = this.root.querySelector('[data-role="hardware"]');
         this.presetsContainer = this.root.querySelector('[data-role="presets"]');
         this.showPlannerContainer = this.root.querySelector('[data-role="planner"]');
     }
@@ -110,10 +114,19 @@ export class PerformanceSuite {
             onSettingsChange: (settings) => this.applyAudioSettings(settings)
         });
 
+        this.hardwareBridge = new PerformanceMidiBridge({
+            parameterManager: this.parameterManager,
+            container: this.hardwareContainer || this.audioColumn,
+            config: this.config.hardware,
+            hub: this.hub,
+            onStatusChange: (status) => this.updateStatus(status)
+        });
+
         this.presetManager = new PerformancePresetManager({
             parameterManager: this.parameterManager,
             touchPadController: this.touchPadController,
             audioPanel: this.audioPanel,
+            hardwareBridge: this.hardwareBridge,
             container: this.presetsContainer,
             hub: this.hub,
             config: this.config.presets,
@@ -167,6 +180,7 @@ export class PerformanceSuite {
         return {
             touchPads: this.touchPadController?.getState?.() || {},
             audio: this.audioPanel?.getSettings?.() || {},
+            hardware: this.hardwareBridge?.getState?.() || {},
             presets: this.presetManager?.getState?.() || { presets: [], playlist: [] },
             showPlanner: this.showPlanner?.getState?.() || { cues: [] },
             theme: this.themePanel?.getState?.() || this.themeContext?.themeState || { paletteId: 'system' }
@@ -182,6 +196,9 @@ export class PerformanceSuite {
         }
         if (state.audio && this.audioPanel?.applySettings) {
             this.audioPanel.applySettings(state.audio);
+        }
+        if (state.hardware && this.hardwareBridge?.applyState) {
+            this.hardwareBridge.applyState(state.hardware);
         }
         if (state.presets && this.presetManager?.applyState) {
             this.presetManager.applyState(state.presets);
@@ -276,6 +293,10 @@ export class PerformanceSuite {
         }
         if (this.audioPanel) {
             this.audioPanel = null;
+        }
+        if (this.hardwareBridge) {
+            this.hardwareBridge.destroy();
+            this.hardwareBridge = null;
         }
         if (this.presetManager) {
             this.presetManager = null;

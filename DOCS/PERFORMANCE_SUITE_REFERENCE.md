@@ -10,9 +10,9 @@ The suite mounts inside `PerformanceSuite` and is composed of three stacked colu
 
 * **Multi-touch pad column** – driven by `TouchPadController`, exposes every pad mapping,
   axis curve, invert toggle, smoothing window, pad count, and pad template selector.
-* **Audio & atmosphere column** – hosts the `PerformanceThemePanel` at the top and the
-  `AudioReactivityPanel` below it so the UI palette, band weights, beat sync, and flourish triggers
-  are reachable in one place.
+* **Audio & atmosphere column** – hosts the `PerformanceThemePanel`, `AudioReactivityPanel`, and
+  new `PerformanceMidiBridge` stack so palette, audio reactivity, and hardware mappings live in the
+  same lane.
 * **Library & planner column** – renders the `PerformancePresetManager` for snapshots / playlists
   and the `PerformanceShowPlanner` for choreographing cues, sequences, and live playback.
 
@@ -35,6 +35,14 @@ status notices, persisting module state, and exposing import/export helpers for 
 * `AudioReactivityPanel` captures live mic / line-in settings including beat sync, smoothing,
   sensitivity, per-band weighting, and flourish trigger thresholding. Settings are broadcast over the
   hub and handed directly to the active engine via `setLiveAudioSettings`.
+
+### Hardware Controllers
+
+* `PerformanceMidiBridge` detects Web MIDI devices, surfaces input selection, and provides a “learn”
+  workflow so any CC message can be bound to suite parameters. Incoming values are smoothed and
+  normalized before driving `ParameterManager.setParameter` calls to avoid sudden jumps.
+* Hardware mappings persist in `localStorage`, emit `hardware:midi-value` hub events, and are bundled
+  into presets so tactile rigs reload alongside pad layouts and audio settings.
 
 ### Presets & Library Management
 
@@ -91,19 +99,17 @@ status notices, persisting module state, and exposing import/export helpers for 
 
 ## Latest Enhancements (This Iteration)
 
-* Added global theme transition defaults, easing presets, and normalization helpers so palette fades
-  are consistent everywhere.
-* `PerformanceThemePanel` gained transition sliders/easing selectors and emits formatted duration
-  labels for quick feedback.
-* `PerformanceShowPlanner` exposes cue-level transition controls, includes transition summaries in
-  the cue list, and applies cue-driven transition metadata when triggering palettes.
-* `PerformanceSuite` and `PerformanceSuiteHost` propagate transition data to the CSS layer, giving
-  the entire dashboard a cohesive glow fade when cues or presets fire.
+* Introduced the hardware bridge module with Web MIDI device discovery, learn mode, smoothing, and
+  hub broadcasts so hardware controllers can drive suite parameters.
+* Presets, playlists, and show planner cues now persist hardware mapping state to keep rigs aligned
+  when swapping shows or triggering cues mid-set.
+* Added the show planner timeline overview with runtime/beat calculations, progress bars, and accent
+  highlights that respond to tempo edits.
 
 ## Future Ideas & Extensions
 
-* **MIDI / OSC Bridge:** map pad gestures, audio meters, and cue triggers to hardware controllers for
-  remote rigs or lighting desks.
+* **OSC Bridge:** extend hardware messaging over OSC/WebRTC so lighting consoles and remote rigs can
+  subscribe to the same cue + parameter events.
 * **Cue Timeline Editor:** add a drag-and-drop timeline with beat snapping for planners who want to
   schedule cues visually against a song structure.
 * **Network Sync:** broadcast hub events over WebRTC/WebSocket so multiple operators (lighting,

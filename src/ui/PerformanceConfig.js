@@ -54,6 +54,14 @@ const DEFAULT_PRESET_CONFIG = {
     playlistKey: 'vib34d-performance-playlist'
 };
 
+const DEFAULT_HARDWARE_CONFIG = {
+    storageKey: 'vib34d-hardware-mappings',
+    autoConnect: false,
+    pickupThreshold: 0.04,
+    smoothing: 0.18,
+    channel: 'omni'
+};
+
 const DEFAULT_SHOW_PLANNER_CONFIG = {
     storageKey: 'vib34d-show-planner',
     defaults: {
@@ -92,6 +100,7 @@ const DEFAULT_PERFORMANCE_CONFIG = {
         defaults: DEFAULT_AUDIO_SETTINGS
     },
     presets: DEFAULT_PRESET_CONFIG,
+    hardware: DEFAULT_HARDWARE_CONFIG,
     showPlanner: DEFAULT_SHOW_PLANNER_CONFIG,
     theme: DEFAULT_THEME_CONFIG
 };

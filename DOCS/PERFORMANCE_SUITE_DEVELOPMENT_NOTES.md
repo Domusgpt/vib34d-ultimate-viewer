@@ -39,6 +39,16 @@ behind each addition.
 - Engines receive reactivity payloads through `setLiveAudioSettings`, apply weighting per
   band (bass/mid/treble/energy), and emit flourish hooks for choreographed bursts.
 
+### Hardware Bridge & MIDI Learn
+- **`src/ui/PerformanceMidiBridge.js`** requests Web MIDI access, lists connected inputs,
+  and lets performers “learn” hardware knobs/faders to any parameter in the registry.
+- Mappings persist locally, publish hub events (`hardware:midi-value`), and smooth incoming
+  CC values before converting them to engine-friendly ranges to prevent on-stage jumps.
+- The bridge feeds directly into `ParameterManager.setParameter`, letting tactile rigs sit
+  alongside multi-touch pads and audio-driven modulation.
+- **New in this revision:** presets now capture hardware mappings alongside pads/audio so
+  tactile rigs restore instantly when loading shows or planner cues.
+
 ## Library & Playback Stack
 
 ### Performance Preset Manager
@@ -89,8 +99,8 @@ behind each addition.
 ## Intended Future Enhancements
 - **Network Sync:** WebRTC/OSC bridge for multi-machine playback so VJs, lighting consoles,
   and projection systems stay locked to the same cue clock.
-- **MIDI & HID Learn:** On-device “learn” mode that maps hardware knobs/faders to any suite
-  parameter, persisting assignments into presets.
+- **OSC & HID Expansion:** Extend the hardware bridge to WebHID/OSC devices, enabling
+  cross-rig sync with lighting desks or alternative controllers.
 - **DMX & Lighting Hooks:** Export theme palettes and cue timings over Art-Net/sACN to sync
   moving lights and LED walls with projection cues.
 - **Gesture Macros:** Allow pads to trigger macro scripts (e.g., burst transitions, layered

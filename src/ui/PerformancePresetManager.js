@@ -40,12 +40,14 @@ export class PerformancePresetManager {
         themeOptions = {},
         themeContext = {},
         getThemeState = null,
-        applyThemeState = null
+        applyThemeState = null,
+        hardwareBridge = null
     } = {}) {
         this.parameterManager = parameterManager;
         this.touchPadController = touchPadController;
         this.audioPanel = audioPanel;
         this.hub = hub;
+        this.hardwareBridge = hardwareBridge;
         this.config = { ...DEFAULT_PERFORMANCE_CONFIG.presets, ...(config || {}) };
 
         this.themeOptions = themeOptions || {};
@@ -230,6 +232,7 @@ export class PerformancePresetManager {
             createdAt: Date.now(),
             touchPads: this.touchPadController?.getState?.() || {},
             audio: this.audioPanel?.getSettings?.() || {},
+            hardware: this.hardwareBridge?.getState?.() || {},
             theme: this.captureThemeSnapshot(),
             metadata: {
                 lastEdited: Date.now()
@@ -407,6 +410,9 @@ export class PerformancePresetManager {
         }
         if (preset.audio && this.audioPanel?.applySettings) {
             this.audioPanel.applySettings(preset.audio);
+        }
+        if (preset.hardware && this.hardwareBridge?.applyState) {
+            this.hardwareBridge.applyState(preset.hardware);
         }
         if (applyTheme) {
             if (this.applyThemeState) {
