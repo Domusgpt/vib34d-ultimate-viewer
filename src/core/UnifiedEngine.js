@@ -10,6 +10,7 @@ import UnifiedResourceManager from './UnifiedResourceManager.js';
 import MobileOptimizedRenderer from './MobileOptimizedRenderer.js';
 import MobileTouchController from './MobileTouchController.js';
 import EnhancedPolychoraSystem from './EnhancedPolychoraSystem.js';
+import AdaptiveParameterBridge from '../product/AdaptiveParameterBridge.js';
 
 export class VIB34DUnifiedEngine {
     constructor(config = {}) {
@@ -24,13 +25,21 @@ export class VIB34DUnifiedEngine {
             memoryBudgetMB: this.detectMobile() ? 64 : 256,
             ...config
         };
-        
+
         console.log(`📱 Mobile detected: ${this.config.enableMobileOptimizations}`);
         console.log(`🎯 Single context mode: ${this.config.useSingleContext}`);
-        
+
+        this.parameterBridge = this.config.parameterBridge || new AdaptiveParameterBridge({ logger: console });
+        this.defaultSystemParameters = {
+            faceted: { gridDensity: 15, morphFactor: 1.0, intensity: 0.8 },
+            quantum: { gridDensity: 18, morphFactor: 1.3, intensity: 0.9 },
+            holographic: { gridDensity: 12, morphFactor: 1.1, intensity: 1.0, hue: 0.55 },
+            polychora: { gridDensity: 10, morphFactor: 0.9, intensity: 0.7 }
+        };
+
         // CORE ARCHITECTURE: Single WebGL context for ALL systems
-        this.canvasManager = this.config.useSingleContext ? 
-            new UnifiedCanvasManager() : 
+        this.canvasManager = this.config.useSingleContext ?
+            new UnifiedCanvasManager() :
             new OptimizedCanvasPool(this.config.maxCanvases);
         
         // Unified resource management across all systems
@@ -52,6 +61,8 @@ export class VIB34DUnifiedEngine {
         // SYSTEMS ARCHITECTURE: 4 visualization systems sharing single context
         this.systems = new Map();
         this.activeSystem = 'faceted';
+
+        this.bootstrapParameterProfiles();
         
         // Performance monitoring
         this.performanceStats = {
@@ -483,13 +494,16 @@ export class VIB34DUnifiedEngine {
     
     getSystemParameters(systemName) {
         // Return system-specific parameters
-        return {
+        const defaults = {
             time: this.time,
-            gridDensity: 15,
-            morphFactor: 1.0,
-            intensity: 0.8,
-            // Add more parameters as needed
+            ...(this.defaultSystemParameters[systemName] || this.defaultSystemParameters.faceted)
         };
+
+        if (this.parameterBridge) {
+            return this.parameterBridge.getParametersForSystem(systemName, defaults);
+        }
+
+        return defaults;
     }
     
     markSystemsDirty() {
@@ -500,6 +514,35 @@ export class VIB34DUnifiedEngine {
                 }
             });
         }
+    }
+
+    bootstrapParameterProfiles() {
+        if (!this.parameterBridge) {
+            return;
+        }
+
+        Object.entries(this.defaultSystemParameters).forEach(([systemName, baseParameters]) => {
+            this.parameterBridge.registerSystemProfile(systemName, {
+                baseParameters,
+                transform: (parameters) => ({
+                    ...parameters,
+                    // Ensure time is always updated dynamically
+                    time: this.time
+                })
+            });
+        });
+    }
+
+    ingestAdaptiveSignal(modalityId, payload, context = {}) {
+        if (!this.parameterBridge) {
+            console.warn('⚠️ Adaptive parameter bridge not configured.');
+            return null;
+        }
+        return this.parameterBridge.ingestSignal(modalityId, payload, context);
+    }
+
+    getAdaptiveModalityManager() {
+        return this.parameterBridge?.getModalityManager?.() || null;
     }
     
     /**
