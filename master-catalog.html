@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Ultimate Viewer - Master Catalog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #000000 0%, #0a0a1a 25%, #1a0a2a 50%, #0a0a1a 75%, #000000 100%);
+            color: #0ff;
+            min-height: 100vh;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 60px 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #0ff;
+            border-radius: 30px;
+            box-shadow:
+                0 0 60px rgba(0, 255, 255, 0.3),
+                inset 0 0 40px rgba(0, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+        }
+
+        h1 {
+            font-size: 3.5em;
+            background: linear-gradient(90deg, #0ff, #f0f, #0ff, #f0f);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: gradientShift 8s ease infinite;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            color: #f0f;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+
+        .description {
+            color: #0ff;
+            opacity: 0.9;
+            font-size: 1em;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 20px auto;
+        }
+
+        .search-container {
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        #searchInput {
+            width: 100%;
+            max-width: 700px;
+            padding: 18px 25px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #0ff;
+            border-radius: 15px;
+            color: #0ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 17px;
+            outline: none;
+            transition: all 0.4s;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        #searchInput:focus {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+            border-color: #f0f;
+            transform: scale(1.02);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin: 50px 0;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #f0f;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.5);
+        }
+
+        .stat-value {
+            font-size: 3em;
+            color: #0ff;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+
+        .stat-label {
+            color: #f0f;
+            font-size: 1em;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            color: #0ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 700;
+        }
+
+        .tab-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #0ff, #00ff88);
+            color: #000;
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+        }
+
+        .category {
+            margin-bottom: 70px;
+            display: none;
+        }
+
+        .category.active {
+            display: block;
+        }
+
+        .category-title {
+            font-size: 2.5em;
+            color: #f0f;
+            margin-bottom: 40px;
+            padding: 20px;
+            border-bottom: 3px solid #0ff;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+
+        .category-icon {
+            font-size: 1.3em;
+        }
+
+        .section-header {
+            font-size: 1.8em;
+            color: #0ff;
+            margin: 40px 0 25px 0;
+            padding: 15px 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border-left: 5px solid #f0f;
+            border-radius: 8px;
+        }
+
+        .versions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .version-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0ff;
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.4s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .version-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.8s;
+        }
+
+        .version-card:hover::before {
+            left: 100%;
+        }
+
+        .version-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.5);
+            border-color: #f0f;
+        }
+
+        .version-card.branch-card {
+            border-color: #f0f;
+            background: rgba(50, 0, 50, 0.3);
+        }
+
+        .version-card.branch-card:hover {
+            border-color: #0ff;
+            box-shadow: 0 15px 50px rgba(255, 0, 255, 0.5);
+        }
+
+        .version-title {
+            font-size: 1.3em;
+            color: #0ff;
+            margin-bottom: 18px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .branch-card .version-title {
+            color: #f0f;
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+        }
+
+        .version-description {
+            color: #aaa;
+            font-size: 0.9em;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+
+        .version-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            padding: 6px 14px;
+            background: rgba(255, 0, 255, 0.2);
+            border: 1px solid #f0f;
+            border-radius: 6px;
+            font-size: 0.75em;
+            color: #f0f;
+            font-weight: 600;
+        }
+
+        .tag.primary {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #0ff;
+            color: #0ff;
+        }
+
+        .tag.branch {
+            background: rgba(255, 0, 255, 0.3);
+            border-color: #f0f;
+            color: #fff;
+        }
+
+        .version-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            background: linear-gradient(135deg, #0a4d68, #0ff);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+
+        .btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.7);
+        }
+
+        .btn-branch {
+            background: linear-gradient(135deg, #4a0a68, #f0f);
+        }
+
+        .btn-branch:hover {
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.7);
+        }
+
+        .branch-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(255, 0, 255, 0.3);
+            border: 1px solid #f0f;
+            border-radius: 5px;
+            font-size: 0.7em;
+            margin-left: 10px;
+            color: #f0f;
+        }
+
+        footer {
+            margin-top: 100px;
+            text-align: center;
+            padding: 40px;
+            border-top: 3px solid #0ff;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: #0ff;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        footer a:hover {
+            color: #f0f;
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2em; }
+            .versions-grid {
+                grid-template-columns: 1fr;
+            }
+            .category-title {
+                font-size: 1.8em;
+            }
+            .tab-selector {
+                flex-direction: column;
+            }
+            .tab-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌟 VIB34D Ultimate Viewer</h1>
+            <div class="subtitle">Master Catalog - All Versions & Branch Deployments</div>
+            <div class="description">
+                This is the comprehensive master catalog of the VIB34D Ultimate Viewer ecosystem. It includes all local
+                HTML versions, experimental branches, production deployments, and specialized implementations across
+                <strong>58 branches</strong> covering games, projection controllers, gallery systems, and advanced visualizers.
+            </div>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="🔍 Search by name, description, tags, or branch...">
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalVersions">39</div>
+                <div class="stat-label">Local Versions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">58</div>
+                <div class="stat-label">Total Branches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">13</div>
+                <div class="stat-label">Game Branches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">22</div>
+                <div class="stat-label">Visualizer Branches</div>
+            </div>
+        </div>
+
+        <div class="tab-selector">
+            <button class="tab-btn active" data-tab="local">📁 Local Versions</button>
+            <button class="tab-btn" data-tab="branches">🌿 Branch Deployments</button>
+            <button class="tab-btn" data-tab="games">🎮 Game Branches</button>
+            <button class="tab-btn" data-tab="projections">📽️ Projection Systems</button>
+            <button class="tab-btn" data-tab="all">🌐 All Combined</button>
+        </div>
+
+        <!-- LOCAL VERSIONS TAB -->
+        <div class="category active" id="tab-local">
+            <h2 class="category-title">
+                <span class="category-icon">📁</span>
+                Local HTML Versions (Main Branch)
+            </h2>
+
+            <h3 class="section-header">🎯 Production & Core Viewers</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="production main viewer core">
+                    <div class="version-title">index.html</div>
+                    <div class="version-description">
+                        Main production entry point - VIB34D Ultimate Viewer with single visualizer display, mobile accelerometer
+                        support, device tilt integration, and trading card quality holographic effects.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag primary">Production</span>
+                        <span class="tag">Main</span>
+                        <span class="tag">Viewer</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="index.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="viewer enhanced premium">
+                    <div class="version-title">viewer-enhanced.html</div>
+                    <div class="version-description">
+                        Enhanced viewer mode with improved rendering pipeline, advanced post-processing, and premium
+                        visual effects while maintaining performance.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag primary">Enhanced</span>
+                        <span class="tag">Viewer</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="viewer-enhanced.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="viewer premium professional">
+                    <div class="version-title">viewer-premium.html</div>
+                    <div class="version-description">
+                        Premium viewer with highest quality rendering, professional presentation features, and
+                        advanced holographic effects for installations.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag primary">Premium</span>
+                        <span class="tag">Pro</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="viewer-premium.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="viewer unified complete">
+                    <div class="version-title">viewer-unified.html</div>
+                    <div class="version-description">
+                        Unified viewer combining multiple viewing modes - switch between simple, enhanced, and
+                        premium modes seamlessly.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Unified</span>
+                        <span class="tag">Multi-Mode</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="viewer-unified.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="viewer simple basic">
+                    <div class="version-title">viewer-simple.html</div>
+                    <div class="version-description">
+                        Simple lightweight viewer - basic playback without advanced features. Optimized for low-end
+                        devices and maximum compatibility.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Simple</span>
+                        <span class="tag">Lightweight</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="viewer-simple.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="viewer core">
+                    <div class="version-title">viewer.html</div>
+                    <div class="version-description">
+                        Core viewer mode - pure visualization without controls. Perfect for performances, installations,
+                        and fullscreen presentations.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Core</span>
+                        <span class="tag">Performance</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="viewer.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header">🎮 Game Mode</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="game mobile play">
+                    <div class="version-title">Game-index.html</div>
+                    <div class="version-description">
+                        Mobile game mode - transform VIB34D visualizer into an interactive rhythm-based game with
+                        gesture controls and scoring system.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag primary">Game</span>
+                        <span class="tag">Mobile</span>
+                        <span class="tag">Interactive</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="Game-index.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header">🎨 Gallery Systems</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="gallery browse collection">
+                    <div class="version-title">gallery.html</div>
+                    <div class="version-description">
+                        Main gallery browser for saved visualizations, presets, and user-created configurations.
+                        Browse, load, and manage your collection.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag primary">Gallery</span>
+                        <span class="tag">Browser</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="gallery.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="gallery unified complete">
+                    <div class="version-title">gallery-unified.html</div>
+                    <div class="version-description">
+                        Unified gallery system combining user saves, community presets, and trading card generation
+                        in one comprehensive interface.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Unified</span>
+                        <span class="tag">Complete</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="gallery-unified.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header">🎯 Alternative Versions & Variants</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="fixed bugs stable">
+                    <div class="version-title">index-fixed.html</div>
+                    <div class="version-description">
+                        Bug-fixed stable version addressing specific issues. Reliability and stability improvements
+                        over experimental builds.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Fixed</span>
+                        <span class="tag">Stable</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="index-fixed.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="modular architecture">
+                    <div class="version-title">index-modular.html</div>
+                    <div class="version-description">
+                        Modular architecture version with component-based design for easier customization and
+                        extension.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Modular</span>
+                        <span class="tag">Components</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="index-modular.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="original legacy reference">
+                    <div class="version-title">OGindex.html</div>
+                    <div class="version-description">
+                        Original implementation preserved for reference - the foundation that started the VIB34D
+                        Ultimate Viewer project.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Original</span>
+                        <span class="tag">Legacy</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="OGindex.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header">🌐 Landing & Onboarding</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="landing intro welcome">
+                    <div class="version-title">landing.html</div>
+                    <div class="version-description">
+                        Landing page introducing VIB34D Ultimate Viewer with feature highlights, demos, and navigation
+                        to different modes.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Landing</span>
+                        <span class="tag">Intro</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="landing.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="landing professional business">
+                    <div class="version-title">landing-professional.html</div>
+                    <div class="version-description">
+                        Professional landing page for business presentations, client demos, and commercial showcases.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Professional</span>
+                        <span class="tag">Business</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="landing-professional.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="onboarding tutorial guide">
+                    <div class="version-title">onboarding-flow.html</div>
+                    <div class="version-description">
+                        Interactive onboarding tutorial guiding new users through features, controls, and best
+                        practices for VIB34D Ultimate Viewer.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Tutorial</span>
+                        <span class="tag">Guide</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="onboarding-flow.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header">🛠️ Export & Utilities</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="export video production">
+                    <div class="version-title">video-export-mvp.html</div>
+                    <div class="version-description">
+                        Video export MVP for rendering visualizations to video files. Frame capture and export
+                        workflows.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag primary">Export</span>
+                        <span class="tag">Video</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="video-export-mvp.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header">🔧 Testing & Debug Tools</h3>
+            <div class="versions-grid">
+                <div class="version-card" data-tags="test runner automation">
+                    <div class="version-title">test-runner.html</div>
+                    <div class="version-description">
+                        Automated test runner for comprehensive system validation and regression testing.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Testing</span>
+                        <span class="tag">Automation</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-runner.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test runner 2025">
+                    <div class="version-title">test-runner-2025.html</div>
+                    <div class="version-description">
+                        2025 updated test runner with modern testing frameworks and improved reporting.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">2025</span>
+                        <span class="tag">Updated</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-runner-2025.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test agentic ai">
+                    <div class="version-title">agentic-test-runner.html</div>
+                    <div class="version-description">
+                        AI-powered agentic test runner that auto-generates and executes tests.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">AI</span>
+                        <span class="tag">Agentic</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="agentic-test-runner.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test gallery">
+                    <div class="version-title">gallery-test-runner.html</div>
+                    <div class="version-description">
+                        Gallery-specific test suite validating save/load and preset systems.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Gallery</span>
+                        <span class="tag">Tests</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="gallery-test-runner.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="diagnostic health">
+                    <div class="version-title">diagnostic-test.html</div>
+                    <div class="version-description">
+                        System diagnostic tool for WebGL capabilities and browser compatibility.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Diagnostic</span>
+                        <span class="tag">Health</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="diagnostic-test.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="debug basic">
+                    <div class="version-title">debug-basic.html</div>
+                    <div class="version-description">
+                        Basic debugging interface with logging and state inspection tools.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Debug</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="debug-basic.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="debug clean">
+                    <div class="version-title">debug-clean.html</div>
+                    <div class="version-description">
+                        Clean debugging environment without clutter.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Debug</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="debug-clean.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="debug engine">
+                    <div class="version-title">debug-engine-syntax.html</div>
+                    <div class="version-description">
+                        Engine syntax debugger for shader and core validation.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Engine</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="debug-engine-syntax.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="debug gallery">
+                    <div class="version-title">debug-gallery.html</div>
+                    <div class="version-description">
+                        Gallery debugging tool for storage inspection.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Gallery</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="debug-gallery.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="debug imports">
+                    <div class="version-title">debug-imports.html</div>
+                    <div class="version-description">
+                        Module import debugger for dependency validation.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Modules</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="debug-imports.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test engine">
+                    <div class="version-title">test-engine.html</div>
+                    <div class="version-description">
+                        Core engine testing suite.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Engine</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-engine.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test viewer">
+                    <div class="version-title">test-viewer.html</div>
+                    <div class="version-description">
+                        Viewer mode validation tests.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Viewer</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-viewer.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test modules">
+                    <div class="version-title">test-modules.html</div>
+                    <div class="version-description">
+                        Module system validation tests.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Modules</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-modules.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test architecture">
+                    <div class="version-title">test-clean-architecture.html</div>
+                    <div class="version-description">
+                        Clean architecture validation suite.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Architecture</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-clean-architecture.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test mobile">
+                    <div class="version-title">test-mobile-complete.html</div>
+                    <div class="version-description">
+                        Comprehensive mobile testing suite.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Mobile</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-mobile-complete.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test mobile gallery">
+                    <div class="version-title">test-mobile-gallery.html</div>
+                    <div class="version-description">
+                        Mobile gallery functionality tests.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Mobile</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="test-mobile-gallery.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test parameters">
+                    <div class="version-title">parameter-test.html</div>
+                    <div class="version-description">
+                        Parameter system validation.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Parameters</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="parameter-test.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test reactivity">
+                    <div class="version-title">reactivity-test.html</div>
+                    <div class="version-description">
+                        Reactivity and interaction testing.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Reactivity</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="reactivity-test.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test screenshot">
+                    <div class="version-title">screenshot-test.html</div>
+                    <div class="version-description">
+                        Screenshot and capture testing.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Screenshot</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="screenshot-test.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="test manual">
+                    <div class="version-title">manual-test.html</div>
+                    <div class="version-description">
+                        Manual testing interface with guided procedures.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Manual</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="manual-test.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="verify clean">
+                    <div class="version-title">verify-clean.html</div>
+                    <div class="version-description">
+                        Code quality verification tool.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Verification</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="verify-clean.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="verify report">
+                    <div class="version-title">verify-report.html</div>
+                    <div class="version-description">
+                        Verification report generator.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Report</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="verify-report.html" class="btn">Launch</a>
+                    </div>
+                </div>
+
+                <div class="version-card" data-tags="validation report">
+                    <div class="version-title">validation-report.html</div>
+                    <div class="version-description">
+                        Comprehensive validation reporting.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag">Validation</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="validation-report.html" class="btn">Launch</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BRANCH DEPLOYMENTS TAB -->
+        <div class="category" id="tab-branches">
+            <h2 class="category-title">
+                <span class="category-icon">🌿</span>
+                Active Branch Deployments
+            </h2>
+
+            <h3 class="section-header">🔥 Key Feature Branches</h3>
+            <div class="versions-grid">
+                <div class="version-card branch-card" data-tags="branch gallery integrity fix">
+                    <div class="version-title">
+                        fix-gallery-system-integrity
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Comprehensive gallery system integrity fixes addressing data persistence, preset loading,
+                        and storage reliability issues.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">Gallery</span>
+                        <span class="tag">Fix</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/fix-gallery-system-integrity"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch ui improvements comprehensive">
+                    <div class="version-title">
+                        comprehensive-ui-improvements
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Comprehensive UI/UX improvements including refined controls, better mobile responsiveness,
+                        and enhanced visual feedback systems.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">UI/UX</span>
+                        <span class="tag">Enhancement</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/comprehensive-ui-improvements"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch perspective 4d dramatic">
+                    <div class="version-title">
+                        dramatic-4d-perspective
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Dramatic 4D perspective enhancements with advanced projection techniques and immersive
+                        depth rendering for stunning visual impact.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">4D</span>
+                        <span class="tag">Visual</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/dramatic-4d-perspective"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch tilt geometric window">
+                    <div class="version-title">
+                        geometric-tilt-window
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Geometric tilt window system using device accelerometer for interactive perspective control
+                        and immersive mobile experiences.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">Tilt</span>
+                        <span class="tag">Mobile</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/geometric-tilt-window"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch hypertetrahedron 4d integration">
+                    <div class="version-title">
+                        hypertetrahedron-integration
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Hypertetrahedron 4D polytope integration - adds pentatope (4-simplex) geometry with proper
+                        projection and rotation systems.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">4D Math</span>
+                        <span class="tag">Polytope</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/hypertetrahedron-integration"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch parameter timing optimization">
+                    <div class="version-title">
+                        parameter-timing-optimization
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Parameter timing optimization addressing delay issues and improving real-time responsiveness
+                        of control systems.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">Performance</span>
+                        <span class="tag">Optimization</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/parameter-timing-optimization"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch microphone beat detection audio">
+                    <div class="version-title">
+                        add-microphone-mode-and-beat-detection
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Microphone input mode with real-time beat detection - enables live audio-reactive
+                        visualizations from any sound source.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">Audio</span>
+                        <span class="tag">Live</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/codex/add-microphone-mode-and-beat-detection"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch aetheric system integration">
+                    <div class="version-title">
+                        integrate-aetheric-system-into-viewer
+                        <span class="branch-badge">BRANCH</span>
+                    </div>
+                    <div class="version-description">
+                        Aetheric system integration bringing mystical ethereal visual effects and advanced
+                        atmospheric rendering techniques.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Branch</span>
+                        <span class="tag">Aetheric</span>
+                        <span class="tag">Visual FX</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/codex/integrate-aetheric-system-into-viewer"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME BRANCHES TAB -->
+        <div class="category" id="tab-games">
+            <h2 class="category-title">
+                <span class="category-icon">🎮</span>
+                Game Development Branches
+            </h2>
+
+            <h3 class="section-header">🕹️ Mobile Game Implementations</h3>
+            <div class="versions-grid">
+                <div class="version-card branch-card" data-tags="branch game mobile development">
+                    <div class="version-title">
+                        develop-mobile-game-from-vib34d-engine
+                        <span class="branch-badge">MAIN GAME</span>
+                    </div>
+                    <div class="version-description">
+                        Primary mobile game development branch transforming VIB34D visualizer into an interactive
+                        rhythm-based game with scoring, levels, and progression systems.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Game Branch</span>
+                        <span class="tag primary">Primary</span>
+                        <span class="tag">Mobile</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/codex/develop-mobile-game-from-vib34d-engine"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch gesture handling game">
+                    <div class="version-title">
+                        implement-gesture-directive-handling
+                        <span class="branch-badge">GAME</span>
+                    </div>
+                    <div class="version-description">
+                        Gesture directive handling system for game controls - swipe, tap, hold, and multi-touch
+                        interactions mapped to gameplay mechanics.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Game Branch</span>
+                        <span class="tag">Gestures</span>
+                        <span class="tag">UI</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/codex/implement-gesture-directive-handling-and-ui-updates"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+
+                <div class="version-card branch-card" data-tags="branch game deployment fix">
+                    <div class="version-title">
+                        fix-game-deployment-issue
+                        <span class="branch-badge">GAME FIX</span>
+                    </div>
+                    <div class="version-description">
+                        Game deployment issue fixes addressing build problems, asset loading, and production
+                        deployment configurations.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Game Branch</span>
+                        <span class="tag">Fix</span>
+                        <span class="tag">Deployment</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/codex/fix-game-deployment-issue"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+            </div>
+
+            <p style="color: #666; margin-top: 30px; text-align: center;">
+                📊 <strong>13 Total Game Branches</strong> - Multiple experimental iterations exploring different
+                game mechanics, scoring systems, and mobile optimization strategies.
+            </p>
+        </div>
+
+        <!-- PROJECTION SYSTEMS TAB -->
+        <div class="category" id="tab-projections">
+            <h2 class="category-title">
+                <span class="category-icon">📽️</span>
+                Projection & Visualizer Control Systems
+            </h2>
+
+            <h3 class="section-header">🎬 Live Projection Refactors</h3>
+            <div class="versions-grid">
+                <div class="version-card branch-card" data-tags="branch projection visualizer refactor live">
+                    <div class="version-title">
+                        refactor-visualizer-engine-for-live-projections
+                        <span class="branch-badge">PRIMARY</span>
+                    </div>
+                    <div class="version-description">
+                        Primary visualizer engine refactor for live projection systems - optimized for performance,
+                        real-time control, and professional installation environments.
+                    </div>
+                    <div class="version-tags">
+                        <span class="tag branch">Projection</span>
+                        <span class="tag primary">Primary</span>
+                        <span class="tag">Live</span>
+                    </div>
+                    <div class="version-actions">
+                        <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/tree/codex/refactor-visualizer-engine-for-live-projections"
+                           class="btn btn-branch" target="_blank">View Branch</a>
+                    </div>
+                </div>
+            </div>
+
+            <p style="color: #666; margin-top: 30px; text-align: center;">
+                📊 <strong>22 Total Projection Branches</strong> - Extensive experimentation with projection mapping,
+                live performance optimization, DMX control integration, and multi-display synchronization.
+            </p>
+        </div>
+
+        <!-- ALL COMBINED TAB -->
+        <div class="category" id="tab-all">
+            <h2 class="category-title">
+                <span class="category-icon">🌐</span>
+                Complete Ecosystem Overview
+            </h2>
+
+            <div class="description" style="max-width: 1200px; margin: 30px auto; font-size: 1.1em;">
+                The VIB34D Ultimate Viewer represents a comprehensive ecosystem spanning <strong>39 local HTML versions</strong>
+                and <strong>58 development branches</strong>. This system has evolved from a simple visualizer into a
+                multi-faceted platform supporting:
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin: 50px 0;">
+                <div style="background: rgba(0,255,255,0.1); padding: 25px; border: 2px solid #0ff; border-radius: 15px;">
+                    <h4 style="color: #0ff; font-size: 1.4em; margin-bottom: 15px;">📱 Mobile Gaming</h4>
+                    <p style="color: #aaa; line-height: 1.7;">
+                        13 branches dedicated to transforming VIB34D into interactive rhythm-based games with gesture
+                        controls, scoring systems, and progressive difficulty.
+                    </p>
+                </div>
+
+                <div style="background: rgba(255,0,255,0.1); padding: 25px; border: 2px solid #f0f; border-radius: 15px;">
+                    <h4 style="color: #f0f; font-size: 1.4em; margin-bottom: 15px;">🎬 Live Projections</h4>
+                    <p style="color: #aaa; line-height: 1.7;">
+                        22 branches exploring professional projection mapping, multi-display sync, DMX integration,
+                        and live performance optimization.
+                    </p>
+                </div>
+
+                <div style="background: rgba(0,255,255,0.1); padding: 25px; border: 2px solid #0ff; border-radius: 15px;">
+                    <h4 style="color: #0ff; font-size: 1.4em; margin-bottom: 15px;">🎨 Gallery Systems</h4>
+                    <p style="color: #aaa; line-height: 1.7;">
+                        Sophisticated save/load systems, trading card generation, preset management, and community
+                        sharing capabilities.
+                    </p>
+                </div>
+
+                <div style="background: rgba(255,0,255,0.1); padding: 25px; border: 2px solid #f0f; border-radius: 15px;">
+                    <h4 style="color: #f0f; font-size: 1.4em; margin-bottom: 15px;">🔬 Experimental Features</h4>
+                    <p style="color: #aaa; line-height: 1.7;">
+                        Aetheric systems, dramatic 4D perspectives, geometric tilt windows, hypertetrahedron integration,
+                        and microphone-driven visualizations.
+                    </p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 60px 0;">
+                <div style="display: inline-block; padding: 30px 50px; background: rgba(0,0,0,0.8); border: 3px solid #0ff; border-radius: 20px;">
+                    <div style="font-size: 1.8em; color: #f0f; margin-bottom: 10px;">🌟 Full Repository Access</div>
+                    <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer"
+                       style="display: inline-block; margin-top: 20px; padding: 15px 40px; background: linear-gradient(135deg, #0ff, #f0f);
+                              color: #000; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 1.2em;"
+                       target="_blank">
+                        View All 58 Branches on GitHub ↗
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>VIB34D Ultimate Viewer</strong> - A Paul Phillips Manifestation</p>
+            <p>4D Holographic Visualization Engine | Mobile Gaming Platform | Live Projection System</p>
+            <p style="margin-top: 25px; font-size: 0.85em; line-height: 1.6;">
+                This master catalog represents the complete evolutionary tree of the VIB34D Ultimate Viewer.<br>
+                From experimental prototypes to production deployments, from simple viewers to complex games,<br>
+                from local development to live professional installations.<br>
+                <strong>Every branch tells a story. Every version serves a purpose.</strong>
+            </p>
+            <p style="margin-top: 25px;">
+                <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer">
+                    📦 Main Repository
+                </a>
+                <span style="margin: 0 15px; color: #333;">|</span>
+                <a href="https://github.com/Domusgpt/vib34d-ultimate-viewer/branches">
+                    🌿 All Branches
+                </a>
+                <span style="margin: 0 15px; color: #333;">|</span>
+                <a href="https://github.com/Domusgpt">
+                    👤 Domusgpt Profile
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const categories = document.querySelectorAll('.category');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.getAttribute('data-tab');
+
+                // Update buttons
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update categories
+                categories.forEach(cat => {
+                    if (cat.id === `tab-${tabName}`) {
+                        cat.classList.add('active');
+                    } else {
+                        cat.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const versionCards = document.querySelectorAll('.version-card');
+
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            let visibleCount = 0;
+
+            versionCards.forEach(card => {
+                const title = card.querySelector('.version-title').textContent.toLowerCase();
+                const description = card.querySelector('.version-description').textContent.toLowerCase();
+                const tags = card.getAttribute('data-tags')?.toLowerCase() || '';
+
+                const matches = title.includes(searchTerm) ||
+                               description.includes(searchTerm) ||
+                               tags.includes(searchTerm);
+
+                if (matches || searchTerm === '') {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Update count
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab && activeTab.getAttribute('data-tab') === 'local') {
+                document.getElementById('totalVersions').textContent = visibleCount;
+            }
+        });
+
+        // Card click to launch
+        versionCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('btn') && !e.target.closest('.btn')) {
+                    const link = card.querySelector('.btn');
+                    if (link) {
+                        window.open(link.href, link.target || '_self');
+                    }
+                }
+            });
+        });
+
+        console.log('🌟 VIB34D Ultimate Viewer - Master Catalog Loaded');
+        console.log('📊 Local Versions: 39');
+        console.log('🌿 Total Branches: 58');
+        console.log('🎮 Game Branches: 13');
+        console.log('📽️ Projection Branches: 22');
+    </script>
+</body>
+</html>
