@@ -1,57 +1,52 @@
-# VIB34D Holographic Visualization Engine
+# VIB34D Adaptive Interface Engine
 
-A WebGL-based 4D mathematics visualization system with 4 different rendering engines.
+VIB34D has evolved from a holographic visualization sandbox into a commercial-ready platform for designing wearable and screenless interfaces. The engine blends 4D procedural rendering with an adaptive modality stack capable of responding to gaze, neural intent, ambient context, and other emerging inputs.
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone and navigate
-cd v2-refactored-mobile-fix
+# Install dependencies
+yarn install
 
-# Start local server
-python3 -m http.server 8080
+# Start the local server (Python static host via npm script)
+yarn dev
 
-# Open in browser
-http://localhost:8080/index-clean.html
+# Open the unified viewer
+http://localhost:8145/index.html
 ```
 
-## 🎮 The 4 Systems
+> **Tip:** Use `DesignSystemBridge` in `src/product/DesignSystemBridge.js` to programmatically generate wearable blueprints once the viewer is running.
 
-**🔷 FACETED** - Simple 2D geometric patterns  
-**🌌 QUANTUM** - Complex 3D lattice effects  
-**✨ HOLOGRAPHIC** - Audio-reactive visualizations  
-**🔮 POLYCHORA** - True 4D polytope mathematics  
+## 🧠 Adaptive Stack Overview
+- **AdaptiveModalityManager** normalizes signals from eye tracking, neural gestures, ambient sensors, etc.
+- **AdaptiveParameterBridge** synchronizes the modalities with the render loop so every system reflects the latest intent.
+- **DesignSystemBridge** converts live parameters into wearable-first layout blueprints ready for export.
+- **PluginRegistry** powers a marketplace of premium exporters, modality packs, and enterprise integrations.
 
-Switch between systems using the top navigation buttons. All systems share the same 11-parameter control system.
+## 🎯 Wearable & Spatial UI Focus
+- **Form Factor Targeting** – Generate watch-face and spatial-disc layouts from live sensor data.
+- **Gesture Semantics** – Blueprint output captures gaze dwell triggers, neural highlight intents, and ambient adaptation rules.
+- **4D Visual Grammar** – Existing faceted, quantum, holographic, and polychora renderers now respond to adaptive parameters out of the box.
 
-## 📱 Mobile Support
+## 💼 Monetization & Support Hooks
+- Register extensions through `PluginRegistry` with tiered pricing (`community`, `studio`, `enterprise`).
+- Attach SLA metadata and telemetry to plugins using `getCommercialSummary()`.
+- Package exporters for Figma, Framer, Unity, and XR toolkits as subscription add-ons.
 
-Mobile performance is optimized. The system loads quickly on phones and runs at 45-60 FPS on most devices.
+## 📚 Documentation
+- `DOCS/WEARABLE_PRODUCT_PLAN.md` – living roadmap + implementation log.
+- `DOCS/WEARABLE_MODALITY_GUIDE.md` – modality taxonomy, extension recipes, and monetization strategy.
+- `DOCS/4-BUSINESS-CASE.md` – updated with wearable go-to-market details (see below for summary).
 
-## 🎨 Features
+## 🧪 Testing
+Run the existing visual regression scripts to ensure no rendering regressions:
+```bash
+yarn test:visual
+```
 
-- **Real-time 4D mathematics** with WebGL rendering
-- **11 parameter control system** with live updates  
-- **Gallery system** for saving/loading configurations
-- **Trading card export** in multiple formats
-- **Audio reactivity** in holographic system
-- **Cross-system compatibility** - parameters work across all engines
+## 🌐 Roadmap Highlights
+1. Launch premium exporters for major design suites.
+2. Integrate biometric wearables (EEG, EMG) as first-party modalities.
+3. Partner with XR headset vendors for spatial interface packs.
 
-## 🔧 Development
-
-Main files:
-- `index-clean.html` - Main interface (427 lines)
-- `js/core/app.js` - System controller  
-- `js/controls/ui-handlers.js` - Parameter controls
-- `src/` - Engine implementations
-
-CSS is modularized in `styles/` directory. All JavaScript uses ES6 modules with graceful fallbacks.
-
-## 📊 Status
-
-✅ All systems operational  
-✅ Mobile optimized  
-✅ No critical issues  
-✅ Ready for use  
-
-See `CLAUDE.md` for detailed documentation and `SYSTEM_STATUS.md` for current technical status.
+VIB34D is now positioned as a holistic platform for designing adaptive interfaces across wearables, ambient displays, and post-screen experiences.
