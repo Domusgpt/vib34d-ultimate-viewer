@@ -12,6 +12,7 @@
  */
 
 import { ParameterManager } from './Parameters.js';
+import { getPerformanceSuiteHost } from '../ui/PerformanceSuiteHost.js';
 
 /**
  * True4DPolychoraVisualizer - Individual layer renderer for 4D polytopes
@@ -514,8 +515,9 @@ export class NewPolychoraEngine {
         this.parameters.setParameter('saturation', 0.9);
         this.parameters.setParameter('gridDensity', 25); // Good for 4D detail
         this.parameters.setParameter('morphFactor', 1.0);
-        
+
         this.init();
+        this.initializePerformanceSuite();
     }
     
     init() {
@@ -524,6 +526,20 @@ export class NewPolychoraEngine {
         this.setup4DInteractivity(); // Unique 4D interaction system
         this.startRenderLoop();
         console.log('✨ TRUE 4D Polychora Engine initialized with VIB34D DNA');
+    }
+
+    initializePerformanceSuite() {
+        if (typeof document === 'undefined') return;
+
+        try {
+            const host = getPerformanceSuiteHost();
+            this.performanceSuite = host.activateEngine(this, {
+                systemName: 'polychora',
+                parameterManager: this.parameters
+            });
+        } catch (error) {
+            console.warn('⚠️ Polychora performance suite initialization failed:', error);
+        }
     }
     
     createVisualizers() {
@@ -741,7 +757,13 @@ export class NewPolychoraEngine {
             visualizer.cleanup();
         });
         this.visualizers = [];
-        
+
+        const host = typeof window !== 'undefined' ? window.performanceSuiteHost : null;
+        if (host?.detachEngine) {
+            host.detachEngine(this);
+            this.performanceSuite = null;
+        }
+
         console.log('🧹 4D Polychora Engine cleaned up');
     }
 }
