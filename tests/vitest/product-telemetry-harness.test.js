@@ -1,0 +1,78 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { ProductTelemetryHarness } from '../../src/product/ProductTelemetryHarness.js';
+import { HttpTelemetryProvider } from '../../src/product/telemetry/HttpTelemetryProvider.js';
+
+describe('ProductTelemetryHarness', () => {
+  let fetchMock;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('routes events to registered providers and clears them on flush', async () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    harness.track('layout-generated', { variant: 'core', userId: 'abc' });
+    const consoleProvider = harness.providers.get('console');
+
+    expect(consoleProvider.events).toHaveLength(1);
+    expect(consoleProvider.events[0].event).toBe('layout-generated');
+
+    await harness.flush();
+    expect(consoleProvider.events).toHaveLength(0);
+  });
+
+  it('applies data minimization policies before dispatching payloads', () => {
+    const harness = new ProductTelemetryHarness({
+      consoleProvider: { log: false },
+      dataMinimization: { anonymize: true, omitLicense: true }
+    });
+
+    harness.attachLicense('secret-license');
+    harness.track('gesture', { identity: 'user-1', magnitude: 0.8, userId: '123' });
+
+    const record = harness.buffer[0];
+    expect(record.licenseKey).toBeUndefined();
+    expect(record.payload.identity).toBeUndefined();
+    expect(record.payload.userId).toBeUndefined();
+    expect(record.payload.magnitude).toBe(0.8);
+  });
+
+  it('supports swappable HTTP providers with async flush', async () => {
+    const httpProvider = new HttpTelemetryProvider({ endpoint: 'https://telemetry.example/collect' });
+    const harness = new ProductTelemetryHarness({
+      useDefaultProvider: false,
+      providers: [httpProvider],
+      flushInterval: 5000,
+      licenseKey: 'test-license'
+    });
+
+    harness.track('pattern-triggered', { id: 'focus-coach' });
+    expect(httpProvider.queue).toHaveLength(1);
+
+    await harness.flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('https://telemetry.example/collect', expect.objectContaining({ method: 'POST' }));
+    expect(httpProvider.queue).toHaveLength(0);
+  });
+
+  it('respects disabled state by ignoring tracking and timers', () => {
+    const harness = new ProductTelemetryHarness({ enabled: false, flushInterval: 2000 });
+    const flushSpy = vi.spyOn(harness, 'flush');
+
+    harness.track('ignored', {});
+    harness.start();
+    vi.advanceTimersByTime(6000);
+
+    expect(harness.buffer).toHaveLength(0);
+    expect(flushSpy).not.toHaveBeenCalled();
+  });
+});
