@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Adaptive Wearable Designer</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: radial-gradient(circle at 20% 20%, #101826, #04060b 65%);
+            --panel-bg: rgba(12, 18, 32, 0.85);
+            --accent: #4c9fff;
+            --muted: rgba(255, 255, 255, 0.55);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui;
+            background: var(--bg);
+            color: #f5f7fb;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr);
+        }
+
+        .canvas-stack {
+            position: relative;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .canvas-stack canvas {
+            position: absolute;
+            width: 88vmin;
+            height: 88vmin;
+            max-width: 880px;
+            max-height: 880px;
+            border-radius: 28px;
+            backdrop-filter: blur(20px);
+        }
+
+        .canvas-stack canvas:nth-child(1) { mix-blend-mode: screen; opacity: 0.35; }
+        .canvas-stack canvas:nth-child(2) { mix-blend-mode: lighten; opacity: 0.45; }
+        .canvas-stack canvas:nth-child(3) { mix-blend-mode: normal; }
+        .canvas-stack canvas:nth-child(4) { mix-blend-mode: screen; opacity: 0.6; }
+        .canvas-stack canvas:nth-child(5) { mix-blend-mode: screen; opacity: 0.8; }
+
+        aside {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: linear-gradient(160deg, rgba(8, 10, 20, 0.9), rgba(12, 18, 32, 0.75));
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px rgba(10, 20, 40, 0.35);
+        }
+
+        .panel h2 {
+            font-size: 1rem;
+            letter-spacing: 0.08em;
+            margin: 0 0 12px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 14px;
+            border-radius: 14px;
+        }
+
+        .metric span:first-child {
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+        }
+
+        .metric span:last-child {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .pattern-card {
+            display: grid;
+            gap: 12px;
+        }
+
+        .pattern-card h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .pattern-card p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.4;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(76, 159, 255, 0.1);
+            color: var(--accent);
+        }
+
+        button {
+            background: rgba(76, 159, 255, 0.1);
+            border: 1px solid rgba(76, 159, 255, 0.3);
+            color: var(--accent);
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: rgba(76, 159, 255, 0.2);
+        }
+
+        .variation-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .variation-controls input[type="range"] {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas-stack" id="canvasStack">
+        <canvas id="background-canvas"></canvas>
+        <canvas id="shadow-canvas"></canvas>
+        <canvas id="content-canvas"></canvas>
+        <canvas id="highlight-canvas"></canvas>
+        <canvas id="accent-canvas"></canvas>
+    </div>
+    <aside>
+        <section class="panel">
+            <h2>Adaptive Intent</h2>
+            <div class="metric-grid" id="intentMetrics">
+                <div class="metric"><span>Focus</span><span id="focusMetric">0.50</span></div>
+                <div class="metric"><span>Engagement</span><span id="engagementMetric">0.40</span></div>
+                <div class="metric"><span>Velocity</span><span id="velocityMetric">0.00</span></div>
+                <div class="metric"><span>Stress</span><span id="stressMetric">0.20</span></div>
+            </div>
+        </section>
+        <section class="panel">
+            <h2>Pattern Activation</h2>
+            <div class="pattern-card">
+                <span class="tag" id="patternTier">STARTER</span>
+                <h3 id="patternName">Neuro Glance Feed</h3>
+                <p id="patternDescription">Micro-summaries that respond to attention bursts and biometric calmness.</p>
+                <div class="tag" id="integrationTag">Figma: vib34d-neuro-glance-feed</div>
+            </div>
+        </section>
+        <section class="panel">
+            <h2>Variations</h2>
+            <div class="variation-controls">
+                <input type="range" min="0" max="99" value="0" id="variationSlider">
+                <button id="randomizeBtn">Randomize</button>
+            </div>
+            <p style="margin-top: 12px; color: rgba(255,255,255,0.6); font-size: 0.85rem;" id="variationLabel">1 - TETRAHEDRON LATTICE</p>
+        </section>
+    </aside>
+
+    <script type="module">
+        import { AdaptiveInterfaceEngine } from './src/core/AdaptiveInterfaceEngine.js';
+
+        const engine = new AdaptiveInterfaceEngine({
+            telemetry: { enabled: false },
+            marketplaceHooks: {
+                onPatternChange: updatePatternPanel,
+                onAdaptiveUpdate: handleAdaptiveUpdate
+            }
+        });
+
+        window.vib34dEngine = engine;
+
+        const variationSlider = document.getElementById('variationSlider');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const variationLabel = document.getElementById('variationLabel');
+        const focusMetric = document.getElementById('focusMetric');
+        const engagementMetric = document.getElementById('engagementMetric');
+        const velocityMetric = document.getElementById('velocityMetric');
+        const stressMetric = document.getElementById('stressMetric');
+
+        variationSlider.addEventListener('input', (event) => {
+            const value = Number(event.target.value);
+            engine.setVariation(value);
+            variationLabel.textContent = `${value + 1} - ${engine.variationManager.getVariationName(value)}`;
+        });
+
+        randomizeBtn.addEventListener('click', () => {
+            engine.randomVariation();
+            variationSlider.value = engine.currentVariation;
+            variationLabel.textContent = `${engine.currentVariation + 1} - ${engine.variationManager.getVariationName(engine.currentVariation)}`;
+        });
+
+        function updatePatternPanel(spec) {
+            document.getElementById('patternTier').textContent = spec.monetization.tier.toUpperCase();
+            document.getElementById('patternName').textContent = spec.pattern?.name || 'Adaptive Pattern';
+            document.getElementById('patternDescription').textContent = spec.pattern?.description || 'Dynamic mapping ready for commercialization.';
+            document.getElementById('integrationTag').textContent = `Figma: ${spec.integration.figmaPlugin}`;
+        }
+
+        function handleAdaptiveUpdate({ context, layout }) {
+            focusMetric.textContent = context.focusVector.x.toFixed(2);
+            engagementMetric.textContent = context.engagementLevel.toFixed(2);
+            velocityMetric.textContent = layout.motion.velocity.toFixed(2);
+            stressMetric.textContent = context.biometricStress.toFixed(2);
+        }
+
+        document.addEventListener('pointermove', event => {
+            const x = event.clientX / window.innerWidth;
+            const y = event.clientY / window.innerHeight;
+            engine.sensoryBridge.ingest('eye-tracking', { x, y, depth: 0.25 + 0.15 * Math.sin(x * Math.PI) }, 0.9);
+            engine.sensoryBridge.ingest('neural-intent', { x: (x - 0.5) * 0.8, y: (0.5 - y) * 0.8, engagement: 0.5 + (0.5 - Math.abs(0.5 - x)) * 0.3 }, 0.7);
+        });
+
+        setInterval(() => {
+            const stress = 0.15 + Math.random() * 0.15;
+            engine.sensoryBridge.ingest('biometric', { stress, heartRate: 70 + Math.random() * 6 }, 0.6);
+            engine.sensoryBridge.ingest('ambient', { luminance: 0.4 + Math.random() * 0.2, motion: Math.random() * 0.3 }, 0.5);
+        }, 2400);
+    </script>
+</body>
+</html>
