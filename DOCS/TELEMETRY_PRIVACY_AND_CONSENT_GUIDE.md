@@ -1,0 +1,93 @@
+# Telemetry Privacy & Consent Guide
+
+This guide captures the privacy, consent, and data minimization practices that govern telemetry usage across the Adaptive Interface Engine and associated SDK deliverables.
+
+## Objectives
+- Provide clear default classifications for emitted telemetry so partners understand when explicit consent is required.
+- Describe how to gate analytics/biometric streams and expose audit trails for compliance reviews.
+- Outline integration hooks for partner teams to extend consent flows and hardware adapter lifecycle events.
+
+## Telemetry Classifications
+The `ProductTelemetryHarness` now tags every event with a classification before dispatch. Default mappings:
+
+| Classification | Description | Consent Default |
+|----------------|-------------|-----------------|
+| `system` | Operational health, adapter lifecycle, SDK boot events. | Allowed |
+| `interaction` | Real-time adaptive focus/gesture streams required for UI responsiveness. | Allowed |
+| `analytics` | Monetization, layout strategy, and design activation metrics. | Blocked until consent |
+| `biometric` | Physiological streams (stress, heart rate, temperature). | Blocked until consent |
+| `compliance` | Schema validation issues, consent updates, audit reporting. | Allowed |
+
+Partners can append custom rules via `registerClassificationRule` or override defaults during SDK bootstrap (`telemetry.defaultConsent`).
+
+## Consent Lifecycle
+- `updateTelemetryConsent(map, metadata)` toggles any classification at runtime. The harness logs every change under `privacy.consent.updated` for audit review and exposes a snapshot via `getTelemetryConsent()`.
+- Events that lack consent are dropped. The harness writes a `privacy.event.blocked` audit record containing the event name and classification so teams can surface consent dialogs or fallback UI.
+- Identity calls default to the `system` classification. Pass `{ classification: 'analytics' }` to `identify` if identity is tied to analytics consent.
+
+### Audit Trail
+Call `telemetry.getAuditTrail()` (or `engine.getTelemetryAuditTrail()` via the SDK) to retrieve the rolling window (default 200 entries) of compliance events. The array includes timestamps, payload metadata, and the classification associated with each entry.
+
+### Compliance Vault Provider
+Use `ComplianceVaultTelemetryProvider` when compliance teams need a persisted export of consent changes and schema issues. The provider accepts a custom storage adapter (defaulting to `localStorage` or in-memory fallback), captures both telemetry events and audit log entries, and exposes `getRecords()`, `clear()`, `flush()`, and `whenReady()` helpers. The wearable designer demo now registers the vault by default, surfaces consent toggles, and lets reviewers download the captured JSON log. Partners can supply remote persistence by wiring one of the storage adapters below:
+
+- `createSignedS3StorageAdapter` – requests a pre-signed S3 URL from a signing endpoint, uploads the JSON payload, and optionally deletes prior exports.
+- `createLogBrokerStorageAdapter` – batches audit entries to a log or compliance broker endpoint via HTTP POST.
+
+These adapters ship under `src/product/telemetry/storage/RemoteStorageAdapters.js` and can be customized with bespoke `fetch` implementations, serialization strategies, and error hooks.
+
+#### Retention & Encryption Controls
+
+- **Retention metadata baked into every export.** Both adapters now accept a `retentionPolicy` option (string identifiers such as `"regulatory"`, millisecond durations, or structured objects) that is normalized and injected into signing requests, upload headers (`x-amz-meta-retention`), and broker headers (`x-retention-policy`). Compliance teams can rely on the vault stream to include the declared retention window for downstream deletion workflows.
+- **Encryption hooks for partner KMS/HSM pipelines.** Provide `encryptPayload(payload, context)` to either adapter to transform the serialized audit package before transport. The hook can return a raw encrypted string/ArrayBuffer or an object describing the encrypted body, `contentType`, additional headers (e.g., `x-amz-server-side-encryption`), and metadata (surfaced back to the signing service and vaulted audit log). This enables customer-managed keys, HSM signatures, or attestation tokens without forking the adapters.
+- **Metadata surfaced for auditing.** The signing call receives any encryption metadata so downstream services can stamp key IDs or envelope references alongside the retention policy. `onUploadComplete` now reports both `retentionPolicy` and `encryptionMetadata` so compliance dashboards can show the exact controls applied to every export.
+
+Recommended defaults:
+
+1. **Biometric/health data:** `retentionPolicy: { strategy: 'timeboxed', maxAgeMs: 30 * 24 * 60 * 60 * 1000 }` plus an encryption hook that wraps payloads with AES-GCM via customer KMS.
+2. **Analytics only:** `retentionPolicy: 'retain-until-deleted'` with optional signing metadata (no encryption required if data is anonymized).
+3. **Regulated markets (HIPAA/GDPR):** Require encryption hooks, log broker signing headers, and periodic export verification using `telemetry.getAuditTrail()` vs. persisted vault records.
+
+### Reusable Consent Panel Component
+The consent UI inside `wearable-designer.html` now uses `createConsentPanel` (see `src/ui/components/ConsentPanel.js`). The component accepts consent options, telemetry hooks, and compliance vault accessors, rendering:
+
+1. Toggle controls for each classification with automatic synchronization to the current consent snapshot.
+2. A consent status summary listing enabled/disabled classifications and audit entry counts.
+3. A compliance log preview with timestamped events.
+4. A download action that exports the captured vault records.
+
+Partners can reuse the component inside plug-ins or dashboards by passing their own DOM container, consent callbacks, and telemetry getters. Use `createAdaptiveSDK({ consentOptions }).createConsentPanel({ container, ... })` when bootstrapping the SDK to ensure default consent copy stays synchronized across surfaces. The component also exposes `handleConsentDecision` so external workflows (e.g., server acknowledgements) can drive UI updates.
+
+## Sensor Validation Feedback
+The `SensoryInputBridge` now publishes schema issues through three surfaces:
+1. `sensoryBridge.setValidationReporter(fn)` – synchronous callback invoked whenever validation issues occur.
+2. `sensoryBridge.getValidationLog()` – retrieves the rolling buffer of validation events.
+3. `telemetry.recordSchemaIssue(issue)` – automatically invoked by `AdaptiveInterfaceEngine` to emit a `sensors.schema_issue` event with `compliance` classification.
+
+Partners should use these signals to tie consent prompts or trust indicators back to raw hardware validation failures.
+
+## Hardware Adapter Lifecycle
+Sensor adapters can now implement optional `connect`, `disconnect`, and `test` methods. Use the new SDK wrappers to manage lifecycle state:
+
+```js
+const sdk = createAdaptiveSDK();
+
+sdk.registerSensorAdapter('neural-intent', neuralAdapter);
+await sdk.connectSensorAdapter('neural-intent');
+const status = sdk.sensoryBridge.getAdapterState('neural-intent'); // { status: 'connected' }
+```
+
+`AdaptiveInterfaceEngine` emits telemetry events for registration, connection success, and failure paths (`sensors.adapter.*`), allowing downstream compliance tooling to verify adapter readiness before collecting biometric data.
+
+## Implementation Checklist
+- [x] Classify all telemetry events and gate analytics/biometric payloads behind consent.
+- [x] Record consent changes and schema violations in an auditable log.
+- [x] Expose adapter lifecycle hooks via the SDK and emit lifecycle telemetry.
+- [x] Integrate UI consent prompts inside `wearable-designer.html` and expose a reusable component for partner plug-ins. *(Demo shell now packages the consent experience via `createConsentPanel`; partner kits can import the same module.)*
+- [x] Provide remote persistence adapters (`createSignedS3StorageAdapter`, `createLogBrokerStorageAdapter`) so compliance teams can stream vault data into approved storage.
+- [ ] Extend schema validation reports to persist in long-term storage with partner-provided retention policies.
+
+## Next Steps
+1. Align with legal/privacy stakeholders on retention windows and cross-border data transfer policies for compliance telemetry.
+2. Harden the remote storage adapters with encryption-at-rest options and signed deletion flows aligned to partner policies.
+3. Evaluate TypeScript adoption for `ProductTelemetryHarness` to surface classifications and consent APIs at compile time.
