@@ -29,7 +29,22 @@ Partners can append custom rules via `registerClassificationRule` or override de
 Call `telemetry.getAuditTrail()` (or `engine.getTelemetryAuditTrail()` via the SDK) to retrieve the rolling window (default 200 entries) of compliance events. The array includes timestamps, payload metadata, and the classification associated with each entry.
 
 ### Compliance Vault Provider
-Use `ComplianceVaultTelemetryProvider` when compliance teams need a persisted export of consent changes and schema issues. The provider accepts a custom storage adapter (defaulting to `localStorage` or in-memory fallback), captures both telemetry events and audit log entries, and exposes `getRecords()`, `clear()`, and `flush()` helpers. The wearable designer demo now registers the vault by default, surfaces consent toggles, and lets reviewers download the captured JSON log.
+Use `ComplianceVaultTelemetryProvider` when compliance teams need a persisted export of consent changes and schema issues. The provider accepts a custom storage adapter (defaulting to `localStorage` or in-memory fallback), captures both telemetry events and audit log entries, and exposes `getRecords()`, `clear()`, `flush()`, and `whenReady()` helpers. The wearable designer demo now registers the vault by default, surfaces consent toggles, and lets reviewers download the captured JSON log. Partners can supply remote persistence by wiring one of the storage adapters below:
+
+- `createSignedS3StorageAdapter` – requests a pre-signed S3 URL from a signing endpoint, uploads the JSON payload, and optionally deletes prior exports.
+- `createLogBrokerStorageAdapter` – batches audit entries to a log or compliance broker endpoint via HTTP POST.
+
+These adapters ship under `src/product/telemetry/storage/RemoteStorageAdapters.js` and can be customized with bespoke `fetch` implementations, serialization strategies, and error hooks.
+
+### Reusable Consent Panel Component
+The consent UI inside `wearable-designer.html` now uses `createConsentPanel` (see `src/ui/components/ConsentPanel.js`). The component accepts consent options, telemetry hooks, and compliance vault accessors, rendering:
+
+1. Toggle controls for each classification with automatic synchronization to the current consent snapshot.
+2. A consent status summary listing enabled/disabled classifications and audit entry counts.
+3. A compliance log preview with timestamped events.
+4. A download action that exports the captured vault records.
+
+Partners can reuse the component inside plug-ins or dashboards by passing their own DOM container, consent callbacks, and telemetry getters. The component also exposes `handleConsentDecision` so external workflows (e.g., server acknowledgements) can drive UI updates.
 
 ## Sensor Validation Feedback
 The `SensoryInputBridge` now publishes schema issues through three surfaces:
@@ -56,10 +71,11 @@ const status = sdk.sensoryBridge.getAdapterState('neural-intent'); // { status: 
 - [x] Classify all telemetry events and gate analytics/biometric payloads behind consent.
 - [x] Record consent changes and schema violations in an auditable log.
 - [x] Expose adapter lifecycle hooks via the SDK and emit lifecycle telemetry.
-- [x] Integrate UI consent prompts inside `wearable-designer.html` and partner plugin scaffolds. *(Demo shell now includes consent toggles + compliance export button; partner kits still pending.)*
+- [x] Integrate UI consent prompts inside `wearable-designer.html` and expose a reusable component for partner plug-ins. *(Demo shell now packages the consent experience via `createConsentPanel`; partner kits can import the same module.)*
+- [x] Provide remote persistence adapters (`createSignedS3StorageAdapter`, `createLogBrokerStorageAdapter`) so compliance teams can stream vault data into approved storage.
 - [ ] Extend schema validation reports to persist in long-term storage with partner-provided retention policies.
 
 ## Next Steps
 1. Align with legal/privacy stakeholders on retention windows and cross-border data transfer policies for compliance telemetry.
-2. Provide ready-made consent UI components in the wearable designer demo and partner plug-ins.
+2. Harden the remote storage adapters with encryption-at-rest options and signed deletion flows aligned to partner policies.
 3. Evaluate TypeScript adoption for `ProductTelemetryHarness` to surface classifications and consent APIs at compile time.

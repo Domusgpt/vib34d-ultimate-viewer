@@ -73,6 +73,17 @@ export class ComplianceVaultTelemetryProvider extends TelemetryProvider {
 
         const existing = this.storageAdapter.read?.();
         this.records = Array.isArray(existing) ? [...existing] : [];
+        this.initializationPromise = Promise.resolve(existing)
+            .then((records) => {
+                if (Array.isArray(records)) {
+                    this.records = [...records];
+                }
+                return this.records;
+            })
+            .catch((error) => {
+                console.warn('[ComplianceVaultTelemetryProvider] Failed to initialize from storage', error);
+                return this.records;
+            });
     }
 
     shouldCapture(classification) {
@@ -87,7 +98,13 @@ export class ComplianceVaultTelemetryProvider extends TelemetryProvider {
         if (this.records.length > this.maxRecords) {
             this.records.splice(0, this.records.length - this.maxRecords);
         }
-        this.storageAdapter.write?.(this.records);
+
+        const result = this.storageAdapter.write?.(this.records);
+        if (result && typeof result.then === 'function') {
+            result.catch((error) => {
+                console.warn('[ComplianceVaultTelemetryProvider] Failed to persist compliance record', error);
+            });
+        }
     }
 
     track(event, record = {}, context = {}) {
@@ -118,10 +135,25 @@ export class ComplianceVaultTelemetryProvider extends TelemetryProvider {
 
     clear() {
         this.records = [];
-        this.storageAdapter.clear?.();
+        const result = this.storageAdapter.clear?.();
+        if (result && typeof result.then === 'function') {
+            result.catch((error) => {
+                console.warn('[ComplianceVaultTelemetryProvider] Failed to clear compliance vault', error);
+            });
+        }
     }
 
     flush() {
-        this.storageAdapter.write?.(this.records);
+        const result = this.storageAdapter.write?.(this.records);
+        if (result && typeof result.then === 'function') {
+            result.catch((error) => {
+                console.warn('[ComplianceVaultTelemetryProvider] Failed to flush compliance vault', error);
+            });
+        }
+    }
+
+    async whenReady() {
+        await this.initializationPromise;
+        return this.getRecords();
     }
 }

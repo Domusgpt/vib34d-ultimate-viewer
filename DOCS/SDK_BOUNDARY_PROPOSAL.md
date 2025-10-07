@@ -18,7 +18,8 @@ Define an explicit, supportable interface for product teams and partners consumi
 | Inputs | `SensoryInputBridge`, `SensorSchemaRegistry`, `registerSensorSchema`, sensor adapter interfaces | Normalization + validation contracts for gaze, neural, biometric, ambient signals plus adapter lifecycle controls. |
 | Layout | `SpatialLayoutSynthesizer`, `LayoutStrategy`, `LayoutContext` types | Strategy registration, generation of layout descriptors, annotations, and motion cues. |
 | Patterns | `InterfacePatternRegistry`, `DesignLanguageManager` | Mapping between layout descriptors and monetizable UI packages. |
-| Telemetry | `TelemetryClient`, `TelemetryProvider`, `ComplianceVaultTelemetryProvider`, `ProductTelemetryHarness` compatibility shim | Event buffering, provider injection, consent state, compliance exports. |
+| Telemetry | `TelemetryClient`, `TelemetryProvider`, `ComplianceVaultTelemetryProvider`, `createSignedS3StorageAdapter`, `createLogBrokerStorageAdapter`, `ProductTelemetryHarness` compatibility shim | Event buffering, provider injection, consent state, compliance exports, remote persistence adapters. |
+| Experience | `createConsentPanel` | Reusable consent UI for demos and partner plug-ins. |
 | Utilities | `createAdaptiveSDK(config)`, `AdaptiveError`, `AdaptiveLogger`, `types/adaptive-sdk.d.ts` | Bootstrapping helper returning configured engine + telemetry/consent hooks with type definitions. |
 
 ## Dependency Injection Model
@@ -31,7 +32,7 @@ Define an explicit, supportable interface for product teams and partners consumi
 
 ## Packaging Plan
 1. **Phase 1:** Ship as ESM bundle + type definitions. Provide factory `createAdaptiveSDK` returning
-   `{ engine, sensoryBridge, telemetry, registerSensorSchema, registerSensorAdapter, connectSensorAdapter, disconnectSensorAdapter, testSensorAdapter, updateTelemetryConsent, getTelemetryConsent, getTelemetryAuditTrail }` and honoring `sensorSchemas`, `sensorAdapters`, and `telemetryConsent` configuration.
+   `{ engine, sensoryBridge, telemetry, registerSensorSchema, registerSensorAdapter, connectSensorAdapter, disconnectSensorAdapter, testSensorAdapter, updateTelemetryConsent, getTelemetryConsent, getTelemetryAuditTrail }` and honoring `sensorSchemas`, `sensorAdapters`, and `telemetryConsent` configuration while bundling `createConsentPanel` and the compliance storage adapters for partner reuse.
 2. **Phase 2:** Publish adapters for React/Vue/Web Components. Ensure wearable demo consumes the same factory to avoid drift.
 3. **Phase 3:** Release plug-in kits (Figma/Webflow) that call into the SDK boundary for previews and telemetry capture.
 

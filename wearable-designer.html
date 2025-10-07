@@ -272,70 +272,24 @@
             </div>
             <p style="margin-top: 12px; color: rgba(255,255,255,0.6); font-size: 0.85rem;" id="variationLabel">1 - TETRAHEDRON LATTICE</p>
         </section>
-        <section class="panel">
-            <h2>Telemetry &amp; Consent</h2>
-            <div class="consent-grid">
-                <label class="consent-toggle">
-                    <div>
-                        <span>System Diagnostics</span>
-                        <small>Required for runtime health and adapter lifecycle.</small>
-                    </div>
-                    <input type="checkbox" data-consent="system">
-                </label>
-                <label class="consent-toggle">
-                    <div>
-                        <span>Compliance &amp; Audit</span>
-                        <small>Records schema issues and consent changes.</small>
-                    </div>
-                    <input type="checkbox" data-consent="compliance">
-                </label>
-                <label class="consent-toggle">
-                    <div>
-                        <span>Interaction Feedback</span>
-                        <small>Tracks gestures and adaptive layout reactions.</small>
-                    </div>
-                    <input type="checkbox" data-consent="interaction">
-                </label>
-                <label class="consent-toggle">
-                    <div>
-                        <span>Analytics</span>
-                        <small>Enables aggregated layout performance telemetry.</small>
-                    </div>
-                    <input type="checkbox" data-consent="analytics">
-                </label>
-                <label class="consent-toggle">
-                    <div>
-                        <span>Biometric Streams</span>
-                        <small>Includes heart rate and stress telemetry.</small>
-                    </div>
-                    <input type="checkbox" data-consent="biometric">
-                </label>
-            </div>
-            <div class="consent-status" id="consentStatus"></div>
-            <button class="secondary" id="downloadComplianceBtn" style="margin-top: 12px;">Download Compliance Log</button>
-            <ul class="compliance-log" id="complianceLog"></ul>
-        </section>
+        <section class="panel" id="telemetryConsentPanel"></section>
     </aside>
 
     <script type="module">
         import { createAdaptiveSDK } from './src/core/AdaptiveSDK.js';
         import { LayoutAnnotation } from './src/ui/adaptive/annotations/LayoutAnnotation.js';
         import { ComplianceVaultTelemetryProvider } from './src/product/telemetry/ComplianceVaultTelemetryProvider.js';
-
-        let renderConsentStatus = () => {};
-        let syncConsentToggles = () => {};
-        let refreshComplianceLog = () => {};
+        import { createConsentPanel } from './src/ui/components/ConsentPanel.js';
 
         const complianceVaultProvider = new ComplianceVaultTelemetryProvider({ maxRecords: 24 });
+        let consentPanel;
 
         const adaptiveSDK = createAdaptiveSDK({
             telemetry: {
                 enabled: true,
                 defaultConsent: { analytics: false, biometric: false },
                 onConsentDecision: (snapshot, metadata) => {
-                    renderConsentStatus(snapshot, metadata);
-                    syncConsentToggles(snapshot);
-                    refreshComplianceLog();
+                    consentPanel?.handleConsentDecision(snapshot, metadata);
                 }
             },
             telemetryProviders: [complianceVaultProvider],
@@ -382,103 +336,49 @@
         const engagementMetric = document.getElementById('engagementMetric');
         const velocityMetric = document.getElementById('velocityMetric');
         const stressMetric = document.getElementById('stressMetric');
-        const consentStatus = document.getElementById('consentStatus');
-        const complianceLog = document.getElementById('complianceLog');
-        const consentToggles = Array.from(document.querySelectorAll('[data-consent]'));
-        const downloadComplianceBtn = document.getElementById('downloadComplianceBtn');
+        const consentPanelContainer = document.getElementById('telemetryConsentPanel');
 
-        renderConsentStatus = (consent, metadata = {}) => {
-            const enabled = Object.entries(consent).filter(([, value]) => value).map(([key]) => key.toUpperCase());
-            const disabled = Object.entries(consent).filter(([, value]) => !value).map(([key]) => key.toUpperCase());
-            const auditCount = getTelemetryAuditTrail().length;
-            const source = metadata.source ? `Last change via ${metadata.source}.` : '';
-
-            const html = `
-                <strong>Active:</strong> ${enabled.length ? enabled.join(', ') : 'None'}<br>
-                <strong>Opt-out:</strong> ${disabled.length ? disabled.join(', ') : 'None'}<br>
-                <strong>Audit Entries:</strong> ${auditCount}<br>
-                ${source}
-            `;
-
-            consentStatus.innerHTML = html.trim();
-        };
-
-        syncConsentToggles = (consent) => {
-            consentToggles.forEach(toggle => {
-                const key = toggle.dataset.consent;
-                if (key in consent) {
-                    toggle.checked = Boolean(consent[key]);
+        consentPanel = createConsentPanel({
+            container: consentPanelContainer,
+            consentOptions: [
+                {
+                    classification: 'system',
+                    title: 'System Diagnostics',
+                    description: 'Required for runtime health and adapter lifecycle.'
+                },
+                {
+                    classification: 'compliance',
+                    title: 'Compliance & Audit',
+                    description: 'Records schema issues and consent changes.'
+                },
+                {
+                    classification: 'interaction',
+                    title: 'Interaction Feedback',
+                    description: 'Tracks gestures and adaptive layout reactions.'
+                },
+                {
+                    classification: 'analytics',
+                    title: 'Analytics',
+                    description: 'Enables aggregated layout performance telemetry.'
+                },
+                {
+                    classification: 'biometric',
+                    title: 'Biometric Streams',
+                    description: 'Includes heart rate and stress telemetry.'
                 }
-            });
-        };
-
-        function formatTimestamp(timestamp) {
-            if (!timestamp) return '';
-            try {
-                return new Date(timestamp).toISOString().replace('T', ' ').replace('Z', 'Z');
-            } catch (error) {
-                return String(timestamp);
-            }
-        }
-
-        refreshComplianceLog = () => {
-            const recent = complianceVaultProvider.getRecords().slice(-4).reverse();
-            complianceLog.innerHTML = '';
-
-            if (!recent.length) {
-                const empty = document.createElement('li');
-                empty.textContent = 'No compliance events captured yet.';
-                complianceLog.appendChild(empty);
-                return;
-            }
-
-            recent.forEach(entry => {
-                const item = document.createElement('li');
-                item.textContent = `${entry.event} • ${entry.classification.toUpperCase()}`;
-                const meta = document.createElement('span');
-                const sourceLabel = entry.source ? ` • ${entry.source}` : '';
-                meta.textContent = `${formatTimestamp(entry.timestamp)}${sourceLabel}`;
-                item.appendChild(meta);
-                complianceLog.appendChild(item);
-            });
-        };
-
-        const initialConsent = getTelemetryConsent();
-        syncConsentToggles(initialConsent);
-        renderConsentStatus(initialConsent);
-        refreshComplianceLog();
-
-        consentToggles.forEach(toggle => {
-            toggle.addEventListener('change', event => {
-                const classification = toggle.dataset.consent;
-                const enabled = toggle.checked;
+            ],
+            getTelemetryConsent,
+            getComplianceRecords: () => complianceVaultProvider.getRecords(),
+            getTelemetryAuditTrail,
+            refreshInterval: 6000,
+            downloadFileNamePrefix: 'vib34d-compliance-log',
+            onConsentToggle: (classification, enabled) => {
                 updateTelemetryConsent({ [classification]: enabled }, { source: 'wearable-designer-ui' });
+            },
+            trackConsentToggle: (classification, enabled) => {
                 telemetryHarness.track('privacy.consent.ui_toggle', { classification, enabled }, { classification: 'compliance' });
-                refreshComplianceLog();
-            });
-        });
-
-        downloadComplianceBtn.addEventListener('click', () => {
-            const records = complianceVaultProvider.getRecords();
-            const blob = new Blob([
-                JSON.stringify({
-                    generatedAt: new Date().toISOString(),
-                    records
-                }, null, 2)
-            ], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `vib34d-compliance-log-${Date.now()}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        });
-
-        setInterval(() => {
-            refreshComplianceLog();
-        }, 6000);
+            }
+        }).mount();
 
         variationSlider.addEventListener('input', (event) => {
             const value = Number(event.target.value);

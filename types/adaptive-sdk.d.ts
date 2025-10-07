@@ -72,17 +72,19 @@ export interface AdaptiveSDK {
   getTelemetryAuditTrail(): TelemetryAuditEntry[];
 }
 
+export interface ComplianceVaultStorageAdapter {
+  read?(): TelemetryAuditEntry[] | Promise<TelemetryAuditEntry[]>;
+  write?(records: TelemetryAuditEntry[]): void | Promise<void>;
+  clear?(): void | Promise<void>;
+}
+
 export interface ComplianceVaultTelemetryProviderOptions {
   id?: string;
   metadata?: Record<string, unknown>;
   storageKey?: string;
   maxRecords?: number;
   includeClassifications?: string[];
-  storageAdapter?: {
-    read?(): TelemetryAuditEntry[];
-    write?(records: TelemetryAuditEntry[]): void;
-    clear?(): void;
-  };
+  storageAdapter?: ComplianceVaultStorageAdapter;
 }
 
 export class ComplianceVaultTelemetryProvider {
@@ -92,6 +94,66 @@ export class ComplianceVaultTelemetryProvider {
   getRecords(): TelemetryAuditEntry[];
   clear(): void;
   flush(): void;
+  whenReady(): Promise<TelemetryAuditEntry[]>;
+}
+
+export interface ConsentToggleOption {
+  classification: string;
+  title: string;
+  description: string;
+}
+
+export interface ConsentPanelOptions {
+  container: HTMLElement;
+  consentOptions?: ConsentToggleOption[];
+  getTelemetryConsent?: () => TelemetryConsentMap;
+  onConsentToggle?: (classification: string, enabled: boolean) => void;
+  getComplianceRecords?: () => TelemetryAuditEntry[];
+  getTelemetryAuditTrail?: () => TelemetryAuditEntry[];
+  refreshInterval?: number;
+  downloadFormatter?: (records: TelemetryAuditEntry[]) => string;
+  downloadFileNamePrefix?: string;
+  onDownload?: (options: { records: TelemetryAuditEntry[]; payload: unknown }) => void;
+  onRender?: (options: { consent: TelemetryConsentMap; metadata?: Record<string, unknown> }) => void;
+  trackConsentToggle?: (classification: string, enabled: boolean) => void;
+  heading?: string;
+}
+
+export interface ConsentPanelApi {
+  mount(): ConsentPanelApi;
+  destroy(): void;
+  refreshComplianceLog(): void;
+  handleConsentDecision(consent: TelemetryConsentMap, metadata?: Record<string, unknown>): void;
+}
+
+export interface SignedS3StorageAdapterOptions {
+  signingEndpoint: string;
+  signingMethod?: string;
+  signingHeaders?: Record<string, string>;
+  signingPayload?: Record<string, unknown>;
+  uploadMethod?: string;
+  uploadHeaders?: Record<string, string>;
+  fetchImplementation?: typeof fetch;
+  serialize?: (records: TelemetryAuditEntry[]) => string | object;
+  onUploadComplete?: (info: { key?: string; location?: string; recordCount: number }) => void;
+  onError?: (error: Error) => void;
+  deleteEndpoint?: string;
+  deleteMethod?: string;
+}
+
+export interface LogBrokerStorageAdapterOptions {
+  endpoint: string;
+  method?: string;
+  headers?: Record<string, string>;
+  fetchImplementation?: typeof fetch;
+  serialize?: (records: TelemetryAuditEntry[]) => string | object;
+  onError?: (error: Error) => void;
+}
+
+export interface RemoteStorageAdapter {
+  write(records: TelemetryAuditEntry[]): Promise<void>;
+  clear(): Promise<void | undefined>;
+  read(): Promise<TelemetryAuditEntry[]>;
 }
 
 declare module './src/core/AdaptiveSDK.js' {
@@ -100,4 +162,22 @@ declare module './src/core/AdaptiveSDK.js' {
 
 declare module '../src/core/AdaptiveSDK.js' {
   export function createAdaptiveSDK(config?: AdaptiveSDKConfig): AdaptiveSDK;
+}
+
+declare module './src/ui/components/ConsentPanel.js' {
+  export function createConsentPanel(options?: ConsentPanelOptions): ConsentPanelApi;
+}
+
+declare module '../src/ui/components/ConsentPanel.js' {
+  export function createConsentPanel(options?: ConsentPanelOptions): ConsentPanelApi;
+}
+
+declare module './src/product/telemetry/storage/RemoteStorageAdapters.js' {
+  export function createSignedS3StorageAdapter(options: SignedS3StorageAdapterOptions): RemoteStorageAdapter;
+  export function createLogBrokerStorageAdapter(options: LogBrokerStorageAdapterOptions): RemoteStorageAdapter;
+}
+
+declare module '../src/product/telemetry/storage/RemoteStorageAdapters.js' {
+  export function createSignedS3StorageAdapter(options: SignedS3StorageAdapterOptions): RemoteStorageAdapter;
+  export function createLogBrokerStorageAdapter(options: LogBrokerStorageAdapterOptions): RemoteStorageAdapter;
 }

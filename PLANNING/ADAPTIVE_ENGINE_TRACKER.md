@@ -28,8 +28,8 @@ This tracker translates the architecture review into actionable engineering work
 | B-08 | Layout/telemetry modularization brief | Capture target module structure + acceptance for strategy/provider refactor. | Core Team | ✅ Done | Phase 2 |
 | B-09 | Privacy & consent hardening | Document telemetry data classifications and provider consent requirements. | Core Team | ✅ Done | Phase 1 |
 | B-10 | Strategy pack starter kits | Package reference strategies/annotations for partner SDK add-ons. | Platform Team | Planned | Phase 2 |
-| B-11 | Consent UI components | Build reusable consent toggles for demos and partner plug-ins. | Experience Team | ⏳ In Progress | Phase 2 |
-| B-12 | Compliance telemetry export | Persist validation/audit events to partner-approved storage. | Core Team | ⏳ In Progress | Phase 2 |
+| B-11 | Consent UI components | Build reusable consent toggles for demos and partner plug-ins. | Experience Team | ✅ Done | Phase 2 |
+| B-12 | Compliance telemetry export | Persist validation/audit events to partner-approved storage. | Core Team | ✅ Done | Phase 2 |
 
 ## Current Sprint (Phase 0)
 | ID | Task | Acceptance Criteria | Status | Notes |
@@ -61,15 +61,16 @@ This tracker translates the architecture review into actionable engineering work
 | 2025-10-11 | B-02 | Sensor schema registry + validation integrated into sensory bridge with Vitest coverage. | Layer consent prompts + hardware adapter lifecycle into follow-up tasks. |
 | 2025-10-12 | B-09 | Telemetry consent classifications, audit logging, and sensor lifecycle hooks documented and implemented. | Ship consent UI components (B-11) and persistence plan (B-12). |
 | 2025-10-13 | B-11/B-12 | Wearable designer updated with consent toggles + compliance export provider to exercise the telemetry vault. | Package UI into reusable components and define partner storage adapters/policies. |
+| 2025-10-14 | B-11/B-12 | Consent panel extracted into reusable component; remote compliance storage adapters (S3 presign, log broker) implemented with documentation and tests. | Monitor partner adoption feedback, add encryption + retention enforcement to remote adapters. |
 
 ## Blockers & Risks
 - **Documentation credibility:** Marketing-heavy messaging conflicts with current engineering readiness. Resolving S0-03 is critical for stakeholder trust.
 - **Strategy validation:** Partner-specific layout strategy packs still need authoring and validation against real wearable surfaces.
 - **Environment footprint:** Playwright OS dependencies exceed lightweight container limits. Vitest adoption reduces immediate pressure, but CI image work is still required before enabling Playwright suites.
-- **Telemetry/privacy follow-up:** Consent gating exists, but signed provider integrations and long-term audit storage remain open (see backlog items B-01, B-12).
+- **Telemetry/privacy follow-up:** Consent gating exists, but signed provider integrations and long-term audit storage policies still need definition (focus shifts to B-01 follow-ups and remote adapter hardening).
 - **Dependency security:** `npm install` reports four moderate vulnerabilities; schedule audit once SDK packaging stabilizes.
 
 ## Next Review
 - **Owner:** Core Team Lead
 - **Date:** 2025-10-14
-- **Agenda:** Resolve environment automation strategy (B-07), lock SDK boundary acceptance criteria (B-01), and prioritize consent UI/persistence follow-ups (B-11, B-12).
+- **Agenda:** Resolve environment automation strategy (B-07), lock SDK boundary acceptance criteria (B-01), and define hardening roadmap for remote compliance adapters + long-term retention.

@@ -17,7 +17,7 @@ http://localhost:8080/wearable-designer.html
 
 > **Note:** `wearable-designer.html` is a prototype experience that wires the adaptive engine into a marketing-oriented UI. It is not yet packaged as a reusable toolkit.
 
-> **New:** The demo shell now ships with a telemetry consent panel and downloadable compliance log powered by the `ComplianceVaultTelemetryProvider`. Use it to trial consent toggles and review the audit stream before embedding the SDK elsewhere.
+> **New:** The demo shell now ships with the reusable `createConsentPanel` experience and downloadable compliance exports powered by `ComplianceVaultTelemetryProvider` plus the remote storage adapters. Use it to trial consent toggles and review the audit stream before embedding the SDK elsewhere.
 
 ## 🧠 Adaptive Architecture Overview
 
@@ -27,9 +27,9 @@ http://localhost:8080/wearable-designer.html
 | Sensory Input | Normalizes gaze, neural, biometric, and ambient signals into semantic channels with schema validation. | `src/ui/adaptive/SensoryInputBridge.js`, `src/ui/adaptive/sensors/SensorSchemaRegistry.js` |
 | Layout Synthesis | Generates intent-driven layout descriptors, motion cues, and color adaptation guidance using pluggable strategies/annotations. | `src/ui/adaptive/SpatialLayoutSynthesizer.js`, `src/ui/adaptive/strategies/*`, `src/ui/adaptive/annotations/*` |
 | Design Language | Maps engine variations to monetizable interface patterns and integration metadata. | `src/features/DesignLanguageManager.js`, `src/ui/adaptive/InterfacePatternRegistry.js` |
-| Telemetry | Classifies events, gates analytics/biometrics behind consent, and dispatches via provider interfaces (console, HTTP, partner, compliance vault). | `src/product/ProductTelemetryHarness.js`, `src/product/telemetry/*` |
+| Telemetry | Classifies events, gates analytics/biometrics behind consent, dispatches via provider interfaces (console, HTTP, partner, compliance vault), and streams audit trails into remote stores. | `src/product/ProductTelemetryHarness.js`, `src/product/telemetry/*`, `src/product/telemetry/storage/RemoteStorageAdapters.js` |
 | SDK Composition | Lightweight factory for DI-based integration into partner shells. | `src/core/AdaptiveSDK.js` |
-| Experience Shell | Demonstration UI highlighting adaptive behaviours and commercialization hooks. | `wearable-designer.html` |
+| Experience Shell | Demonstration UI highlighting adaptive behaviours and commercialization hooks (now composed with `createConsentPanel`). | `wearable-designer.html`, `src/ui/components/ConsentPanel.js` |
 
 Read the [Adaptive Engine Architecture Review](DOCS/ADAPTIVE_ENGINE_ARCHITECTURE_REVIEW.md) for an in-depth assessment of the current implementation, strengths, and risks.
 
@@ -45,7 +45,7 @@ Read the [Adaptive Engine Architecture Review](DOCS/ADAPTIVE_ENGINE_ARCHITECTURE
 - `DOCS/PARTNER_INTEGRATION_STRATEGY.md` – High-level integration opportunities for tooling ecosystems.
 - [Wearable Designer Migration Checklist](PLANNING/WEARABLE_DESIGNER_MIGRATION_CHECKLIST.md) – Tasks for porting the demo shell onto the modular runtime once interfaces stabilize.
 
-Phase 1 now delivers runtime-pluggable layout strategies, annotations, telemetry providers, sensor payload schema validation, consent-aware telemetry, and downloadable audit exports via the `AdaptiveSDK` factory. Upcoming focus areas include promoting the consent UI components into reusable packages, deepening hardware adapter lifecycle coverage, and porting experience shells onto the new factory. Progress on these tasks is recorded in the tracker above.
+Phase 1 now delivers runtime-pluggable layout strategies, annotations, telemetry providers, sensor payload schema validation, consent-aware telemetry, a reusable consent panel component, and downloadable audit exports with remote storage adapters via the `AdaptiveSDK` factory. Upcoming focus areas include hardening remote compliance adapters (encryption/retention), deepening hardware adapter lifecycle coverage, and porting experience shells onto the new factory. Progress on these tasks is recorded in the tracker above.
 
 ## 🎨 Engine Heritage
 
