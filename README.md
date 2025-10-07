@@ -1,57 +1,62 @@
-# VIB34D Holographic Visualization Engine
+# VIB34D Adaptive Interface Platform (Prototype)
 
-A WebGL-based 4D mathematics visualization system with 4 different rendering engines.
+The VIB34D visualization engine now includes an experimental adaptive layer aimed at wearable, ambient, and projection-first interfaces. The current codebase demonstrates the concept but still requires significant engineering work before it can be marketed as a supported SDK. Start here to understand the available pieces and how we plan to evolve them.
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Concept Demo)
 
 ```bash
 # Clone and navigate
-cd v2-refactored-mobile-fix
+cd vib34d-ultimate-viewer
 
-# Start local server
+# Start local server (no build tooling required)
 python3 -m http.server 8080
 
-# Open in browser
-http://localhost:8080/index-clean.html
+# Open the wearable/ambient demo shell
+http://localhost:8080/wearable-designer.html
 ```
 
-## 🎮 The 4 Systems
+> **Note:** `wearable-designer.html` is a prototype experience that wires the adaptive engine into a marketing-oriented UI. It is not yet packaged as a reusable toolkit.
 
-**🔷 FACETED** - Simple 2D geometric patterns  
-**🌌 QUANTUM** - Complex 3D lattice effects  
-**✨ HOLOGRAPHIC** - Audio-reactive visualizations  
-**🔮 POLYCHORA** - True 4D polytope mathematics  
+## 🧠 Adaptive Architecture Overview
 
-Switch between systems using the top navigation buttons. All systems share the same 11-parameter control system.
+| Layer | Purpose | Key Files |
+|-------|---------|-----------|
+| Core Runtime | Extends the legacy `VIB34DIntegratedEngine` with adaptive hooks while preserving existing visualizers. | `src/core/AdaptiveInterfaceEngine.js` |
+| Sensory Input | Normalizes gaze, neural, biometric, and ambient signals into semantic channels. | `src/ui/adaptive/SensoryInputBridge.js` |
+| Layout Synthesis | Generates intent-driven layout descriptors, motion cues, and color adaptation guidance. | `src/ui/adaptive/SpatialLayoutSynthesizer.js` |
+| Design Language | Maps engine variations to monetizable interface patterns and integration metadata. | `src/features/DesignLanguageManager.js`, `src/ui/adaptive/InterfacePatternRegistry.js` |
+| Telemetry | Buffers analytics/licensing events for later provider integration. | `src/product/ProductTelemetryHarness.js` |
+| Experience Shell | Demonstration UI highlighting adaptive behaviours and commercialization hooks. | `wearable-designer.html` |
 
-## 📱 Mobile Support
+Read the [Adaptive Engine Architecture Review](DOCS/ADAPTIVE_ENGINE_ARCHITECTURE_REVIEW.md) for an in-depth assessment of the current implementation, strengths, and risks.
 
-Mobile performance is optimized. The system loads quickly on phones and runs at 45-60 FPS on most devices.
+## 📈 Roadmap & Tracking
 
-## 🎨 Features
+- [Adaptive Engine Development Tracker](PLANNING/ADAPTIVE_ENGINE_TRACKER.md) – Source of truth for backlog, sprint focus, and environment readiness.
+- [Adaptive Engine Core Viability Assessment](DOCS/ADAPTIVE_ENGINE_CORE_ASSESSMENT.md) – Deep-dive on whether the current stack can graduate to a commercial SDK and what refactors are required.
+- [Adaptive Engine Testing Stack Evaluation](DOCS/TESTING_STACK_EVALUATION.md) – Recommendation to adopt Vitest + jsdom for Phase 1 coverage while keeping Playwright optional.
+- [Layout & Telemetry Modularization Brief](DOCS/LAYOUT_TELEMETRY_MODULARIZATION_BRIEF.md) – Target interfaces and acceptance criteria for strategy/provider refactors.
+- [Adaptive SDK Boundary Proposal](DOCS/SDK_BOUNDARY_PROPOSAL.md) – Proposed public API surface, dependency injection model, and packaging plan for commercialization.
+- `DOCS/ADAPTIVE_UI_PRODUCT_PLAN.md` – Strategic objectives and go-to-market framing from the previous refactor.
+- `DOCS/PARTNER_INTEGRATION_STRATEGY.md` – High-level integration opportunities for tooling ecosystems.
+- [Wearable Designer Migration Checklist](PLANNING/WEARABLE_DESIGNER_MIGRATION_CHECKLIST.md) – Tasks for porting the demo shell onto the modular runtime once interfaces stabilize.
 
-- **Real-time 4D mathematics** with WebGL rendering
-- **11 parameter control system** with live updates  
-- **Gallery system** for saving/loading configurations
-- **Trading card export** in multiple formats
-- **Audio reactivity** in holographic system
-- **Cross-system compatibility** - parameters work across all engines
+Upcoming focus areas include defining a formal SDK boundary, introducing sensor data schemas, modularizing layout strategies, and replacing the telemetry stub with provider plug-ins. Progress on these tasks is recorded in the tracker above.
 
-## 🔧 Development
+## 🎨 Engine Heritage
 
-Main files:
-- `index-clean.html` - Main interface (427 lines)
-- `js/core/app.js` - System controller  
-- `js/controls/ui-handlers.js` - Parameter controls
-- `src/` - Engine implementations
+All four holographic subsystems remain available for creative workflows and continue to share the unified parameter controls described in `SYSTEM_STATUS.md`. The adaptive layer currently sits on top of this proven rendering core.
 
-CSS is modularized in `styles/` directory. All JavaScript uses ES6 modules with graceful fallbacks.
+## 🔧 Development Notes
 
-## 📊 Status
+- The adaptive modules are delivered as native ES modules; a static HTTP server is sufficient for local prototyping.
+- Legacy gallery/test harnesses remain in the repository to preserve historical functionality while refactoring proceeds.
+- Automated testing for the adaptive pipeline now uses Vitest + jsdom (`npm test`). Playwright smoke suites remain available under `npm run test:e2e*` but require optional browser installs.
 
-✅ All systems operational  
-✅ Mobile optimized  
-✅ No critical issues  
-✅ Ready for use  
+## 📊 Reality Check
 
-See `CLAUDE.md` for detailed documentation and `SYSTEM_STATUS.md` for current technical status.
+- ⚠️ Prototype status – Suitable for demonstrations, not production deployments.
+- ⚠️ Documentation gap – API contracts, adapter lifecycles, and telemetry providers still need formal specs.
+- ✅ Visualization core – Legacy systems remain stable and documented (see `SYSTEM_STATUS.md`).
+
+Contributions should reference the architecture review and tracker documents to stay aligned with the evolving roadmap.
