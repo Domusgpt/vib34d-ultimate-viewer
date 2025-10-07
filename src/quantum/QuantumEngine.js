@@ -6,6 +6,7 @@
 import { QuantumHolographicVisualizer } from './QuantumVisualizer.js';
 import { ParameterManager } from '../core/Parameters.js';
 import { GeometryLibrary } from '../geometry/GeometryLibrary.js';
+import { getPerformanceSuiteHost } from '../ui/PerformanceSuiteHost.js';
 
 export class QuantumEngine {
     constructor() {
@@ -34,8 +35,9 @@ export class QuantumEngine {
         this.parameters.setParameter('saturation', 0.9); // More vivid
         this.parameters.setParameter('gridDensity', 20); // Denser patterns
         this.parameters.setParameter('morphFactor', this.baseMorphFactor);
-        
+
         this.init();
+        this.initializePerformanceSuite();
     }
     
     /**
@@ -47,6 +49,20 @@ export class QuantumEngine {
         this.setupGestureVelocityReactivity(); // Additional gesture system
         this.startRenderLoop();
         console.log('✨ Quantum Engine initialized with audio + gesture velocity reactivity');
+    }
+
+    initializePerformanceSuite() {
+        if (typeof document === 'undefined') return;
+
+        try {
+            const host = getPerformanceSuiteHost();
+            this.performanceSuite = host.activateEngine(this, {
+                systemName: 'quantum',
+                parameterManager: this.parameters
+            });
+        } catch (error) {
+            console.warn('⚠️ Quantum performance suite initialization failed:', error);
+        }
     }
     
     /**
@@ -573,6 +589,12 @@ export class QuantumEngine {
             }
         });
         this.visualizers = [];
+
+        const host = typeof window !== 'undefined' ? window.performanceSuiteHost : null;
+        if (host?.detachEngine) {
+            host.detachEngine(this);
+            this.performanceSuite = null;
+        }
         console.log('🧹 Quantum Engine destroyed');
     }
 }
