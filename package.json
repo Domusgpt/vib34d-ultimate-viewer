@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "description": "**Revolutionary transformation: 20+ WebGL contexts → 1 unified context**",
   "main": "index.js",
+  "types": "types/adaptive-sdk.d.ts",
   "scripts": {
-    "test": "npx playwright test",
-    "test:headed": "npx playwright test --headed",
-    "test:debug": "npx playwright test --debug",
-    "test:report": "npx playwright show-report",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npx playwright test",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:debug": "npx playwright test --debug",
+    "test:e2e:smoke": "npx playwright test --project=chromium --grep @smoke",
+    "test:e2e:report": "npx playwright show-report",
     "dev": "python3 -m http.server 8145"
   },
   "repository": {
@@ -24,6 +28,8 @@
   "homepage": "https://github.com/Domusgpt/v2-refactored#readme",
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "playwright": "^1.55.0"
+    "jsdom": "^23.2.0",
+    "playwright": "^1.55.0",
+    "vitest": "^1.6.0"
   }
 }
