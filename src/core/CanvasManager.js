@@ -3,6 +3,8 @@
  * No canvas destruction - HTML canvases stay put, just switch visibility
  */
 
+import { getPerformanceSuiteHost } from '../ui/PerformanceSuiteHost.js';
+
 export class CanvasManager {
   constructor() {
     this.currentSystem = null;
@@ -11,9 +13,14 @@ export class CanvasManager {
 
   async switchToSystem(systemName, engineClasses) {
     console.log(`🔄 DESTROY OLD → CREATE NEW: ${systemName}`);
-    
+
+    const suiteHost = typeof document !== 'undefined' ? getPerformanceSuiteHost() : null;
+
     // STEP 1: DESTROY current engine completely
     if (this.currentEngine) {
+      if (suiteHost) {
+        suiteHost.prepareForEngineSwitch(this.currentEngine);
+      }
       if (this.currentEngine.setActive) {
         this.currentEngine.setActive(false);
       }
@@ -31,6 +38,10 @@ export class CanvasManager {
     
     // STEP 4: CREATE fresh engine
     const engine = await this.createFreshEngine(systemName, engineClasses);
+
+    if (engine && suiteHost) {
+      suiteHost.activateEngine(engine, { systemName });
+    }
     
     // STEP 5: Start new engine
     if (engine && engine.setActive) {
