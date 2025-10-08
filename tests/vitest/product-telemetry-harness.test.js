@@ -1,0 +1,372 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { ProductTelemetryHarness } from '../../src/product/ProductTelemetryHarness.js';
+import { HttpTelemetryProvider } from '../../src/product/telemetry/HttpTelemetryProvider.js';
+import { LicenseManager } from '../../src/product/licensing/LicenseManager.js';
+
+describe('ProductTelemetryHarness', () => {
+  let fetchMock;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('routes events to registered providers and clears them on flush', async () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    harness.updateConsent({ analytics: true });
+    harness.track('layout-generated', { variant: 'core', userId: 'abc' });
+    const consoleProvider = harness.providers.get('console');
+
+    expect(consoleProvider.events).toHaveLength(1);
+    expect(consoleProvider.events[0].event).toBe('layout-generated');
+
+    await harness.flush();
+    expect(consoleProvider.events).toHaveLength(0);
+  });
+
+  it('applies data minimization policies before dispatching payloads', () => {
+    const harness = new ProductTelemetryHarness({
+      consoleProvider: { log: false },
+      dataMinimization: { anonymize: true, omitLicense: true }
+    });
+
+    harness.attachLicense('secret-license');
+    harness.updateConsent({ analytics: true });
+    harness.track('gesture', { identity: 'user-1', magnitude: 0.8, userId: '123' });
+
+    const record = harness.buffer[0];
+    expect(record.licenseKey).toBeUndefined();
+    expect(record.payload.identity).toBeUndefined();
+    expect(record.payload.userId).toBeUndefined();
+    expect(record.payload.magnitude).toBe(0.8);
+  });
+
+  it('supports swappable HTTP providers with async flush', async () => {
+    const httpProvider = new HttpTelemetryProvider({ endpoint: 'https://telemetry.example/collect' });
+    const harness = new ProductTelemetryHarness({
+      useDefaultProvider: false,
+      providers: [httpProvider],
+      flushInterval: 5000,
+      licenseKey: 'test-license'
+    });
+
+    harness.updateConsent({ analytics: true });
+    harness.track('pattern-triggered', { id: 'focus-coach' });
+    expect(httpProvider.queue).toHaveLength(1);
+
+    await harness.flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('https://telemetry.example/collect', expect.objectContaining({ method: 'POST' }));
+    expect(httpProvider.queue).toHaveLength(0);
+  });
+
+  it('applies registered request middleware before provider flush', async () => {
+    const httpProvider = new HttpTelemetryProvider({ endpoint: 'https://telemetry.example/collect' });
+    const harness = new ProductTelemetryHarness({
+      useDefaultProvider: false,
+      providers: [httpProvider],
+      flushInterval: 5000
+    });
+
+    const middleware = vi.fn(async (context) => ({
+      options: {
+        headers: {
+          'x-signature': 'signed-value'
+        }
+      },
+      metadata: {
+        signature: {
+          algorithm: 'HMAC-SHA256'
+        }
+      }
+    }));
+
+    harness.registerRequestMiddleware(middleware);
+
+    harness.updateConsent({ analytics: true });
+    harness.track('pattern-triggered', { id: 'focus-coach' });
+
+    await harness.flush();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://telemetry.example/collect',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'x-signature': 'signed-value' })
+      })
+    );
+    expect(middleware).toHaveBeenCalled();
+  });
+
+  it('respects disabled state by ignoring tracking and timers', () => {
+    const harness = new ProductTelemetryHarness({ enabled: false, flushInterval: 2000 });
+    const flushSpy = vi.spyOn(harness, 'flush');
+
+    harness.track('ignored', {});
+    harness.start();
+    vi.advanceTimersByTime(6000);
+
+    expect(harness.buffer).toHaveLength(0);
+    expect(flushSpy).not.toHaveBeenCalled();
+  });
+
+  it('gates analytics events until consent is granted', () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    harness.track('design.spec.activated', { variation: 'focus-a' });
+    expect(harness.buffer).toHaveLength(0);
+
+    harness.updateConsent({ analytics: true });
+    harness.track('design.spec.activated', { variation: 'focus-b' });
+
+    expect(harness.buffer).toHaveLength(1);
+    expect(harness.buffer[0].classification).toBe('analytics');
+
+    const audit = harness.getAuditTrail();
+    expect(audit.find(entry => entry.event === 'privacy.consent.updated')).toBeTruthy();
+    expect(audit.find(entry => entry.event === 'privacy.event.blocked')).toBeTruthy();
+  });
+
+  it('records schema issues for compliance review', () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    harness.recordSchemaIssue({ type: 'eye-tracking', issues: [{ field: 'x', code: 'max' }], payload: { x: 1 } });
+
+    expect(harness.buffer).toHaveLength(1);
+    expect(harness.buffer[0].event).toBe('sensors.schema_issue');
+    expect(harness.buffer[0].classification).toBe('compliance');
+
+    const audit = harness.getAuditTrail();
+    expect(audit.at(-1).event).toBe('compliance.schema.issue');
+  });
+
+  it('notifies telemetry providers when audit events are recorded', () => {
+    const auditProvider = { id: 'audit-sink', recordAudit: vi.fn() };
+    const harness = new ProductTelemetryHarness({
+      useDefaultProvider: false,
+      providers: [auditProvider]
+    });
+
+    harness.recordAudit('privacy.event.blocked', { reason: 'test' });
+
+    expect(auditProvider.recordAudit).toHaveBeenCalledTimes(1);
+    expect(auditProvider.recordAudit).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'privacy.event.blocked', classification: 'compliance' })
+    );
+  });
+
+  it('blocks telemetry when the license is inactive', async () => {
+    const licenseManager = new LicenseManager({ clock: () => new Date('2025-02-01T00:00:00Z') });
+    const harness = new ProductTelemetryHarness({ licenseManager, consoleProvider: { log: false } });
+
+    licenseManager.setLicense({ key: 'expired-license', expiresAt: '2025-01-01T00:00:00Z' });
+    await licenseManager.validate();
+
+    harness.updateConsent({ analytics: true });
+    harness.track('design.spec.activated', { variation: 'focus-a' });
+
+    expect(harness.buffer).toHaveLength(0);
+    expect(harness.getAuditTrail().some(entry => entry.event === 'compliance.license.blocked')).toBe(true);
+  });
+
+  it('allows telemetry after the license validates successfully', async () => {
+    const validator = vi.fn().mockResolvedValue({ valid: true });
+    const licenseManager = new LicenseManager({
+      validators: [validator],
+      clock: () => new Date('2025-01-01T00:00:00Z')
+    });
+    const harness = new ProductTelemetryHarness({ licenseManager, consoleProvider: { log: false } });
+
+    licenseManager.setLicense({ key: 'valid-license', expiresAt: '2025-12-31T00:00:00Z' });
+    await licenseManager.validate();
+
+    harness.updateConsent({ analytics: true });
+    harness.track('design.spec.activated', { variation: 'focus-b' });
+
+    expect(harness.buffer).toHaveLength(1);
+    expect(validator).toHaveBeenCalled();
+  });
+
+  it('records audit events from license attestors', () => {
+    const events = [];
+    const attestor = {
+      on: vi.fn((event, handler) => {
+        events.push(event);
+        if (event === 'attestation') {
+          handler({ event: 'attestation', status: 'ok' });
+        }
+        if (event === 'error') {
+          handler({ error: new Error('failure') });
+        }
+        return () => {};
+      })
+    };
+
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+    harness.setLicenseAttestor(attestor);
+
+    const auditEvents = harness.getAuditTrail().map(entry => entry.event);
+    expect(events).toContain('attestation');
+    expect(auditEvents).toContain('compliance.license.attestation');
+    expect(auditEvents).toContain('compliance.license.attestor_error');
+  });
+
+  it('registers license attestation profile packs during bootstrap', () => {
+    const harness = new ProductTelemetryHarness({
+      consoleProvider: { log: false },
+      licenseAttestationProfilePackId: 'enterprise-saas',
+      licenseAttestationProfilePackOptions: {
+        regions: ['global', 'apac'],
+        baseUrl: 'https://attest.example.com/licenses'
+      }
+    });
+
+    const profiles = harness.getLicenseAttestationProfiles();
+    const profileIds = profiles.map(profile => profile.id);
+
+    expect(profileIds).toContain('enterprise-saas/global');
+    expect(profileIds).toContain('enterprise-saas/apac');
+    expect(harness.getLicenseAttestationProfile('enterprise-saas/global')).toBeTruthy();
+
+    const auditEvents = harness.getAuditTrail().map(entry => entry.event);
+    expect(auditEvents).toContain('system.license.attestation_profile_pack_registered');
+    expect(harness.licenseAttestationProfiles.getDefaultProfileId()).toBe('enterprise-saas/global');
+  });
+
+  it('supports manual registration of profile packs with opt-out defaulting', () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    const result = harness.registerLicenseAttestationProfilePack('studio-collab', {
+      collaborationId: 'aurora',
+      applyDefault: false,
+      regions: ['global']
+    });
+
+    expect(result.profileIds).toHaveLength(1);
+    expect(result.profileIds[0]).toContain('studio-collab/aurora');
+    expect(harness.licenseAttestationProfiles.getDefaultProfileId()).toBeNull();
+  });
+
+  it('applies license attestation profiles and records audit events', () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      async text() {
+        return JSON.stringify({ valid: true });
+      }
+    }));
+
+    const harness = new ProductTelemetryHarness({
+      consoleProvider: { log: false },
+      licenseAttestationProfiles: [
+        {
+          id: 'wearables-enterprise',
+          attestor: {
+            attestationUrl: 'https://licensing.example/attest',
+            fetch: fetchMock,
+            pollIntervalMs: 120000
+          },
+          binding: {
+            attestorOptions: { immediate: true }
+          },
+          sla: { failOpen: true, responseTargetMs: 8000 }
+        }
+      ],
+      defaultLicenseAttestationProfileId: 'wearables-enterprise'
+    });
+
+    const profileResult = harness.setLicenseAttestorFromProfile('wearables-enterprise', {
+      attestorOptions: { pollIntervalMs: 60000 },
+      binding: { attestorOptions: { immediate: false } },
+      metadata: { market: 'apac' }
+    });
+
+    expect(profileResult.binding.attestorOptions).toEqual({ immediate: false });
+    expect(profileResult.profile.metadata).toEqual({ market: 'apac' });
+    expect(harness.licenseAttestor).toBe(profileResult.attestor);
+
+    const auditEvents = harness.getAuditTrail().map(entry => entry.event);
+    expect(auditEvents).toContain('system.license.attestation_profile_registered');
+    expect(auditEvents).toContain('system.license.attestation_profile_applied');
+  });
+
+  it('surfaces commercialization summaries when packs are registered', () => {
+    const updates = [];
+    const harness = new ProductTelemetryHarness({
+      consoleProvider: { log: false },
+      commercialization: {
+        onUpdate: summary => updates.push(summary)
+      }
+    });
+
+    harness.registerLicenseAttestationProfile({
+      id: 'direct-profile',
+      name: 'Direct Profile',
+      attestor: {
+        attestationUrl: 'https://license.example.com/attest',
+        revocationUrl: 'https://license.example.com/revoke',
+        entitlementsUrl: 'https://license.example.com/entitlements'
+      },
+      metadata: { segment: 'enterprise', region: 'global' }
+    });
+
+    const packResult = harness.registerLicenseAttestationProfilePack('studio-collab', {
+      applyDefault: false,
+      collaborationId: 'vitest'
+    });
+
+    const profileId = packResult.profileIds[0];
+    harness.setLicenseAttestorFromProfile(profileId);
+
+    const summary = harness.getCommercializationSummary();
+    expect(summary.packs.length).toBeGreaterThan(0);
+    expect(summary.profiles.length).toBeGreaterThan(0);
+    expect(summary.segments.enterprise.profileCount).toBeGreaterThan(0);
+    expect(summary.regions.global.profileCount).toBeGreaterThan(0);
+    expect(updates.length).toBeGreaterThan(0);
+  });
+
+  it('captures commercialization snapshots and exports KPI data', () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    harness.registerLicenseAttestationProfilePack('enterprise-saas', { applyDefault: true });
+    const snapshot = harness.captureCommercializationSnapshot({ trigger: 'vitest', capturedBy: 'harness-test' });
+
+    expect(snapshot).toBeTruthy();
+    expect(snapshot.kpis.totalPacks).toBeGreaterThan(0);
+
+    const snapshots = harness.getCommercializationSnapshots();
+    expect(snapshots.length).toBeGreaterThan(0);
+
+    const report = harness.getCommercializationKpiReport();
+    expect(report.latest).not.toBeNull();
+
+    const exportPayload = harness.exportCommercializationSnapshots({ format: 'json', includeSummary: false });
+    expect(exportPayload).toContain('"snapshotCount"');
+
+    const csv = harness.exportCommercializationSnapshots({ format: 'csv' });
+    expect(csv.split('\n')[0]).toContain('totalPacks');
+  });
+
+  it('schedules periodic commercialization snapshots', () => {
+    const harness = new ProductTelemetryHarness({ consoleProvider: { log: false } });
+
+    harness.registerLicenseAttestationProfilePack('studio-collab', { applyDefault: false, collaborationId: 'schedule-test' });
+
+    const stop = harness.startCommercializationSnapshotSchedule(1000, { trigger: 'schedule-test' });
+    expect(typeof stop === 'function' || stop === null).toBeTruthy();
+
+    vi.advanceTimersByTime(3100);
+    stop?.();
+
+    const snapshots = harness.getCommercializationSnapshots();
+    expect(snapshots.length).toBeGreaterThanOrEqual(2);
+  });
+});
