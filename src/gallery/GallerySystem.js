@@ -4,8 +4,9 @@
  */
 
 export class GallerySystem {
-    constructor(engine) {
+    constructor(engine, options = {}) {
         this.engine = engine;
+        this.options = options;
         this.galleryModal = null;
         this.previewCanvas = null;
         this.previewVisualizer = null;
@@ -90,12 +91,26 @@ export class GallerySystem {
      */
     initPreviewSystem() {
         if (this.previewCanvas) {
+            const getContext = typeof this.previewCanvas.getContext === 'function'
+                ? this.previewCanvas.getContext.bind(this.previewCanvas)
+                : null;
+
+            if (!getContext) {
+                console.warn('🛈 Gallery preview disabled: canvas 2D context unavailable in current environment.');
+                return;
+            }
+
+            const ctx = getContext('2d');
+            if (!ctx) {
+                console.warn('🛈 Gallery preview disabled: 2D context could not be created.');
+                return;
+            }
             // Create a preview visualizer (simplified version)
             this.previewVisualizer = {
                 canvas: this.previewCanvas,
-                ctx: this.previewCanvas.getContext('2d'),
+                ctx,
                 params: {},
-                
+
                 updateParams(params) {
                     this.params = { ...params };
                 },
@@ -133,13 +148,17 @@ export class GallerySystem {
             };
             
             // Start preview render loop
-            const previewRender = () => {
-                if (this.currentPreview >= 0) {
+            const renderLoop = () => {
+                if (this.currentPreview >= 0 && this.previewVisualizer) {
                     this.previewVisualizer.render();
                 }
-                requestAnimationFrame(previewRender);
+                if (typeof requestAnimationFrame === 'function') {
+                    requestAnimationFrame(renderLoop);
+                }
             };
-            previewRender();
+            if (typeof requestAnimationFrame === 'function') {
+                renderLoop();
+            }
         }
     }
     
