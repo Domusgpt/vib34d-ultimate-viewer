@@ -1,0 +1,2434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIB34D Adaptive Wearable Designer</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: radial-gradient(circle at 20% 20%, #101826, #04060b 65%);
+            --panel-bg: rgba(12, 18, 32, 0.85);
+            --accent: #4c9fff;
+            --muted: rgba(255, 255, 255, 0.55);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui;
+            background: var(--bg);
+            color: #f5f7fb;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr);
+        }
+
+        .canvas-stack {
+            position: relative;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .canvas-stack canvas {
+            position: absolute;
+            width: 88vmin;
+            height: 88vmin;
+            max-width: 880px;
+            max-height: 880px;
+            border-radius: 28px;
+            backdrop-filter: blur(20px);
+        }
+
+        .canvas-stack canvas:nth-child(1) { mix-blend-mode: screen; opacity: 0.35; }
+        .canvas-stack canvas:nth-child(2) { mix-blend-mode: lighten; opacity: 0.45; }
+        .canvas-stack canvas:nth-child(3) { mix-blend-mode: normal; }
+        .canvas-stack canvas:nth-child(4) { mix-blend-mode: screen; opacity: 0.6; }
+        .canvas-stack canvas:nth-child(5) { mix-blend-mode: screen; opacity: 0.8; }
+
+        aside {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: linear-gradient(160deg, rgba(8, 10, 20, 0.9), rgba(12, 18, 32, 0.75));
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px rgba(10, 20, 40, 0.35);
+        }
+
+        .panel h2 {
+            font-size: 1rem;
+            letter-spacing: 0.08em;
+            margin: 0 0 12px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 14px;
+            border-radius: 14px;
+        }
+
+        .metric span:first-child {
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+        }
+
+        .metric span:last-child {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .blueprint-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .blueprint-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .blueprint-metric span:first-child {
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .blueprint-metric span:last-child {
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .blueprint-zone-list {
+            display: grid;
+            gap: 10px;
+            margin: 0 0 16px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .blueprint-zone {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .blueprint-zone strong {
+            display: block;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.76);
+        }
+
+        .blueprint-zone span {
+            display: block;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 4px;
+            letter-spacing: 0.03em;
+        }
+
+        .blueprint-insights {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin: 14px 0 10px;
+        }
+
+        .blueprint-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .insight-tag {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(76, 159, 255, 0.18);
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .insight-tag.warning {
+            background: rgba(255, 166, 87, 0.18);
+            color: rgba(255, 212, 152, 0.95);
+        }
+
+        .insight-tag.critical {
+            background: rgba(255, 99, 132, 0.2);
+            color: rgba(255, 179, 190, 0.95);
+        }
+
+        .blueprint-recommendations {
+            list-style: none;
+            margin: 0 0 18px;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .blueprint-recommendations li {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .scenario-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .scenario-controls label {
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .scenario-controls select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .scenario-controls .action-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .scenario-controls .action-row button {
+            flex: 1;
+        }
+
+        .scenario-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .scenario-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .scenario-metric span:first-child {
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .scenario-metric span:last-child {
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .scenario-tags, .scenario-recommendations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .scenario-tags span {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            letter-spacing: 0.04em;
+        }
+
+        .scenario-recommendations li {
+            list-style: none;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 8px 10px;
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.82);
+            border-left: 3px solid rgba(102, 214, 255, 0.65);
+            letter-spacing: 0.01em;
+        }
+
+        .evolution-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .evolution-variants {
+            display: grid;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .evolution-variant-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .evolution-variant-card strong {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .evolution-variant-card span {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.03em;
+        }
+
+        .evolution-variant-card .insight-tag {
+            align-self: flex-start;
+        }
+
+        .variant-metrics {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .variant-metrics span {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .scenario-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .scenario-step {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid rgba(125, 107, 255, 0.5);
+        }
+
+        .scenario-step strong {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.78);
+            margin-bottom: 6px;
+        }
+
+        .scenario-step span {
+            display: block;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.02em;
+        }
+
+        .scenario-step .anomalies {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: rgba(255, 99, 132, 0.9);
+        }
+
+        .scenario-history-preview {
+            margin-top: 16px;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+        }
+
+        .meta-line {
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+        }
+
+        .empty-state {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.55);
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .pack-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .pack-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .pack-card h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .pack-card p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .pack-card .meta {
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .snapshot-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .snapshot-controls button {
+            flex: 1;
+            background: rgba(76, 159, 255, 0.15);
+            border: 1px solid rgba(76, 159, 255, 0.45);
+            color: #f5f7fb;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .snapshot-controls button:hover {
+            background: rgba(76, 159, 255, 0.3);
+        }
+
+        .kpi-summary {
+            margin-top: 16px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .snapshot-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .remote-storage {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: grid;
+            gap: 12px;
+        }
+
+        .remote-storage .remote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .remote-storage h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .remote-log {
+            display: grid;
+            gap: 8px;
+        }
+
+        .remote-log-entry {
+            background: rgba(12, 20, 34, 0.65);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: grid;
+            gap: 4px;
+            border: 1px solid rgba(76, 159, 255, 0.18);
+        }
+
+        .remote-log-entry strong {
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+        }
+
+        .remote-log-entry span {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .remote-log-entry--error {
+            border-color: rgba(255, 90, 90, 0.45);
+            background: rgba(38, 12, 18, 0.7);
+        }
+
+        .remote-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .remote-actions button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #f5f7fb;
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .remote-actions button:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .snapshot-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: grid;
+            gap: 4px;
+        }
+
+        .snapshot-item strong {
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+        }
+
+        .snapshot-item span {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .pattern-card {
+            display: grid;
+            gap: 12px;
+        }
+
+        .pattern-card h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .pattern-card p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.4;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(76, 159, 255, 0.1);
+            color: var(--accent);
+        }
+
+        button {
+            background: rgba(76, 159, 255, 0.1);
+            border: 1px solid rgba(76, 159, 255, 0.3);
+            color: var(--accent);
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: rgba(76, 159, 255, 0.2);
+        }
+
+        .variation-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .variation-controls input[type="range"] {
+            width: 100%;
+        }
+
+        .consent-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .consent-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 14px;
+            border-radius: 14px;
+        }
+
+        .consent-toggle div {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .consent-toggle span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .consent-toggle small {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.03em;
+        }
+
+        .consent-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+        }
+
+        .consent-status {
+            margin-top: 14px;
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.5;
+        }
+
+        .consent-status strong {
+            color: var(--accent);
+        }
+
+        .compliance-log {
+            list-style: none;
+            margin: 18px 0 0;
+            padding: 0;
+            display: grid;
+            gap: 10px;
+        }
+
+        .compliance-log li {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .compliance-log li span {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.68rem;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.04em;
+        }
+
+        .panel button.secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .panel button.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .calibration-controls {
+            display: grid;
+            gap: 12px;
+        }
+
+        .calibration-adjustments {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .calibration-adjustment-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .calibration-adjustment-card strong {
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        .calibration-adjustment-card span {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.65);
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas-stack" id="canvasStack">
+        <canvas id="background-canvas"></canvas>
+        <canvas id="shadow-canvas"></canvas>
+        <canvas id="content-canvas"></canvas>
+        <canvas id="highlight-canvas"></canvas>
+        <canvas id="annotation-canvas"></canvas>
+        <canvas id="accent-canvas"></canvas>
+    </div>
+    <aside>
+        <section class="panel">
+            <h2>Adaptive Intent</h2>
+            <div class="metric-grid" id="intentMetrics">
+                <div class="metric"><span>Focus</span><span id="focusMetric">0.50</span></div>
+                <div class="metric"><span>Engagement</span><span id="engagementMetric">0.40</span></div>
+                <div class="metric"><span>Velocity</span><span id="velocityMetric">0.00</span></div>
+                <div class="metric"><span>Stress</span><span id="stressMetric">0.20</span></div>
+            </div>
+        </section>
+        <section class="panel">
+            <h2>Pattern Activation</h2>
+            <div class="pattern-card">
+                <span class="tag" id="patternTier">STARTER</span>
+                <h3 id="patternName">Neuro Glance Feed</h3>
+                <p id="patternDescription">Micro-summaries that respond to attention bursts and biometric calmness.</p>
+                <div class="tag" id="integrationTag">Figma: vib34d-neuro-glance-feed</div>
+            </div>
+        </section>
+        <section class="panel">
+            <h2>Adaptive Blueprint</h2>
+            <div class="blueprint-metrics">
+                <div class="blueprint-metric"><span>Intensity</span><span id="blueprintIntensity">0.50</span></div>
+                <div class="blueprint-metric"><span>Velocity</span><span id="blueprintVelocity">0.00</span></div>
+                <div class="blueprint-metric"><span>Engagement</span><span id="blueprintEngagement">0.40</span></div>
+                <div class="blueprint-metric"><span>Stress</span><span id="blueprintStress">0.20</span></div>
+            </div>
+            <ul class="blueprint-zone-list" id="blueprintZoneList"></ul>
+            <div class="blueprint-insights">
+                <div class="blueprint-metric"><span>Balance</span><span id="blueprintBalance">--</span></div>
+                <div class="blueprint-metric"><span>Focus</span><span id="blueprintFocusReliability">--</span></div>
+                <div class="blueprint-metric"><span>Stress Risk</span><span id="blueprintStressRisk">--</span></div>
+                <div class="blueprint-metric"><span>Stability</span><span id="blueprintMotionStability">--</span></div>
+            </div>
+            <div class="blueprint-tags" id="blueprintTags"></div>
+            <ul class="blueprint-recommendations" id="blueprintRecommendations"></ul>
+            <button class="secondary" id="downloadBlueprintBtn" type="button">Download Blueprint</button>
+        </section>
+        <section class="panel" id="scenarioPanel">
+            <h2>Scenario Lab</h2>
+            <div class="scenario-controls">
+                <label for="scenarioPresetSelect">Preset</label>
+                <select id="scenarioPresetSelect">
+                    <option value="focus-drift">Focus Drift + Stress Spike</option>
+                    <option value="ambient-overload">Ambient Overload Recovery</option>
+                    <option value="handoff-latency">Peripheral Handoff Latency</option>
+                </select>
+                <div class="action-row">
+                    <button id="runScenarioBtn" type="button">Run Scenario</button>
+                    <button class="secondary" id="downloadScenarioBtn" type="button">Download Scenario</button>
+                </div>
+            </div>
+            <div class="scenario-metrics">
+                <div class="scenario-metric"><span>Confidence</span><span id="scenarioConfidence">--</span></div>
+                <div class="scenario-metric"><span>Peak Stress</span><span id="scenarioPeakStress">--</span></div>
+                <div class="scenario-metric"><span>Anomalies</span><span id="scenarioAnomalies">0</span></div>
+            </div>
+            <div class="scenario-tags" id="scenarioTags"></div>
+            <ul class="scenario-recommendations" id="scenarioRecommendations"></ul>
+            <div class="scenario-steps" id="scenarioSteps"></div>
+            <div class="scenario-history-preview" id="scenarioHistoryPreview"></div>
+        </section>
+        <section class="panel" id="calibrationPanel">
+            <h2>Calibration Studio</h2>
+            <div class="calibration-controls">
+                <label for="calibrationSourceSelect">Source</label>
+                <select id="calibrationSourceSelect">
+                    <option value="latest">Latest Blueprint</option>
+                    <option value="snapshot">Fresh Snapshot</option>
+                    <option value="scenario">Scenario Weighted</option>
+                </select>
+                <div class="action-row">
+                    <button id="runCalibrationBtn" type="button">Run Calibration</button>
+                    <button class="secondary" id="downloadCalibrationBtn" type="button">Download Calibration</button>
+                </div>
+            </div>
+            <div class="scenario-metrics">
+                <div class="scenario-metric"><span>Calibrations</span><span id="calibrationCount">0</span></div>
+                <div class="scenario-metric"><span>Avg Score</span><span id="calibrationAverageScore">--</span></div>
+                <div class="scenario-metric"><span>Priority</span><span id="calibrationPriority">--</span></div>
+            </div>
+            <div class="scenario-tags" id="calibrationTags"></div>
+            <ul class="scenario-recommendations" id="calibrationActions"></ul>
+            <div class="calibration-adjustments" id="calibrationAdjustments"></div>
+            <div class="scenario-history-preview" id="calibrationHistoryPreview"></div>
+        </section>
+        <section class="panel" id="evolutionPanel">
+            <h2>Evolution Lab</h2>
+            <div class="evolution-controls">
+                <label for="evolutionBaseSelect">Source</label>
+                <select id="evolutionBaseSelect">
+                    <option value="latest">Latest Blueprint</option>
+                    <option value="snapshot">Fresh Snapshot</option>
+                    <option value="scenario">Scenario Weighted</option>
+                </select>
+                <div class="action-row">
+                    <button id="runEvolutionBtn" type="button">Run Evolution Sweep</button>
+                    <button class="secondary" id="downloadEvolutionBtn" type="button">Download Evolution</button>
+                </div>
+            </div>
+            <div class="scenario-metrics">
+                <div class="scenario-metric"><span>Variants</span><span id="evolutionVariantCount">0</span></div>
+                <div class="scenario-metric"><span>Recommended</span><span id="evolutionRecommendedScore">--</span></div>
+                <div class="scenario-metric"><span>Avg Δ</span><span id="evolutionAverageDelta">--</span></div>
+            </div>
+            <div class="scenario-tags" id="evolutionTags"></div>
+            <ul class="scenario-recommendations" id="evolutionRecommendations"></ul>
+            <div class="evolution-variants" id="evolutionVariants"></div>
+            <div class="scenario-history-preview" id="evolutionHistoryPreview"></div>
+        </section>
+        <section class="panel">
+            <h2>Variations</h2>
+            <div class="variation-controls">
+                <input type="range" min="0" max="99" value="0" id="variationSlider">
+                <button id="randomizeBtn">Randomize</button>
+            </div>
+            <p style="margin-top: 12px; color: rgba(255,255,255,0.6); font-size: 0.85rem;" id="variationLabel">1 - TETRAHEDRON LATTICE</p>
+        </section>
+        <section class="panel" id="telemetryConsentPanel"></section>
+        <section class="panel" id="commercializationPanel">
+            <h2>Commercialization Coverage</h2>
+            <p class="meta-line" id="commercializationUpdated" style="margin: 0 0 12px;"></p>
+            <div class="metric-grid" id="segmentCoverageGrid"></div>
+            <div class="metric-grid" id="regionCoverageGrid" style="margin-top: 12px;"></div>
+            <div class="pack-list" id="commercializationPackList"></div>
+            <div class="snapshot-controls">
+                <button id="captureSnapshotBtn" type="button">Capture Snapshot</button>
+                <button id="exportSnapshotsBtn" type="button">Download KPI Export</button>
+            </div>
+            <div class="kpi-summary" id="commercializationKpiSummary"></div>
+            <div class="snapshot-list" id="commercializationSnapshotList"></div>
+            <div class="remote-storage" id="commercializationRemoteStatus">
+                <div class="remote-header">
+                    <h3>Remote Persistence</h3>
+                    <span class="meta-line" id="commercializationRemoteLastUpload">No remote uploads yet</span>
+                </div>
+                <div class="remote-log" id="commercializationRemoteLog"></div>
+                <div class="remote-actions">
+                    <button id="clearRemoteLogBtn" type="button">Reset Remote Log</button>
+                </div>
+            </div>
+        </section>
+    </aside>
+
+    <script type="module">
+        import { createAdaptiveSDK } from './src/core/AdaptiveSDK.js';
+        import { LayoutAnnotation } from './src/ui/adaptive/annotations/LayoutAnnotation.js';
+        import { ComplianceVaultTelemetryProvider } from './src/product/telemetry/ComplianceVaultTelemetryProvider.js';
+        import { createConsentPanel } from './src/ui/components/ConsentPanel.js';
+        import { createCommercializationSnapshotRemoteStorage } from './src/product/licensing/storage/CommercializationSnapshotStorageAdapters.js';
+        import { createLayoutBlueprintRenderer, buildLayoutBlueprint } from './src/ui/adaptive/renderers/LayoutBlueprintRenderer.js';
+        import { LayoutBlueprintInsightEngine } from './src/ui/adaptive/renderers/LayoutBlueprintInsightEngine.js';
+
+        const complianceVaultProvider = new ComplianceVaultTelemetryProvider({ maxRecords: 24 });
+        let consentPanel;
+
+        const segmentCoverageGrid = document.getElementById('segmentCoverageGrid');
+        const regionCoverageGrid = document.getElementById('regionCoverageGrid');
+        const commercializationPackList = document.getElementById('commercializationPackList');
+        const commercializationUpdated = document.getElementById('commercializationUpdated');
+        const captureSnapshotBtn = document.getElementById('captureSnapshotBtn');
+        const exportSnapshotsBtn = document.getElementById('exportSnapshotsBtn');
+        const snapshotList = document.getElementById('commercializationSnapshotList');
+        const commercializationKpiSummary = document.getElementById('commercializationKpiSummary');
+        const remoteLastUpload = document.getElementById('commercializationRemoteLastUpload');
+        const remoteLogContainer = document.getElementById('commercializationRemoteLog');
+        const clearRemoteLogBtn = document.getElementById('clearRemoteLogBtn');
+        const blueprintIntensity = document.getElementById('blueprintIntensity');
+        const blueprintVelocity = document.getElementById('blueprintVelocity');
+        const blueprintEngagement = document.getElementById('blueprintEngagement');
+        const blueprintStress = document.getElementById('blueprintStress');
+        const blueprintZoneList = document.getElementById('blueprintZoneList');
+        const blueprintBalance = document.getElementById('blueprintBalance');
+        const blueprintFocusReliability = document.getElementById('blueprintFocusReliability');
+        const blueprintStressRisk = document.getElementById('blueprintStressRisk');
+        const blueprintMotionStability = document.getElementById('blueprintMotionStability');
+        const blueprintTags = document.getElementById('blueprintTags');
+        const blueprintRecommendations = document.getElementById('blueprintRecommendations');
+        const downloadBlueprintBtn = document.getElementById('downloadBlueprintBtn');
+        const scenarioPresetSelect = document.getElementById('scenarioPresetSelect');
+        const runScenarioBtn = document.getElementById('runScenarioBtn');
+        const downloadScenarioBtn = document.getElementById('downloadScenarioBtn');
+        const scenarioConfidenceMetric = document.getElementById('scenarioConfidence');
+        const scenarioPeakStress = document.getElementById('scenarioPeakStress');
+        const scenarioAnomalies = document.getElementById('scenarioAnomalies');
+        const scenarioTags = document.getElementById('scenarioTags');
+        const scenarioRecommendations = document.getElementById('scenarioRecommendations');
+        const scenarioSteps = document.getElementById('scenarioSteps');
+        const scenarioHistoryPreview = document.getElementById('scenarioHistoryPreview');
+        const calibrationSourceSelect = document.getElementById('calibrationSourceSelect');
+        const runCalibrationBtn = document.getElementById('runCalibrationBtn');
+        const downloadCalibrationBtn = document.getElementById('downloadCalibrationBtn');
+        const calibrationCount = document.getElementById('calibrationCount');
+        const calibrationAverageScore = document.getElementById('calibrationAverageScore');
+        const calibrationPriority = document.getElementById('calibrationPriority');
+        const calibrationTags = document.getElementById('calibrationTags');
+        const calibrationActions = document.getElementById('calibrationActions');
+        const calibrationAdjustments = document.getElementById('calibrationAdjustments');
+        const calibrationHistoryPreview = document.getElementById('calibrationHistoryPreview');
+        const evolutionVariantCount = document.getElementById('evolutionVariantCount');
+        const evolutionRecommendedScore = document.getElementById('evolutionRecommendedScore');
+        const evolutionAverageDelta = document.getElementById('evolutionAverageDelta');
+        const evolutionTags = document.getElementById('evolutionTags');
+        const evolutionRecommendations = document.getElementById('evolutionRecommendations');
+        const evolutionVariants = document.getElementById('evolutionVariants');
+        const evolutionHistoryPreview = document.getElementById('evolutionHistoryPreview');
+        const evolutionBaseSelect = document.getElementById('evolutionBaseSelect');
+        const runEvolutionBtn = document.getElementById('runEvolutionBtn');
+        const downloadEvolutionBtn = document.getElementById('downloadEvolutionBtn');
+
+        let adaptiveSDKRef;
+        let stopSnapshotSchedule = null;
+
+        const remoteUploadLog = [];
+        let latestBlueprint = null;
+        let latestBlueprintInsights = null;
+        let latestDesignSpec = null;
+        let latestScenarioResult = null;
+        let latestCalibrationResult = null;
+        let latestEvolutionResult = null;
+        let blueprintInsightEngine = null;
+
+        const formatTime = (value) => {
+            if (!value) return 'unknown';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'unknown';
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        };
+
+        const formatDateTime = (value) => {
+            if (!value) return 'unknown';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'unknown';
+            return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
+        };
+
+        const clone = (value) => JSON.parse(JSON.stringify(value));
+
+        const fallbackDesignSpec = {
+            pattern: { id: 'wearable-baseline', name: 'Wearable Baseline', description: 'Baseline pattern for scenario lab.' },
+            monetization: { tier: 'starter' },
+            integration: { figmaPlugin: 'vib34d-baseline' }
+        };
+
+        const scenarioPresets = {
+            'focus-drift': {
+                label: 'Focus Drift + Stress Spike',
+                contextDefaults: {
+                    focusVector: { x: 0.48, y: 0.52, depth: 0.38 },
+                    engagementLevel: 0.58,
+                    biometricStress: 0.28
+                },
+                steps: [
+                    () => ({
+                        id: 'baseline',
+                        context: { dwellMs: 1200, engagementLevel: 0.6, biometricStress: 0.32 }
+                    }),
+                    (baseLayout) => ({
+                        id: 'stress-crest',
+                        context: {
+                            dwellMs: 900,
+                            focusVector: { x: 0.62, y: 0.4, depth: 0.18 },
+                            engagementLevel: 0.44,
+                            biometricStress: 0.82
+                        },
+                        layout: {
+                            ...clone(baseLayout),
+                            zones: [
+                                { id: 'primary', occupancy: 0.94, layeringDepth: 0.16, visibility: 0.92 },
+                                { id: 'peripheral', occupancy: 0.24, layeringDepth: 0.58, visibility: 0.52 }
+                            ]
+                        }
+                    })
+                ]
+            },
+            'ambient-overload': {
+                label: 'Ambient Overload Recovery',
+                contextDefaults: {
+                    focusVector: { x: 0.52, y: 0.48, depth: 0.42 },
+                    engagementLevel: 0.55,
+                    biometricStress: 0.36
+                },
+                steps: [
+                    (baseLayout) => ({
+                        id: 'ambient-surge',
+                        context: {
+                            dwellMs: 1000,
+                            biometricStress: 0.58,
+                            ambientNoise: 0.7,
+                            engagementLevel: 0.47
+                        },
+                        layout: {
+                            ...clone(baseLayout),
+                            zones: [
+                                { id: 'primary', occupancy: 0.68, layeringDepth: 0.28, visibility: 0.82 },
+                                { id: 'ambient', occupancy: 0.52, layeringDepth: 0.4, visibility: 0.74 }
+                            ]
+                        }
+                    }),
+                    (baseLayout) => ({
+                        id: 'guided-calm',
+                        context: {
+                            dwellMs: 1500,
+                            biometricStress: 0.3,
+                            engagementLevel: 0.63,
+                            ambientNoise: 0.35
+                        },
+                        layout: {
+                            ...clone(baseLayout),
+                            motion: { ...clone(baseLayout.motion), velocity: 0.24 },
+                            zones: [
+                                { id: 'primary', occupancy: 0.64, layeringDepth: 0.26, visibility: 0.9 },
+                                { id: 'ambient', occupancy: 0.36, layeringDepth: 0.48, visibility: 0.62 }
+                            ]
+                        }
+                    })
+                ]
+            },
+            'handoff-latency': {
+                label: 'Peripheral Handoff Latency',
+                contextDefaults: {
+                    focusVector: { x: 0.4, y: 0.6, depth: 0.33 },
+                    engagementLevel: 0.61,
+                    biometricStress: 0.26
+                },
+                steps: [
+                    () => ({
+                        id: 'handoff-start',
+                        context: { dwellMs: 800, engagementLevel: 0.6, gestureLatencyMs: 320 }
+                    }),
+                    (baseLayout) => ({
+                        id: 'handoff-corrective',
+                        context: {
+                            dwellMs: 1100,
+                            engagementLevel: 0.68,
+                            gestureLatencyMs: 140,
+                            biometricStress: 0.34
+                        },
+                        layout: {
+                            ...clone(baseLayout),
+                            motion: { ...clone(baseLayout.motion), velocity: 0.28 },
+                            zones: [
+                                { id: 'primary', occupancy: 0.58, layeringDepth: 0.22, visibility: 0.88 },
+                                { id: 'peripheral', occupancy: 0.46, layeringDepth: 0.36, visibility: 0.78 }
+                            ]
+                        }
+                    })
+                ]
+            }
+        };
+
+        function convertBlueprintToLayout(blueprint) {
+            if (!blueprint) {
+                return null;
+            }
+            return {
+                intensity: blueprint.intensity,
+                motion: clone(blueprint.motion || { velocity: 0.3, bias: { x: 0, y: 0, z: 0 }, easing: 'ease-in-out' }),
+                zones: Array.isArray(blueprint.zones)
+                    ? blueprint.zones.map(zone => ({
+                        id: zone.id,
+                        occupancy: zone.occupancy,
+                        layeringDepth: zone.layeringDepth,
+                        curvature: zone.curvature,
+                        visibility: zone.visibility,
+                        recommendedComponents: zone.components || zone.recommendedComponents || []
+                    }))
+                    : []
+            };
+        }
+
+        function getBaseLayoutForScenario() {
+            if (latestBlueprint) {
+                const layoutFromBlueprint = convertBlueprintToLayout(latestBlueprint);
+                if (layoutFromBlueprint) {
+                    return layoutFromBlueprint;
+                }
+            }
+
+            if (adaptiveSDKRef?.generateLayoutBlueprintSnapshot) {
+                const snapshot = adaptiveSDKRef.generateLayoutBlueprintSnapshot({ storeHistory: false });
+                if (snapshot?.blueprint) {
+                    latestBlueprint = snapshot.blueprint;
+                    latestEvolutionResult = null;
+                    renderEvolutionResult(null);
+                    refreshEvolutionHistoryPreview();
+                    latestBlueprintInsights = snapshot.insights || latestBlueprintInsights;
+                    return convertBlueprintToLayout(snapshot.blueprint);
+                }
+            }
+
+            return {
+                intensity: 0.6,
+                motion: { velocity: 0.32, bias: { x: 0.08, y: -0.05, z: 0.04 }, easing: 'ease-in-out' },
+                zones: [
+                    { id: 'primary', occupancy: 0.7, layeringDepth: 0.22, curvature: 0.2, visibility: 0.88, recommendedComponents: ['status-pulse'] },
+                    { id: 'peripheral', occupancy: 0.38, layeringDepth: 0.45, curvature: 0.26, visibility: 0.68, recommendedComponents: ['gesture-band'] }
+                ]
+            };
+        }
+
+        function getActiveDesignSpec() {
+            if (latestDesignSpec) {
+                return latestDesignSpec;
+            }
+            if (adaptiveSDKRef?.engine?.activeDesignSpec) {
+                return adaptiveSDKRef.engine.activeDesignSpec;
+            }
+            return fallbackDesignSpec;
+        }
+
+        function buildScenarioSteps(preset, baseLayout) {
+            if (!preset || !Array.isArray(preset.steps)) {
+                return [];
+            }
+            return preset.steps.map((builder, index) => {
+                const descriptor = typeof builder === 'function' ? builder(baseLayout) : builder;
+                const step = { ...descriptor };
+                step.id = step.id || `step-${index + 1}`;
+                if (typeof descriptor?.layout === 'function') {
+                    step.layout = descriptor.layout(baseLayout);
+                }
+                return step;
+            });
+        }
+
+        function renderScenarioResult(result, presetLabel) {
+            if (!scenarioConfidenceMetric || !scenarioPeakStress || !scenarioAnomalies || !scenarioTags || !scenarioRecommendations || !scenarioSteps) {
+                return;
+            }
+
+            if (!result) {
+                scenarioConfidenceMetric.textContent = '--';
+                scenarioPeakStress.textContent = '--';
+                scenarioAnomalies.textContent = '0';
+                scenarioTags.innerHTML = '';
+                scenarioRecommendations.innerHTML = '';
+                scenarioSteps.innerHTML = '<div class="empty-state">Run a scenario to see adaptive step analytics.</div>';
+                if (scenarioHistoryPreview) {
+                    scenarioHistoryPreview.textContent = 'Scenario history empty — run a scenario to populate telemetry records.';
+                }
+                return;
+            }
+
+            const { aggregate = {}, recommendations = [], statusTags = [], steps = [] } = result;
+
+            scenarioConfidenceMetric.textContent = typeof aggregate.scenarioConfidence === 'number'
+                ? aggregate.scenarioConfidence.toFixed(2)
+                : '--';
+            scenarioPeakStress.textContent = typeof aggregate.peakStressRisk === 'number'
+                ? aggregate.peakStressRisk.toFixed(2)
+                : '--';
+            scenarioAnomalies.textContent = String(aggregate.anomalyCount ?? 0);
+
+            scenarioTags.innerHTML = '';
+            statusTags.forEach(tag => {
+                const span = document.createElement('span');
+                span.textContent = tag;
+                scenarioTags.appendChild(span);
+            });
+
+            scenarioRecommendations.innerHTML = '';
+            if (recommendations.length) {
+                recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    scenarioRecommendations.appendChild(li);
+                });
+            }
+
+            scenarioSteps.innerHTML = '';
+            if (!steps.length) {
+                scenarioSteps.innerHTML = '<div class="empty-state">No steps recorded for this scenario.</div>';
+            } else {
+                steps.forEach(step => {
+                    const card = document.createElement('div');
+                    card.className = 'scenario-step';
+                    const title = document.createElement('strong');
+                    const stressRisk = typeof step.analytics?.stressRisk === 'number'
+                        ? step.analytics.stressRisk.toFixed(2)
+                        : '--';
+                    title.innerHTML = `<span>${step.id}</span><span>Stress ${stressRisk}</span>`;
+                    card.appendChild(title);
+
+                    const summary = document.createElement('span');
+                    const dwellMs = step.context?.dwellMs ? `${step.context.dwellMs}ms dwell` : 'Passive';
+                    summary.textContent = `${presetLabel || 'Scenario'} · ${dwellMs}`;
+                    card.appendChild(summary);
+
+                    if (Array.isArray(step.anomalies) && step.anomalies.length) {
+                        const anomalySpan = document.createElement('span');
+                        anomalySpan.className = 'anomalies';
+                        anomalySpan.textContent = step.anomalies.map(anomaly => anomaly.message || anomaly.type).join(' • ');
+                        card.appendChild(anomalySpan);
+                    }
+
+                    scenarioSteps.appendChild(card);
+                });
+            }
+        }
+
+        function renderCalibrationResult(result) {
+            if (!calibrationCount || !calibrationAverageScore || !calibrationPriority || !calibrationTags || !calibrationActions || !calibrationAdjustments) {
+                return;
+            }
+
+            if (!result) {
+                calibrationCount.textContent = '0';
+                calibrationAverageScore.textContent = '--';
+                calibrationPriority.textContent = '--';
+                calibrationTags.innerHTML = '';
+                calibrationActions.innerHTML = '';
+                calibrationAdjustments.innerHTML = '<div class="empty-state">Run the calibration studio to surface adjustment plans.</div>';
+                return;
+            }
+
+            const aggregate = result.aggregate || {};
+            calibrationCount.textContent = String(aggregate.calibrationCount ?? 0);
+            calibrationAverageScore.textContent = typeof aggregate.averageScore === 'number'
+                ? aggregate.averageScore.toFixed(2)
+                : '--';
+            calibrationPriority.textContent = aggregate.highestPriority
+                ? aggregate.highestPriority.toUpperCase()
+                : '--';
+
+            const tags = Array.isArray(aggregate.tags) ? aggregate.tags : [];
+            calibrationTags.innerHTML = '';
+            if (!tags.length) {
+                calibrationTags.innerHTML = '<span class="insight-tag">STABLE</span>';
+            } else {
+                for (const tag of tags) {
+                    const badge = document.createElement('span');
+                    badge.className = 'insight-tag';
+                    if (/critical|priority/i.test(tag)) {
+                        badge.classList.add('critical');
+                    } else if (/stress|comfort|motion/i.test(tag)) {
+                        badge.classList.add('warning');
+                    }
+                    badge.textContent = tag.toUpperCase();
+                    calibrationTags.appendChild(badge);
+                }
+            }
+
+            const actions = Array.isArray(aggregate.nextActions) ? aggregate.nextActions : [];
+            calibrationActions.innerHTML = '';
+            if (!actions.length) {
+                calibrationActions.innerHTML = '<li>No calibration actions queued.</li>';
+            } else {
+                for (const action of actions.slice(0, 4)) {
+                    const item = document.createElement('li');
+                    item.textContent = `${action.title} — ${action.summary}`;
+                    calibrationActions.appendChild(item);
+                }
+            }
+
+            const adjustments = Array.isArray(aggregate.adjustments) ? aggregate.adjustments : [];
+            calibrationAdjustments.innerHTML = '';
+            if (!adjustments.length) {
+                calibrationAdjustments.innerHTML = '<div class="empty-state">No adjustments required for current metrics.</div>';
+            } else {
+                for (const adjustment of adjustments) {
+                    const card = document.createElement('div');
+                    card.className = 'calibration-adjustment-card';
+
+                    const title = document.createElement('strong');
+                    title.textContent = `${adjustment.type.toUpperCase()} · ${adjustment.target}`;
+                    card.appendChild(title);
+
+                    const summary = document.createElement('span');
+                    summary.textContent = `${adjustment.aggregateChange.toFixed(3)} change across ${adjustment.recommendations} recommendation${adjustment.recommendations === 1 ? '' : 's'}.`;
+                    card.appendChild(summary);
+
+                    if (Array.isArray(adjustment.summaries) && adjustment.summaries.length) {
+                        const detail = document.createElement('span');
+                        detail.textContent = adjustment.summaries.join(' • ');
+                        card.appendChild(detail);
+                    }
+
+                    calibrationAdjustments.appendChild(card);
+                }
+            }
+        }
+
+
+function renderEvolutionResult(result) {
+    if (!evolutionVariantCount || !evolutionRecommendedScore || !evolutionVariants) {
+        return;
+    }
+
+    if (!result || !Array.isArray(result.variants) || result.variants.length === 0) {
+        evolutionVariantCount.textContent = '0';
+        evolutionRecommendedScore.textContent = '--';
+        evolutionAverageDelta.textContent = '--';
+        if (evolutionTags) {
+            evolutionTags.innerHTML = '';
+        }
+        if (evolutionRecommendations) {
+            evolutionRecommendations.innerHTML = '';
+        }
+        if (evolutionVariants) {
+            evolutionVariants.innerHTML = '<div class="empty-state">Run evolution to explore variant strategies.</div>';
+        }
+        return;
+    }
+
+    latestEvolutionResult = result;
+    const aggregate = result.aggregate || {};
+    evolutionVariantCount.textContent = String(aggregate.variantCount ?? result.variants.length);
+    evolutionRecommendedScore.textContent = typeof aggregate.recommendedScore === 'number'
+        ? aggregate.recommendedScore.toFixed(2)
+        : '--';
+    evolutionAverageDelta.textContent = typeof aggregate.averageScoreDelta === 'number'
+        ? aggregate.averageScoreDelta.toFixed(3)
+        : '--';
+
+    if (evolutionTags) {
+        const tags = Array.isArray(aggregate.tags) ? aggregate.tags : [];
+        evolutionTags.innerHTML = '';
+        if (!tags.length) {
+            evolutionTags.innerHTML = '<span class="insight-tag">STABLE</span>';
+        } else {
+            for (const tag of tags) {
+                const badge = document.createElement('span');
+                badge.className = 'insight-tag';
+                if (/critical|stress/i.test(tag)) {
+                    badge.classList.add('critical');
+                } else if (/balance|focus/i.test(tag)) {
+                    badge.classList.add('warning');
+                }
+                badge.textContent = tag.toUpperCase();
+                evolutionTags.appendChild(badge);
+            }
+        }
+    }
+
+    if (evolutionRecommendations) {
+        const recommendations = Array.isArray(aggregate.recommendations) && aggregate.recommendations.length
+            ? aggregate.recommendations
+            : ['Blueprint stable — experiment with scenario weighting to explore new variants.'];
+        evolutionRecommendations.innerHTML = '';
+        for (const rec of recommendations) {
+            const li = document.createElement('li');
+            li.textContent = rec;
+            evolutionRecommendations.appendChild(li);
+        }
+    }
+
+    if (evolutionVariants) {
+        evolutionVariants.innerHTML = '';
+        for (const variant of result.variants) {
+            const card = document.createElement('div');
+            card.className = 'evolution-variant-card';
+            const header = document.createElement('strong');
+            const scoreText = typeof variant.score === 'number' ? variant.score.toFixed(2) : '--';
+            header.innerHTML = `<span>${variant.title || variant.id}</span><span>${scoreText}</span>`;
+            card.appendChild(header);
+
+            if (variant.rationale) {
+                const rationale = document.createElement('span');
+                rationale.textContent = variant.rationale;
+                card.appendChild(rationale);
+            }
+
+            const metrics = document.createElement('div');
+            metrics.className = 'variant-metrics';
+            const delta = typeof variant.scoreDelta === 'number' ? variant.scoreDelta.toFixed(3) : '--';
+            metrics.innerHTML = `<span>Δ ${delta}</span>`;
+            const analyticsDelta = variant.analyticsDelta || {};
+            const balanceDelta = typeof analyticsDelta.zoneBalanceScore === 'number'
+                ? analyticsDelta.zoneBalanceScore.toFixed(3)
+                : '--';
+            const focusDelta = typeof analyticsDelta.focusReliability === 'number'
+                ? analyticsDelta.focusReliability.toFixed(3)
+                : '--';
+            const stressDelta = typeof analyticsDelta.stressRisk === 'number'
+                ? analyticsDelta.stressRisk.toFixed(3)
+                : '--';
+            const motionDelta = typeof analyticsDelta.motionStability === 'number'
+                ? analyticsDelta.motionStability.toFixed(3)
+                : '--';
+            metrics.innerHTML += `<span>Balance Δ ${balanceDelta}</span>`;
+            metrics.innerHTML += `<span>Focus Δ ${focusDelta}</span>`;
+            metrics.innerHTML += `<span>Stress Δ ${stressDelta}</span>`;
+            metrics.innerHTML += `<span>Motion Δ ${motionDelta}</span>`;
+            card.appendChild(metrics);
+
+            if (Array.isArray(variant.tags) && variant.tags.length) {
+                for (const tag of variant.tags) {
+                    const badge = document.createElement('span');
+                    badge.className = 'insight-tag';
+                    if (/critical|stress/i.test(tag)) {
+                        badge.classList.add('critical');
+                    } else if (/balance|focus|comfort/i.test(tag)) {
+                        badge.classList.add('warning');
+                    }
+                    badge.textContent = tag.toUpperCase();
+                    card.appendChild(badge);
+                }
+            }
+
+            evolutionVariants.appendChild(card);
+        }
+    }
+}
+
+function refreshEvolutionHistoryPreview() {
+    if (!evolutionHistoryPreview) {
+        return;
+    }
+    if (!adaptiveSDKRef?.getLayoutBlueprintEvolutionHistory) {
+        evolutionHistoryPreview.textContent = 'Evolution engine not available in this build.';
+        return;
+    }
+
+    const history = adaptiveSDKRef.getLayoutBlueprintEvolutionHistory();
+    if (!history.length) {
+        evolutionHistoryPreview.textContent = 'Evolution history empty — run a sweep to populate insights.';
+        return;
+    }
+
+    const last = history[history.length - 1];
+    const variantCount = last.variants?.length ?? 0;
+    const delta = typeof last.aggregate?.averageScoreDelta === 'number'
+        ? last.aggregate.averageScoreDelta.toFixed(3)
+        : '--';
+    evolutionHistoryPreview.textContent = `Evolution history tracks ${history.length} run${history.length === 1 ? '' : 's'}. Latest sweep produced ${variantCount} variant${variantCount === 1 ? '' : 's'} with avg Δ ${delta}.`;
+}
+
+        function refreshScenarioHistoryPreview() {
+            if (!scenarioHistoryPreview) {
+                return;
+            }
+            if (!adaptiveSDKRef?.getLayoutBlueprintScenarioHistory) {
+                scenarioHistoryPreview.textContent = 'Scenario telemetry not available in this build.';
+                return;
+            }
+
+            const history = adaptiveSDKRef.getLayoutBlueprintScenarioHistory();
+            if (!history.length) {
+                scenarioHistoryPreview.textContent = 'Scenario history empty — run a scenario to populate telemetry records.';
+                return;
+            }
+
+            const last = history[history.length - 1];
+            const confidence = typeof last.aggregate?.scenarioConfidence === 'number'
+                ? last.aggregate.scenarioConfidence.toFixed(2)
+                : '--';
+            scenarioHistoryPreview.textContent = `Scenario history contains ${history.length} run${history.length === 1 ? '' : 's'}. Latest confidence ${confidence} with ${last.aggregate?.anomalyCount ?? 0} anomaly flags.`;
+        }
+
+        function refreshCalibrationHistoryPreview() {
+            if (!calibrationHistoryPreview) {
+                return;
+            }
+            if (!adaptiveSDKRef?.getLayoutBlueprintCalibrationHistory) {
+                calibrationHistoryPreview.textContent = 'Calibration engine not available in this build.';
+                return;
+            }
+
+            const history = adaptiveSDKRef.getLayoutBlueprintCalibrationHistory();
+            if (!history.length) {
+                calibrationHistoryPreview.textContent = 'Calibration history empty — run the studio to surface adjustment plans.';
+                return;
+            }
+
+            const last = history[history.length - 1];
+            const average = typeof last.aggregate?.averageScore === 'number'
+                ? last.aggregate.averageScore.toFixed(2)
+                : '--';
+            calibrationHistoryPreview.textContent = `Calibration history tracks ${history.length} session${history.length === 1 ? '' : 's'}. Latest average score ${average} across ${last.aggregate?.calibrationCount ?? 0} calibrators.`;
+        }
+
+        function executeScenario(presetId) {
+            if (!adaptiveSDKRef?.generateLayoutBlueprintScenario) {
+                if (scenarioHistoryPreview) {
+                    scenarioHistoryPreview.textContent = 'Scenario simulator not configured for this session.';
+                }
+                return;
+            }
+            const preset = scenarioPresets[presetId] || scenarioPresets['focus-drift'];
+            const baseLayout = getBaseLayoutForScenario();
+            const design = getActiveDesignSpec();
+            const contextDefaults = preset.contextDefaults || {};
+            const steps = buildScenarioSteps(preset, baseLayout);
+
+            const result = adaptiveSDKRef.generateLayoutBlueprintScenario({
+                id: `${presetId}-${Date.now()}`,
+                layout: baseLayout,
+                design,
+                contextDefaults,
+                steps
+            });
+
+            latestScenarioResult = { ...result, preset: preset.label };
+            renderScenarioResult(result, preset.label);
+            refreshScenarioHistoryPreview();
+            if (calibrationSourceSelect?.value === 'scenario') {
+                executeCalibration('scenario');
+            }
+        }
+
+        function renderRemoteStorageStatus() {
+            if (!remoteLogContainer || !remoteLastUpload) {
+                return;
+            }
+
+            if (remoteUploadLog.length === 0) {
+                remoteLastUpload.textContent = 'No remote uploads yet';
+                remoteLogContainer.innerHTML = '<div class="empty-state">Remote storage will sync after the next KPI capture</div>';
+                return;
+            }
+
+            const latestUpload = remoteUploadLog.find(entry => entry.type === 'upload');
+            if (latestUpload) {
+                remoteLastUpload.textContent = `Last remote upload ${formatTime(latestUpload.exportedAt)}`;
+            } else {
+                const latest = remoteUploadLog[0];
+                remoteLastUpload.textContent = `Last remote attempt ${formatTime(latest.exportedAt || latest.occurredAt)}`;
+            }
+
+            remoteLogContainer.innerHTML = '';
+            for (const entry of remoteUploadLog) {
+                const card = document.createElement('div');
+                card.className = `remote-log-entry remote-log-entry--${entry.type}`;
+
+                const title = document.createElement('strong');
+                if (entry.type === 'upload') {
+                    title.textContent = `Uploaded ${entry.recordCount} snapshot${entry.recordCount === 1 ? '' : 's'}`;
+                } else {
+                    title.textContent = 'Upload error';
+                }
+                card.appendChild(title);
+
+                const meta = document.createElement('span');
+                meta.className = 'meta-line';
+                meta.textContent = formatDateTime(entry.exportedAt || entry.occurredAt);
+                card.appendChild(meta);
+
+                if (entry.type === 'upload' && entry.snapshotIds?.length) {
+                    const detail = document.createElement('span');
+                    detail.textContent = `Snapshots: ${entry.snapshotIds.join(', ')}`;
+                    card.appendChild(detail);
+                } else if (entry.type === 'error' && entry.message) {
+                    const detail = document.createElement('span');
+                    detail.textContent = entry.message;
+                    card.appendChild(detail);
+                }
+
+                remoteLogContainer.appendChild(card);
+            }
+        }
+
+        function pushRemoteLog(entry) {
+            remoteUploadLog.unshift(entry);
+            if (remoteUploadLog.length > 6) {
+                remoteUploadLog.length = 6;
+            }
+            renderRemoteStorageStatus();
+        }
+
+        function executeCalibration(mode = 'latest') {
+            if (!adaptiveSDKRef?.calibrateLayoutBlueprint) {
+                if (calibrationHistoryPreview) {
+                    calibrationHistoryPreview.textContent = 'Calibration engine not configured for this session.';
+                }
+                return;
+            }
+
+            let blueprint = latestBlueprint;
+            let insights = latestBlueprintInsights?.analytics || latestBlueprintInsights || null;
+            let scenario = null;
+
+            if ((mode === 'snapshot' || !blueprint) && typeof adaptiveSDKRef.generateLayoutBlueprintSnapshot === 'function') {
+                const snapshot = adaptiveSDKRef.generateLayoutBlueprintSnapshot({
+                    id: `calibration-${Date.now()}`,
+                    analyze: true,
+                    storeHistory: true
+                });
+                if (snapshot?.blueprint) {
+                    blueprint = snapshot.blueprint;
+                    insights = snapshot.insights?.analytics || snapshot.insights || insights;
+                    latestBlueprint = blueprint;
+                    latestEvolutionResult = null;
+                    renderEvolutionResult(null);
+                    refreshEvolutionHistoryPreview();
+                    latestBlueprintInsights = snapshot.insights || latestBlueprintInsights;
+                    renderBlueprintPanel(latestBlueprint, latestBlueprintInsights);
+                }
+            }
+
+            if (!blueprint) {
+                calibrationHistoryPreview.textContent = 'No blueprint available — trigger an adaptive update first.';
+                renderCalibrationResult(null);
+                return;
+            }
+
+            if (mode === 'scenario' && latestScenarioResult) {
+                scenario = latestScenarioResult;
+            }
+
+            const calibration = adaptiveSDKRef.calibrateLayoutBlueprint({
+                blueprint,
+                insights,
+                scenario,
+                annotations: blueprint.annotations,
+                storeHistory: true
+            });
+
+            latestCalibrationResult = calibration;
+            renderCalibrationResult(calibration);
+            refreshCalibrationHistoryPreview();
+        }
+
+
+
+function executeEvolution(mode = 'latest') {
+    if (!adaptiveSDKRef?.runLayoutBlueprintEvolution) {
+        if (evolutionHistoryPreview) {
+            evolutionHistoryPreview.textContent = 'Evolution engine not configured for this session.';
+        }
+        return;
+    }
+
+    let blueprint = latestBlueprint;
+    if (mode === 'scenario' && latestScenarioResult?.steps?.length) {
+        const lastStep = latestScenarioResult.steps[latestScenarioResult.steps.length - 1];
+        if (lastStep?.blueprint) {
+            blueprint = lastStep.blueprint;
+        }
+    }
+
+    if ((mode === 'snapshot' || !blueprint) && typeof adaptiveSDKRef.generateLayoutBlueprintSnapshot === 'function') {
+        const snapshot = adaptiveSDKRef.generateLayoutBlueprintSnapshot({
+            id: `evolution-${Date.now()}`,
+            analyze: true,
+            storeHistory: true
+        });
+        if (snapshot?.blueprint) {
+            blueprint = snapshot.blueprint;
+            latestBlueprint = blueprint;
+            latestEvolutionResult = null;
+            renderEvolutionResult(null);
+            refreshEvolutionHistoryPreview();
+            latestBlueprintInsights = snapshot.insights || latestBlueprintInsights;
+            renderBlueprintPanel(latestBlueprint, latestBlueprintInsights);
+        }
+    }
+
+    if (!blueprint) {
+        renderEvolutionResult(null);
+        if (evolutionHistoryPreview) {
+            evolutionHistoryPreview.textContent = 'No blueprint available — trigger an adaptive update first.';
+        }
+        return;
+    }
+
+    const strategyOptions = {};
+    if (mode === 'scenario' && latestScenarioResult?.aggregate) {
+        strategyOptions.scenarioAggregate = latestScenarioResult.aggregate;
+    }
+
+    const result = adaptiveSDKRef.runLayoutBlueprintEvolution({
+        id: `evolution-${Date.now()}`,
+        blueprint,
+        strategyOptions: Object.keys(strategyOptions).length ? strategyOptions : undefined
+    });
+
+    renderEvolutionResult(result);
+    refreshEvolutionHistoryPreview();
+}
+        const remoteStorageAdapter = {
+            async write(records) {
+                await new Promise(resolve => setTimeout(resolve, 80));
+                const snapshotIds = Array.isArray(records) ? records.map(item => item.id) : [];
+                pushRemoteLog({
+                    type: 'upload',
+                    exportedAt: new Date().toISOString(),
+                    recordCount: snapshotIds.length,
+                    snapshotIds
+                });
+            },
+            async clear() {
+                remoteUploadLog.length = 0;
+                renderRemoteStorageStatus();
+            }
+        };
+
+        const commercializationRemoteStorage = createCommercializationSnapshotRemoteStorage({
+            adapter: remoteStorageAdapter,
+            includeSummary: false,
+            redactContextKeys: ['licenseKey'],
+            onError: error => {
+                pushRemoteLog({
+                    type: 'error',
+                    message: error?.message || 'Remote upload failed',
+                    occurredAt: new Date().toISOString()
+                });
+            }
+        });
+
+        clearRemoteLogBtn?.addEventListener('click', () => {
+            remoteStorageAdapter.clear?.();
+        });
+
+        renderRemoteStorageStatus();
+
+        const blueprintRenderer = createLayoutBlueprintRenderer({
+            layers: {
+                background: document.getElementById('background-canvas'),
+                shadow: document.getElementById('shadow-canvas'),
+                content: document.getElementById('content-canvas'),
+                highlight: document.getElementById('highlight-canvas'),
+                annotations: document.getElementById('annotation-canvas'),
+                accent: document.getElementById('accent-canvas')
+            }
+        });
+
+        blueprintRenderer.resize();
+        window.addEventListener('resize', () => blueprintRenderer.resize());
+
+        renderBlueprintPanel(null, null);
+
+        const formatLabel = (value) => {
+            if (!value) return 'Unspecified';
+            return value.split(/[-_]/g).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+        };
+
+        const clamp = (value, min = 0, max = 1) => {
+            const numeric = Number(value);
+            const resolved = Number.isFinite(numeric) ? numeric : min;
+            return Math.min(max, Math.max(min, resolved));
+        };
+
+        const formatPercent = (value) => `${Math.round(clamp(value, 0, 1) * 100)}%`;
+
+        function renderBlueprintPanel(blueprint, insightResult) {
+            if (!blueprint) {
+                if (blueprintIntensity) blueprintIntensity.textContent = '--';
+                if (blueprintVelocity) blueprintVelocity.textContent = '--';
+                if (blueprintEngagement) blueprintEngagement.textContent = '--';
+                if (blueprintStress) blueprintStress.textContent = '--';
+                if (blueprintBalance) blueprintBalance.textContent = '--';
+                if (blueprintFocusReliability) blueprintFocusReliability.textContent = '--';
+                if (blueprintStressRisk) blueprintStressRisk.textContent = '--';
+                if (blueprintMotionStability) blueprintMotionStability.textContent = '--';
+                if (blueprintZoneList) {
+                    blueprintZoneList.innerHTML = '<li class="blueprint-zone"><span>Awaiting adaptive update</span></li>';
+                }
+                if (blueprintTags) {
+                    blueprintTags.innerHTML = '';
+                }
+                if (blueprintRecommendations) {
+                    blueprintRecommendations.innerHTML = '';
+                }
+                return;
+            }
+
+            const analytics = blueprint.analytics || {};
+            const toDisplay = (value, digits = 2) => (typeof value === 'number' ? value : 0).toFixed(digits);
+
+            blueprintIntensity.textContent = toDisplay(blueprint.intensity);
+            blueprintVelocity.textContent = toDisplay(blueprint.motion.velocity);
+            blueprintEngagement.textContent = toDisplay(blueprint.engagementLevel);
+            blueprintStress.textContent = toDisplay(blueprint.biometricStress);
+            if (blueprintBalance) blueprintBalance.textContent = toDisplay(analytics.zoneBalanceScore);
+            if (blueprintFocusReliability) blueprintFocusReliability.textContent = toDisplay(analytics.focusReliability);
+            if (blueprintStressRisk) blueprintStressRisk.textContent = toDisplay(analytics.stressRisk);
+            if (blueprintMotionStability) blueprintMotionStability.textContent = toDisplay(analytics.motionStability);
+
+            if (blueprintZoneList) {
+                blueprintZoneList.innerHTML = '';
+                if (!Array.isArray(blueprint.zones) || blueprint.zones.length === 0) {
+                    blueprintZoneList.innerHTML = '<li class="blueprint-zone"><span>No layout zones registered</span></li>';
+                } else {
+                    for (const zone of blueprint.zones) {
+                        const item = document.createElement('li');
+                        item.className = 'blueprint-zone';
+
+                        const title = document.createElement('strong');
+                        title.textContent = formatLabel(zone.id || 'zone');
+                        item.appendChild(title);
+
+                        const components = Array.isArray(zone.components) && zone.components.length
+                            ? zone.components.join(', ')
+                            : 'None';
+                        const componentLine = document.createElement('span');
+                        componentLine.textContent = `Components: ${components}`;
+                        item.appendChild(componentLine);
+
+                        const metricsLine = document.createElement('span');
+                        metricsLine.textContent = `Occupancy ${formatPercent(zone.occupancy)} · Surface ${Math.round(zone.surfaceScore * 100)}`;
+                        item.appendChild(metricsLine);
+
+                        blueprintZoneList.appendChild(item);
+                    }
+                }
+            }
+
+            if (blueprintTags) {
+                const tags = insightResult?.statusTags || analytics.statusTags || [];
+                if (!tags.length) {
+                    blueprintTags.innerHTML = '<span class="insight-tag">STABLE</span>';
+                } else {
+                    blueprintTags.innerHTML = '';
+                    for (const tag of tags) {
+                        const badge = document.createElement('span');
+                        badge.className = 'insight-tag';
+                        if (/critical/i.test(tag)) {
+                            badge.classList.add('critical');
+                        } else if (/stress|reassurance|steady/i.test(tag)) {
+                            badge.classList.add('warning');
+                        }
+                        badge.textContent = tag.toUpperCase();
+                        blueprintTags.appendChild(badge);
+                    }
+                }
+            }
+
+            if (blueprintRecommendations) {
+                const recommendations = insightResult?.recommendations || analytics.recommendations || [];
+                blueprintRecommendations.innerHTML = '';
+                if (!recommendations.length) {
+                    blueprintRecommendations.innerHTML = '<li>No blueprint actions pending.</li>';
+                } else {
+                    for (const recommendation of recommendations.slice(0, 4)) {
+                        const recItem = document.createElement('li');
+                        recItem.textContent = recommendation;
+                        blueprintRecommendations.appendChild(recItem);
+                    }
+                }
+            }
+        }
+
+        function renderMetricGrid(container, entries, formatter) {
+            container.innerHTML = '';
+            if (entries.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = 'Awaiting attestation coverage';
+                container.appendChild(empty);
+                return;
+            }
+
+            for (const [key, data] of entries) {
+                const metric = document.createElement('div');
+                metric.className = 'metric';
+                const { primary, secondary } = formatter(key, data);
+                const label = document.createElement('span');
+                label.textContent = primary;
+                const value = document.createElement('span');
+                value.textContent = secondary;
+                metric.appendChild(label);
+                metric.appendChild(value);
+                container.appendChild(metric);
+            }
+        }
+
+        function renderCommercializationSummary(summary) {
+            if (!summary) {
+                renderMetricGrid(segmentCoverageGrid, [], () => ({ primary: '', secondary: '' }));
+                renderMetricGrid(regionCoverageGrid, [], () => ({ primary: '', secondary: '' }));
+                commercializationPackList.innerHTML = '';
+                commercializationKpiSummary.innerHTML = '';
+                snapshotList.innerHTML = '';
+                commercializationUpdated.textContent = 'No commercialization activity yet';
+                if (adaptiveSDKRef) {
+                    refreshCommercializationSnapshots();
+                }
+                return;
+            }
+
+            const segmentEntries = Object.entries(summary.segments || {});
+            renderMetricGrid(segmentCoverageGrid, segmentEntries, (segment, data) => ({
+                primary: formatLabel(segment),
+                secondary: `${data.profileCount} profiles · ${data.adoptionCount} adoptions`
+            }));
+
+            const regionEntries = Object.entries(summary.regions || {});
+            renderMetricGrid(regionCoverageGrid, regionEntries, (region, data) => ({
+                primary: formatLabel(region),
+                secondary: `${data.profileCount} profiles · ${data.adoptionCount} adoptions`
+            }));
+
+            const profileMap = new Map((summary.profiles || []).map(profile => [profile.id, profile]));
+            commercializationPackList.innerHTML = '';
+            const packs = summary.packs || [];
+            if (packs.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = 'No commercialization packs registered yet';
+                commercializationPackList.appendChild(empty);
+            } else {
+                for (const pack of packs) {
+                    const card = document.createElement('div');
+                    card.className = 'pack-card';
+
+                    const headline = document.createElement('span');
+                    headline.className = 'meta-line';
+                    headline.textContent = pack.metadata?.segment ? `${formatLabel(pack.metadata.segment)} Segment` : 'Custom Pack';
+                    card.appendChild(headline);
+
+                    const title = document.createElement('h3');
+                    title.textContent = pack.name || formatLabel(pack.id);
+                    card.appendChild(title);
+
+                    if (pack.description) {
+                        const description = document.createElement('p');
+                        description.textContent = pack.description;
+                        card.appendChild(description);
+                    }
+
+                    const stats = document.createElement('p');
+                    const profileCount = Array.isArray(pack.profileIds) ? pack.profileIds.length : 0;
+                    stats.textContent = `Profiles: ${profileCount} · Adoptions: ${pack.adoptionCount}`;
+                    card.appendChild(stats);
+
+                    const defaultProfile = pack.defaultProfileId ? profileMap.get(pack.defaultProfileId) : null;
+                    const defaultLine = document.createElement('p');
+                    defaultLine.className = 'meta-line';
+                    defaultLine.textContent = defaultProfile
+                        ? `Default Profile: ${defaultProfile.name}`
+                        : 'Default Profile: None';
+                    card.appendChild(defaultLine);
+
+                    commercializationPackList.appendChild(card);
+                }
+            }
+
+            if (summary.lastUpdated) {
+                const timestamp = new Date(summary.lastUpdated);
+                commercializationUpdated.textContent = `Updated ${timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+                commercializationUpdated.textContent = 'No commercialization activity yet';
+            }
+
+            if (adaptiveSDKRef) {
+                refreshCommercializationSnapshots();
+            }
+        }
+
+        function renderKpiSummary(report) {
+            commercializationKpiSummary.innerHTML = '';
+            if (!report || !report.latest) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = 'No KPI snapshots yet';
+                commercializationKpiSummary.appendChild(empty);
+                return;
+            }
+
+            const metrics = [
+                { label: 'Total Adoption', value: report.latest.kpis?.totalAdoption ?? 0, delta: report.deltas?.totalAdoption },
+                { label: 'Active Packs', value: report.latest.kpis?.activePacks ?? 0, delta: report.deltas?.activePacks },
+                { label: 'Active Profiles', value: report.latest.kpis?.activeProfiles ?? 0, delta: report.deltas?.activeProfiles }
+            ];
+
+            for (const metric of metrics) {
+                const item = document.createElement('div');
+                item.className = 'snapshot-item';
+
+                const title = document.createElement('strong');
+                title.textContent = metric.label;
+                item.appendChild(title);
+
+                const value = document.createElement('span');
+                value.textContent = `${metric.value}`;
+                value.style.fontSize = '1.1rem';
+                value.style.fontWeight = '600';
+                value.style.color = 'var(--accent)';
+                item.appendChild(value);
+
+                let deltaText = 'NO CHANGE VS LAST';
+                if (typeof metric.delta === 'number') {
+                    if (metric.delta > 0) {
+                        deltaText = `+${metric.delta} VS LAST SNAPSHOT`;
+                    } else if (metric.delta < 0) {
+                        deltaText = `${metric.delta} VS LAST SNAPSHOT`;
+                    }
+                }
+                const delta = document.createElement('span');
+                delta.className = 'meta-line';
+                delta.textContent = deltaText;
+                item.appendChild(delta);
+
+                commercializationKpiSummary.appendChild(item);
+            }
+        }
+
+        function renderSnapshotHistory(snapshots) {
+            snapshotList.innerHTML = '';
+            if (!snapshots || snapshots.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = 'No commercialization snapshots yet';
+                snapshotList.appendChild(empty);
+                return;
+            }
+
+            for (const snapshot of snapshots) {
+                const item = document.createElement('div');
+                item.className = 'snapshot-item';
+
+                const capturedAt = document.createElement('strong');
+                const timestamp = new Date(snapshot.capturedAt);
+                capturedAt.textContent = timestamp.toLocaleString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                item.appendChild(capturedAt);
+
+                const coverage = document.createElement('span');
+                coverage.textContent = `Adoption ${snapshot.kpis?.totalAdoption ?? 0} · Packs ${snapshot.kpis?.activePacks ?? 0}/${snapshot.kpis?.totalPacks ?? 0}`;
+                item.appendChild(coverage);
+
+                const contextBits = [];
+                if (snapshot.context?.trigger) {
+                    contextBits.push(String(snapshot.context.trigger));
+                }
+                if (snapshot.context?.capturedBy) {
+                    contextBits.push(String(snapshot.context.capturedBy));
+                }
+                if (contextBits.length > 0) {
+                    const meta = document.createElement('span');
+                    meta.className = 'meta-line';
+                    meta.textContent = contextBits.join(' · ');
+                    item.appendChild(meta);
+                }
+
+                snapshotList.appendChild(item);
+            }
+        }
+
+        function refreshCommercializationSnapshots() {
+            if (!adaptiveSDKRef) {
+                commercializationKpiSummary.innerHTML = '';
+                snapshotList.innerHTML = '';
+                return;
+            }
+            const snapshots = adaptiveSDKRef.getLicenseCommercializationSnapshots({ limit: 5, withSummary: false });
+            renderSnapshotHistory(snapshots);
+            const kpiReport = adaptiveSDKRef.getLicenseCommercializationKpiReport();
+            renderKpiSummary(kpiReport);
+        }
+
+        const adaptiveSDK = (adaptiveSDKRef = createAdaptiveSDK({
+            telemetry: {
+                enabled: true,
+                defaultConsent: { analytics: false, biometric: false },
+                onConsentDecision: (snapshot, metadata) => {
+                    consentPanel?.handleConsentDecision(snapshot, metadata);
+                },
+                commercialization: {
+                    onUpdate: renderCommercializationSummary,
+                    snapshotStoreOptions: {
+                        storage: commercializationRemoteStorage,
+                        onChange: () => renderRemoteStorageStatus()
+                    },
+                    snapshotIntervalMs: 3600000
+                }
+            },
+            telemetryProviders: [complianceVaultProvider],
+            marketplaceHooks: {
+                onPatternChange: updatePatternPanel,
+                onAdaptiveUpdate: handleAdaptiveUpdate
+            }
+        }));
+
+        refreshScenarioHistoryPreview();
+
+        const {
+            engine,
+            registerLayoutAnnotation,
+            updateTelemetryConsent,
+            getTelemetryConsent,
+            getTelemetryAuditTrail,
+            getLicenseCommercializationSummary,
+            setLicenseAttestorFromProfile,
+            registerLicenseAttestationProfilePack
+        } = adaptiveSDK;
+
+        const telemetryHarness = adaptiveSDK.telemetry;
+
+        latestDesignSpec = engine.activeDesignSpec || latestDesignSpec;
+
+        captureSnapshotBtn?.addEventListener('click', () => {
+            adaptiveSDKRef?.captureLicenseCommercializationSnapshot({
+                trigger: 'demo-manual',
+                capturedBy: 'wearable-designer'
+            });
+            refreshCommercializationSnapshots();
+        });
+
+        exportSnapshotsBtn?.addEventListener('click', () => {
+            if (!adaptiveSDKRef) return;
+            const exportPayload = adaptiveSDKRef.exportLicenseCommercializationSnapshots({
+                format: 'json',
+                includeSummary: false
+            });
+            if (!exportPayload) return;
+            const blob = new Blob([exportPayload], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `vib34d-commercialization-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        blueprintInsightEngine = adaptiveSDK.blueprintInsightEngine || new LayoutBlueprintInsightEngine({ historyLimit: 60 });
+
+        downloadBlueprintBtn?.addEventListener('click', () => {
+            if (!latestBlueprint) return;
+            const payload = JSON.stringify({
+                blueprint: latestBlueprint,
+                insights: latestBlueprintInsights
+            }, null, 2);
+            const blob = new Blob([payload], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `vib34d-blueprint-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        renderScenarioResult(null);
+        renderCalibrationResult(latestCalibrationResult);
+        refreshCalibrationHistoryPreview();
+
+        renderEvolutionResult(latestEvolutionResult);
+        refreshEvolutionHistoryPreview();
+
+        runScenarioBtn?.addEventListener('click', () => {
+            const presetId = scenarioPresetSelect?.value || 'focus-drift';
+            executeScenario(presetId);
+        });
+
+        runCalibrationBtn?.addEventListener('click', () => {
+            const mode = calibrationSourceSelect?.value || 'latest';
+            executeCalibration(mode);
+        });
+
+        runEvolutionBtn?.addEventListener('click', () => {
+            const mode = evolutionBaseSelect?.value || 'latest';
+            executeEvolution(mode);
+        });
+
+        downloadScenarioBtn?.addEventListener('click', () => {
+            if (!latestScenarioResult) {
+                return;
+            }
+            const payload = JSON.stringify({
+                scenario: latestScenarioResult,
+                blueprint: latestBlueprint,
+                design: latestDesignSpec || fallbackDesignSpec
+            }, null, 2);
+            const blob = new Blob([payload], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `vib34d-scenario-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        downloadCalibrationBtn?.addEventListener('click', () => {
+            if (!latestCalibrationResult) {
+                return;
+            }
+            const payload = JSON.stringify({
+                calibration: latestCalibrationResult,
+                blueprint: latestBlueprint,
+                insights: latestBlueprintInsights,
+                scenario: latestScenarioResult
+            }, null, 2);
+            const blob = new Blob([payload], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `vib34d-calibration-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        downloadEvolutionBtn?.addEventListener('click', () => {
+            if (!latestEvolutionResult) {
+                return;
+            }
+            const payload = JSON.stringify({
+                evolution: latestEvolutionResult,
+                blueprint: latestBlueprint,
+                insights: latestBlueprintInsights,
+                scenario: latestScenarioResult
+            }, null, 2);
+            const blob = new Blob([payload], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `vib34d-evolution-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        registerLayoutAnnotation(new class extends LayoutAnnotation {
+            constructor() {
+                super({ id: 'demo-insight', priority: 5 });
+            }
+
+            shouldApply({ layout }) {
+                return layout.intensity > 0.7;
+            }
+
+            build({ layout }) {
+                return {
+                    type: 'insight',
+                    message: `High intent detected (${layout.intensity.toFixed(2)})`
+                };
+            }
+        }());
+
+        window.vib34dEngine = engine;
+        window.vib34dComplianceVault = complianceVaultProvider;
+
+        const enterprisePack = registerLicenseAttestationProfilePack('enterprise-saas', { applyDefault: true });
+        const studioPack = registerLicenseAttestationProfilePack('studio-collab', {
+            applyDefault: false,
+            collaborationId: 'aura-labs'
+        });
+
+        window.vib34dEnterprisePack = enterprisePack;
+        window.vib34dStudioPack = studioPack;
+        window.vib34dBlueprintInsightEngine = blueprintInsightEngine;
+
+        if (enterprisePack?.defaultProfileId) {
+            setLicenseAttestorFromProfile(enterprisePack.defaultProfileId);
+        }
+
+        renderCommercializationSummary(getLicenseCommercializationSummary());
+        refreshCommercializationSnapshots();
+
+        const snapshotStore = adaptiveSDKRef.getLicenseCommercializationSnapshotStore?.();
+        snapshotStore?.whenReady?.().then(() => {
+            refreshCommercializationSnapshots();
+            renderRemoteStorageStatus();
+        });
+
+        if (typeof adaptiveSDKRef?.startLicenseCommercializationSnapshotSchedule === 'function') {
+            stopSnapshotSchedule = adaptiveSDKRef.startLicenseCommercializationSnapshotSchedule(60000, {
+                trigger: 'demo-schedule',
+                capturedBy: 'wearable-designer'
+            }) || null;
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (typeof stopSnapshotSchedule === 'function') {
+                stopSnapshotSchedule();
+            }
+        });
+
+        const variationSlider = document.getElementById('variationSlider');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const variationLabel = document.getElementById('variationLabel');
+        const focusMetric = document.getElementById('focusMetric');
+        const engagementMetric = document.getElementById('engagementMetric');
+        const velocityMetric = document.getElementById('velocityMetric');
+        const stressMetric = document.getElementById('stressMetric');
+        const consentPanelContainer = document.getElementById('telemetryConsentPanel');
+
+        consentPanel = createConsentPanel({
+            container: consentPanelContainer,
+            consentOptions: [
+                {
+                    classification: 'system',
+                    title: 'System Diagnostics',
+                    description: 'Required for runtime health and adapter lifecycle.'
+                },
+                {
+                    classification: 'compliance',
+                    title: 'Compliance & Audit',
+                    description: 'Records schema issues and consent changes.'
+                },
+                {
+                    classification: 'interaction',
+                    title: 'Interaction Feedback',
+                    description: 'Tracks gestures and adaptive layout reactions.'
+                },
+                {
+                    classification: 'analytics',
+                    title: 'Analytics',
+                    description: 'Enables aggregated layout performance telemetry.'
+                },
+                {
+                    classification: 'biometric',
+                    title: 'Biometric Streams',
+                    description: 'Includes heart rate and stress telemetry.'
+                }
+            ],
+            getTelemetryConsent,
+            getComplianceRecords: () => complianceVaultProvider.getRecords(),
+            getTelemetryAuditTrail,
+            refreshInterval: 6000,
+            downloadFileNamePrefix: 'vib34d-compliance-log',
+            onConsentToggle: (classification, enabled) => {
+                updateTelemetryConsent({ [classification]: enabled }, { source: 'wearable-designer-ui' });
+            },
+            trackConsentToggle: (classification, enabled) => {
+                telemetryHarness.track('privacy.consent.ui_toggle', { classification, enabled }, { classification: 'compliance' });
+            }
+        }).mount();
+
+        variationSlider.addEventListener('input', (event) => {
+            const value = Number(event.target.value);
+            engine.setVariation(value);
+            variationLabel.textContent = `${value + 1} - ${engine.variationManager.getVariationName(value)}`;
+        });
+
+        randomizeBtn.addEventListener('click', () => {
+            engine.randomVariation();
+            variationSlider.value = engine.currentVariation;
+            variationLabel.textContent = `${engine.currentVariation + 1} - ${engine.variationManager.getVariationName(engine.currentVariation)}`;
+        });
+
+        function updatePatternPanel(spec) {
+            latestDesignSpec = spec;
+            document.getElementById('patternTier').textContent = spec.monetization.tier.toUpperCase();
+            document.getElementById('patternName').textContent = spec.pattern?.name || 'Adaptive Pattern';
+            document.getElementById('patternDescription').textContent = spec.pattern?.description || 'Dynamic mapping ready for commercialization.';
+            document.getElementById('integrationTag').textContent = `Figma: ${spec.integration.figmaPlugin}`;
+        }
+
+        function handleAdaptiveUpdate({ context, layout, design }) {
+            latestDesignSpec = design || latestDesignSpec;
+            focusMetric.textContent = context.focusVector.x.toFixed(2);
+            engagementMetric.textContent = context.engagementLevel.toFixed(2);
+            velocityMetric.textContent = layout.motion.velocity.toFixed(2);
+            stressMetric.textContent = context.biometricStress.toFixed(2);
+
+            blueprintRenderer.render(layout, design, context);
+            let snapshot = null;
+            if (typeof adaptiveSDK.generateLayoutBlueprintSnapshot === 'function') {
+                snapshot = adaptiveSDK.generateLayoutBlueprintSnapshot({
+                    layout,
+                    design,
+                    context,
+                    id: `wearable-${Date.now()}`,
+                    storeHistory: true
+                });
+            }
+
+            if (!snapshot) {
+                const blueprint = buildLayoutBlueprint(layout, design, context);
+                const insights = blueprintInsightEngine?.analyze(blueprint, { storeHistory: true });
+                snapshot = { blueprint, insights };
+            } else if (!snapshot.insights && blueprintInsightEngine && blueprintInsightEngine !== adaptiveSDK.blueprintInsightEngine) {
+                snapshot.insights = blueprintInsightEngine.analyze(snapshot.blueprint, { storeHistory: true });
+            }
+
+            latestBlueprint = snapshot.blueprint;
+            latestEvolutionResult = null;
+            renderEvolutionResult(null);
+            refreshEvolutionHistoryPreview();
+            latestBlueprintInsights = snapshot.insights;
+            renderBlueprintPanel(latestBlueprint, latestBlueprintInsights);
+            refreshScenarioHistoryPreview();
+            renderCalibrationResult(latestCalibrationResult);
+            refreshCalibrationHistoryPreview();
+        }
+
+        document.addEventListener('pointermove', event => {
+            const x = event.clientX / window.innerWidth;
+            const y = event.clientY / window.innerHeight;
+            engine.sensoryBridge.ingest('eye-tracking', { x, y, depth: 0.25 + 0.15 * Math.sin(x * Math.PI) }, 0.9);
+            engine.sensoryBridge.ingest('neural-intent', { x: (x - 0.5) * 0.8, y: (0.5 - y) * 0.8, engagement: 0.5 + (0.5 - Math.abs(0.5 - x)) * 0.3 }, 0.7);
+        });
+
+        setInterval(() => {
+            const stress = 0.15 + Math.random() * 0.15;
+            engine.sensoryBridge.ingest('biometric', { stress, heartRate: 70 + Math.random() * 6 }, 0.6);
+            engine.sensoryBridge.ingest('ambient', { luminance: 0.4 + Math.random() * 0.2, motion: Math.random() * 0.3 }, 0.5);
+        }, 2400);
+    </script>
+</body>
+</html>
