@@ -12,16 +12,69 @@ import { ExportManager } from '../export/ExportManager.js';
 // InteractionHandler removed - each system handles its own interactions
 import { StatusManager } from '../ui/StatusManager.js';
 
+function createStatusFacade() {
+    const noop = () => {};
+    return {
+        setStatus: noop,
+        success: noop,
+        error: noop,
+        warning: noop,
+        info: noop
+    };
+}
+
+function createGalleryFacade() {
+    return {
+        openGallery() {
+            console.warn('🛈 Gallery view requested but gallery system is disabled in the current environment.');
+        }
+    };
+}
+
+function createExportFacade() {
+    const warn = () => {
+        console.warn('🛈 Export request ignored because exports are disabled in the current environment.');
+    };
+    return {
+        exportJSON: warn,
+        exportCSS: warn,
+        exportHTML: warn,
+        exportPNG: warn,
+        importJSON: warn,
+        importFolder: warn
+    };
+}
+
+function normalizeEnvironmentOptions(environmentOptions = {}) {
+    const mode = environmentOptions.mode || (typeof window === 'undefined' ? 'headless' : 'browser');
+    const skipVisualization = environmentOptions.skipVisualization ?? mode !== 'browser';
+    const skipUiBindings = environmentOptions.skipUiBindings ?? mode !== 'browser';
+    return {
+        mode,
+        skipVisualization,
+        skipUiBindings,
+        skipGallery: environmentOptions.skipGallery ?? skipUiBindings,
+        skipExport: environmentOptions.skipExport ?? skipUiBindings,
+        skipStatus: environmentOptions.skipStatus ?? (mode !== 'browser'),
+        autoStart: environmentOptions.autoStart ?? true
+    };
+}
+
 export class VIB34DIntegratedEngine {
-    constructor() {
+    constructor(environmentOptions = {}) {
+        this.environment = normalizeEnvironmentOptions(environmentOptions);
         // Core system components
         this.visualizers = [];
         this.parameterManager = new ParameterManager();
         this.variationManager = new VariationManager(this); // CRITICAL FIX: Pass this as engine parameter
-        this.gallerySystem = new GallerySystem(this);
-        this.exportManager = new ExportManager(this);
+        this.gallerySystem = this.environment.skipGallery
+            ? createGalleryFacade()
+            : new GallerySystem(this, { environment: this.environment });
+        this.exportManager = this.environment.skipExport
+            ? createExportFacade()
+            : new ExportManager(this, { environment: this.environment });
         // Each system handles its own interactions - no central handler needed
-        this.statusManager = new StatusManager();
+        this.statusManager = this.environment.skipStatus ? createStatusFacade() : new StatusManager();
         
         // Active state for reactivity
         this.isActive = false;
@@ -43,7 +96,9 @@ export class VIB34DIntegratedEngine {
         this.animationId = null;
         
         // Initialize system
-        this.init();
+        if (this.environment.autoStart) {
+            this.init();
+        }
     }
     
     /**
@@ -53,12 +108,20 @@ export class VIB34DIntegratedEngine {
         console.log('🌌 Initializing VIB34D Integrated Holographic Engine...');
         
         try {
-            this.createVisualizers();
-            this.setupControls();
+            if (!this.environment.skipVisualization) {
+                this.createVisualizers();
+            }
+            if (!this.environment.skipUiBindings) {
+                this.setupControls();
+            }
             this.setupInteractions();
             this.loadCustomVariations();
-            this.populateVariationGrid();
-            this.startRenderLoop();
+            if (!this.environment.skipUiBindings) {
+                this.populateVariationGrid();
+            }
+            if (!this.environment.skipVisualization) {
+                this.startRenderLoop();
+            }
             
             this.statusManager.setStatus('VIB34D Engine initialized successfully', 'success');
             console.log('✅ VIB34D Engine ready');
@@ -97,26 +160,35 @@ export class VIB34DIntegratedEngine {
      * Set up UI controls and event handlers
      */
     setupControls() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         // Delegate to UI components
         this.setupTabSystem();
         this.setupParameterControls();
         this.setupGeometryPresets();
         this.updateDisplayValues();
     }
-    
+
     setupTabSystem() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 btn.classList.add('active');
                 document.getElementById(btn.dataset.tab + '-tab').classList.add('active');
             });
         });
     }
-    
+
     setupParameterControls() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         const controls = [
             'variationSlider', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'dimension',
             'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue'
@@ -129,8 +201,11 @@ export class VIB34DIntegratedEngine {
             }
         });
     }
-    
+
     setupGeometryPresets() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         document.querySelectorAll('[data-geometry]').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('[data-geometry]').forEach(b => b.classList.remove('active'));
@@ -163,6 +238,9 @@ export class VIB34DIntegratedEngine {
      * Populate the variation grid UI
      */
     populateVariationGrid() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         this.variationManager.populateGrid();
     }
     
@@ -170,6 +248,9 @@ export class VIB34DIntegratedEngine {
      * Start the main render loop
      */
     startRenderLoop() {
+        if (this.environment.skipVisualization) {
+            return;
+        }
         if (window.mobileDebug) {
             window.mobileDebug.log(`🎬 VIB34D Faceted Engine: Starting render loop with ${this.visualizers?.length} visualizers`);
         }
@@ -219,14 +300,20 @@ export class VIB34DIntegratedEngine {
      * Update parameters from UI controls
      */
     updateFromControls() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         this.parameterManager.updateFromControls();
         this.updateDisplayValues();
     }
-    
+
     /**
      * Update display values in UI
      */
     updateDisplayValues() {
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         this.parameterManager.updateDisplayValues();
     }
     
@@ -237,15 +324,19 @@ export class VIB34DIntegratedEngine {
         if (index >= 0 && index < this.totalVariations) {
             this.currentVariation = index;
             this.variationManager.applyVariation(index);
-            this.updateDisplayValues();
-            this.updateVisualizers();
-            
-            // Update UI
-            const slider = document.getElementById('variationSlider');
-            if (slider) {
-                slider.value = index;
+            if (!this.environment.skipUiBindings) {
+                this.updateDisplayValues();
             }
-            
+            this.updateVisualizers();
+
+            // Update UI
+            if (!this.environment.skipUiBindings) {
+                const slider = document.getElementById('variationSlider');
+                if (slider) {
+                    slider.value = index;
+                }
+            }
+
             this.statusManager.setStatus(`Variation ${index + 1} loaded`, 'info');
         }
     }
@@ -271,7 +362,9 @@ export class VIB34DIntegratedEngine {
      */
     randomizeAll() {
         this.parameterManager.randomizeAll();
-        this.updateDisplayValues();
+        if (!this.environment.skipUiBindings) {
+            this.updateDisplayValues();
+        }
         this.updateVisualizers();
         this.statusManager.setStatus('All parameters randomized', 'info');
     }
@@ -281,7 +374,9 @@ export class VIB34DIntegratedEngine {
      */
     resetToDefaults() {
         this.parameterManager.resetToDefaults();
-        this.updateDisplayValues();
+        if (!this.environment.skipUiBindings) {
+            this.updateDisplayValues();
+        }
         this.updateVisualizers();
         this.statusManager.setStatus('Reset to default parameters', 'info');
     }
@@ -293,7 +388,9 @@ export class VIB34DIntegratedEngine {
         const customIndex = this.variationManager.saveCurrentAsCustom();
         if (customIndex !== -1) {
             this.statusManager.setStatus(`Saved as custom variation ${customIndex + 1}`, 'success');
-            this.populateVariationGrid();
+            if (!this.environment.skipUiBindings) {
+                this.populateVariationGrid();
+            }
         } else {
             this.statusManager.setStatus('All custom slots are full', 'warning');
         }

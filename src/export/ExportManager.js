@@ -4,8 +4,16 @@
  */
 
 export class ExportManager {
-    constructor(engine) {
+    constructor(engine, options = {}) {
         this.engine = engine;
+        this.options = options;
+        this.environment = options.environment || {};
+        if (typeof document === 'undefined') {
+            return;
+        }
+        if (this.environment.skipUiBindings) {
+            return;
+        }
         this.setupFileInputs();
     }
     
