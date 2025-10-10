@@ -5,8 +5,8 @@
  */
 
 // Global state variables
-let audioEnabled = window.audioEnabled || false;
-let interactivityEnabled = false;
+let interactivityEnabled = window.interactivityEnabled !== false;
+window.interactivityEnabled = interactivityEnabled;
 
 /**
  * Main parameter update function - CRITICAL for all visualizers
@@ -276,28 +276,87 @@ window.openViewer = function() {
 /**
  * Interactivity Toggle - Enable/disable mouse and touch interactions
  */
-window.toggleInteractivity = function() {
-    interactivityEnabled = !interactivityEnabled;
-    
-    // Update interactivity button visual state
-    const interactBtn = document.getElementById('interactivityToggle') || document.querySelector('[onclick="toggleInteractivity()"]');
-    if (interactBtn) {
-        if (interactivityEnabled) {
-            interactBtn.classList.add('active');
-        } else {
-            interactBtn.classList.remove('active');
-        }
-        interactBtn.title = `Interactive Control: ${interactivityEnabled ? 'ON' : 'OFF'}`;
+window.toggleInteractivity = async function() {
+    if (window._interactivityToggleInFlight) {
+        return;
     }
-    
-    console.log(`🎛️ Mouse/Touch Interactions: ${interactivityEnabled ? 'ENABLED' : 'DISABLED'}`);
-    console.log('🔷 Faceted: Mouse tracking', interactivityEnabled ? '✅' : '❌');
-    console.log('🌌 Quantum: Enhanced interactions', interactivityEnabled ? '✅' : '❌'); 
-    console.log('✨ Holographic: Touch interactions', interactivityEnabled ? '✅' : '❌');
-    console.log('🔮 Polychora: 4D precision tracking', interactivityEnabled ? '✅' : '❌');
-    
-    // Show status overlay
-    showInteractivityStatus();
+
+    const interactBtn = document.getElementById('interactivityToggle') || document.querySelector('[onclick="toggleInteractivity()"]');
+
+    const currentState = typeof window.reactivityManager?.enabled === 'boolean'
+        ? window.reactivityManager.enabled
+        : interactivityEnabled;
+
+    const desiredState = !currentState;
+
+    window._interactivityToggleInFlight = true;
+    if (interactBtn) {
+        interactBtn.classList.add('busy');
+    }
+
+    try {
+        interactivityEnabled = desiredState;
+        window.interactivityEnabled = desiredState;
+
+        // Synchronize ReactivityManager if available
+        if (window.reactivityManager && typeof window.reactivityManager.setEnabled === 'function') {
+            try {
+                window.reactivityManager.setEnabled(desiredState);
+            } catch (error) {
+                console.warn('⚠️ ReactivityManager failed to update:', error?.message || error);
+                interactivityEnabled = window.reactivityManager.enabled === false ? false : interactivityEnabled;
+                window.interactivityEnabled = interactivityEnabled;
+            }
+        }
+
+        // Auto-disable device tilt if interactivity was turned off
+        if (!desiredState && window.deviceTiltHandler?.isEnabled) {
+            try {
+                window.deviceTiltHandler.disable();
+                const tiltBtn = document.getElementById('tiltBtn');
+                if (tiltBtn) {
+                    tiltBtn.style.background = '';
+                    tiltBtn.style.color = '';
+                    tiltBtn.title = 'Device Tilt (4D Rotation)';
+                }
+            } catch (error) {
+                console.warn('⚠️ Failed to disable tilt while turning off interactivity:', error?.message || error);
+            }
+        }
+
+        // Update interactivity button visual state
+        if (interactBtn) {
+            interactBtn.classList.toggle('active', interactivityEnabled);
+            interactBtn.title = `Interactive Control: ${interactivityEnabled ? 'ON' : 'OFF'}`;
+        }
+
+        console.log(`🎛️ Mouse/Touch Interactions: ${interactivityEnabled ? 'ENABLED' : 'DISABLED'}`);
+        console.log('🔷 Faceted: Mouse tracking', interactivityEnabled ? '✅' : '❌');
+        console.log('🌌 Quantum: Enhanced interactions', interactivityEnabled ? '✅' : '❌');
+        console.log('✨ Holographic: Touch interactions', interactivityEnabled ? '✅' : '❌');
+        console.log('🔮 Polychora: 4D precision tracking', interactivityEnabled ? '✅' : '❌');
+
+        if (typeof window.synchronizeEngineStates === 'function') {
+            try {
+                const maybePromise = window.synchronizeEngineStates();
+                if (maybePromise && typeof maybePromise.then === 'function') {
+                    await maybePromise;
+                }
+            } catch (error) {
+                console.warn('⚠️ Synchronization failed after interactivity toggle:', error?.message || error);
+                showInteractivityStatus();
+            }
+        } else {
+            showInteractivityStatus();
+        }
+
+        interactivityEnabled = window.interactivityEnabled !== false;
+    } finally {
+        if (interactBtn) {
+            interactBtn.classList.remove('busy');
+        }
+        window._interactivityToggleInFlight = false;
+    }
 };
 
 /**
@@ -488,6 +547,11 @@ function updateUIParameter(param, value) {
  * Show interactivity status overlay
  */
 function showInteractivityStatus() {
+    const audioState = window.audioEnabled === true;
+    const interactivityState = typeof window.reactivityManager?.enabled === 'boolean'
+        ? window.reactivityManager.enabled
+        : window.interactivityEnabled !== false;
+
     // Create floating overlay for interactivity status
     let overlay = document.getElementById('reactivity-status-overlay');
     if (!overlay) {
@@ -515,8 +579,8 @@ function showInteractivityStatus() {
         <div style="color: #00ffff; font-weight: bold; margin-bottom: 10px;">
             🎛️ REACTIVITY STATUS
         </div>
-        <div>🎵 Audio: ${audioEnabled ? '<span style="color: #00ff00">ON</span>' : '<span style="color: #ff4444">OFF</span>'}</div>
-        <div>🖱️ Interactions: ${interactivityEnabled ? '<span style="color: #00ff00">ON</span>' : '<span style="color: #ff4444">OFF</span>'}</div>
+        <div>🎵 Audio: ${audioState ? '<span style="color: #00ff00">ON</span>' : '<span style="color: #ff4444">OFF</span>'}</div>
+        <div>🖱️ Interactions: ${interactivityState ? '<span style="color: #00ff00">ON</span>' : '<span style="color: #ff4444">OFF</span>'}</div>
     `;
     
     // Auto-hide after 3 seconds
@@ -584,6 +648,9 @@ function showAudioReactivityStatus() {
 function showInteractivityOverlay() {
     showInteractivityStatus();
 }
+
+// Expose status helpers for cross-module synchronization
+window.showInteractivityStatus = showInteractivityStatus;
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
