@@ -19,7 +19,8 @@ export class SensoryInputBridge {
             schemas,
             issueReporter,
             autoConnectAdapters = true,
-            validationLogLimit = 120
+            validationLogLimit = 120,
+            timeSource
         } = options;
 
         this.pollingInterval = pollingInterval;
@@ -38,6 +39,14 @@ export class SensoryInputBridge {
         this.decayTimers = new Map();
         this.adapterStates = new Map();
 
+        const fallbackTimeSource = () => {
+            if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+                return performance.now();
+            }
+            return Date.now();
+        };
+        this.getNow = typeof timeSource === 'function' ? timeSource : fallbackTimeSource;
+
         this.state = {
             focusVector: { x: 0.5, y: 0.5, depth: 0.3 },
             intentionVector: { x: 0, y: 0, z: 0, w: 0 },
@@ -49,7 +58,7 @@ export class SensoryInputBridge {
                 noiseLevel: 0.2,
                 motion: 0.1
             },
-            updatedAt: performance.now()
+            updatedAt: this.getNow()
         };
 
         this.loopHandle = null;
@@ -81,10 +90,10 @@ export class SensoryInputBridge {
             try {
                 await adapter.connect();
                 this.adapterStates.set(type, { status: 'connected', lastError: null });
-                this.emit('adapter:connected', { type, timestamp: performance.now() });
+                this.emit('adapter:connected', { type, timestamp: this.getNow() });
             } catch (error) {
                 this.adapterStates.set(type, { status: 'error', lastError: error });
-                this.emit('adapter:error', { type, error, timestamp: performance.now() });
+                this.emit('adapter:error', { type, error, timestamp: this.getNow() });
                 throw error;
             }
         } else {
@@ -102,10 +111,10 @@ export class SensoryInputBridge {
             try {
                 await adapter.disconnect();
                 this.adapterStates.set(type, { status: 'disconnected', lastError: null });
-                this.emit('adapter:disconnected', { type, timestamp: performance.now() });
+                this.emit('adapter:disconnected', { type, timestamp: this.getNow() });
             } catch (error) {
                 this.adapterStates.set(type, { status: 'error', lastError: error });
-                this.emit('adapter:error', { type, error, timestamp: performance.now() });
+                this.emit('adapter:error', { type, error, timestamp: this.getNow() });
                 throw error;
             }
         } else {
@@ -210,10 +219,15 @@ export class SensoryInputBridge {
     }
 
     processSample(type, sample) {
-        if (!sample || typeof sample.confidence !== 'number') return;
-        if (sample.confidence < this.confidenceThreshold) return;
+        if (!sample) return;
 
-        const now = performance.now();
+        const numericConfidence = Number(sample.confidence);
+        if (!Number.isFinite(numericConfidence)) return;
+
+        const confidence = Math.max(0, Math.min(1, numericConfidence));
+        if (confidence < this.confidenceThreshold) return;
+
+        const now = this.getNow();
         const { payload: sanitizedPayload, issues } = this.schemaRegistry.validate(type, sample.payload);
 
         if (issues.length > 0) {
@@ -235,11 +249,23 @@ export class SensoryInputBridge {
         if (!this.channels.has(type)) {
             this.channels.set(type, []);
         }
-        this.channels.get(type)?.push({ ...sample, payload: sanitizedPayload, issues, receivedAt: now });
-        this.applySemanticMapping(type, sanitizedPayload, sample.confidence, now);
+        this.channels.get(type)?.push({
+            ...sample,
+            confidence,
+            payload: sanitizedPayload,
+            issues,
+            receivedAt: now
+        });
+        this.applySemanticMapping(type, sanitizedPayload, confidence, now);
     }
 
     applySemanticMapping(type, payload, confidence, timestamp) {
+        if (typeof type === 'string' && type.startsWith('wearable.')) {
+            this.emit(type, { payload, confidence, timestamp });
+            this.applyWearableComposite(type, payload, confidence, timestamp);
+            return;
+        }
+
         switch (type) {
             case 'eye-tracking':
                 this.updateFocus(payload, confidence, timestamp);
@@ -260,6 +286,36 @@ export class SensoryInputBridge {
                 // Allow custom adapters to emit semantic channel names directly
                 this.emit(type, { payload, confidence, timestamp });
                 break;
+        }
+    }
+
+    applyWearableComposite(type, payload, confidence, timestamp) {
+        if (!payload || typeof payload !== 'object') return;
+
+        const channels = payload.channels && typeof payload.channels === 'object'
+            ? payload.channels
+            : {};
+
+        for (const [channelType, channelValue] of Object.entries(channels)) {
+            if (!channelValue) continue;
+            const channelPayload = channelValue.payload ?? channelValue;
+            const channelConfidence = typeof channelValue.confidence === 'number'
+                ? channelValue.confidence
+                : confidence;
+            this.applySemanticMapping(channelType, channelPayload, channelConfidence, timestamp);
+        }
+
+        const metadata = payload.metadata && typeof payload.metadata === 'object'
+            ? payload.metadata
+            : null;
+        if (metadata) {
+            this.emit(`${type}:metadata`, {
+                deviceId: payload.deviceId ?? null,
+                firmwareVersion: payload.firmwareVersion ?? null,
+                metadata,
+                confidence,
+                timestamp
+            });
         }
     }
 
@@ -324,7 +380,7 @@ export class SensoryInputBridge {
             clearTimeout(this.decayTimers.get(channel));
         }
         const timeout = setTimeout(() => {
-            this.emit(`${channel}:decay`, { channel, timestamp: performance.now() });
+            this.emit(`${channel}:decay`, { channel, timestamp: this.getNow() });
         }, this.decayHalfLife);
         this.decayTimers.set(channel, timeout);
     }
