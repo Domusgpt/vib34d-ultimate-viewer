@@ -55,6 +55,22 @@ export class VIB34DApp {
                         setTimeout(() => {
                             window.applyParametersCoordinated(system, newEngine);
                         }, 60);
+
+                        // Re-sync engine integrations with toggle states after parameters settle
+                        setTimeout(() => {
+                            if (typeof window.synchronizeEngineStates === 'function') {
+                                try {
+                                    const maybePromise = window.synchronizeEngineStates();
+                                    if (maybePromise && typeof maybePromise.then === 'function') {
+                                        maybePromise.catch(error => {
+                                            console.warn('⚠️ Deferred sync failed after system switch:', error?.message || error);
+                                        });
+                                    }
+                                } catch (error) {
+                                    console.warn('⚠️ Deferred sync threw after system switch:', error?.message || error);
+                                }
+                            }
+                        }, 260);
                         
                         // Update UI buttons
                         document.querySelectorAll('.system-btn').forEach(btn => {
@@ -240,6 +256,79 @@ export class VIB34DApp {
                 }
             }
         };
+
+        // Synchronize engine states with global toggle flags
+        window.synchronizeEngineStates = async () => {
+            console.log('🔄 Synchronizing engine states with toggle flags...');
+
+            const interactivityState = window.interactivityEnabled !== false;
+            let targetAudioState = window.audioEnabled === true;
+
+            // Update interactivity button state
+            const interactBtn = document.getElementById('interactivityToggle') || document.querySelector('[onclick="toggleInteractivity()"]');
+            if (interactBtn) {
+                interactBtn.classList.toggle('active', interactivityState);
+                interactBtn.title = `Interactive Control: ${interactivityState ? 'ON' : 'OFF'}`;
+            }
+
+            if (window.reactivityManager && typeof window.reactivityManager.setEnabled === 'function') {
+                window.reactivityManager.setEnabled(interactivityState);
+            }
+
+            if (window.interactivityMenu?.isVisible && typeof window.interactivityMenu.updateInputSources === 'function') {
+                setTimeout(() => window.interactivityMenu.updateInputSources(), 0);
+            }
+
+            // Update audio button + engine state
+            const audioBtn = document.getElementById('audioToggle') || document.querySelector('[onclick="toggleAudio()"]');
+
+            if (window.audioEngine) {
+                const audioIsActive = typeof window.audioEngine.isAudioActive === 'function'
+                    ? window.audioEngine.isAudioActive()
+                    : window.audioEngine.isActive;
+
+                if (targetAudioState && !audioIsActive) {
+                    try {
+                        const started = await window.audioEngine.init();
+                        targetAudioState = started;
+                        if (!started) {
+                            window.audioEnabled = false;
+                        }
+                    } catch (error) {
+                        window.audioEnabled = false;
+                        targetAudioState = false;
+                        console.warn('⚠️ Failed to reinitialize audio engine during sync:', error?.message || error);
+                    }
+                } else if (!targetAudioState && audioIsActive) {
+                    if (typeof window.audioEngine.stop === 'function') {
+                        window.audioEngine.stop();
+                    } else {
+                        window.audioEngine.isActive = false;
+                    }
+                    targetAudioState = false;
+                } else {
+                    targetAudioState = audioIsActive && window.audioEnabled !== false;
+                }
+            }
+
+            if (audioBtn) {
+                audioBtn.classList.toggle('active', targetAudioState);
+                audioBtn.title = `Audio Reactivity: ${targetAudioState ? 'ON' : 'OFF'}`;
+            }
+
+            if (window.deviceTiltHandler?.isEnabled && typeof window.deviceTiltHandler.updateBaseRotation === 'function') {
+                const currentParams = window.getCurrentUIParameterState ? window.getCurrentUIParameterState() : {};
+                window.deviceTiltHandler.updateBaseRotation(
+                    currentParams.rot4dXW || 0,
+                    currentParams.rot4dYW || 0,
+                    currentParams.rot4dZW || 0
+                );
+            }
+
+            if (typeof window.showInteractivityStatus === 'function') {
+                window.showInteractivityStatus();
+            }
+        };
         
         // Device Tilt Functions for 4D Rotation Control
         window.toggleDeviceTilt = async () => {
@@ -287,6 +376,22 @@ export class VIB34DApp {
                 );
             }
         };
+
+        // Ensure UI toggle states match stored globals on first paint
+        setTimeout(() => {
+            if (typeof window.synchronizeEngineStates === 'function') {
+                try {
+                    const maybePromise = window.synchronizeEngineStates();
+                    if (maybePromise && typeof maybePromise.then === 'function') {
+                        maybePromise.catch(error => {
+                            console.warn('⚠️ Initial sync failed:', error?.message || error);
+                        });
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Initial sync threw:', error?.message || error);
+                }
+            }
+        }, 0);
     }
 
     // Initialize the application
