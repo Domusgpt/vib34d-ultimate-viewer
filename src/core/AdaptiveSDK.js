@@ -202,6 +202,7 @@ export function createAdaptiveSDK(config = {}) {
         registerTelemetryProvider: engine.registerTelemetryProvider.bind(engine),
         registerTelemetryRequestMiddleware: engine.registerTelemetryRequestMiddleware.bind(engine),
         clearTelemetryRequestMiddleware: engine.clearTelemetryRequestMiddleware.bind(engine),
+        registerTelemetryClassificationRule: engine.registerTelemetryClassificationRule.bind(engine),
         registerLicenseAttestationProfile: engine.registerLicenseAttestationProfile.bind(engine),
         registerLicenseAttestationProfilePack: engine.registerLicenseAttestationProfilePack.bind(engine),
         getLicenseAttestationProfiles: engine.telemetry.getLicenseAttestationProfiles.bind(engine.telemetry),

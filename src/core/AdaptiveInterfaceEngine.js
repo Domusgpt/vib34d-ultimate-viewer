@@ -103,6 +103,11 @@ export class AdaptiveInterfaceEngine extends VIB34DIntegratedEngine {
         return this;
     }
 
+    registerTelemetryClassificationRule(rule) {
+        this.telemetry.registerClassificationRule(rule);
+        return this;
+    }
+
     registerLicenseAttestationProfile(profileOrId, maybeProfile) {
         return this.telemetry.registerLicenseAttestationProfile(profileOrId, maybeProfile);
     }

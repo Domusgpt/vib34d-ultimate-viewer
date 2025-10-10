@@ -55,8 +55,19 @@ export type TelemetryRequestMiddleware = (
   context: TelemetryRequestContext
 ) => Promise<Partial<TelemetryRequestContext> | void> | Partial<TelemetryRequestContext> | void;
 
+export type TelemetryClassificationRule =
+  | ((event: string, payload?: Record<string, unknown>) => boolean)
+  | RegExp
+  | {
+      test?: (event: string, payload?: Record<string, unknown>) => boolean;
+      prefix?: string;
+      match?: RegExp;
+      classification?: string;
+    };
+
 export interface TelemetryConfig extends Record<string, unknown> {
   requestMiddleware?: TelemetryRequestMiddleware[];
+  classificationRules?: TelemetryClassificationRule[];
   licenseAttestationProfiles?: LicenseAttestationProfile[];
   defaultLicenseAttestationProfileId?: string;
   licenseAttestationProfilePackId?: string;
@@ -528,6 +539,7 @@ export interface AdaptiveSDK {
   registerTelemetryProvider(provider: any): any;
   registerTelemetryRequestMiddleware(middleware: TelemetryRequestMiddleware): any;
   clearTelemetryRequestMiddleware(): any;
+  registerTelemetryClassificationRule(rule: TelemetryClassificationRule): any;
   registerLicenseAttestationProfile(
     profile: LicenseAttestationProfile | string,
     options?: Omit<LicenseAttestationProfile, 'id'>
