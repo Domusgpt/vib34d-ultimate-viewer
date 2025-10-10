@@ -174,4 +174,102 @@ describe('createAdaptiveSDK', () => {
     expect(() => sdk.updateTelemetryConsent({ analytics: true })).not.toThrow();
     expect(Array.isArray(sdk.telemetry.getAuditTrail())).toBe(true);
   });
+
+  it('supports telemetry provider factories and readiness tracking', async () => {
+    const factoryProvider = {
+      id: 'factory-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+    const asyncProvider = {
+      id: 'async-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+
+    const sdk = createHeadlessAdaptiveSDK({
+      replaceDefaultProviders: true,
+      telemetryProviders: [
+        () => factoryProvider,
+        {
+          factory: async () => {
+            await Promise.resolve();
+            return asyncProvider;
+          }
+        }
+      ]
+    });
+
+    await sdk.whenTelemetryProvidersReady();
+
+    const middleware = () => {};
+    sdk.registerTelemetryRequestMiddleware(middleware);
+
+    expect(factoryProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+    expect(asyncProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+  });
+
+  it('gates telemetry provider descriptors and broadcasts registration events', async () => {
+    const eagerProvider = {
+      id: 'eager-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+    const skippedProvider = {
+      id: 'skipped-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+    const lateProvider = {
+      id: 'late-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+
+    const sdk = createHeadlessAdaptiveSDK({
+      replaceDefaultProviders: true,
+      telemetryProviders: [
+        {
+          guard: () => false,
+          factory: () => skippedProvider
+        },
+        {
+          when: () => Promise.resolve(true),
+          resolve: async () => {
+            await Promise.resolve();
+            return eagerProvider;
+          }
+        }
+      ]
+    });
+
+    await sdk.whenTelemetryProvidersReady();
+
+    expect(sdk.telemetry.providers.has('eager-provider')).toBe(true);
+    expect(sdk.telemetry.providers.has('skipped-provider')).toBe(false);
+
+    const events = [];
+    const unsubscribe = sdk.onTelemetryProviderRegistered(event => {
+      events.push({ id: event.provider.id, source: event.source });
+    });
+
+    expect(events.some(event => event.id === 'eager-provider' && event.source === 'existing')).toBe(true);
+
+    await sdk.registerTelemetryProviders(
+      {
+        when: () => new Promise(resolve => setTimeout(() => resolve(true), 0)),
+        module: async () => ({ default: lateProvider }),
+        timeoutMs: 50
+      },
+      { source: 'runtime' }
+    );
+
+    await sdk.whenTelemetryProvidersReady();
+
+    expect(sdk.telemetry.providers.has('late-provider')).toBe(true);
+    expect(events.some(event => event.id === 'late-provider' && event.source === 'runtime')).toBe(true);
+
+    const middleware = () => {};
+    sdk.registerTelemetryRequestMiddleware(middleware);
+
+    expect(eagerProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+    expect(lateProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+
+    unsubscribe();
+  });
 });

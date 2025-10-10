@@ -120,6 +120,278 @@ export function createAdaptiveSDK(config = {}) {
         environment: config.environment
     });
 
+    const telemetryProviderPromises = [];
+    const telemetryProviderWatchers = new Set();
+    const telemetryDescriptorContext = {
+        engine,
+        telemetry: engine.telemetry,
+        config,
+        environment: engine.environment
+    };
+
+    const trackTelemetryPromise = promise => {
+        if (!promise || typeof promise.then !== 'function') {
+            return Promise.resolve();
+        }
+        const tracked = promise.catch(error => {
+            console.warn('[AdaptiveSDK] Telemetry provider pipeline rejected', error);
+        });
+        telemetryProviderPromises.push(tracked);
+        return tracked;
+    };
+
+    const isTelemetryDescriptor = entry => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+            return false;
+        }
+        if (typeof entry.factory === 'function' || typeof entry.resolve === 'function') {
+            return true;
+        }
+        if (typeof entry.module === 'function' || (entry.module && typeof entry.module.then === 'function')) {
+            return true;
+        }
+        if (typeof entry.guard === 'function' || typeof entry.when === 'function') {
+            return true;
+        }
+        if (entry.guard === true || entry.when === true) {
+            return true;
+        }
+        if (Array.isArray(entry.providers)) {
+            return true;
+        }
+        if (typeof entry.timeoutMs === 'number') {
+            return true;
+        }
+        if ('use' in entry) {
+            return true;
+        }
+        return false;
+    };
+
+    const notifyTelemetryProviderListeners = (event) => {
+        if (telemetryProviderWatchers.size === 0) {
+            return;
+        }
+        for (const listener of telemetryProviderWatchers) {
+            try {
+                listener(event);
+            } catch (listenerError) {
+                console.warn('[AdaptiveSDK] Telemetry provider listener failed', listenerError);
+            }
+        }
+    };
+
+    const registerResolvedTelemetryProvider = (resolved, meta = {}) => {
+        if (!resolved) {
+            return;
+        }
+
+        if (Array.isArray(resolved)) {
+            for (const entry of resolved) {
+                registerResolvedTelemetryProvider(entry, meta);
+            }
+            return;
+        }
+
+        if (resolved && typeof resolved === 'object' && 'default' in resolved && resolved.default) {
+            registerResolvedTelemetryProvider(resolved.default, meta);
+            return;
+        }
+
+        try {
+            engine.registerTelemetryProvider(resolved);
+        } catch (error) {
+            console.warn('[AdaptiveSDK] Failed to register telemetry provider', error);
+            return;
+        }
+
+        notifyTelemetryProviderListeners({
+            provider: resolved,
+            descriptor: meta.descriptor ?? null,
+            entry: meta.entry ?? null,
+            source: meta.source ?? 'config',
+            options: meta.descriptor?.options ?? meta.options
+        });
+    };
+
+    const processTelemetryProviderCandidate = async (candidate, meta = {}) => {
+        if (!candidate) {
+            return;
+        }
+
+        if (Array.isArray(candidate)) {
+            for (const entry of candidate) {
+                await processTelemetryProviderCandidate(entry, meta);
+            }
+            return;
+        }
+
+        if (isTelemetryDescriptor(candidate)) {
+            await resolveTelemetryDescriptor(candidate, meta);
+            return;
+        }
+
+        if (candidate && typeof candidate === 'object' && 'default' in candidate && candidate.default) {
+            await processTelemetryProviderCandidate(candidate.default, meta);
+            return;
+        }
+
+        if (typeof candidate.then === 'function') {
+            await candidate.then(
+                resolved => processTelemetryProviderCandidate(resolved, meta),
+                error => {
+                    console.warn('[AdaptiveSDK] Telemetry provider factory rejected', error);
+                }
+            );
+            return;
+        }
+
+        registerResolvedTelemetryProvider(candidate, meta);
+    };
+
+    const resolveTelemetryDescriptor = async (descriptor, meta = {}) => {
+        const descriptorMeta = {
+            ...meta,
+            descriptor,
+            entry: meta.entry ?? descriptor,
+            source: meta.source ?? 'config',
+            options: descriptor.options ?? meta.options
+        };
+
+        if (descriptor.guard !== undefined) {
+            try {
+                const guardResult = typeof descriptor.guard === 'function'
+                    ? descriptor.guard({ ...telemetryDescriptorContext, descriptor })
+                    : descriptor.guard;
+                const allowed = await Promise.resolve(guardResult);
+                if (!allowed) {
+                    return;
+                }
+            } catch (error) {
+                console.warn('[AdaptiveSDK] Telemetry provider guard threw an error', error);
+                return;
+            }
+        }
+
+        if (descriptor.when !== undefined) {
+            try {
+                const whenResult = typeof descriptor.when === 'function'
+                    ? descriptor.when({ ...telemetryDescriptorContext, descriptor })
+                    : descriptor.when;
+                const ready = await Promise.resolve(whenResult);
+                if (ready === false) {
+                    return;
+                }
+            } catch (error) {
+                console.warn('[AdaptiveSDK] Telemetry provider readiness condition rejected', error);
+                return;
+            }
+        }
+
+        if (Array.isArray(descriptor.providers)) {
+            for (const nested of descriptor.providers) {
+                await processTelemetryProviderEntry(nested, descriptorMeta);
+            }
+            return;
+        }
+
+        let candidate;
+        try {
+            if (typeof descriptor.resolve === 'function') {
+                candidate = descriptor.resolve({
+                    ...telemetryDescriptorContext,
+                    descriptor,
+                    options: descriptor.options
+                });
+            } else if (descriptor.module) {
+                const loader = typeof descriptor.module === 'function'
+                    ? descriptor.module
+                    : () => descriptor.module;
+                candidate = loader({
+                    ...telemetryDescriptorContext,
+                    descriptor,
+                    options: descriptor.options
+                });
+            } else if (typeof descriptor.factory === 'function') {
+                candidate = descriptor.factory({
+                    engine,
+                    telemetry: engine.telemetry,
+                    config,
+                    options: descriptor.options,
+                    environment: engine.environment
+                });
+            } else if ('use' in descriptor) {
+                candidate = descriptor.use;
+            }
+        } catch (error) {
+            console.warn('[AdaptiveSDK] Telemetry provider descriptor failed to resolve', error);
+            return;
+        }
+
+        if (descriptor.timeoutMs && candidate && typeof candidate.then === 'function') {
+            let timeoutId;
+            candidate = Promise.race([
+                candidate,
+                new Promise((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        reject(new Error('Timed out resolving telemetry provider descriptor'));
+                    }, descriptor.timeoutMs);
+                })
+            ]).finally(() => {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
+            });
+        }
+
+        await processTelemetryProviderCandidate(candidate, descriptorMeta);
+    };
+
+    const processTelemetryProviderEntry = async (entry, meta = {}) => {
+        if (!entry) {
+            return;
+        }
+
+        if (Array.isArray(entry)) {
+            for (const candidate of entry) {
+                await processTelemetryProviderEntry(candidate, meta);
+            }
+            return;
+        }
+
+        if (isTelemetryDescriptor(entry)) {
+            await resolveTelemetryDescriptor(entry, { ...meta, entry });
+            return;
+        }
+
+        if (typeof entry === 'function') {
+            let candidate;
+            try {
+                candidate = entry({
+                    engine,
+                    telemetry: engine.telemetry,
+                    config,
+                    options: meta.options,
+                    environment: engine.environment
+                });
+            } catch (error) {
+                console.warn('[AdaptiveSDK] Telemetry provider factory threw an error', error);
+                return;
+            }
+            await processTelemetryProviderCandidate(candidate, { ...meta, entry });
+            return;
+        }
+
+        await processTelemetryProviderCandidate(entry, meta);
+    };
+
+    const instantiateTelemetryProviderEntry = (entry, meta = {}) => {
+        const promise = (async () => {
+            await processTelemetryProviderEntry(entry, { ...meta, source: meta.source ?? 'config', entry });
+        })();
+        return trackTelemetryPromise(promise);
+    };
+
     if (licenseManager) {
         engine.telemetry.setLicenseManager(licenseManager);
     }
@@ -155,8 +427,8 @@ export function createAdaptiveSDK(config = {}) {
         if (config.replaceDefaultProviders ?? false) {
             engine.telemetry.providers = new Map();
         }
-        for (const provider of config.telemetryProviders) {
-            engine.registerTelemetryProvider(provider);
+        for (const providerEntry of config.telemetryProviders) {
+            instantiateTelemetryProviderEntry(providerEntry, { source: 'config' });
         }
     }
 
@@ -200,8 +472,54 @@ export function createAdaptiveSDK(config = {}) {
         registerLayoutStrategy: engine.registerLayoutStrategy.bind(engine),
         registerLayoutAnnotation: engine.registerLayoutAnnotation.bind(engine),
         registerTelemetryProvider: engine.registerTelemetryProvider.bind(engine),
+        registerTelemetryProviders(entries, options = {}) {
+            const list = Array.isArray(entries) ? entries : [entries];
+            if (options.replace ?? false) {
+                engine.telemetry.providers = new Map();
+            }
+            const source = options.source ?? 'runtime';
+            const tasks = [];
+            for (const entry of list) {
+                const result = instantiateTelemetryProviderEntry(entry, { source });
+                if (result && typeof result.then === 'function') {
+                    tasks.push(result);
+                }
+            }
+            if (tasks.length === 0) {
+                return Promise.resolve();
+            }
+            return Promise.allSettled(tasks).then(() => undefined);
+        },
         registerTelemetryRequestMiddleware: engine.registerTelemetryRequestMiddleware.bind(engine),
         clearTelemetryRequestMiddleware: engine.clearTelemetryRequestMiddleware.bind(engine),
+        whenTelemetryProvidersReady() {
+            if (telemetryProviderPromises.length === 0) {
+                return Promise.resolve();
+            }
+            return Promise.allSettled(telemetryProviderPromises).then(() => undefined);
+        },
+        onTelemetryProviderRegistered(listener) {
+            if (typeof listener !== 'function') {
+                throw new Error('Telemetry provider listener must be a function.');
+            }
+            telemetryProviderWatchers.add(listener);
+            for (const provider of engine.telemetry.providers.values()) {
+                try {
+                    listener({
+                        provider,
+                        descriptor: null,
+                        entry: null,
+                        source: 'existing',
+                        options: undefined
+                    });
+                } catch (error) {
+                    console.warn('[AdaptiveSDK] Telemetry provider listener failed', error);
+                }
+            }
+            return () => {
+                telemetryProviderWatchers.delete(listener);
+            };
+        },
         registerLicenseAttestationProfile: engine.registerLicenseAttestationProfile.bind(engine),
         registerLicenseAttestationProfilePack: engine.registerLicenseAttestationProfilePack.bind(engine),
         getLicenseAttestationProfiles: engine.telemetry.getLicenseAttestationProfiles.bind(engine.telemetry),

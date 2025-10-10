@@ -16,6 +16,8 @@ export class SimpleAudioEngine {
         this.context = null;
         this.analyser = null;
         this.dataArray = null;
+        this.mediaStream = null;
+        this.initPromise = null;
         this.isActive = false;
         
         // Mobile-safe: Initialize with defaults
@@ -31,10 +33,15 @@ export class SimpleAudioEngine {
     
     async init() {
         if (this.isActive) return true;
-        
-        try {
+        if (this.initPromise) return this.initPromise;
+
+        this.initPromise = (async () => {
             console.log('🎵 Simple Audio Engine: Starting...');
-            
+
+            if (!navigator.mediaDevices?.getUserMedia) {
+                throw new Error('Media devices API not available');
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.context = new (window.AudioContext || window.webkitAudioContext)();
             
@@ -48,20 +55,34 @@ export class SimpleAudioEngine {
             
             const source = this.context.createMediaStreamSource(stream);
             source.connect(this.analyser);
-            
+
             this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+            this.mediaStream = stream;
             this.isActive = true;
-            
+
             // CRITICAL FIX: Enable global audio flag so visualizers will use the data
             window.audioEnabled = true;
-            
+
             this.startProcessing();
             console.log('✅ Audio Engine: Active - window.audioEnabled = true');
             return true;
-            
-        } catch (error) {
+        })()
+        .catch(error => {
             console.log('⚠️ Audio denied - silent mode');
             window.audioEnabled = false; // Keep audio disabled if permission denied
+            throw error;
+        })
+        .finally(() => {
+            this.initPromise = null;
+        });
+
+        const pendingInit = this.initPromise;
+
+        try {
+            const result = await pendingInit;
+            return result;
+        } catch (error) {
+            this.teardownStream();
             return false;
         }
     }
@@ -127,13 +148,31 @@ export class SimpleAudioEngine {
     stop() {
         this.isActive = false;
         window.audioEnabled = false;
-        
+
+        this.teardownStream();
+
         if (this.context) {
             this.context.close();
             this.context = null;
         }
-        
+
         console.log('🎵 Audio Engine: Stopped');
+    }
+
+    /**
+     * Stop any live microphone capture tracks.
+     */
+    teardownStream() {
+        if (this.mediaStream) {
+            this.mediaStream.getTracks().forEach(track => {
+                try {
+                    track.stop();
+                } catch (error) {
+                    console.warn('⚠️ Failed to stop audio track cleanly:', error?.message || error);
+                }
+            });
+            this.mediaStream = null;
+        }
     }
 }
 
@@ -142,47 +181,81 @@ export class SimpleAudioEngine {
  * Toggles audio reactivity and updates UI state
  */
 export function setupAudioToggle() {
-    window.toggleAudio = function() {
+    window.toggleAudio = async function() {
         const audioBtn = document.getElementById('audioToggle') || document.querySelector('[onclick="toggleAudio()"]');
-        
-        if (!window.audioEngine.isActive) {
-            // Try to start audio
-            window.audioEngine.init().then(success => {
-                if (success) {
-                    if (audioBtn) {
-                        audioBtn.classList.add('active');
-                        audioBtn.title = 'Audio Reactivity: ON';
+
+        if (window._audioToggleInFlight) {
+            return;
+        }
+
+        if (!window.audioEngine) {
+            console.warn('⚠️ Audio engine not available');
+            return;
+        }
+
+        window._audioToggleInFlight = true;
+        if (audioBtn) {
+            audioBtn.classList.add('busy');
+        }
+
+        try {
+            const audioIsActive = typeof window.audioEngine.isAudioActive === 'function'
+                ? window.audioEngine.isAudioActive()
+                : window.audioEngine.isActive;
+
+            if (!audioIsActive) {
+                // Try to start audio
+                try {
+                    const success = await window.audioEngine.init();
+                    if (success) {
+                        window.audioEnabled = true;
+                        if (audioBtn) {
+                            audioBtn.classList.add('active');
+                            audioBtn.title = 'Audio Reactivity: ON';
+                        }
+                        console.log('🎵 Audio Reactivity: ON');
+                    } else {
+                        window.audioEnabled = false;
+                        if (audioBtn) {
+                            audioBtn.classList.remove('active');
+                            audioBtn.title = 'Audio Reactivity: OFF';
+                        }
+                        console.log('⚠️ Audio permission denied or not available');
                     }
-                    console.log('🎵 Audio Reactivity: ON');
-                } else {
-                    console.log('⚠️ Audio permission denied or not available');
-                }
-            });
-        } else {
-            // Toggle audio processing
-            let audioEnabled = !window.audioEnabled;
-            window.audioEnabled = audioEnabled; // Update global flag
-            
-            if (audioBtn) {
-                // Update button visual state
-                if (audioEnabled) {
-                    audioBtn.classList.add('active');
-                } else {
-                    audioBtn.classList.remove('active');
-                }
-                audioBtn.title = `Audio Reactivity: ${audioEnabled ? 'ON' : 'OFF'}`;
-            }
-            
-            // Audio permission check for mobile
-            if (audioEnabled) {
-                navigator.mediaDevices.getUserMedia({ audio: true }).catch(e => {
-                    audioEnabled = false;
+                } catch (error) {
                     window.audioEnabled = false;
-                    console.log('⚠️ Audio permission denied:', e.message);
-                });
+                    if (audioBtn) {
+                        audioBtn.classList.remove('active');
+                        audioBtn.title = 'Audio Reactivity: OFF';
+                    }
+                    console.warn('⚠️ Unable to start audio engine:', error?.message || error);
+                }
+            } else {
+                if (typeof window.audioEngine.stop === 'function') {
+                    window.audioEngine.stop();
+                } else {
+                    window.audioEngine.isActive = false;
+                    window.audioEnabled = false;
+                }
+
+                if (audioBtn) {
+                    audioBtn.classList.remove('active');
+                    audioBtn.title = 'Audio Reactivity: OFF';
+                }
+
+                console.log('🎵 Audio Reactivity: OFF');
             }
-            
-            console.log(`🎵 Audio Reactivity: ${audioEnabled ? 'ON' : 'OFF'}`);
+
+            if (typeof window.synchronizeEngineStates === 'function') {
+                await window.synchronizeEngineStates();
+            } else if (typeof window.showInteractivityStatus === 'function') {
+                window.showInteractivityStatus();
+            }
+        } finally {
+            if (audioBtn) {
+                audioBtn.classList.remove('busy');
+            }
+            window._audioToggleInFlight = false;
         }
     };
 }

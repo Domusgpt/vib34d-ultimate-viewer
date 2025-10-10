@@ -70,6 +70,72 @@ export interface TelemetryConfig extends Record<string, unknown> {
   commercializationReporter?: LicenseCommercializationReporter;
 }
 
+export interface AdaptiveTelemetryProviderFactoryContext {
+  engine: any;
+  telemetry: any;
+  config: AdaptiveSDKConfig;
+  options?: Record<string, unknown>;
+  environment?: AdaptiveEnvironmentOptions;
+}
+
+export type AdaptiveTelemetryProviderFactoryResult =
+  | any
+  | any[]
+  | Promise<any>
+  | Promise<any[]>;
+
+export type AdaptiveTelemetryProviderFactory = (
+  context: AdaptiveTelemetryProviderFactoryContext
+) => AdaptiveTelemetryProviderFactoryResult;
+
+export interface AdaptiveTelemetryProviderDescriptorContext
+  extends AdaptiveTelemetryProviderFactoryContext {
+  descriptor: AdaptiveTelemetryProviderDescriptorObject;
+}
+
+export type AdaptiveTelemetryProviderResolver = (
+  context: AdaptiveTelemetryProviderDescriptorContext
+) => AdaptiveTelemetryProviderFactoryResult;
+
+export type AdaptiveTelemetryProviderModuleLoader =
+  | ((context: AdaptiveTelemetryProviderDescriptorContext) => Promise<any> | any)
+  | Promise<any>
+  | any;
+
+export interface AdaptiveTelemetryProviderDescriptorObject {
+  factory?: AdaptiveTelemetryProviderFactory;
+  resolve?: AdaptiveTelemetryProviderResolver;
+  module?: AdaptiveTelemetryProviderModuleLoader;
+  guard?:
+    | boolean
+    | ((context: AdaptiveTelemetryProviderDescriptorContext) => boolean | Promise<boolean>);
+  when?:
+    | boolean
+    | ((context: AdaptiveTelemetryProviderDescriptorContext) => boolean | Promise<boolean>);
+  options?: Record<string, unknown>;
+  providers?: AdaptiveTelemetryProviderDescriptor[];
+  timeoutMs?: number;
+  use?: AdaptiveTelemetryProviderDescriptor;
+}
+
+export type AdaptiveTelemetryProviderDescriptor =
+  | any
+  | AdaptiveTelemetryProviderFactory
+  | AdaptiveTelemetryProviderDescriptorObject;
+
+export interface AdaptiveTelemetryProviderRegistrationEvent {
+  provider: any;
+  descriptor: AdaptiveTelemetryProviderDescriptorObject | null;
+  entry: AdaptiveTelemetryProviderDescriptor | null;
+  source: string;
+  options?: Record<string, unknown>;
+}
+
+export interface AdaptiveTelemetryProviderRegistrationOptions {
+  replace?: boolean;
+  source?: string;
+}
+
 export interface LicenseDetails {
   key: string;
   tenantId?: string;
@@ -496,7 +562,7 @@ export interface AdaptiveSDKConfig {
   environment?: AdaptiveEnvironmentOptions;
   layoutStrategies?: any[];
   layoutAnnotations?: any[];
-  telemetryProviders?: any[];
+  telemetryProviders?: AdaptiveTelemetryProviderDescriptor[];
   replaceDefaultProviders?: boolean;
   licenseAttestationProfiles?: LicenseAttestationProfile[];
   defaultLicenseAttestationProfileId?: string;
@@ -526,8 +592,16 @@ export interface AdaptiveSDK {
   registerLayoutStrategy(strategy: any): any;
   registerLayoutAnnotation(annotation: any): any;
   registerTelemetryProvider(provider: any): any;
+  registerTelemetryProviders(
+    entries: AdaptiveTelemetryProviderDescriptor | AdaptiveTelemetryProviderDescriptor[],
+    options?: AdaptiveTelemetryProviderRegistrationOptions
+  ): Promise<void>;
   registerTelemetryRequestMiddleware(middleware: TelemetryRequestMiddleware): any;
   clearTelemetryRequestMiddleware(): any;
+  whenTelemetryProvidersReady(): Promise<void>;
+  onTelemetryProviderRegistered(
+    listener: (event: AdaptiveTelemetryProviderRegistrationEvent) => void
+  ): () => void;
   registerLicenseAttestationProfile(
     profile: LicenseAttestationProfile | string,
     options?: Omit<LicenseAttestationProfile, 'id'>
