@@ -36,7 +36,26 @@ Define an explicit, supportable interface for product teams and partners consumi
   visualizers, DOM bindings, export inputs) while keeping sensory, telemetry, licensing, and projection workflows operational in
   server-side or automated test environments.
 - **Telemetry Providers:** Providers implement `identify`, `track`, and `flush`. The runtime defaults to buffered mode via
-  `ProductTelemetryHarness` + `ConsoleTelemetryProvider` when no provider is specified.
+  `ProductTelemetryHarness` + `ConsoleTelemetryProvider` when no provider is specified. Integrations can now supply provider
+  instances, factory functions, or async descriptors through `createAdaptiveSDK({ telemetryProviders: [...] })`; call
+  `sdk.whenTelemetryProvidersReady()` before wiring request middleware when factories perform dynamic imports. Descriptor entries
+  support `guard`/`when` gating, nested provider bundles, dynamic `module` loaders, timeout controls, and metadata (`tags`,
+  `bundle`, `capabilities`) so shells can lazily load partner telemetry once entitlements or consent gates clear while
+  annotating providers for downstream orchestration. Use `sdk.registerTelemetryProviders(descriptor, { source: 'runtime' })`
+  to stream in additional providers post-boot, mirror availability in dashboards via `sdk.onTelemetryProviderRegistered(listener)`
+  (events now surface provider `tags`, `bundle`, `capabilities`, and `registrationSource`), and coordinate downstream activation
+  with `sdk.whenTelemetryProviderReady(selector, options)` to await specific IDs, bundles, tag groups, registration sources, or
+  predicate matches before enabling dependent features. When you need a continuous feed, call
+  `sdk.streamTelemetryProviders(selector, { includeExisting, signal })` to iterate over registration events (or projected
+  values) as providers resolve, optionally skipping already-registered providers and wiring abort controllers into async
+  orchestration. Use `sdk.createTelemetryProviderStream(selector, { includeExisting, signal, queuingStrategy, ReadableStream })`
+  when you want a Web Streams API surface that plugs into `pipeThrough`/`pipeTo` workflows without reimplementing selectors or
+  abort wiring. Prefer `sdk.watchTelemetryProviders(selector, listener, { includeExisting, once, signal, onError })`
+  when you want immediate callbacks instead of an async iterator—the helper replays existing matches, filters by the same
+  selector metadata, auto-unsubscribes when `once` is true, and forwards abort reasons into optional error hooks.
+  When you need a finite batch instead of a live stream, call
+  `sdk.collectTelemetryProviders(selector, { count, includeExisting, distinct, signal, timeoutMs })` to gather projected
+  matches until the requested count is satisfied while replaying existing providers and honoring abort/timeout guards.
 - **Pattern Packs:** `InterfacePatternRegistry` accepts packaged bundles containing metadata, monetization hints, and renderers.
 - **License Attestation Packs:** `ProductTelemetryHarness` and `createAdaptiveSDK` accept curated attestation packs via `LicenseAttestationProfileCatalog` so commercialization teams can register enterprise/studio/indie defaults in one call.
 - **Commercialization KPI Snapshots:** `ProductTelemetryHarness` exposes snapshot capture/scheduling/export APIs, `LicenseCommercializationSnapshotStore` now supports async storage with `whenReady()`, and `createAdaptiveSDK` mirrors the helpers so partners can persist commercialization KPIs and feed BI tools without bespoke pipelines.【F:src/product/ProductTelemetryHarness.js†L468-L534】【F:types/adaptive-sdk.d.ts†L452-L506】
