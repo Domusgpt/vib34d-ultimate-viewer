@@ -174,4 +174,15 @@ describe('createAdaptiveSDK', () => {
     expect(() => sdk.updateTelemetryConsent({ analytics: true })).not.toThrow();
     expect(Array.isArray(sdk.telemetry.getAuditTrail())).toBe(true);
   });
+
+  it('registers telemetry classification rules through the SDK helper', () => {
+    const sdk = createHeadlessAdaptiveSDK();
+
+    const before = sdk.telemetry.classifyEvent('custom.metric', {});
+    sdk.registerTelemetryClassificationRule({ prefix: 'custom.', classification: 'custom' });
+    const after = sdk.telemetry.classifyEvent('custom.metric', {});
+
+    expect(before).not.toBe('custom');
+    expect(after).toBe('custom');
+  });
 });
