@@ -174,4 +174,221 @@ describe('createAdaptiveSDK', () => {
     expect(() => sdk.updateTelemetryConsent({ analytics: true })).not.toThrow();
     expect(Array.isArray(sdk.telemetry.getAuditTrail())).toBe(true);
   });
+
+  it('supports telemetry provider factories and readiness tracking', async () => {
+    const factoryProvider = {
+      id: 'factory-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+    const asyncProvider = {
+      id: 'async-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+
+    const sdk = createHeadlessAdaptiveSDK({
+      replaceDefaultProviders: true,
+      telemetryProviders: [
+        () => factoryProvider,
+        {
+          factory: async () => {
+            await Promise.resolve();
+            return asyncProvider;
+          }
+        }
+      ]
+    });
+
+    await sdk.whenTelemetryProvidersReady();
+
+    const middleware = () => {};
+    sdk.registerTelemetryRequestMiddleware(middleware);
+
+    expect(factoryProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+    expect(asyncProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+  });
+
+  it('gates telemetry provider descriptors and broadcasts registration events', async () => {
+    const eagerProvider = {
+      id: 'eager-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+    const skippedProvider = {
+      id: 'skipped-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+    const lateProvider = {
+      id: 'late-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+
+    const sdk = createHeadlessAdaptiveSDK({
+      replaceDefaultProviders: true,
+      telemetryProviders: [
+        {
+          guard: () => false,
+          factory: () => skippedProvider
+        },
+        {
+          when: () => Promise.resolve(true),
+          resolve: async () => {
+            await Promise.resolve();
+            return eagerProvider;
+          }
+        }
+      ]
+    });
+
+    await sdk.whenTelemetryProvidersReady();
+
+    expect(sdk.telemetry.providers.has('eager-provider')).toBe(true);
+    expect(sdk.telemetry.providers.has('skipped-provider')).toBe(false);
+
+    const events = [];
+    const unsubscribe = sdk.onTelemetryProviderRegistered(event => {
+      events.push({ id: event.provider.id, source: event.source });
+    });
+
+    expect(events.some(event => event.id === 'eager-provider' && event.source === 'existing')).toBe(true);
+
+    await sdk.registerTelemetryProviders(
+      {
+        when: () => new Promise(resolve => setTimeout(() => resolve(true), 0)),
+        module: async () => ({ default: lateProvider }),
+        timeoutMs: 50
+      },
+      { source: 'runtime' }
+    );
+
+    await sdk.whenTelemetryProvidersReady();
+
+    expect(sdk.telemetry.providers.has('late-provider')).toBe(true);
+    expect(events.some(event => event.id === 'late-provider' && event.source === 'runtime')).toBe(true);
+
+    const middleware = () => {};
+    sdk.registerTelemetryRequestMiddleware(middleware);
+
+    expect(eagerProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+    expect(lateProvider.registerRequestMiddleware).toHaveBeenCalledWith(middleware);
+
+    unsubscribe();
+  });
+
+  it('awaits telemetry provider readiness by id, array, or predicate', async () => {
+    const immediateProvider = {
+      id: 'immediate-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+
+    const lateProvider = {
+      id: 'late-provider',
+      registerRequestMiddleware: vi.fn()
+    };
+
+    const sdk = createHeadlessAdaptiveSDK({
+      replaceDefaultProviders: true
+    });
+
+    await sdk.registerTelemetryProviders(immediateProvider, { source: 'runtime' });
+
+    const immediateEvent = await sdk.whenTelemetryProviderReady('immediate-provider');
+
+    expect(immediateEvent.provider).toBe(immediateProvider);
+    expect(immediateEvent.source).toBe('existing');
+    expect(immediateEvent.registrationSource).toBe('runtime');
+
+    const arrayPromise = sdk.whenTelemetryProviderReady([
+      'immediate-provider',
+      'late-provider'
+    ]);
+
+    const predicatePromise = sdk.whenTelemetryProviderReady(provider => provider?.id === 'late-provider');
+
+    const registrationPromise = sdk.registerTelemetryProviders(
+      {
+        factory: async () => {
+          await Promise.resolve();
+          return lateProvider;
+        }
+      },
+      { source: 'runtime' }
+    );
+
+    await registrationPromise;
+
+    const [arrayEvents, predicateEvent] = await Promise.all([arrayPromise, predicatePromise]);
+
+    expect(Array.isArray(arrayEvents)).toBe(true);
+    expect(arrayEvents[0]?.provider).toBe(immediateProvider);
+    expect(arrayEvents[0]?.source).toBe('existing');
+    expect(arrayEvents[0]?.registrationSource).toBe('runtime');
+    expect(arrayEvents[1]?.provider).toBe(lateProvider);
+    expect(arrayEvents[1]?.source).toBe('runtime');
+    expect(arrayEvents[1]?.registrationSource).toBe('runtime');
+
+    expect(predicateEvent.provider).toBe(lateProvider);
+    expect(predicateEvent.source).toBe('runtime');
+    expect(predicateEvent.registrationSource).toBe('runtime');
+  });
+
+  it('matches telemetry provider readiness using metadata selectors', async () => {
+    const taggedProvider = {
+      id: 'tagged-provider',
+      registerRequestMiddleware: vi.fn(),
+      capabilities: ['stream']
+    };
+
+    const sdk = createHeadlessAdaptiveSDK({
+      replaceDefaultProviders: true,
+      telemetryProviders: [
+        {
+          tags: ['analytics', 'streaming'],
+          bundle: 'core/analytics',
+          capabilities: ['async'],
+          factory: () => taggedProvider
+        }
+      ]
+    });
+
+    const existingEvent = await sdk.whenTelemetryProviderReady({
+      tags: ['analytics'],
+      anyCapability: ['async', 'stream'],
+      bundle: 'core/analytics'
+    });
+
+    expect(existingEvent.provider).toBe(taggedProvider);
+    expect(existingEvent.source).toBe('existing');
+    expect(existingEvent.registrationSource).toBe('config');
+    expect(existingEvent.tags).toEqual(expect.arrayContaining(['analytics', 'streaming']));
+    expect(existingEvent.capabilities).toEqual(expect.arrayContaining(['async', 'stream']));
+    expect(existingEvent.bundle).toBe('core/analytics');
+
+    const runtimeProvider = {
+      id: 'runtime-provider',
+      registerRequestMiddleware: vi.fn(),
+      capabilities: { streaming: true }
+    };
+
+    const runtimeEventPromise = sdk.whenTelemetryProviderReady({
+      id: 'runtime-provider',
+      source: 'runtime',
+      anyTag: ['runtime'],
+      registrationSource: 'runtime'
+    });
+
+    await sdk.registerTelemetryProviders(runtimeProvider, {
+      source: 'runtime',
+      tags: ['runtime'],
+      bundle: 'runtime/ingest',
+      capabilities: ['on-demand']
+    });
+
+    const runtimeEvent = await runtimeEventPromise;
+
+    expect(runtimeEvent.provider).toBe(runtimeProvider);
+    expect(runtimeEvent.source).toBe('runtime');
+    expect(runtimeEvent.registrationSource).toBe('runtime');
+    expect(runtimeEvent.tags).toEqual(expect.arrayContaining(['runtime']));
+    expect(runtimeEvent.bundle).toBe('runtime/ingest');
+    expect(runtimeEvent.capabilities).toEqual(expect.arrayContaining(['on-demand', 'streaming']));
+  });
 });
