@@ -26,6 +26,93 @@ export interface SensorAdapter<TPayload = unknown> {
   test?(): Promise<boolean> | boolean;
 }
 
+export interface WearableChannelSample<TPayload = Record<string, unknown>> {
+  payload: TPayload;
+  confidence?: number;
+}
+
+export interface WearableCompositePayload<TChannels extends Record<string, WearableChannelSample> = Record<string, WearableChannelSample>> {
+  deviceId: string;
+  firmwareVersion?: string | null;
+  channels: TChannels;
+  metadata?: Record<string, unknown>;
+}
+
+export interface WearableTelemetryHarness {
+  track?(
+    event: string,
+    payload?: Record<string, unknown>,
+    options?: { classification?: string }
+  ): void;
+  recordAudit?(
+    event: string,
+    payload?: Record<string, unknown>,
+    classification?: string
+  ): void;
+}
+
+export interface WearableTransport<TRawSample = Record<string, unknown>> {
+  connect?(): Promise<void> | void;
+  disconnect?(): Promise<void> | void;
+  nextSample?(): Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  read?(): Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  reset?(): void;
+}
+
+export interface BaseWearableDeviceAdapterOptions<TRawSample = Record<string, unknown>> {
+  deviceId?: string;
+  firmwareVersion?: string | null;
+  telemetry?: WearableTelemetryHarness | null;
+  telemetryScope?: string;
+  telemetryClassification?: string;
+  licenseManager?: LicenseManager | null;
+  requiredLicenseFeature?: string | null;
+  schemaType?: string;
+  defaultConfidence?: number;
+  sampleProvider?: () => Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  transport?: WearableTransport<TRawSample> | null;
+  trace?: Array<TRawSample | (() => TRawSample | Promise<TRawSample>)>;
+  traceLoop?: boolean;
+  recordTelemetryMetadata?: boolean;
+}
+
+export class BaseWearableDeviceAdapter<TComposite extends WearableCompositePayload = WearableCompositePayload>
+  implements SensorAdapter<TComposite>
+{
+  constructor(options?: BaseWearableDeviceAdapterOptions);
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  read(): Promise<SensorAdapterSample<TComposite> | null>;
+  normalizeSample(
+    raw: Record<string, unknown>
+  ): { confidence?: number; payload?: Partial<TComposite> } | null;
+}
+
+export interface ARVisorWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  defaultFieldOfView?: { horizontal?: number; vertical?: number; diagonal?: number };
+  requiredLicenseFeature?: string;
+}
+
+export class ARVisorWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: ARVisorWearableAdapterOptions);
+}
+
+export interface NeuralBandWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  requiredLicenseFeature?: string;
+}
+
+export class NeuralBandWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: NeuralBandWearableAdapterOptions);
+}
+
+export interface BiometricWristWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  requiredLicenseFeature?: string;
+}
+
+export class BiometricWristWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: BiometricWristWearableAdapterOptions);
+}
+
 export interface TelemetryConsentMap {
   [classification: string]: boolean;
 }

@@ -240,6 +240,12 @@ export class SensoryInputBridge {
     }
 
     applySemanticMapping(type, payload, confidence, timestamp) {
+        if (typeof type === 'string' && type.startsWith('wearable.')) {
+            this.emit(type, { payload, confidence, timestamp });
+            this.applyWearableComposite(type, payload, confidence, timestamp);
+            return;
+        }
+
         switch (type) {
             case 'eye-tracking':
                 this.updateFocus(payload, confidence, timestamp);
@@ -260,6 +266,36 @@ export class SensoryInputBridge {
                 // Allow custom adapters to emit semantic channel names directly
                 this.emit(type, { payload, confidence, timestamp });
                 break;
+        }
+    }
+
+    applyWearableComposite(type, payload, confidence, timestamp) {
+        if (!payload || typeof payload !== 'object') return;
+
+        const channels = payload.channels && typeof payload.channels === 'object'
+            ? payload.channels
+            : {};
+
+        for (const [channelType, channelValue] of Object.entries(channels)) {
+            if (!channelValue) continue;
+            const channelPayload = channelValue.payload ?? channelValue;
+            const channelConfidence = typeof channelValue.confidence === 'number'
+                ? channelValue.confidence
+                : confidence;
+            this.applySemanticMapping(channelType, channelPayload, channelConfidence, timestamp);
+        }
+
+        const metadata = payload.metadata && typeof payload.metadata === 'object'
+            ? payload.metadata
+            : null;
+        if (metadata) {
+            this.emit(`${type}:metadata`, {
+                deviceId: payload.deviceId ?? null,
+                firmwareVersion: payload.firmwareVersion ?? null,
+                metadata,
+                confidence,
+                timestamp
+            });
         }
     }
 
