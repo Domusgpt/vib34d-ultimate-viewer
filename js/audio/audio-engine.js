@@ -142,47 +142,56 @@ export class SimpleAudioEngine {
  * Toggles audio reactivity and updates UI state
  */
 export function setupAudioToggle() {
-    window.toggleAudio = function() {
+    window.toggleAudio = async function() {
         const audioBtn = document.getElementById('audioToggle') || document.querySelector('[onclick="toggleAudio()"]');
-        
-        if (!window.audioEngine.isActive) {
+
+        if (!window.audioEngine) {
+            console.warn('⚠️ Audio engine not available');
+            return;
+        }
+
+        const audioIsActive = typeof window.audioEngine.isAudioActive === 'function'
+            ? window.audioEngine.isAudioActive()
+            : window.audioEngine.isActive;
+
+        if (!audioIsActive) {
             // Try to start audio
-            window.audioEngine.init().then(success => {
-                if (success) {
-                    if (audioBtn) {
-                        audioBtn.classList.add('active');
-                        audioBtn.title = 'Audio Reactivity: ON';
-                    }
-                    console.log('🎵 Audio Reactivity: ON');
-                } else {
-                    console.log('⚠️ Audio permission denied or not available');
-                }
-            });
-        } else {
-            // Toggle audio processing
-            let audioEnabled = !window.audioEnabled;
-            window.audioEnabled = audioEnabled; // Update global flag
-            
-            if (audioBtn) {
-                // Update button visual state
-                if (audioEnabled) {
+            const success = await window.audioEngine.init();
+            if (success) {
+                window.audioEnabled = true;
+                if (audioBtn) {
                     audioBtn.classList.add('active');
-                } else {
-                    audioBtn.classList.remove('active');
+                    audioBtn.title = 'Audio Reactivity: ON';
                 }
-                audioBtn.title = `Audio Reactivity: ${audioEnabled ? 'ON' : 'OFF'}`;
+                console.log('🎵 Audio Reactivity: ON');
+            } else {
+                window.audioEnabled = false;
+                if (audioBtn) {
+                    audioBtn.classList.remove('active');
+                    audioBtn.title = 'Audio Reactivity: OFF';
+                }
+                console.log('⚠️ Audio permission denied or not available');
             }
-            
-            // Audio permission check for mobile
-            if (audioEnabled) {
-                navigator.mediaDevices.getUserMedia({ audio: true }).catch(e => {
-                    audioEnabled = false;
-                    window.audioEnabled = false;
-                    console.log('⚠️ Audio permission denied:', e.message);
-                });
+        } else {
+            if (typeof window.audioEngine.stop === 'function') {
+                window.audioEngine.stop();
+            } else {
+                window.audioEngine.isActive = false;
+                window.audioEnabled = false;
             }
-            
-            console.log(`🎵 Audio Reactivity: ${audioEnabled ? 'ON' : 'OFF'}`);
+
+            if (audioBtn) {
+                audioBtn.classList.remove('active');
+                audioBtn.title = 'Audio Reactivity: OFF';
+            }
+
+            console.log('🎵 Audio Reactivity: OFF');
+        }
+
+        if (typeof window.synchronizeEngineStates === 'function') {
+            window.synchronizeEngineStates();
+        } else if (typeof window.showInteractivityStatus === 'function') {
+            window.showInteractivityStatus();
         }
     };
 }
