@@ -36,7 +36,12 @@ Define an explicit, supportable interface for product teams and partners consumi
   visualizers, DOM bindings, export inputs) while keeping sensory, telemetry, licensing, and projection workflows operational in
   server-side or automated test environments.
 - **Telemetry Providers:** Providers implement `identify`, `track`, and `flush`. The runtime defaults to buffered mode via
-  `ProductTelemetryHarness` + `ConsoleTelemetryProvider` when no provider is specified.
+  `ProductTelemetryHarness` + `ConsoleTelemetryProvider` when no provider is specified. Integrations can now supply provider
+  instances, factory functions, or async descriptors through `createAdaptiveSDK({ telemetryProviders: [...] })`; call
+  `sdk.whenTelemetryProvidersReady()` before wiring request middleware when factories perform dynamic imports. Descriptor entries
+  support `guard`/`when` gating, nested provider bundles, dynamic `module` loaders, and timeout controls so shells can lazily load
+  partner telemetry once entitlements or consent gates clear. Use `sdk.registerTelemetryProviders(descriptor, { source: 'runtime' })`
+  to stream in additional providers post-boot and mirror availability in dashboards via `sdk.onTelemetryProviderRegistered(listener)`.
 - **Pattern Packs:** `InterfacePatternRegistry` accepts packaged bundles containing metadata, monetization hints, and renderers.
 - **License Attestation Packs:** `ProductTelemetryHarness` and `createAdaptiveSDK` accept curated attestation packs via `LicenseAttestationProfileCatalog` so commercialization teams can register enterprise/studio/indie defaults in one call.
 - **Commercialization KPI Snapshots:** `ProductTelemetryHarness` exposes snapshot capture/scheduling/export APIs, `LicenseCommercializationSnapshotStore` now supports async storage with `whenReady()`, and `createAdaptiveSDK` mirrors the helpers so partners can persist commercialization KPIs and feed BI tools without bespoke pipelines.【F:src/product/ProductTelemetryHarness.js†L468-L534】【F:types/adaptive-sdk.d.ts†L452-L506】
