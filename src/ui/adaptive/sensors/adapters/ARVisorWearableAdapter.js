@@ -60,9 +60,87 @@ const assignIfDefined = (target, key, value, clone = false) => {
 const ensureConfidence = (value, fallback) => {
     const numeric = Number(value);
     if (Number.isFinite(numeric)) {
+        if (numeric < 0) return 0;
+        if (numeric > 1) return 1;
         return numeric;
     }
-    return fallback;
+    const fallbackNumeric = Number(fallback);
+    if (!Number.isFinite(fallbackNumeric)) {
+        return 0;
+    }
+    if (fallbackNumeric < 0) return 0;
+    if (fallbackNumeric > 1) return 1;
+    return fallbackNumeric;
+};
+
+const deepCloneValue = value => {
+    if (Array.isArray(value)) {
+        return value.map(entry => deepCloneValue(entry));
+    }
+    if (isPlainObject(value)) {
+        const clone = {};
+        for (const [key, entry] of Object.entries(value)) {
+            clone[key] = deepCloneValue(entry);
+        }
+        return clone;
+    }
+    return value;
+};
+
+const unwrapSpatialSource = (source, arrayKey) => {
+    if (!source) {
+        return null;
+    }
+
+    if (Array.isArray(source)) {
+        if (!arrayKey) {
+            return null;
+        }
+        return {
+            payload: {
+                [arrayKey]: source.map(entry => deepCloneValue(entry))
+            }
+        };
+    }
+
+    if (!isPlainObject(source)) {
+        return null;
+    }
+
+    if (isPlainObject(source.payload)) {
+        return {
+            payload: deepCloneValue(source.payload),
+            confidence: source.confidence
+        };
+    }
+
+    const { confidence, ...rest } = source;
+    if (arrayKey && Array.isArray(rest)) {
+        return {
+            payload: {
+                [arrayKey]: rest.map(entry => deepCloneValue(entry))
+            },
+            confidence
+        };
+    }
+
+    return {
+        payload: deepCloneValue(rest),
+        confidence
+    };
+};
+
+const hasSpatialPayload = payload => {
+    if (!payload) {
+        return false;
+    }
+    if (Array.isArray(payload)) {
+        return payload.length > 0;
+    }
+    if (isPlainObject(payload)) {
+        return Object.keys(payload).length > 0;
+    }
+    return true;
 };
 
 export class ARVisorWearableAdapter extends BaseWearableDeviceAdapter {
@@ -132,6 +210,108 @@ export class ARVisorWearableAdapter extends BaseWearableDeviceAdapter {
             };
         }
 
+        const spatialChannels = {};
+        const spatialConfidences = [];
+        const addSpatialChannel = (key, paths, fallbackConfidence, confidencePaths = [], arrayKey) => {
+            const rawSource = pickFirst(safe, paths);
+            if (!rawSource) {
+                return;
+            }
+
+            const entry = unwrapSpatialSource(rawSource, arrayKey);
+            if (!entry || !hasSpatialPayload(entry.payload)) {
+                return;
+            }
+
+            const confidence = ensureConfidence(
+                firstNumber(
+                    entry.confidence,
+                    ...confidencePaths.map(path => getPath(safe, path)),
+                    getPath(safe, 'spatial.confidence'),
+                    getPath(safe, 'scene.confidence'),
+                    getPath(safe, 'quality.scene.overall'),
+                    getPath(safe, 'quality.scene'),
+                    getPath(safe, 'quality.sceneConfidence'),
+                    getPath(safe, 'sceneConfidence'),
+                    getPath(safe, 'quality.overall')
+                ),
+                fallbackConfidence
+            );
+
+            spatialChannels[key] = {
+                payload: entry.payload,
+                confidence
+            };
+            spatialConfidences.push(confidence);
+        };
+
+        addSpatialChannel(
+            'planes',
+            ['channels.spatial.planes', 'spatial.planes', 'scene.planes'],
+            0.78,
+            [
+                'spatial.planes.confidence',
+                'scene.planes.confidence',
+                'scene.planesConfidence',
+                'quality.scene.planes',
+                'quality.scene.planes.confidence',
+                'quality.scenePlanes',
+                'planesConfidence'
+            ],
+            'planes'
+        );
+
+        addSpatialChannel(
+            'depth',
+            ['channels.spatial.depth', 'spatial.depth', 'scene.depth'],
+            0.72,
+            [
+                'spatial.depth.confidence',
+                'scene.depth.confidence',
+                'scene.depthConfidence',
+                'quality.scene.depth',
+                'quality.scene.depth.confidence',
+                'quality.sceneDepth',
+                'depthConfidence'
+            ]
+        );
+
+        addSpatialChannel(
+            'hitTests',
+            ['channels.spatial.hitTests', 'spatial.hitTests', 'scene.hitTests'],
+            0.8,
+            [
+                'spatial.hitTests.confidence',
+                'scene.hitTests.confidence',
+                'scene.hitTestConfidence',
+                'quality.scene.hitTests',
+                'quality.scene.hitTests.confidence',
+                'quality.hitTests',
+                'hitTestConfidence'
+            ],
+            'results'
+        );
+
+        addSpatialChannel(
+            'anchors',
+            ['channels.spatial.anchors', 'spatial.anchors', 'scene.anchors'],
+            0.76,
+            [
+                'spatial.anchors.confidence',
+                'scene.anchors.confidence',
+                'scene.anchorConfidence',
+                'quality.scene.anchors',
+                'quality.scene.anchors.confidence',
+                'quality.anchors',
+                'anchorConfidence'
+            ],
+            'anchors'
+        );
+
+        if (Object.keys(spatialChannels).length > 0) {
+            composite.spatial = spatialChannels;
+        }
+
         const fieldOfView = {
             ...this.defaultFieldOfView,
             ...(pickFirst(safe, ['metadata.fieldOfView', 'fieldOfView']) || {})
@@ -185,11 +365,19 @@ export class ARVisorWearableAdapter extends BaseWearableDeviceAdapter {
             }
         }
 
+        const channelConfidences = Object.values(composite.channels)
+            .map(channel => channel?.confidence);
+
         const confidence = ensureConfidence(
             firstNumber(
                 safe.confidence,
                 getPath(safe, 'quality.overall'),
-                composite.channels['eye-tracking']?.confidence
+                getPath(safe, 'quality.overallConfidence'),
+                getPath(safe, 'quality.focus'),
+                getPath(safe, 'quality.scene'),
+                getPath(safe, 'quality.scene.overall'),
+                ...channelConfidences,
+                ...spatialConfidences
             ),
             this.defaultConfidence
         );

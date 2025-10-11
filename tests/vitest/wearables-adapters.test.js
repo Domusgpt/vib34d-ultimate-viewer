@@ -4,6 +4,7 @@ import { SensorSchemaRegistry } from '../../src/ui/adaptive/sensors/SensorSchema
 import { SensoryInputBridge } from '../../src/ui/adaptive/SensoryInputBridge.js';
 import { WearableDeviceManager } from '../../src/ui/adaptive/sensors/WearableDeviceManager.js';
 import { BiometricWristWearableAdapter } from '../../src/ui/adaptive/sensors/adapters/BiometricWristWearableAdapter.js';
+import { ARVisorWearableAdapter } from '../../src/ui/adaptive/sensors/adapters/ARVisorWearableAdapter.js';
 import { LicenseManager } from '../../src/product/licensing/LicenseManager.js';
 
 describe('Wearable sensor schemas', () => {
@@ -327,6 +328,121 @@ describe('Wearable adapters', () => {
         expect(trackCall[1].channels).toContain('biometric');
         expect(trackCall[2]).toEqual({ classification: 'system' });
         expect(telemetry.recordAudit).not.toHaveBeenCalled();
+    });
+
+    it('normalizes AR visor spatial traces into schema-ready payloads', () => {
+        const adapter = new ARVisorWearableAdapter({
+            deviceId: 'visor-spatial',
+            defaultConfidence: 0.8
+        });
+
+        const raw = {
+            deviceId: 'visor-spatial',
+            channels: {
+                'eye-tracking': {
+                    payload: { x: 0.52, y: 0.47, depth: 0.36 },
+                    confidence: 0.9
+                },
+                spatial: {
+                    planes: {
+                        payload: {
+                            timestamp: 12,
+                            space: { type: 'local-floor', id: 'room' },
+                            planes: [
+                                {
+                                    id: 'plane-a',
+                                    space: { type: 'local-floor', id: 'room' },
+                                    pose: {
+                                        position: { x: 0, y: 0, z: 0 },
+                                        orientation: { x: 0, y: 0, z: 0, w: 1 }
+                                    },
+                                    alignment: 'horizontal',
+                                    extent: { width: 3, height: 2 },
+                                    polygon: [
+                                        { x: 0, y: 0, z: 0 },
+                                        { x: 3, y: 0, z: 0 },
+                                        { x: 3, y: 0, z: 2 }
+                                    ],
+                                    lastChangedTime: 12
+                                }
+                            ]
+                        },
+                        confidence: 0.66
+                    }
+                }
+            },
+            spatial: {
+                depth: {
+                    timestamp: 12,
+                    space: 'viewer',
+                    format: 'r16u',
+                    width: 128,
+                    height: 128,
+                    rawValueToMeters: 0.001,
+                    buffer: { type: 'cpu', handle: 'depth-buffer' },
+                    confidence: 1.2
+                }
+            },
+            scene: {
+                hitTests: {
+                    timestamp: 12,
+                    space: { type: 'viewer' },
+                    results: [
+                        {
+                            rayId: 'ray-alpha',
+                            space: { type: 'local', id: 'origin' },
+                            pose: {
+                                position: { x: 0, y: 1, z: 0 },
+                                orientation: { x: 0, y: 0, z: 0, w: 1 }
+                            },
+                            distance: 1.1,
+                            timestamp: 12
+                        }
+                    ]
+                },
+                anchors: {
+                    timestamp: 12,
+                    space: { type: 'local' },
+                    anchors: [
+                        {
+                            id: 'anchor-a',
+                            space: { type: 'local', id: 'origin' },
+                            pose: {
+                                position: { x: 0.1, y: 0.2, z: 0.3 },
+                                orientation: { x: 0, y: 0, z: 0, w: 1 }
+                            },
+                            lastChangedTime: 12
+                        }
+                    ]
+                }
+            },
+            quality: {
+                overall: 0.64,
+                scene: 0.7,
+                scenePlanes: 0.68,
+                depth: 0.73,
+                hitTests: 0.72,
+                anchors: 0.74
+            },
+            sceneConfidence: 0.71
+        };
+
+        const normalized = adapter.normalizeSample(raw);
+        expect(normalized.confidence).toBeCloseTo(0.64, 5);
+        expect(normalized.payload.deviceId).toBe('visor-spatial');
+        expect(normalized.payload.spatial?.planes?.confidence).toBeCloseTo(0.66, 5);
+        expect(normalized.payload.spatial?.depth?.confidence).toBeLessThanOrEqual(1);
+        expect(normalized.payload.spatial?.hitTests?.payload?.results).toHaveLength(1);
+        expect(normalized.payload.spatial?.anchors?.payload?.anchors).toHaveLength(1);
+
+        const registry = new SensorSchemaRegistry();
+        const { payload: sanitized, issues } = registry.validate('wearable.ar-visor', normalized.payload);
+
+        expect(issues).toHaveLength(0);
+        expect(sanitized.channels['spatial.planes'].payload.planes).toHaveLength(1);
+        expect(sanitized.channels['spatial.depth'].payload.format).toBe('r16u');
+        expect(sanitized.channels['spatial.hit-tests'].payload.results).toHaveLength(1);
+        expect(sanitized.channels['spatial.anchors'].payload.anchors).toHaveLength(1);
     });
 });
 
