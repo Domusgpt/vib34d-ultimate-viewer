@@ -26,6 +26,208 @@ export interface SensorAdapter<TPayload = unknown> {
   test?(): Promise<boolean> | boolean;
 }
 
+export class SensorSchemaRegistry {
+  constructor(options?: {
+    registerDefaults?: boolean;
+    schemas?: Array<[string, SensorSchema]> | Record<string, SensorSchema>;
+  });
+  register(type: string, schema: SensorSchema): void;
+  loadCustomSchemas(
+    schemas: Array<[string, SensorSchema]> | Record<string, SensorSchema> | undefined
+  ): void;
+  validate<TInput = Record<string, unknown>, TNormalized = TInput>(
+    type: string,
+    payload: TInput
+  ): SensorSchemaNormalizationResult<TNormalized>;
+}
+
+export interface WearableChannelSample<TPayload = Record<string, unknown>> {
+  payload: TPayload;
+  confidence?: number;
+}
+
+export interface WearableCompositePayload<TChannels extends Record<string, WearableChannelSample> = Record<string, WearableChannelSample>> {
+  deviceId: string;
+  firmwareVersion?: string | null;
+  channels: TChannels;
+  metadata?: Record<string, unknown>;
+}
+
+export interface WearableTelemetryHarness {
+  track?(
+    event: string,
+    payload?: Record<string, unknown>,
+    options?: { classification?: string }
+  ): void;
+  recordAudit?(
+    event: string,
+    payload?: Record<string, unknown>,
+    classification?: string
+  ): void;
+}
+
+export interface WearableTransport<TRawSample = Record<string, unknown>> {
+  connect?(): Promise<void> | void;
+  disconnect?(): Promise<void> | void;
+  nextSample?(): Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  read?(): Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  reset?(): void;
+}
+
+export interface BaseWearableDeviceAdapterOptions<TRawSample = Record<string, unknown>> {
+  deviceId?: string;
+  firmwareVersion?: string | null;
+  telemetry?: WearableTelemetryHarness | null;
+  telemetryScope?: string;
+  telemetryClassification?: string;
+  licenseManager?: LicenseManager | null;
+  requiredLicenseFeature?: string | null;
+  schemaType?: string;
+  defaultConfidence?: number;
+  sampleProvider?: () => Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  transport?: WearableTransport<TRawSample> | null;
+  trace?: Array<TRawSample | (() => TRawSample | Promise<TRawSample>)>;
+  traceLoop?: boolean;
+  recordTelemetryMetadata?: boolean;
+}
+
+export class BaseWearableDeviceAdapter<TComposite extends WearableCompositePayload = WearableCompositePayload>
+  implements SensorAdapter<TComposite>
+{
+  constructor(options?: BaseWearableDeviceAdapterOptions);
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  read(): Promise<SensorAdapterSample<TComposite> | null>;
+  normalizeSample(
+    raw: Record<string, unknown>
+  ): { confidence?: number; payload?: Partial<TComposite> } | null;
+}
+
+export interface ARVisorWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  defaultFieldOfView?: { horizontal?: number; vertical?: number; diagonal?: number };
+  requiredLicenseFeature?: string;
+}
+
+export class ARVisorWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: ARVisorWearableAdapterOptions);
+}
+
+export interface NeuralBandWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  requiredLicenseFeature?: string;
+}
+
+export class NeuralBandWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: NeuralBandWearableAdapterOptions);
+}
+
+export interface BiometricWristWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  requiredLicenseFeature?: string;
+}
+
+export class BiometricWristWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: BiometricWristWearableAdapterOptions);
+}
+
+export interface SensoryInputBridgeOptions {
+  pollingInterval?: number;
+  decayHalfLife?: number;
+  confidenceThreshold?: number;
+  schemaRegistry?: SensorSchemaRegistry;
+  schemas?: Array<[string, SensorSchema]> | Record<string, SensorSchema>;
+  issueReporter?: (
+    entry: {
+      type: string;
+      issues: SensorSchemaIssue[];
+      payload: Record<string, unknown>;
+      timestamp: number;
+    }
+  ) => void;
+  autoConnectAdapters?: boolean;
+  validationLogLimit?: number;
+  timeSource?: () => number;
+  channelHistoryLimit?: number;
+  wearableHistoryLimit?: number;
+}
+
+export interface WearableSnapshot<TComposite extends WearableCompositePayload = WearableCompositePayload> {
+  type: string;
+  deviceId: string;
+  timestamp: number;
+  confidence: number;
+  firmwareVersion: string | null;
+  composite: TComposite;
+  metadata?: Record<string, unknown> | null;
+  channels?: Record<string, WearableChannelSample>;
+}
+
+export class SensoryInputBridge {
+  constructor(options?: SensoryInputBridgeOptions);
+  registerAdapter(type: string, adapter: SensorAdapter): void;
+  connectAdapter(type: string): Promise<void>;
+  disconnectAdapter(type: string): Promise<void>;
+  testAdapter(type: string): Promise<boolean>;
+  connectAllAdapters(): Promise<void>;
+  disconnectAllAdapters(): Promise<void>;
+  subscribe(channel: string, callback: (payload: unknown) => void): () => void;
+  ingest(type: string, payload: unknown, confidence?: number): void;
+  start(): void;
+  stop(): void;
+  processSample(type: string, sample: SensorAdapterSample): void;
+  getSnapshot(): Record<string, unknown>;
+  registerSchema(type: string, schema: SensorSchema): void;
+  getSchemaRegistry(): SensorSchemaRegistry;
+  setValidationReporter(
+    reporter?: (
+      entry: {
+        type: string;
+        issues: SensorSchemaIssue[];
+        payload: Record<string, unknown>;
+        timestamp: number;
+      }
+    ) => void
+  ): void;
+  getValidationLog(): Array<{
+    type: string;
+    issues: SensorSchemaIssue[];
+    payload: Record<string, unknown>;
+    timestamp: number;
+  }>;
+  getAdapterState(type: string): { status: string; lastError: unknown } | undefined;
+  getChannelHistory(type: string): SensorAdapterSample[];
+  setChannelHistoryLimit(limit: number): void;
+  getWearableSnapshot(type: string, deviceId: string): WearableSnapshot | null;
+  listWearableDevices(type: string): string[];
+  getWearableHistory(type: string): WearableSnapshot[];
+}
+
+export interface WearableDeviceManagerOptions {
+  bridge?: SensoryInputBridge;
+  autoStart?: boolean;
+  historyLimit?: number;
+  wearableHistoryLimit?: number;
+  bridgeOptions?: SensoryInputBridgeOptions;
+}
+
+export class WearableDeviceManager {
+  constructor(options?: WearableDeviceManagerOptions);
+  getBridge(): SensoryInputBridge;
+  registerAdapter(type: string, adapter: SensorAdapter): SensorAdapter;
+  unregisterAdapter(type: string): void;
+  start(): void;
+  stop(): void;
+  subscribeToDevice(
+    type: string,
+    deviceId: string,
+    callback: (snapshot: WearableSnapshot & { type: string }) => void
+  ): () => void;
+  getDeviceSnapshot(type: string, deviceId: string): (WearableSnapshot & { type: string }) | null;
+  listDevices(type: string): string[];
+  getDeviceHistory(type: string): WearableSnapshot[];
+  ingest(type: string, payload: unknown, confidence?: number): void;
+}
+
+export default WearableDeviceManager;
+
 export interface TelemetryConsentMap {
   [classification: string]: boolean;
 }
