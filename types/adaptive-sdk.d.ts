@@ -70,6 +70,329 @@ export interface TelemetryConfig extends Record<string, unknown> {
   commercializationReporter?: LicenseCommercializationReporter;
 }
 
+export interface AdaptiveTelemetryProviderFactoryContext {
+  engine: any;
+  telemetry: any;
+  config: AdaptiveSDKConfig;
+  options?: Record<string, unknown>;
+  environment?: AdaptiveEnvironmentOptions;
+}
+
+export type AdaptiveTelemetryProviderFactoryResult =
+  | any
+  | any[]
+  | Promise<any>
+  | Promise<any[]>;
+
+export type AdaptiveTelemetryProviderFactory = (
+  context: AdaptiveTelemetryProviderFactoryContext
+) => AdaptiveTelemetryProviderFactoryResult;
+
+export interface AdaptiveTelemetryProviderDescriptorContext
+  extends AdaptiveTelemetryProviderFactoryContext {
+  descriptor: AdaptiveTelemetryProviderDescriptorObject;
+  whenProvidersReady: () => Promise<void>;
+  whenProviderReady: (
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadyOptions
+  ) => Promise<AdaptiveTelemetryProviderReadyResult>;
+  streamTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderStreamOptions
+  ) => AdaptiveTelemetryProviderStream<T>;
+  watchTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector: AdaptiveTelemetryProviderReadySelector | undefined,
+    listener: (
+      value: T,
+      event: AdaptiveTelemetryProviderRegistrationEvent
+    ) => void,
+    options?: AdaptiveTelemetryProviderWatchOptions
+  ) => () => void;
+  collectTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderCollectOptions
+  ) => Promise<T[]>;
+  createTelemetryProviderStream: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadableStreamOptions<T>
+  ) => AdaptiveTelemetryProviderReadableStream<T>;
+  trackTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderTrackOptions
+  ) => AdaptiveTelemetryProviderTracker<T>;
+}
+
+export type AdaptiveTelemetryProviderResolver = (
+  context: AdaptiveTelemetryProviderDescriptorContext
+) => AdaptiveTelemetryProviderFactoryResult;
+
+export type AdaptiveTelemetryProviderModuleLoader =
+  | ((context: AdaptiveTelemetryProviderDescriptorContext) => Promise<any> | any)
+  | Promise<any>
+  | any;
+
+export interface AdaptiveTelemetryProviderDescriptorObject {
+  factory?: AdaptiveTelemetryProviderFactory;
+  resolve?: AdaptiveTelemetryProviderResolver;
+  module?: AdaptiveTelemetryProviderModuleLoader;
+  guard?:
+    | boolean
+    | ((context: AdaptiveTelemetryProviderDescriptorContext) => boolean | Promise<boolean>);
+  when?:
+    | boolean
+    | ((context: AdaptiveTelemetryProviderDescriptorContext) => boolean | Promise<boolean>);
+  options?: Record<string, unknown>;
+  providers?: AdaptiveTelemetryProviderDescriptor[];
+  timeoutMs?: number;
+  use?: AdaptiveTelemetryProviderDescriptor;
+  tags?: string | string[] | Set<string> | Record<string, boolean>;
+  bundle?: string;
+  capabilities?: string | string[] | Set<string> | Record<string, boolean>;
+}
+
+export type AdaptiveTelemetryProviderDescriptor =
+  | any
+  | AdaptiveTelemetryProviderFactory
+  | AdaptiveTelemetryProviderDescriptorObject;
+
+export interface AdaptiveTelemetryProviderRegistrationEvent {
+  provider: any;
+  descriptor: AdaptiveTelemetryProviderDescriptorObject | null;
+  entry: AdaptiveTelemetryProviderDescriptor | null;
+  source: string;
+  registrationSource?: string;
+  options?: Record<string, unknown>;
+  tags?: string[];
+  bundle?: string | null;
+  capabilities?: string[];
+}
+
+export interface AdaptiveTelemetryProviderRegistrationOptions {
+  replace?: boolean;
+  source?: string;
+  registrationSource?: string;
+  tags?: string | string[] | Set<string> | Record<string, boolean>;
+  bundle?: string;
+  capabilities?: string | string[] | Set<string> | Record<string, boolean>;
+}
+
+export interface AdaptiveTelemetryProviderReadyOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export interface AdaptiveTelemetryProviderStreamOptions {
+  includeExisting?: boolean;
+  signal?: AbortSignal;
+}
+
+export interface AdaptiveTelemetryProviderReadableStreamOptions<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  includeExisting?: boolean;
+  signal?: AbortSignal;
+  queuingStrategy?: QueuingStrategy<T>;
+  ReadableStream?: {
+    new (underlyingSource: UnderlyingSource<T>, strategy?: QueuingStrategy<T>): ReadableStream<T>;
+  };
+  streamConstructor?: {
+    new (underlyingSource: UnderlyingSource<T>, strategy?: QueuingStrategy<T>): ReadableStream<T>;
+  };
+}
+
+export interface AdaptiveTelemetryProviderCollectOptions {
+  count?: number;
+  includeExisting?: boolean;
+  distinct?: boolean;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export interface AdaptiveTelemetryProviderWatchOptions {
+  includeExisting?: boolean;
+  once?: boolean;
+  signal?: AbortSignal;
+  onError?: (
+    error: Error,
+    event?: AdaptiveTelemetryProviderRegistrationEvent | null,
+    context?: string | null
+  ) => void;
+}
+
+export type AdaptiveTelemetryProviderStream<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> = AsyncIterable<T>;
+
+export type AdaptiveTelemetryProviderReadableStream<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> = ReadableStream<T>;
+
+export interface AdaptiveTelemetryProviderMetadataSnapshot {
+  descriptor: AdaptiveTelemetryProviderDescriptorObject | null;
+  entry: AdaptiveTelemetryProviderDescriptor | null;
+  source: string;
+  registrationSource: string;
+  options?: Record<string, unknown>;
+  tags?: string[];
+  bundle?: string | null;
+  capabilities?: string[];
+}
+
+export interface AdaptiveTelemetryProviderTrackerRecord<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  key: unknown;
+  provider: any | null;
+  event: AdaptiveTelemetryProviderRegistrationEvent;
+  value: T;
+  metadata: AdaptiveTelemetryProviderMetadataSnapshot | null;
+  seenAt: number;
+  updatedAt: number;
+}
+
+export interface AdaptiveTelemetryProviderTrackOptions {
+  includeExisting?: boolean;
+  key?:
+    | 'auto'
+    | 'id'
+    | 'providerId'
+    | 'provider'
+    | 'instance'
+    | 'event'
+    | ((
+        provider: any,
+        event: AdaptiveTelemetryProviderRegistrationEvent
+      ) => unknown);
+  signal?: AbortSignal;
+  onError?: (
+    error: Error,
+    event?: AdaptiveTelemetryProviderRegistrationEvent | null,
+    context?: string | null
+  ) => void;
+}
+
+export interface AdaptiveTelemetryProviderTrackAddChange<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  type: 'add' | 'update';
+  key: unknown;
+  record: AdaptiveTelemetryProviderTrackerRecord<T>;
+  previous: AdaptiveTelemetryProviderTrackerRecord<T> | null;
+  value: T;
+  event: AdaptiveTelemetryProviderRegistrationEvent;
+  replay: boolean;
+  active: boolean;
+}
+
+export interface AdaptiveTelemetryProviderTrackErrorChange {
+  type: 'error';
+  error: Error;
+  event: AdaptiveTelemetryProviderRegistrationEvent | null;
+  context: string | null;
+  active: boolean;
+}
+
+export interface AdaptiveTelemetryProviderTrackDisposeChange {
+  type: 'dispose';
+  reason: Error | null;
+  active: boolean;
+}
+
+export type AdaptiveTelemetryProviderTrackChange<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> =
+  | AdaptiveTelemetryProviderTrackAddChange<T>
+  | AdaptiveTelemetryProviderTrackErrorChange
+  | AdaptiveTelemetryProviderTrackDisposeChange;
+
+export interface AdaptiveTelemetryProviderTracker<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> extends Iterable<AdaptiveTelemetryProviderTrackerRecord<T>> {
+  readonly active: boolean;
+  readonly size: number;
+  has(key: unknown): boolean;
+  get(key: unknown): AdaptiveTelemetryProviderTrackerRecord<T> | null;
+  keys(): unknown[];
+  values(): AdaptiveTelemetryProviderTrackerRecord<T>[];
+  entries(): Array<[unknown, AdaptiveTelemetryProviderTrackerRecord<T>]>;
+  snapshot(): AdaptiveTelemetryProviderTrackerRecord<T>[];
+  forEach(
+    callback: (
+      record: AdaptiveTelemetryProviderTrackerRecord<T>,
+      key: unknown,
+      tracker: AdaptiveTelemetryProviderTracker<T>
+    ) => void
+  ): void;
+  subscribe(
+    listener: (change: AdaptiveTelemetryProviderTrackChange<T>) => void,
+    options?: { replay?: boolean }
+  ): () => void;
+  dispose(reason?: unknown): void;
+  [Symbol.iterator](): Iterator<AdaptiveTelemetryProviderTrackerRecord<T>>;
+}
+
+export interface AdaptiveTelemetryProviderReadySelectorCriteria {
+  id?: string | string[];
+  ids?: string[];
+  providerId?: string | string[];
+  providerIds?: string[];
+  tag?: string;
+  tags?: string | string[] | Set<string> | Record<string, boolean>;
+  allTags?: string | string[] | Set<string> | Record<string, boolean>;
+  requireTags?: string | string[] | Set<string> | Record<string, boolean>;
+  anyTag?: string | string[] | Set<string> | Record<string, boolean>;
+  anyTags?: string | string[] | Set<string> | Record<string, boolean>;
+  someTags?: string | string[] | Set<string> | Record<string, boolean>;
+  excludeTags?: string | string[] | Set<string> | Record<string, boolean>;
+  excludedTags?: string | string[] | Set<string> | Record<string, boolean>;
+  bundle?: string | string[] | Set<string> | Record<string, boolean>;
+  bundles?: string | string[] | Set<string> | Record<string, boolean>;
+  source?: string | string[] | Set<string> | Record<string, boolean>;
+  sources?: string | string[] | Set<string> | Record<string, boolean>;
+  registrationSource?: string | string[] | Set<string> | Record<string, boolean>;
+  registrationSources?: string | string[] | Set<string> | Record<string, boolean>;
+  capabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  allCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  requireCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  anyCapability?: string | string[] | Set<string> | Record<string, boolean>;
+  anyCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  someCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  excludeCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  excludedCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  match?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  where?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  filter?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  project?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  select?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  map?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+}
+
+export type AdaptiveTelemetryProviderReadySelector =
+  | string
+  | { id: string }
+  | RegExp
+  | string[]
+  | AdaptiveTelemetryProviderReadySelectorCriteria
+  | ((
+      provider: any,
+      event: AdaptiveTelemetryProviderRegistrationEvent
+    ) => unknown);
+
+export type AdaptiveTelemetryProviderReadyResult =
+  | AdaptiveTelemetryProviderRegistrationEvent
+  | Array<AdaptiveTelemetryProviderRegistrationEvent | null>
+  | unknown;
+
 export interface LicenseDetails {
   key: string;
   tenantId?: string;
@@ -496,7 +819,7 @@ export interface AdaptiveSDKConfig {
   environment?: AdaptiveEnvironmentOptions;
   layoutStrategies?: any[];
   layoutAnnotations?: any[];
-  telemetryProviders?: any[];
+  telemetryProviders?: AdaptiveTelemetryProviderDescriptor[];
   replaceDefaultProviders?: boolean;
   licenseAttestationProfiles?: LicenseAttestationProfile[];
   defaultLicenseAttestationProfileId?: string;
@@ -526,8 +849,54 @@ export interface AdaptiveSDK {
   registerLayoutStrategy(strategy: any): any;
   registerLayoutAnnotation(annotation: any): any;
   registerTelemetryProvider(provider: any): any;
+  registerTelemetryProviders(
+    entries: AdaptiveTelemetryProviderDescriptor | AdaptiveTelemetryProviderDescriptor[],
+    options?: AdaptiveTelemetryProviderRegistrationOptions
+  ): Promise<void>;
   registerTelemetryRequestMiddleware(middleware: TelemetryRequestMiddleware): any;
   clearTelemetryRequestMiddleware(): any;
+  whenTelemetryProvidersReady(): Promise<void>;
+  whenTelemetryProviderReady(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadyOptions
+  ): Promise<AdaptiveTelemetryProviderReadyResult>;
+  streamTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderStreamOptions
+  ): AdaptiveTelemetryProviderStream<T>;
+  watchTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector: AdaptiveTelemetryProviderReadySelector | undefined,
+    listener: (
+      value: T,
+      event: AdaptiveTelemetryProviderRegistrationEvent
+    ) => void,
+    options?: AdaptiveTelemetryProviderWatchOptions
+  ): () => void;
+  collectTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderCollectOptions
+  ): Promise<T[]>;
+  trackTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderTrackOptions
+  ): AdaptiveTelemetryProviderTracker<T>;
+  createTelemetryProviderStream<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadableStreamOptions<T>
+  ): AdaptiveTelemetryProviderReadableStream<T>;
+  onTelemetryProviderRegistered(
+    listener: (event: AdaptiveTelemetryProviderRegistrationEvent) => void
+  ): () => void;
   registerLicenseAttestationProfile(
     profile: LicenseAttestationProfile | string,
     options?: Omit<LicenseAttestationProfile, 'id'>
