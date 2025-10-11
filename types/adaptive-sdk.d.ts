@@ -26,6 +26,542 @@ export interface SensorAdapter<TPayload = unknown> {
   test?(): Promise<boolean> | boolean;
 }
 
+export interface SpatialVector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface SpatialQuaternion {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+export type SpatialSpaceType =
+  | 'viewer'
+  | 'local'
+  | 'local-floor'
+  | 'bounded-floor'
+  | 'unbounded'
+  | 'stage'
+  | 'device'
+  | 'custom';
+
+export interface SpatialPose {
+  position: SpatialVector3;
+  orientation: SpatialQuaternion;
+}
+
+export interface SpatialSpaceReference {
+  type: SpatialSpaceType;
+  id: string | null;
+  pose?: SpatialPose;
+}
+
+export type SpatialTrackingState = 'tracked' | 'emulated' | 'paused' | 'unknown';
+
+export type SpatialPlaneAlignment = 'horizontal' | 'vertical' | 'slanted' | 'unknown';
+
+export type SpatialPlaneClassification =
+  | 'floor'
+  | 'ceiling'
+  | 'wall'
+  | 'table'
+  | 'seat'
+  | 'screen'
+  | 'platform'
+  | 'unknown';
+
+export interface SpatialPlane {
+  id: string;
+  space: SpatialSpaceReference;
+  pose: SpatialPose;
+  alignment: SpatialPlaneAlignment;
+  extent: { width: number; height: number };
+  polygon?: SpatialVector3[];
+  lastChangedTime: number;
+  trackingState?: SpatialTrackingState;
+  classification?: SpatialPlaneClassification;
+}
+
+export interface SpatialPlaneCollection {
+  timestamp: number;
+  space: SpatialSpaceReference;
+  planes: SpatialPlane[];
+  removedIds?: string[];
+}
+
+export interface SpatialDepthBufferDescriptor {
+  type: 'cpu' | 'gpu';
+  handle: string | null;
+  format?: string | null;
+  usage?: string | null;
+}
+
+export interface SpatialCameraIntrinsics {
+  fx?: number;
+  fy?: number;
+  cx?: number;
+  cy?: number;
+}
+
+export interface SpatialDepthBuffer {
+  timestamp: number;
+  space: SpatialSpaceReference;
+  viewId?: string | null;
+  format: string;
+  width: number;
+  height: number;
+  rawValueToMeters: number;
+  near?: number | null;
+  far?: number | null;
+  intrinsics?: SpatialCameraIntrinsics;
+  buffer: SpatialDepthBufferDescriptor;
+  confidence?: number | null;
+}
+
+export interface SpatialRay {
+  origin: SpatialVector3;
+  direction: SpatialVector3;
+}
+
+export type SpatialHitTestEntityType = 'plane' | 'mesh' | 'point' | 'feature-point' | 'unknown';
+export type SpatialHitTestResultType = SpatialHitTestEntityType;
+export type SpatialInputHandedness = 'none' | 'left' | 'right';
+
+export interface SpatialHitTestResultInputSource {
+  handedness?: SpatialInputHandedness;
+  targetRaySpace?: string | null;
+  profiles?: string[];
+}
+
+export interface SpatialHitTestRay {
+  id: string;
+  space: SpatialSpaceReference;
+  offsetRay: SpatialRay;
+  entityTypes: SpatialHitTestEntityType[];
+  targetRaySpace?: string | null;
+  handedness?: SpatialInputHandedness;
+  transient: boolean;
+  profile?: string | null;
+  initialResults?: SpatialHitTestResult[];
+}
+
+export interface SpatialHitTestResult {
+  rayId: string;
+  space: SpatialSpaceReference;
+  pose: SpatialPose;
+  transformMatrix?: number[] | null;
+  distance: number;
+  timestamp: number;
+  type?: SpatialHitTestResultType;
+  normal?: SpatialVector3;
+  anchors?: string[];
+  inputSource?: SpatialHitTestResultInputSource;
+  confidence?: number | null;
+}
+
+export interface SpatialHitTestResultCollection {
+  timestamp: number;
+  space: SpatialSpaceReference;
+  results: SpatialHitTestResult[];
+}
+
+export interface SpatialAnchor {
+  id: string;
+  space: SpatialSpaceReference;
+  pose: SpatialPose;
+  lastChangedTime: number;
+  trackingState?: SpatialTrackingState;
+  accuracy?: number | null;
+  associatedRayId?: string | null;
+  classification?: SpatialPlaneClassification;
+  confidence?: number | null;
+}
+
+export interface SpatialAnchorCollection {
+  timestamp: number;
+  space: SpatialSpaceReference;
+  anchors: SpatialAnchor[];
+  removedIds?: string[];
+}
+
+export interface QuaternionClusterBlendResult {
+  orientation: SpatialQuaternion;
+  confidence?: number | null;
+  position?: SpatialVector3 | null;
+  weight: number;
+  sampleCount: number;
+  variance?: number | null;
+  averageDistance?: number | null;
+  space?: SpatialSpaceReference | null;
+}
+
+export interface AnchorClusterReducerOptions {
+  space?: SpatialSpaceReference | null;
+}
+
+export type AnchorClusterReducer = (
+  anchors: ReadonlyArray<SpatialAnchor>,
+  options?: AnchorClusterReducerOptions
+) => QuaternionClusterBlendResult | null;
+
+export interface HitTestClusterReducerOptions {
+  space?: SpatialSpaceReference | null;
+  distanceFalloff?: number;
+}
+
+export type HitTestClusterReducer = (
+  results: ReadonlyArray<SpatialHitTestResult>,
+  options?: HitTestClusterReducerOptions
+) => (QuaternionClusterBlendResult & { averageDistance?: number | null }) | null;
+
+export interface QuaternionSample {
+  orientation?: SpatialQuaternion;
+  quaternion?: SpatialQuaternion;
+  weight?: number;
+  confidence?: number;
+}
+
+export interface QuaternionAverageOptions {
+  fallbackIdentity?: boolean;
+}
+
+export function averageQuaternionSamples(
+  samples: ReadonlyArray<QuaternionSample>,
+  options?: QuaternionAverageOptions
+): SpatialQuaternion | null;
+
+export function blendAnchorCluster(
+  anchors: ReadonlyArray<SpatialAnchor>,
+  options?: AnchorClusterReducerOptions
+): QuaternionClusterBlendResult | null;
+
+export function blendHitTestCluster(
+  results: ReadonlyArray<SpatialHitTestResult>,
+  options?: HitTestClusterReducerOptions
+): (QuaternionClusterBlendResult & { averageDistance?: number | null }) | null;
+
+export interface QuaternionToolkit {
+  averageQuaternionSamples: typeof averageQuaternionSamples;
+  blendAnchorCluster: typeof blendAnchorCluster;
+  blendHitTestCluster: typeof blendHitTestCluster;
+}
+
+export const QuaternionClusterToolkit: QuaternionToolkit;
+
+export class SensorSchemaRegistry {
+  constructor(options?: {
+    registerDefaults?: boolean;
+    schemas?: Array<[string, SensorSchema]> | Record<string, SensorSchema>;
+  });
+  register(type: string, schema: SensorSchema): void;
+  loadCustomSchemas(
+    schemas: Array<[string, SensorSchema]> | Record<string, SensorSchema> | undefined
+  ): void;
+  validate<TInput = Record<string, unknown>, TNormalized = TInput>(
+    type: string,
+    payload: TInput
+  ): SensorSchemaNormalizationResult<TNormalized>;
+}
+
+export interface WearableChannelSample<TPayload = Record<string, unknown>> {
+  payload: TPayload;
+  confidence?: number;
+}
+
+export interface WearableCompositePayload<TChannels extends Record<string, WearableChannelSample> = Record<string, WearableChannelSample>> {
+  deviceId: string;
+  firmwareVersion?: string | null;
+  channels: TChannels;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ARVisorSpatialChannels {
+  'spatial.planes'?: WearableChannelSample<SpatialPlaneCollection>;
+  'spatial.depth'?: WearableChannelSample<SpatialDepthBuffer>;
+  'spatial.hit-tests'?: WearableChannelSample<SpatialHitTestResultCollection>;
+  'spatial.anchors'?: WearableChannelSample<SpatialAnchorCollection>;
+}
+
+export type ARVisorWearableChannels = Record<string, WearableChannelSample> & ARVisorSpatialChannels;
+
+export type ARVisorWearableComposite = WearableCompositePayload<ARVisorWearableChannels>;
+
+export interface WearableTelemetryHarness {
+  track?(
+    event: string,
+    payload?: Record<string, unknown>,
+    options?: { classification?: string }
+  ): void;
+  recordAudit?(
+    event: string,
+    payload?: Record<string, unknown>,
+    classification?: string
+  ): void;
+}
+
+export interface WearableTransport<TRawSample = Record<string, unknown>> {
+  connect?(): Promise<void> | void;
+  disconnect?(): Promise<void> | void;
+  nextSample?(): Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  read?(): Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  reset?(): void;
+}
+
+export interface BaseWearableDeviceAdapterOptions<TRawSample = Record<string, unknown>> {
+  deviceId?: string;
+  firmwareVersion?: string | null;
+  telemetry?: WearableTelemetryHarness | null;
+  telemetryScope?: string;
+  telemetryClassification?: string;
+  licenseManager?: LicenseManager | null;
+  requiredLicenseFeature?: string | null;
+  schemaType?: string;
+  defaultConfidence?: number;
+  sampleProvider?: () => Promise<TRawSample | null | undefined> | TRawSample | null | undefined;
+  transport?: WearableTransport<TRawSample> | null;
+  trace?: Array<TRawSample | (() => TRawSample | Promise<TRawSample>)>;
+  traceLoop?: boolean;
+  recordTelemetryMetadata?: boolean;
+}
+
+export class BaseWearableDeviceAdapter<TComposite extends WearableCompositePayload = WearableCompositePayload>
+  implements SensorAdapter<TComposite>
+{
+  constructor(options?: BaseWearableDeviceAdapterOptions);
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  read(): Promise<SensorAdapterSample<TComposite> | null>;
+  normalizeSample(
+    raw: Record<string, unknown>
+  ): { confidence?: number; payload?: Partial<TComposite> } | null;
+}
+
+export interface ARVisorWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  defaultFieldOfView?: { horizontal?: number; vertical?: number; diagonal?: number };
+  requiredLicenseFeature?: string;
+}
+
+export class ARVisorWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: ARVisorWearableAdapterOptions);
+}
+
+export interface NeuralBandWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  requiredLicenseFeature?: string;
+}
+
+export class NeuralBandWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: NeuralBandWearableAdapterOptions);
+}
+
+export interface BiometricWristWearableAdapterOptions extends BaseWearableDeviceAdapterOptions {
+  requiredLicenseFeature?: string;
+}
+
+export class BiometricWristWearableAdapter extends BaseWearableDeviceAdapter {
+  constructor(options?: BiometricWristWearableAdapterOptions);
+}
+
+export interface SensoryInputBridgeOptions {
+  pollingInterval?: number;
+  decayHalfLife?: number;
+  confidenceThreshold?: number;
+  schemaRegistry?: SensorSchemaRegistry;
+  schemas?: Array<[string, SensorSchema]> | Record<string, SensorSchema>;
+  issueReporter?: (
+    entry: {
+      type: string;
+      issues: SensorSchemaIssue[];
+      payload: Record<string, unknown>;
+      timestamp: number;
+    }
+  ) => void;
+  autoConnectAdapters?: boolean;
+  validationLogLimit?: number;
+  timeSource?: () => number;
+  channelHistoryLimit?: number;
+  wearableHistoryLimit?: number;
+}
+
+export interface WearableSnapshot<TComposite extends WearableCompositePayload = WearableCompositePayload> {
+  type: string;
+  deviceId: string;
+  timestamp: number;
+  confidence: number;
+  firmwareVersion: string | null;
+  composite: TComposite;
+  metadata?: Record<string, unknown> | null;
+  channels?: Record<string, WearableChannelSample>;
+}
+
+export class SensoryInputBridge {
+  constructor(options?: SensoryInputBridgeOptions);
+  registerAdapter(type: string, adapter: SensorAdapter): void;
+  connectAdapter(type: string): Promise<void>;
+  disconnectAdapter(type: string): Promise<void>;
+  testAdapter(type: string): Promise<boolean>;
+  connectAllAdapters(): Promise<void>;
+  disconnectAllAdapters(): Promise<void>;
+  subscribe(channel: string, callback: (payload: unknown) => void): () => void;
+  ingest(type: string, payload: unknown, confidence?: number): void;
+  start(): void;
+  stop(): void;
+  processSample(type: string, sample: SensorAdapterSample): void;
+  getSnapshot(): Record<string, unknown>;
+  registerSchema(type: string, schema: SensorSchema): void;
+  getSchemaRegistry(): SensorSchemaRegistry;
+  setValidationReporter(
+    reporter?: (
+      entry: {
+        type: string;
+        issues: SensorSchemaIssue[];
+        payload: Record<string, unknown>;
+        timestamp: number;
+      }
+    ) => void
+  ): void;
+  getValidationLog(): Array<{
+    type: string;
+    issues: SensorSchemaIssue[];
+    payload: Record<string, unknown>;
+    timestamp: number;
+  }>;
+  getAdapterState(type: string): { status: string; lastError: unknown } | undefined;
+  getChannelHistory(type: string): SensorAdapterSample[];
+  setChannelHistoryLimit(limit: number): void;
+  getWearableSnapshot(type: string, deviceId: string): WearableSnapshot | null;
+  listWearableDevices(type: string): string[];
+  getWearableHistory(type: string): WearableSnapshot[];
+}
+
+export interface WearableDeviceManagerOptions {
+  bridge?: SensoryInputBridge;
+  autoStart?: boolean;
+  historyLimit?: number;
+  wearableHistoryLimit?: number;
+  bridgeOptions?: SensoryInputBridgeOptions;
+}
+
+export class WearableDeviceManager {
+  constructor(options?: WearableDeviceManagerOptions);
+  getBridge(): SensoryInputBridge;
+  registerAdapter(type: string, adapter: SensorAdapter): SensorAdapter;
+  unregisterAdapter(type: string): void;
+  start(): void;
+  stop(): void;
+  subscribeToDevice(
+    type: string,
+    deviceId: string,
+    callback: (snapshot: WearableSnapshot & { type: string }) => void
+  ): () => void;
+  getDeviceSnapshot(type: string, deviceId: string): (WearableSnapshot & { type: string }) | null;
+  listDevices(type: string): string[];
+  getDeviceHistory(type: string): WearableSnapshot[];
+  ingest(type: string, payload: unknown, confidence?: number): void;
+}
+
+export interface ShaderQuaternionSynchronizerLogger {
+  warn?: (message?: any, ...optionalParams: any[]) => void;
+}
+
+export interface ShaderQuaternionSynchronizerOptions {
+  bridge: SensoryInputBridge;
+  systems?: Record<string, unknown>;
+  systemResolver?: (name: string) => unknown;
+  rotationScale?: number;
+  minConfidence?: number;
+  baseAlpha?: number;
+  energySmoothing?: number;
+  velocityReference?: number;
+  logger?: ShaderQuaternionSynchronizerLogger;
+  anchorReducer?: AnchorClusterReducer;
+  hitTestReducer?: HitTestClusterReducer;
+}
+
+export interface ShaderQuaternionOrientationContext {
+  confidence?: number;
+  timestamp?: number;
+  source?: string;
+  metadata?: ShaderQuaternionOrientationMetadata | null;
+}
+
+export interface ShaderQuaternionOrientationMetadata {
+  anchorCluster?: QuaternionClusterBlendResult | null;
+  hitTestCluster?: (QuaternionClusterBlendResult & { averageDistance?: number | null }) | null;
+  [key: string]: unknown;
+}
+
+export interface ShaderQuaternionSynchronizerSystemState {
+  system: string;
+  parameters: Record<string, number>;
+  confidence: number;
+  motionEnergy: number;
+  euler: { roll: number; pitch: number; yaw: number };
+}
+
+export interface ShaderQuaternionSynchronizerUpdate {
+  quaternion: SpatialQuaternion;
+  euler: { roll: number; pitch: number; yaw: number };
+  motionEnergy: number;
+  confidence: number;
+  timestamp: number;
+  source: string | null;
+  systems: ShaderQuaternionSynchronizerSystemState[];
+  metadata: ShaderQuaternionOrientationMetadata | null;
+}
+
+export class ShaderQuaternionSynchronizer {
+  constructor(options: ShaderQuaternionSynchronizerOptions);
+  start(): this;
+  stop(): void;
+  setEnabled(enabled: boolean): void;
+  applyOrientation(
+    quaternion: SpatialQuaternion,
+    context?: ShaderQuaternionOrientationContext
+  ): void;
+  addObserver(
+    observer: (update: ShaderQuaternionSynchronizerUpdate) => void
+  ): () => void;
+  removeObserver(observer: (update: ShaderQuaternionSynchronizerUpdate) => void): void;
+  clearObservers(): void;
+}
+
+export interface ShaderQuaternionDiagnosticsOverlayFormatOptions {
+  angleDecimals?: number;
+  energyDecimals?: number;
+  confidenceDecimals?: number;
+}
+
+export interface ShaderQuaternionDiagnosticsOverlayOptions {
+  synchronizer: ShaderQuaternionSynchronizer;
+  container?: HTMLElement | string | null;
+  document?: Document;
+  theme?: 'dark' | 'light';
+  format?: ShaderQuaternionDiagnosticsOverlayFormatOptions;
+}
+
+export interface CreateShaderQuaternionDiagnosticsOverlayOptions
+  extends Partial<Omit<ShaderQuaternionDiagnosticsOverlayOptions, 'synchronizer'>> {
+  synchronizer?: ShaderQuaternionSynchronizer;
+  synchronizerOptions?: Omit<ShaderQuaternionSynchronizerOptions, 'bridge'> & {
+    systems?: Record<string, unknown>;
+    systemResolver?: (name: string) => unknown;
+  };
+  autoMount?: boolean;
+}
+
+export class ShaderQuaternionDiagnosticsOverlay {
+  constructor(options: ShaderQuaternionDiagnosticsOverlayOptions);
+  mount(): this;
+  unmount(): void;
+  render(payload: ShaderQuaternionSynchronizerUpdate): void;
+}
+
+export default WearableDeviceManager;
+
 export interface TelemetryConsentMap {
   [classification: string]: boolean;
 }
@@ -512,6 +1048,18 @@ export interface AdaptiveSDK {
   projectionSimulator: ProjectionScenarioSimulator;
   licenseManager?: LicenseManager;
   licenseAttestor?: RemoteLicenseAttestor;
+  ShaderQuaternionSynchronizer: typeof ShaderQuaternionSynchronizer;
+  ShaderQuaternionDiagnosticsOverlay: typeof ShaderQuaternionDiagnosticsOverlay;
+  quaternionToolkit: QuaternionToolkit;
+  createShaderQuaternionSynchronizer(
+    options?: Omit<ShaderQuaternionSynchronizerOptions, 'bridge'> & {
+      systems?: Record<string, unknown>;
+      systemResolver?: (name: string) => unknown;
+    }
+  ): ShaderQuaternionSynchronizer;
+  createShaderQuaternionDiagnosticsOverlay(
+    options?: CreateShaderQuaternionDiagnosticsOverlayOptions
+  ): ShaderQuaternionDiagnosticsOverlay;
   registerLayoutStrategy(strategy: any): any;
   registerLayoutAnnotation(annotation: any): any;
   registerTelemetryProvider(provider: any): any;
@@ -1273,6 +1821,72 @@ declare module '../src/ui/adaptive/renderers/LayoutBlueprintRenderer.js' {
     LayoutBlueprintZoneSummary,
     LayoutBlueprintMotion,
     LayoutBlueprintMotionBias,
+  };
+}
+
+declare module './src/ui/adaptive/renderers/ShaderQuaternionSynchronizer.js' {
+  export {
+    ShaderQuaternionSynchronizer,
+    ShaderQuaternionSynchronizerOptions,
+    ShaderQuaternionOrientationContext,
+    ShaderQuaternionOrientationMetadata,
+    ShaderQuaternionSynchronizerLogger,
+    ShaderQuaternionSynchronizerUpdate,
+    ShaderQuaternionSynchronizerSystemState,
+    ShaderQuaternionDiagnosticsOverlay,
+    ShaderQuaternionDiagnosticsOverlayOptions,
+    ShaderQuaternionDiagnosticsOverlayFormatOptions,
+    CreateShaderQuaternionDiagnosticsOverlayOptions,
+  };
+}
+
+declare module '../src/ui/adaptive/renderers/ShaderQuaternionSynchronizer.js' {
+  export {
+    ShaderQuaternionSynchronizer,
+    ShaderQuaternionSynchronizerOptions,
+    ShaderQuaternionOrientationContext,
+    ShaderQuaternionOrientationMetadata,
+    ShaderQuaternionSynchronizerLogger,
+    ShaderQuaternionSynchronizerUpdate,
+    ShaderQuaternionSynchronizerSystemState,
+    ShaderQuaternionDiagnosticsOverlay,
+    ShaderQuaternionDiagnosticsOverlayOptions,
+    ShaderQuaternionDiagnosticsOverlayFormatOptions,
+    CreateShaderQuaternionDiagnosticsOverlayOptions,
+  };
+}
+
+declare module './src/ui/adaptive/renderers/QuaternionClusterToolkit.js' {
+  export {
+    QuaternionClusterToolkit,
+    QuaternionToolkit,
+    QuaternionClusterBlendResult,
+    AnchorClusterReducer,
+    AnchorClusterReducerOptions,
+    HitTestClusterReducer,
+    HitTestClusterReducerOptions,
+    QuaternionSample,
+    QuaternionAverageOptions,
+    averageQuaternionSamples,
+    blendAnchorCluster,
+    blendHitTestCluster,
+  };
+}
+
+declare module '../src/ui/adaptive/renderers/QuaternionClusterToolkit.js' {
+  export {
+    QuaternionClusterToolkit,
+    QuaternionToolkit,
+    QuaternionClusterBlendResult,
+    AnchorClusterReducer,
+    AnchorClusterReducerOptions,
+    HitTestClusterReducer,
+    HitTestClusterReducerOptions,
+    QuaternionSample,
+    QuaternionAverageOptions,
+    averageQuaternionSamples,
+    blendAnchorCluster,
+    blendHitTestCluster,
   };
 }
 
