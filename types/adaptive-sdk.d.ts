@@ -399,6 +399,39 @@ export class WearableDeviceManager {
   ingest(type: string, payload: unknown, confidence?: number): void;
 }
 
+export interface ShaderQuaternionSynchronizerLogger {
+  warn?: (message?: any, ...optionalParams: any[]) => void;
+}
+
+export interface ShaderQuaternionSynchronizerOptions {
+  bridge: SensoryInputBridge;
+  systems?: Record<string, unknown>;
+  systemResolver?: (name: string) => unknown;
+  rotationScale?: number;
+  minConfidence?: number;
+  baseAlpha?: number;
+  energySmoothing?: number;
+  velocityReference?: number;
+  logger?: ShaderQuaternionSynchronizerLogger;
+}
+
+export interface ShaderQuaternionOrientationContext {
+  confidence?: number;
+  timestamp?: number;
+  source?: string;
+}
+
+export class ShaderQuaternionSynchronizer {
+  constructor(options: ShaderQuaternionSynchronizerOptions);
+  start(): this;
+  stop(): void;
+  setEnabled(enabled: boolean): void;
+  applyOrientation(
+    quaternion: SpatialQuaternion,
+    context?: ShaderQuaternionOrientationContext
+  ): void;
+}
+
 export default WearableDeviceManager;
 
 export interface TelemetryConsentMap {
@@ -887,6 +920,13 @@ export interface AdaptiveSDK {
   projectionSimulator: ProjectionScenarioSimulator;
   licenseManager?: LicenseManager;
   licenseAttestor?: RemoteLicenseAttestor;
+  ShaderQuaternionSynchronizer: typeof ShaderQuaternionSynchronizer;
+  createShaderQuaternionSynchronizer(
+    options?: Omit<ShaderQuaternionSynchronizerOptions, 'bridge'> & {
+      systems?: Record<string, unknown>;
+      systemResolver?: (name: string) => unknown;
+    }
+  ): ShaderQuaternionSynchronizer;
   registerLayoutStrategy(strategy: any): any;
   registerLayoutAnnotation(annotation: any): any;
   registerTelemetryProvider(provider: any): any;
@@ -1648,6 +1688,24 @@ declare module '../src/ui/adaptive/renderers/LayoutBlueprintRenderer.js' {
     LayoutBlueprintZoneSummary,
     LayoutBlueprintMotion,
     LayoutBlueprintMotionBias,
+  };
+}
+
+declare module './src/ui/adaptive/renderers/ShaderQuaternionSynchronizer.js' {
+  export {
+    ShaderQuaternionSynchronizer,
+    ShaderQuaternionSynchronizerOptions,
+    ShaderQuaternionOrientationContext,
+    ShaderQuaternionSynchronizerLogger,
+  };
+}
+
+declare module '../src/ui/adaptive/renderers/ShaderQuaternionSynchronizer.js' {
+  export {
+    ShaderQuaternionSynchronizer,
+    ShaderQuaternionSynchronizerOptions,
+    ShaderQuaternionOrientationContext,
+    ShaderQuaternionSynchronizerLogger,
   };
 }
 

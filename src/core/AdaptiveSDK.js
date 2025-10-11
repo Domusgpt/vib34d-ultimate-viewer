@@ -2,6 +2,7 @@ import { AdaptiveInterfaceEngine } from './AdaptiveInterfaceEngine.js';
 import { createConsentPanel as baseCreateConsentPanel } from '../ui/components/ConsentPanel.js';
 import { LicenseManager } from '../product/licensing/LicenseManager.js';
 import { RemoteLicenseAttestor } from '../product/licensing/RemoteLicenseAttestor.js';
+import { ShaderQuaternionSynchronizer } from '../ui/adaptive/renderers/ShaderQuaternionSynchronizer.js';
 
 export function createAdaptiveSDK(config = {}) {
     const telemetryOptions = { ...(config.telemetry || {}) };
@@ -196,6 +197,33 @@ export function createAdaptiveSDK(config = {}) {
         projectionSimulator: engine.projectionSimulator,
         licenseManager,
         licenseAttestor,
+        ShaderQuaternionSynchronizer,
+        createShaderQuaternionSynchronizer(options = {}) {
+            const { systems, systemResolver, ...rest } = options || {};
+            const resolver = typeof systemResolver === 'function'
+                ? systemResolver
+                : (name => {
+                    if (systems && systems[name]) {
+                        return systems[name];
+                    }
+                    if (typeof engine?.getVisualSystem === 'function') {
+                        const resolved = engine.getVisualSystem(name);
+                        if (resolved) {
+                            return resolved;
+                        }
+                    }
+                    if (typeof window !== 'undefined' && window?.systemManager?.systems instanceof Map) {
+                        return window.systemManager.systems.get(name) || null;
+                    }
+                    return null;
+                });
+
+            return new ShaderQuaternionSynchronizer({
+                bridge: engine.sensoryBridge,
+                systemResolver: resolver,
+                ...rest
+            });
+        },
         registerLayoutStrategy: engine.registerLayoutStrategy.bind(engine),
         registerLayoutAnnotation: engine.registerLayoutAnnotation.bind(engine),
         registerTelemetryProvider: engine.registerTelemetryProvider.bind(engine),
