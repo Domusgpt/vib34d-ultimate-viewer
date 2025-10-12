@@ -36,7 +36,39 @@ Define an explicit, supportable interface for product teams and partners consumi
   visualizers, DOM bindings, export inputs) while keeping sensory, telemetry, licensing, and projection workflows operational in
   server-side or automated test environments.
 - **Telemetry Providers:** Providers implement `identify`, `track`, and `flush`. The runtime defaults to buffered mode via
-  `ProductTelemetryHarness` + `ConsoleTelemetryProvider` when no provider is specified.
+  `ProductTelemetryHarness` + `ConsoleTelemetryProvider` when no provider is specified. Integrations can now supply provider
+  instances, factory functions, or async descriptors through `createAdaptiveSDK({ telemetryProviders: [...] })`; call
+  `sdk.whenTelemetryProvidersReady()` before wiring request middleware when factories perform dynamic imports. Descriptor entries
+  support `guard`/`when` gating, nested provider bundles, dynamic `module` loaders, timeout controls, and metadata (`tags`,
+  `bundle`, `capabilities`) so shells can lazily load partner telemetry once entitlements or consent gates clear while
+  annotating providers for downstream orchestration. Use `sdk.registerTelemetryProviders(descriptor, { source: 'runtime' })`
+  to stream in additional providers post-boot, mirror availability in dashboards via `sdk.onTelemetryProviderRegistered(listener)`
+  (events now surface provider `tags`, `bundle`, `capabilities`, and `registrationSource`), and coordinate downstream activation
+  with `sdk.whenTelemetryProviderReady(selector, options)` to await specific IDs, bundles, tag groups, registration sources, or
+  predicate matches before enabling dependent features. When you need a continuous feed, call
+   `sdk.streamTelemetryProviders(selector, { includeExisting, signal })` to iterate over registration events (or projected
+  values) as providers resolve, optionally skipping already-registered providers and wiring abort controllers into async
+  orchestration. Use `sdk.createTelemetryProviderStream(selector, { includeExisting, signal, queuingStrategy, ReadableStream })`
+  when you want a Web Streams API surface that plugs into `pipeThrough`/`pipeTo` workflows without reimplementing selectors or
+  abort wiring. Prefer `sdk.watchTelemetryProviders(selector, listener, { includeExisting, once, signal, onError })`
+  when you want immediate callbacks instead of an async iterator—the helper replays existing matches, filters by the same
+  selector metadata, auto-unsubscribes when `once` is true, and forwards abort reasons into optional error hooks. Bridge the
+  telemetry pipeline into DOM-style consumers with
+  `sdk.createTelemetryProviderEventTarget(selector, { includeExisting, eventName, errorEventName, detail, signal })`, which
+  wraps the selector matcher inside an `EventTarget`, queues include-existing replays for the next microtask, emits configurable
+  match/error/dispose events with metadata-rich details, and shares abort/once semantics with the other helpers.
+  When you need a finite batch instead of a live stream, call
+  `sdk.collectTelemetryProviders(selector, { count, includeExisting, distinct, signal, timeoutMs })` to gather projected
+  matches until the requested count is satisfied while replaying existing providers and honoring abort/timeout guards. When
+  you need a reusable snapshot that emits add/update changes and exposes replay-aware subscriptions, call
+  `sdk.trackTelemetryProviders(selector, { includeExisting, key, signal, onError })` and share the returned tracker across
+  agents before disposing it once coordination is complete.
+- **Plugins:** Load command, agent, hook, or MCP descriptors via `createAdaptiveSDK({ plugins })` or runtime
+  `sdk.registerPlugin(descriptor, { source })`. The boundary exposes a full plugin manager (`sdk.plugins`) alongside wrappers
+  such as `watchPlugins`, `whenPluginsReady`, `whenPluginRegistered`, `invokePluginCommand`, `createPluginAgent`,
+  `emitPluginHook`, and marketplace helpers (`registerPluginMarketplace`, `installPluginFromMarketplace`) so shells can replay
+  include-existing matches, await specific metadata, auto-dispose once selectors resolve, and stream marketplace installations
+  without inventing bespoke registries.
 - **Pattern Packs:** `InterfacePatternRegistry` accepts packaged bundles containing metadata, monetization hints, and renderers.
 - **License Attestation Packs:** `ProductTelemetryHarness` and `createAdaptiveSDK` accept curated attestation packs via `LicenseAttestationProfileCatalog` so commercialization teams can register enterprise/studio/indie defaults in one call.
 - **Commercialization KPI Snapshots:** `ProductTelemetryHarness` exposes snapshot capture/scheduling/export APIs, `LicenseCommercializationSnapshotStore` now supports async storage with `whenReady()`, and `createAdaptiveSDK` mirrors the helpers so partners can persist commercialization KPIs and feed BI tools without bespoke pipelines.【F:src/product/ProductTelemetryHarness.js†L468-L534】【F:types/adaptive-sdk.d.ts†L452-L506】
@@ -44,6 +76,7 @@ Define an explicit, supportable interface for product teams and partners consumi
 ## Packaging Plan
 1. **Phase 1:** Ship as ESM bundle + type definitions. Provide factory `createAdaptiveSDK` returning
    `{ engine, sensoryBridge, telemetry, projectionComposer, projectionSimulator, licenseManager, licenseAttestor, registerSensorSchema, registerSensorAdapter, connectSensorAdapter, disconnectSensorAdapter, testSensorAdapter, registerTelemetryProvider, registerTelemetryRequestMiddleware, clearTelemetryRequestMiddleware, registerLicenseAttestationProfile, registerLicenseAttestationProfilePack, getLicenseAttestationProfiles, getLicenseAttestationProfile, setDefaultLicenseAttestationProfile, setLicenseAttestorFromProfile, updateTelemetryConsent, getTelemetryConsent, getTelemetryAuditTrail, getLicenseCommercializationSummary, getLicenseCommercializationReporter, getLicenseCommercializationSnapshotStore, captureLicenseCommercializationSnapshot, getLicenseCommercializationSnapshots, getLicenseCommercializationKpiReport, exportLicenseCommercializationSnapshots, startLicenseCommercializationSnapshotSchedule, stopLicenseCommercializationSnapshotSchedule, setLicense, validateLicense, getLicenseStatus, getLicenseHistory, getLicenseAttestationHistory, setLicenseAttestor, requestLicenseAttestation, onLicenseStatusChange, composeProjectionField, getProjectionFrame, stepProjectionSimulation, registerProjectionScenario, removeProjectionScenario, listProjectionScenarios, getProjectionScenario, setActiveProjectionScenario, getActiveProjectionScenario, createConsentPanel }` and honoring `sensorSchemas`, `sensorAdapters`, `consentOptions`, `telemetryConsent`, `projection`, `license`, `licenseAttestor`, `licenseAttestationProfiles`, `licenseAttestationProfilePacks`, and `licenseAttestorProfileId`/`licenseAttestorProfileOverrides` configuration while bundling `createConsentPanel`, layout blueprint helpers (`createLayoutBlueprintRenderer`, `buildLayoutBlueprint`), projection helpers (`createProjectionFieldComposer`, `composeProjectionField`, `ProjectionScenarioSimulator`), request signing middleware, and the compliance/commercialization storage adapters for partner reuse.
+   Plugin orchestration rides alongside this surface via `sdk.plugins` and convenience wrappers (`watchPlugins`, `registerPlugin`, `registerPlugins`, `unregisterPlugin`, `whenPluginsReady`, `whenPluginRegistered`, `invokePluginCommand`, `createPluginAgent`, `emitPluginHook`, `registerPluginMarketplace`, `installPluginFromMarketplace`) so partners can ship commands, agents, hooks, and MCP servers from config or marketplaces without building custom registries.
 2. **Phase 2:** Publish adapters for React/Vue/Web Components. Ensure wearable demo consumes the same factory to avoid drift.
 3. **Phase 3:** Release plug-in kits (Figma/Webflow) that call into the SDK boundary for previews and telemetry capture.
 
