@@ -70,6 +70,391 @@ export interface TelemetryConfig extends Record<string, unknown> {
   commercializationReporter?: LicenseCommercializationReporter;
 }
 
+export interface AdaptiveTelemetryProviderFactoryContext {
+  engine: any;
+  telemetry: any;
+  config: AdaptiveSDKConfig;
+  options?: Record<string, unknown>;
+  environment?: AdaptiveEnvironmentOptions;
+}
+
+export type AdaptiveTelemetryProviderFactoryResult =
+  | any
+  | any[]
+  | Promise<any>
+  | Promise<any[]>;
+
+export type AdaptiveTelemetryProviderFactory = (
+  context: AdaptiveTelemetryProviderFactoryContext
+) => AdaptiveTelemetryProviderFactoryResult;
+
+export interface AdaptiveTelemetryProviderDescriptorContext
+  extends AdaptiveTelemetryProviderFactoryContext {
+  descriptor: AdaptiveTelemetryProviderDescriptorObject;
+  whenProvidersReady: () => Promise<void>;
+  whenProviderReady: (
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadyOptions
+  ) => Promise<AdaptiveTelemetryProviderReadyResult>;
+  streamTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderStreamOptions
+  ) => AdaptiveTelemetryProviderStream<T>;
+  watchTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector: AdaptiveTelemetryProviderReadySelector | undefined,
+    listener: (
+      value: T,
+      event: AdaptiveTelemetryProviderRegistrationEvent
+    ) => void,
+    options?: AdaptiveTelemetryProviderWatchOptions
+  ) => () => void;
+  collectTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderCollectOptions
+  ) => Promise<T[]>;
+  createTelemetryProviderEventTarget: <
+    TValue = AdaptiveTelemetryProviderRegistrationEvent,
+    TDetail = AdaptiveTelemetryProviderEventDetail<TValue>
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderEventTargetOptions<TValue, TDetail>
+  ) => AdaptiveTelemetryProviderEventTargetResult<TDetail>;
+  createTelemetryProviderStream: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadableStreamOptions<T>
+  ) => AdaptiveTelemetryProviderReadableStream<T>;
+  trackTelemetryProviders: <
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderTrackOptions
+  ) => AdaptiveTelemetryProviderTracker<T>;
+}
+
+export type AdaptiveTelemetryProviderResolver = (
+  context: AdaptiveTelemetryProviderDescriptorContext
+) => AdaptiveTelemetryProviderFactoryResult;
+
+export type AdaptiveTelemetryProviderModuleLoader =
+  | ((context: AdaptiveTelemetryProviderDescriptorContext) => Promise<any> | any)
+  | Promise<any>
+  | any;
+
+export interface AdaptiveTelemetryProviderDescriptorObject {
+  factory?: AdaptiveTelemetryProviderFactory;
+  resolve?: AdaptiveTelemetryProviderResolver;
+  module?: AdaptiveTelemetryProviderModuleLoader;
+  guard?:
+    | boolean
+    | ((context: AdaptiveTelemetryProviderDescriptorContext) => boolean | Promise<boolean>);
+  when?:
+    | boolean
+    | ((context: AdaptiveTelemetryProviderDescriptorContext) => boolean | Promise<boolean>);
+  options?: Record<string, unknown>;
+  providers?: AdaptiveTelemetryProviderDescriptor[];
+  timeoutMs?: number;
+  use?: AdaptiveTelemetryProviderDescriptor;
+  tags?: string | string[] | Set<string> | Record<string, boolean>;
+  bundle?: string;
+  capabilities?: string | string[] | Set<string> | Record<string, boolean>;
+}
+
+export type AdaptiveTelemetryProviderDescriptor =
+  | any
+  | AdaptiveTelemetryProviderFactory
+  | AdaptiveTelemetryProviderDescriptorObject;
+
+export interface AdaptiveTelemetryProviderRegistrationEvent {
+  provider: any;
+  descriptor: AdaptiveTelemetryProviderDescriptorObject | null;
+  entry: AdaptiveTelemetryProviderDescriptor | null;
+  source: string;
+  registrationSource?: string;
+  options?: Record<string, unknown>;
+  tags?: string[];
+  bundle?: string | null;
+  capabilities?: string[];
+}
+
+export interface AdaptiveTelemetryProviderRegistrationOptions {
+  replace?: boolean;
+  source?: string;
+  registrationSource?: string;
+  tags?: string | string[] | Set<string> | Record<string, boolean>;
+  bundle?: string;
+  capabilities?: string | string[] | Set<string> | Record<string, boolean>;
+}
+
+export interface AdaptiveTelemetryProviderReadyOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export interface AdaptiveTelemetryProviderStreamOptions {
+  includeExisting?: boolean;
+  signal?: AbortSignal;
+}
+
+export interface AdaptiveTelemetryProviderReadableStreamOptions<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  includeExisting?: boolean;
+  signal?: AbortSignal;
+  queuingStrategy?: QueuingStrategy<T>;
+  ReadableStream?: {
+    new (underlyingSource: UnderlyingSource<T>, strategy?: QueuingStrategy<T>): ReadableStream<T>;
+  };
+  streamConstructor?: {
+    new (underlyingSource: UnderlyingSource<T>, strategy?: QueuingStrategy<T>): ReadableStream<T>;
+  };
+}
+
+export interface AdaptiveTelemetryProviderCollectOptions {
+  count?: number;
+  includeExisting?: boolean;
+  distinct?: boolean;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export interface AdaptiveTelemetryProviderWatchOptions {
+  includeExisting?: boolean;
+  once?: boolean;
+  signal?: AbortSignal;
+  onError?: (
+    error: Error,
+    event?: AdaptiveTelemetryProviderRegistrationEvent | null,
+    context?: string | null
+  ) => void;
+}
+
+export interface AdaptiveTelemetryProviderEventDetail<
+  TValue = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  value: TValue;
+  event: AdaptiveTelemetryProviderRegistrationEvent;
+  metadata: AdaptiveTelemetryProviderMetadataSnapshot | null;
+}
+
+export interface AdaptiveTelemetryProviderEventTargetOptions<
+  TValue = AdaptiveTelemetryProviderRegistrationEvent,
+  TDetail = AdaptiveTelemetryProviderEventDetail<TValue>
+> {
+  includeExisting?: boolean;
+  once?: boolean;
+  signal?: AbortSignal;
+  eventName?: string;
+  errorEventName?: string;
+  disposeEventName?: string;
+  detail?: (
+    value: TValue,
+    event: AdaptiveTelemetryProviderRegistrationEvent
+  ) => TDetail;
+  onError?: (
+    error: Error,
+    event?: AdaptiveTelemetryProviderRegistrationEvent | null
+  ) => void;
+}
+
+export interface AdaptiveTelemetryProviderEvent<
+  TDetail = unknown
+> extends Event {
+  detail: TDetail;
+}
+
+export interface AdaptiveTelemetryProviderEventTargetResult<
+  TDetail = AdaptiveTelemetryProviderEventDetail
+> {
+  readonly target: EventTarget;
+  readonly signal: AbortSignal;
+  readonly active: boolean;
+  addEventListener(
+    type: string,
+    listener: (event: AdaptiveTelemetryProviderEvent<TDetail>) => void,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: (event: AdaptiveTelemetryProviderEvent<TDetail>) => void,
+    options?: boolean | EventListenerOptions
+  ): void;
+  dispatchEvent(event: Event): boolean;
+  dispose(reason?: unknown): void;
+  abort(reason?: unknown): void;
+}
+
+export type AdaptiveTelemetryProviderStream<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> = AsyncIterable<T>;
+
+export type AdaptiveTelemetryProviderReadableStream<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> = ReadableStream<T>;
+
+export interface AdaptiveTelemetryProviderMetadataSnapshot {
+  descriptor: AdaptiveTelemetryProviderDescriptorObject | null;
+  entry: AdaptiveTelemetryProviderDescriptor | null;
+  source: string;
+  registrationSource: string;
+  options?: Record<string, unknown>;
+  tags?: string[];
+  bundle?: string | null;
+  capabilities?: string[];
+}
+
+export interface AdaptiveTelemetryProviderTrackerRecord<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  key: unknown;
+  provider: any | null;
+  event: AdaptiveTelemetryProviderRegistrationEvent;
+  value: T;
+  metadata: AdaptiveTelemetryProviderMetadataSnapshot | null;
+  seenAt: number;
+  updatedAt: number;
+}
+
+export interface AdaptiveTelemetryProviderTrackOptions {
+  includeExisting?: boolean;
+  key?:
+    | 'auto'
+    | 'id'
+    | 'providerId'
+    | 'provider'
+    | 'instance'
+    | 'event'
+    | ((
+        provider: any,
+        event: AdaptiveTelemetryProviderRegistrationEvent
+      ) => unknown);
+  signal?: AbortSignal;
+  onError?: (
+    error: Error,
+    event?: AdaptiveTelemetryProviderRegistrationEvent | null,
+    context?: string | null
+  ) => void;
+}
+
+export interface AdaptiveTelemetryProviderTrackAddChange<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> {
+  type: 'add' | 'update';
+  key: unknown;
+  record: AdaptiveTelemetryProviderTrackerRecord<T>;
+  previous: AdaptiveTelemetryProviderTrackerRecord<T> | null;
+  value: T;
+  event: AdaptiveTelemetryProviderRegistrationEvent;
+  replay: boolean;
+  active: boolean;
+}
+
+export interface AdaptiveTelemetryProviderTrackErrorChange {
+  type: 'error';
+  error: Error;
+  event: AdaptiveTelemetryProviderRegistrationEvent | null;
+  context: string | null;
+  active: boolean;
+}
+
+export interface AdaptiveTelemetryProviderTrackDisposeChange {
+  type: 'dispose';
+  reason: Error | null;
+  active: boolean;
+}
+
+export type AdaptiveTelemetryProviderTrackChange<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> =
+  | AdaptiveTelemetryProviderTrackAddChange<T>
+  | AdaptiveTelemetryProviderTrackErrorChange
+  | AdaptiveTelemetryProviderTrackDisposeChange;
+
+export interface AdaptiveTelemetryProviderTracker<
+  T = AdaptiveTelemetryProviderRegistrationEvent
+> extends Iterable<AdaptiveTelemetryProviderTrackerRecord<T>> {
+  readonly active: boolean;
+  readonly size: number;
+  has(key: unknown): boolean;
+  get(key: unknown): AdaptiveTelemetryProviderTrackerRecord<T> | null;
+  keys(): unknown[];
+  values(): AdaptiveTelemetryProviderTrackerRecord<T>[];
+  entries(): Array<[unknown, AdaptiveTelemetryProviderTrackerRecord<T>]>;
+  snapshot(): AdaptiveTelemetryProviderTrackerRecord<T>[];
+  forEach(
+    callback: (
+      record: AdaptiveTelemetryProviderTrackerRecord<T>,
+      key: unknown,
+      tracker: AdaptiveTelemetryProviderTracker<T>
+    ) => void
+  ): void;
+  subscribe(
+    listener: (change: AdaptiveTelemetryProviderTrackChange<T>) => void,
+    options?: { replay?: boolean }
+  ): () => void;
+  dispose(reason?: unknown): void;
+  [Symbol.iterator](): Iterator<AdaptiveTelemetryProviderTrackerRecord<T>>;
+}
+
+export interface AdaptiveTelemetryProviderReadySelectorCriteria {
+  id?: string | string[];
+  ids?: string[];
+  providerId?: string | string[];
+  providerIds?: string[];
+  tag?: string;
+  tags?: string | string[] | Set<string> | Record<string, boolean>;
+  allTags?: string | string[] | Set<string> | Record<string, boolean>;
+  requireTags?: string | string[] | Set<string> | Record<string, boolean>;
+  anyTag?: string | string[] | Set<string> | Record<string, boolean>;
+  anyTags?: string | string[] | Set<string> | Record<string, boolean>;
+  someTags?: string | string[] | Set<string> | Record<string, boolean>;
+  excludeTags?: string | string[] | Set<string> | Record<string, boolean>;
+  excludedTags?: string | string[] | Set<string> | Record<string, boolean>;
+  bundle?: string | string[] | Set<string> | Record<string, boolean>;
+  bundles?: string | string[] | Set<string> | Record<string, boolean>;
+  source?: string | string[] | Set<string> | Record<string, boolean>;
+  sources?: string | string[] | Set<string> | Record<string, boolean>;
+  registrationSource?: string | string[] | Set<string> | Record<string, boolean>;
+  registrationSources?: string | string[] | Set<string> | Record<string, boolean>;
+  capabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  allCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  requireCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  anyCapability?: string | string[] | Set<string> | Record<string, boolean>;
+  anyCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  someCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  excludeCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  excludedCapabilities?: string | string[] | Set<string> | Record<string, boolean>;
+  match?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  where?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  filter?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  project?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  select?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+  map?: (provider: any, event: AdaptiveTelemetryProviderRegistrationEvent) => unknown;
+}
+
+export type AdaptiveTelemetryProviderReadySelector =
+  | string
+  | { id: string }
+  | RegExp
+  | string[]
+  | AdaptiveTelemetryProviderReadySelectorCriteria
+  | ((
+      provider: any,
+      event: AdaptiveTelemetryProviderRegistrationEvent
+    ) => unknown);
+
+export type AdaptiveTelemetryProviderReadyResult =
+  | AdaptiveTelemetryProviderRegistrationEvent
+  | Array<AdaptiveTelemetryProviderRegistrationEvent | null>
+  | unknown;
+
 export interface LicenseDetails {
   key: string;
   tenantId?: string;
@@ -476,6 +861,428 @@ export interface RemoteLicenseAttestorEvents {
   };
 }
 
+export interface AdaptivePluginAuthor {
+  name?: string;
+  email?: string;
+  url?: string;
+}
+
+export interface AdaptivePluginManifest {
+  id?: string;
+  name: string;
+  version?: string;
+  description?: string;
+  author?: string | AdaptivePluginAuthor;
+  homepage?: string;
+  tags?: string[];
+}
+
+export interface AdaptivePluginMetadata {
+  source: string;
+  marketplace: string | null;
+  installSource: string | null;
+  registeredAt: string;
+  tags: string[];
+  notes?: string | null;
+  descriptorMetadata?: Record<string, unknown>;
+  marketplaceEntry?: AdaptivePluginMarketplaceEntry | null;
+}
+
+export interface AdaptivePluginLifecycleContext {
+  sdk: AdaptiveSDK;
+  engine: any;
+  telemetry: any;
+  licenseManager?: LicenseManager;
+  manifest: AdaptivePluginManifest;
+  metadata: AdaptivePluginMetadata;
+  plugin: AdaptivePlugin;
+}
+
+export interface AdaptivePluginCommandInvokeOptions {
+  signal?: AbortSignal;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdaptivePluginAgentInvokeOptions {
+  signal?: AbortSignal;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdaptivePluginHookInvokeOptions {
+  signal?: AbortSignal;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdaptivePluginServerInvokeOptions {
+  signal?: AbortSignal;
+  metadata?: Record<string, unknown>;
+}
+
+export type AdaptivePluginCommandHandler = (
+  context: AdaptivePluginCommandContext,
+  payload?: unknown,
+  options?: AdaptivePluginCommandInvokeOptions
+) => unknown | Promise<unknown>;
+
+export type AdaptivePluginAgentFactory = (
+  context: AdaptivePluginAgentContext,
+  payload?: unknown,
+  options?: AdaptivePluginAgentInvokeOptions
+) => unknown | Promise<unknown>;
+
+export type AdaptivePluginHookHandler = (
+  context: AdaptivePluginHookContext,
+  payload?: unknown,
+  options?: AdaptivePluginHookInvokeOptions
+) => unknown | Promise<unknown>;
+
+export type AdaptivePluginServerFactory = (
+  context: AdaptivePluginServerContext,
+  payload?: unknown,
+  options?: AdaptivePluginServerInvokeOptions
+) => unknown | Promise<unknown>;
+
+export interface AdaptivePluginDescriptorCommand {
+  name?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  handler?: AdaptivePluginCommandHandler | string;
+  run?: AdaptivePluginCommandHandler;
+  execute?: AdaptivePluginCommandHandler;
+  invoke?: AdaptivePluginCommandHandler;
+  fn?: AdaptivePluginCommandHandler;
+  disabled?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AdaptivePluginDescriptorAgent {
+  name?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  create?: AdaptivePluginAgentFactory;
+  factory?: AdaptivePluginAgentFactory;
+  instantiate?: AdaptivePluginAgentFactory;
+  build?: AdaptivePluginAgentFactory;
+  disabled?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AdaptivePluginDescriptorHook {
+  event?: string;
+  name?: string;
+  metadata?: Record<string, unknown>;
+  handler?: AdaptivePluginHookHandler;
+  run?: AdaptivePluginHookHandler;
+  execute?: AdaptivePluginHookHandler;
+  invoke?: AdaptivePluginHookHandler;
+  fn?: AdaptivePluginHookHandler;
+  once?: boolean;
+  disabled?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AdaptivePluginDescriptorServer {
+  name?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  create?: AdaptivePluginServerFactory;
+  factory?: AdaptivePluginServerFactory;
+  instantiate?: AdaptivePluginServerFactory;
+  start?: AdaptivePluginServerFactory;
+  disabled?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AdaptivePluginDescriptor {
+  name?: string;
+  id?: string;
+  version?: string;
+  description?: string;
+  author?: string | AdaptivePluginAuthor;
+  homepage?: string;
+  tags?: string[];
+  manifest?: AdaptivePluginManifest;
+  commands?:
+    | Record<string, AdaptivePluginDescriptorCommand | AdaptivePluginCommandHandler | string>
+    | Array<AdaptivePluginDescriptorCommand | AdaptivePluginCommandHandler | string>;
+  agents?:
+    | Record<string, AdaptivePluginDescriptorAgent | AdaptivePluginAgentFactory>
+    | Array<AdaptivePluginDescriptorAgent | AdaptivePluginAgentFactory>;
+  hooks?:
+    | Record<string, AdaptivePluginDescriptorHook | AdaptivePluginHookHandler>
+    | Array<AdaptivePluginDescriptorHook | AdaptivePluginHookHandler>;
+  servers?:
+    | Record<string, AdaptivePluginDescriptorServer | AdaptivePluginServerFactory>
+    | Array<AdaptivePluginDescriptorServer | AdaptivePluginServerFactory>;
+  mcpServers?:
+    | Record<string, AdaptivePluginDescriptorServer | AdaptivePluginServerFactory>
+    | Array<AdaptivePluginDescriptorServer | AdaptivePluginServerFactory>;
+  exports?: unknown;
+  api?: unknown;
+  runtime?: unknown;
+  metadata?: Record<string, unknown>;
+  notes?: string;
+  setup?: (context: AdaptivePluginLifecycleContext) => void | Promise<void>;
+  dispose?: (context: AdaptivePluginLifecycleContext, reason?: string) => void | Promise<void>;
+  [key: string]: unknown;
+}
+
+export interface AdaptivePluginCommandContext extends AdaptivePluginLifecycleContext {
+  command: AdaptivePluginCommand;
+  payload?: unknown;
+  options?: AdaptivePluginCommandInvokeOptions;
+}
+
+export interface AdaptivePluginAgentContext extends AdaptivePluginLifecycleContext {
+  agent: AdaptivePluginAgent;
+  payload?: unknown;
+  options?: AdaptivePluginAgentInvokeOptions;
+}
+
+export interface AdaptivePluginHookContext extends AdaptivePluginLifecycleContext {
+  hook: AdaptivePluginHook;
+  event: string;
+  payload?: unknown;
+  options?: AdaptivePluginHookInvokeOptions;
+}
+
+export interface AdaptivePluginServerContext extends AdaptivePluginLifecycleContext {
+  server: AdaptivePluginServer;
+  payload?: unknown;
+  options?: AdaptivePluginServerInvokeOptions;
+}
+
+export interface AdaptivePluginCommand {
+  name: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  handler: AdaptivePluginCommandHandler;
+  plugin: AdaptivePlugin;
+  manifest: AdaptivePluginManifest;
+}
+
+export interface AdaptivePluginAgent {
+  name: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  plugin: AdaptivePlugin;
+  manifest: AdaptivePluginManifest;
+  factory: AdaptivePluginAgentFactory;
+}
+
+export interface AdaptivePluginHook {
+  event: string;
+  metadata?: Record<string, unknown>;
+  once?: boolean;
+  plugin: AdaptivePlugin;
+  manifest: AdaptivePluginManifest;
+  handler: AdaptivePluginHookHandler;
+}
+
+export interface AdaptivePluginServer {
+  name: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  plugin: AdaptivePlugin;
+  manifest: AdaptivePluginManifest;
+  factory: AdaptivePluginServerFactory;
+}
+
+export interface AdaptivePluginFactoryContext {
+  metadata: {
+    source: string;
+    marketplace: string | null;
+    installSource: string;
+  };
+  engine: any;
+  telemetry: any;
+  licenseManager?: LicenseManager;
+  sdk: AdaptiveSDK;
+}
+
+export type AdaptivePluginFactory = (
+  context: AdaptivePluginFactoryContext
+) => AdaptivePluginDescriptor | Promise<AdaptivePluginDescriptor>;
+
+export type AdaptivePluginInput =
+  | AdaptivePluginDescriptor
+  | AdaptivePluginFactory
+  | { factory: AdaptivePluginFactory };
+
+export interface AdaptivePluginRegistrationOptions {
+  source?: string;
+  marketplace?: string | null;
+  installSource?: string | null;
+  tags?: Array<string> | Record<string, unknown> | Set<string>;
+  name?: string;
+  fallbackName?: string;
+  notes?: string;
+  replace?: boolean;
+}
+
+export interface AdaptivePluginUnregisterOptions {
+  reason?: string;
+}
+
+export interface AdaptivePluginEvent {
+  type: 'registered' | 'replaced' | 'unregistered';
+  plugin: AdaptivePlugin;
+  manifest: AdaptivePluginManifest;
+  metadata: AdaptivePluginMetadata;
+  replaced?: boolean;
+  replay?: boolean;
+  reason?: string | null;
+}
+
+export type AdaptivePluginSelector =
+  | string
+  | string[]
+  | ((plugin: AdaptivePlugin) => boolean)
+  | {
+      name?: string;
+      marketplace?: string | null;
+      source?: string;
+      tags?: string[];
+    };
+
+export interface AdaptivePluginWatchOptions {
+  includeExisting?: boolean;
+}
+
+export interface AdaptivePluginWaitOptions {
+  signal?: AbortSignal;
+}
+
+export interface AdaptivePluginMarketplaceEntry {
+  name: string;
+  description?: string;
+  version?: string | null;
+  source?: string | null;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  autoInstall?: boolean;
+  plugin?: AdaptivePluginInput | null;
+  loader?: (
+    context: { marketplace: string; plugin: string }
+  ) => AdaptivePluginInput | Promise<AdaptivePluginInput>;
+}
+
+export interface AdaptivePluginMarketplaceDescriptor {
+  name?: string;
+  id?: string;
+  description?: string;
+  owner?: Record<string, unknown>;
+  source?: string;
+  repository?: string;
+  plugins?:
+    | Record<string, AdaptivePluginMarketplaceEntry>
+    | AdaptivePluginMarketplaceEntry[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdaptivePluginMarketplaceOptions {
+  autoInstall?: boolean;
+  name?: string;
+}
+
+export interface AdaptivePluginMarketplaceInstallOptions {
+  replace?: boolean;
+  installSource?: string | null;
+}
+
+export interface AdaptivePluginMarketplace {
+  name: string;
+  description?: string;
+  owner?: Record<string, unknown>;
+  source?: string | null;
+  metadata?: Record<string, unknown>;
+  plugins: Map<string, AdaptivePluginMarketplaceEntry>;
+}
+
+export interface AdaptivePlugin {
+  manifest: AdaptivePluginManifest;
+  metadata: AdaptivePluginMetadata;
+  commands: Map<string, AdaptivePluginCommand>;
+  agents: Map<string, AdaptivePluginAgent>;
+  hooks: Map<string, AdaptivePluginHook>;
+  servers: Map<string, AdaptivePluginServer>;
+  exports?: unknown;
+}
+
+export interface AdaptivePluginManager {
+  register(
+    plugin: AdaptivePluginInput,
+    options?: AdaptivePluginRegistrationOptions
+  ): Promise<AdaptivePlugin>;
+  registerMany(
+    plugins: AdaptivePluginInput[] | AdaptivePluginInput,
+    options?: AdaptivePluginRegistrationOptions
+  ): Promise<AdaptivePlugin[]>;
+  unregister(name: string, options?: AdaptivePluginUnregisterOptions): boolean;
+  get(name: string): AdaptivePlugin | null;
+  list(): AdaptivePlugin[];
+  watch(
+    listener: (event: AdaptivePluginEvent) => void,
+    options?: AdaptivePluginWatchOptions
+  ): () => void;
+  whenRegistered(
+    selector?: AdaptivePluginSelector,
+    options?: AdaptivePluginWaitOptions
+  ): Promise<AdaptivePlugin>;
+  whenReady(): Promise<void>;
+  listCommands(
+    selector?: AdaptivePluginSelector | ((command: AdaptivePluginCommand) => boolean)
+  ): AdaptivePluginCommand[];
+  getCommand(name: string): AdaptivePluginCommand | null;
+  invokeCommand<T = unknown>(
+    name: string,
+    payload?: unknown,
+    options?: AdaptivePluginCommandInvokeOptions
+  ): Promise<T>;
+  listAgents(
+    selector?: AdaptivePluginSelector | ((agent: AdaptivePluginAgent) => boolean)
+  ): AdaptivePluginAgent[];
+  getAgent(name: string): AdaptivePluginAgent | null;
+  createAgent<T = unknown>(
+    name: string,
+    payload?: unknown,
+    options?: AdaptivePluginAgentInvokeOptions
+  ): Promise<T>;
+  emitHook(
+    event: string,
+    payload?: unknown,
+    options?: AdaptivePluginHookInvokeOptions
+  ): Promise<unknown[]>;
+  listHooks(event?: string): AdaptivePluginHook[];
+  listServers(
+    selector?: AdaptivePluginSelector | ((server: AdaptivePluginServer) => boolean)
+  ): AdaptivePluginServer[];
+  getServer(name: string): AdaptivePluginServer | null;
+  createServer<T = unknown>(
+    name: string,
+    payload?: unknown,
+    options?: AdaptivePluginServerInvokeOptions
+  ): Promise<T>;
+  registerMarketplace(
+    descriptor: AdaptivePluginMarketplaceDescriptor,
+    options?: AdaptivePluginMarketplaceOptions
+  ): AdaptivePluginMarketplace;
+  unregisterMarketplace(name: string): boolean;
+  getMarketplace(name: string): AdaptivePluginMarketplace | null;
+  listMarketplaces(): AdaptivePluginMarketplace[];
+  installFromMarketplace(
+    marketplace: string,
+    pluginName: string,
+    options?: AdaptivePluginMarketplaceInstallOptions
+  ): Promise<AdaptivePlugin>;
+  registerFromConfig(
+    entries?: AdaptivePluginInput[] | Record<string, AdaptivePluginInput>
+  ): Promise<void> | undefined;
+  registerMarketplacesFromConfig(
+    entries?: AdaptivePluginMarketplaceDescriptor[] | Record<string, AdaptivePluginMarketplaceDescriptor>
+  ): void;
+}
+
 export interface AdaptiveEnvironmentOptions {
   mode?: 'browser' | 'headless' | string;
   skipVisualization?: boolean;
@@ -496,7 +1303,7 @@ export interface AdaptiveSDKConfig {
   environment?: AdaptiveEnvironmentOptions;
   layoutStrategies?: any[];
   layoutAnnotations?: any[];
-  telemetryProviders?: any[];
+  telemetryProviders?: AdaptiveTelemetryProviderDescriptor[];
   replaceDefaultProviders?: boolean;
   licenseAttestationProfiles?: LicenseAttestationProfile[];
   defaultLicenseAttestationProfileId?: string;
@@ -512,6 +1319,10 @@ export interface AdaptiveSDKConfig {
   licenseAttestorBinding?: RemoteLicenseAttestorBindingOptions;
   commercialization?: LicenseCommercializationOptions;
   commercializationReporter?: LicenseCommercializationReporter;
+  plugins?: AdaptivePluginInput[] | Record<string, AdaptivePluginInput>;
+  pluginMarketplaces?:
+    | AdaptivePluginMarketplaceDescriptor[]
+    | Record<string, AdaptivePluginMarketplaceDescriptor>;
 }
 
 export interface AdaptiveSDK {
@@ -523,11 +1334,132 @@ export interface AdaptiveSDK {
   projectionSimulator: ProjectionScenarioSimulator;
   licenseManager?: LicenseManager;
   licenseAttestor?: RemoteLicenseAttestor;
+  plugins: AdaptivePluginManager;
+  watchPlugins(
+    listener: (event: AdaptivePluginEvent) => void,
+    options?: AdaptivePluginWatchOptions
+  ): () => void;
+  registerPlugin(
+    plugin: AdaptivePluginInput,
+    options?: AdaptivePluginRegistrationOptions
+  ): Promise<AdaptivePlugin>;
+  registerPlugins(
+    plugins: AdaptivePluginInput[] | AdaptivePluginInput,
+    options?: AdaptivePluginRegistrationOptions
+  ): Promise<AdaptivePlugin[]>;
+  unregisterPlugin(name: string, options?: AdaptivePluginUnregisterOptions): boolean;
+  getPlugin(name: string): AdaptivePlugin | null;
+  listPlugins(
+    selector?: AdaptivePluginSelector | ((plugin: AdaptivePlugin) => boolean)
+  ): AdaptivePlugin[];
+  whenPluginsReady(): Promise<void>;
+  whenPluginRegistered(
+    selector?: AdaptivePluginSelector,
+    options?: AdaptivePluginWaitOptions
+  ): Promise<AdaptivePlugin>;
+  listPluginCommands(
+    selector?: AdaptivePluginSelector | ((command: AdaptivePluginCommand) => boolean)
+  ): AdaptivePluginCommand[];
+  getPluginCommand(name: string): AdaptivePluginCommand | null;
+  invokePluginCommand<T = unknown>(
+    name: string,
+    payload?: unknown,
+    options?: AdaptivePluginCommandInvokeOptions
+  ): Promise<T>;
+  listPluginAgents(
+    selector?: AdaptivePluginSelector | ((agent: AdaptivePluginAgent) => boolean)
+  ): AdaptivePluginAgent[];
+  getPluginAgent(name: string): AdaptivePluginAgent | null;
+  createPluginAgent<T = unknown>(
+    name: string,
+    payload?: unknown,
+    options?: AdaptivePluginAgentInvokeOptions
+  ): Promise<T>;
+  emitPluginHook(
+    event: string,
+    payload?: unknown,
+    options?: AdaptivePluginHookInvokeOptions
+  ): Promise<unknown[]>;
+  listPluginHooks(event?: string): AdaptivePluginHook[];
+  listPluginServers(
+    selector?: AdaptivePluginSelector | ((server: AdaptivePluginServer) => boolean)
+  ): AdaptivePluginServer[];
+  getPluginServer(name: string): AdaptivePluginServer | null;
+  createPluginServer<T = unknown>(
+    name: string,
+    payload?: unknown,
+    options?: AdaptivePluginServerInvokeOptions
+  ): Promise<T>;
+  registerPluginMarketplace(
+    descriptor: AdaptivePluginMarketplaceDescriptor,
+    options?: AdaptivePluginMarketplaceOptions
+  ): AdaptivePluginMarketplace;
+  unregisterPluginMarketplace(name: string): boolean;
+  listPluginMarketplaces(): AdaptivePluginMarketplace[];
+  getPluginMarketplace(name: string): AdaptivePluginMarketplace | null;
+  installPluginFromMarketplace(
+    marketplace: string,
+    pluginName: string,
+    options?: AdaptivePluginMarketplaceInstallOptions
+  ): Promise<AdaptivePlugin>;
   registerLayoutStrategy(strategy: any): any;
   registerLayoutAnnotation(annotation: any): any;
   registerTelemetryProvider(provider: any): any;
+  registerTelemetryProviders(
+    entries: AdaptiveTelemetryProviderDescriptor | AdaptiveTelemetryProviderDescriptor[],
+    options?: AdaptiveTelemetryProviderRegistrationOptions
+  ): Promise<void>;
   registerTelemetryRequestMiddleware(middleware: TelemetryRequestMiddleware): any;
   clearTelemetryRequestMiddleware(): any;
+  whenTelemetryProvidersReady(): Promise<void>;
+  whenTelemetryProviderReady(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadyOptions
+  ): Promise<AdaptiveTelemetryProviderReadyResult>;
+  streamTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderStreamOptions
+  ): AdaptiveTelemetryProviderStream<T>;
+  watchTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector: AdaptiveTelemetryProviderReadySelector | undefined,
+    listener: (
+      value: T,
+      event: AdaptiveTelemetryProviderRegistrationEvent
+    ) => void,
+    options?: AdaptiveTelemetryProviderWatchOptions
+  ): () => void;
+  collectTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderCollectOptions
+  ): Promise<T[]>;
+  createTelemetryProviderEventTarget<
+    TValue = AdaptiveTelemetryProviderRegistrationEvent,
+    TDetail = AdaptiveTelemetryProviderEventDetail<TValue>
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderEventTargetOptions<TValue, TDetail>
+  ): AdaptiveTelemetryProviderEventTargetResult<TDetail>;
+  trackTelemetryProviders<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderTrackOptions
+  ): AdaptiveTelemetryProviderTracker<T>;
+  createTelemetryProviderStream<
+    T = AdaptiveTelemetryProviderRegistrationEvent
+  >(
+    selector?: AdaptiveTelemetryProviderReadySelector,
+    options?: AdaptiveTelemetryProviderReadableStreamOptions<T>
+  ): AdaptiveTelemetryProviderReadableStream<T>;
+  onTelemetryProviderRegistered(
+    listener: (event: AdaptiveTelemetryProviderRegistrationEvent) => void
+  ): () => void;
   registerLicenseAttestationProfile(
     profile: LicenseAttestationProfile | string,
     options?: Omit<LicenseAttestationProfile, 'id'>
