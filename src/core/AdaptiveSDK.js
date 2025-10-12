@@ -2,6 +2,14 @@ import { AdaptiveInterfaceEngine } from './AdaptiveInterfaceEngine.js';
 import { createConsentPanel as baseCreateConsentPanel } from '../ui/components/ConsentPanel.js';
 import { LicenseManager } from '../product/licensing/LicenseManager.js';
 import { RemoteLicenseAttestor } from '../product/licensing/RemoteLicenseAttestor.js';
+import { ShaderQuaternionSynchronizer } from '../ui/adaptive/renderers/ShaderQuaternionSynchronizer.js';
+import { ShaderQuaternionDiagnosticsOverlay } from '../ui/adaptive/renderers/ShaderQuaternionDiagnosticsOverlay.js';
+import {
+    averageQuaternionSamples,
+    blendAnchorCluster,
+    blendHitTestCluster
+} from '../ui/adaptive/renderers/QuaternionClusterToolkit.js';
+import { SpatialQuaternionSceneBinder } from '../ui/adaptive/renderers/SpatialQuaternionSceneBinder.js';
 
 export function createAdaptiveSDK(config = {}) {
     const telemetryOptions = { ...(config.telemetry || {}) };
@@ -196,6 +204,40 @@ export function createAdaptiveSDK(config = {}) {
         projectionSimulator: engine.projectionSimulator,
         licenseManager,
         licenseAttestor,
+        ShaderQuaternionSynchronizer,
+        ShaderQuaternionDiagnosticsOverlay,
+        SpatialQuaternionSceneBinder,
+        quaternionToolkit: {
+            averageQuaternionSamples,
+            blendAnchorCluster,
+            blendHitTestCluster
+        },
+        createShaderQuaternionSynchronizer(options = {}) {
+            const { systems, systemResolver, ...rest } = options || {};
+            const resolver = typeof systemResolver === 'function'
+                ? systemResolver
+                : (name => {
+                    if (systems && systems[name]) {
+                        return systems[name];
+                    }
+                    if (typeof engine?.getVisualSystem === 'function') {
+                        const resolved = engine.getVisualSystem(name);
+                        if (resolved) {
+                            return resolved;
+                        }
+                    }
+                    if (typeof window !== 'undefined' && window?.systemManager?.systems instanceof Map) {
+                        return window.systemManager.systems.get(name) || null;
+                    }
+                    return null;
+                });
+
+            return new ShaderQuaternionSynchronizer({
+                bridge: engine.sensoryBridge,
+                systemResolver: resolver,
+                ...rest
+            });
+        },
         registerLayoutStrategy: engine.registerLayoutStrategy.bind(engine),
         registerLayoutAnnotation: engine.registerLayoutAnnotation.bind(engine),
         registerTelemetryProvider: engine.registerTelemetryProvider.bind(engine),
@@ -230,6 +272,36 @@ export function createAdaptiveSDK(config = {}) {
         getLicenseCommercializationSnapshots: engine.getLicenseCommercializationSnapshots.bind(engine),
         getLicenseCommercializationKpiReport: engine.getLicenseCommercializationKpiReport.bind(engine),
         exportLicenseCommercializationSnapshots: engine.exportLicenseCommercializationSnapshots.bind(engine),
+        createShaderQuaternionDiagnosticsOverlay(options = {}) {
+            const synchronizer = options.synchronizer instanceof ShaderQuaternionSynchronizer
+                ? options.synchronizer
+                : this.createShaderQuaternionSynchronizer(options.synchronizerOptions || {});
+
+            const overlayOptions = {
+                synchronizer,
+                container: options.container,
+                document: options.document,
+                theme: options.theme,
+                format: options.format
+            };
+
+            const overlay = new ShaderQuaternionDiagnosticsOverlay(overlayOptions);
+            if (options.autoMount !== false) {
+                overlay.mount();
+            }
+            return overlay;
+        },
+        createSpatialQuaternionSceneBinder(options = {}) {
+            const synchronizer = options.synchronizer instanceof ShaderQuaternionSynchronizer
+                ? options.synchronizer
+                : this.createShaderQuaternionSynchronizer(options.synchronizerOptions || {});
+
+            return new SpatialQuaternionSceneBinder({
+                bridge: engine.sensoryBridge,
+                synchronizer,
+                logger: options.logger || console
+            });
+        },
         startLicenseCommercializationSnapshotSchedule: engine.startLicenseCommercializationSnapshotSchedule.bind(engine),
         stopLicenseCommercializationSnapshotSchedule: engine.stopLicenseCommercializationSnapshotSchedule.bind(engine),
         setLicense(license) {
