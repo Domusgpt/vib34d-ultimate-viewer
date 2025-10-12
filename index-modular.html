@@ -197,6 +197,51 @@
         .control-section:last-child {
             border-bottom: none;
         }
+
+        .spatial-cluster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .cluster-card {
+            background: rgba(0, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 96px;
+        }
+
+        .cluster-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(0, 255, 255, 0.7);
+        }
+
+        .cluster-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #00ffff;
+        }
+
+        .cluster-value--warning {
+            color: #ffd166;
+        }
+
+        .cluster-value--alert {
+            color: #ff6f91;
+        }
+
+        .cluster-meta {
+            font-size: 0.68rem;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.4;
+        }
         
         .section-title {
             font-size: 0.9rem;
@@ -520,8 +565,29 @@
             <button class="panel-btn" onclick="createTradingCard('classic')" style="background: rgba(255, 150, 0, 0.1); border-color: rgba(255, 150, 0, 0.3); color: #ff9600;">🎴 Trading Card</button>
             <button class="panel-btn" onclick="createTradingCard('social')" style="background: rgba(255, 100, 255, 0.1); border-color: rgba(255, 100, 255, 0.3); color: #ff64ff;">📱 Social Card</button>
         </div>
+
+        <div class="control-section" id="spatialClusterSection">
+            <div class="section-title">SPATIAL QUATERNION SYNC</div>
+            <div class="spatial-cluster-grid">
+                <div class="cluster-card">
+                    <div class="cluster-label">Multi-device Status</div>
+                    <div class="cluster-value" id="spatialClusterStatus">Waiting for trace…</div>
+                    <div class="cluster-meta" id="spatialClusterDevices">No active devices</div>
+                </div>
+                <div class="cluster-card">
+                    <div class="cluster-label">Confidence & Variance</div>
+                    <div class="cluster-value" id="spatialClusterConfidence">—</div>
+                    <div class="cluster-meta cluster-value" id="spatialClusterVariance">Variance —</div>
+                </div>
+                <div class="cluster-card">
+                    <div class="cluster-label">Dominant Device</div>
+                    <div class="cluster-value" id="spatialClusterDominant">—</div>
+                    <div class="cluster-meta" id="spatialClusterEnergy">Motion —</div>
+                </div>
+            </div>
+        </div>
     </div>
-    
+
     <!-- MODULAR SYSTEM INITIALIZATION -->
     <script type="module">
         import { SystemManager } from './core/SystemManager.js';
@@ -529,10 +595,43 @@
         import { QuantumSystem } from './systems/quantum/QuantumSystem.js';
         import { HolographicSystem } from './systems/holographic/HolographicSystem.js';
         import { PolychoraSystem } from './systems/polychora/PolychoraSystem.js';
-        
+        import { createAdaptiveSDK } from './src/core/AdaptiveSDK.js';
+        import { DEMO_AR_VISOR_SPATIAL_TRACE } from './src/data/spatial/arVisorDemoTrace.js';
+
         // Global system manager
         let systemManager = null;
-        
+
+        const spatialClusterStatus = document.getElementById('spatialClusterStatus');
+        const spatialClusterDevices = document.getElementById('spatialClusterDevices');
+        const spatialClusterConfidence = document.getElementById('spatialClusterConfidence');
+        const spatialClusterVariance = document.getElementById('spatialClusterVariance');
+        const spatialClusterDominant = document.getElementById('spatialClusterDominant');
+        const spatialClusterEnergy = document.getElementById('spatialClusterEnergy');
+
+        const resetSpatialClusterUi = () => {
+            if (spatialClusterStatus) spatialClusterStatus.textContent = 'Waiting for trace…';
+            if (spatialClusterDevices) spatialClusterDevices.textContent = 'No active devices';
+            if (spatialClusterConfidence) spatialClusterConfidence.textContent = '—';
+            if (spatialClusterVariance) {
+                spatialClusterVariance.textContent = 'Variance —';
+                spatialClusterVariance.classList.remove('cluster-value--warning', 'cluster-value--alert');
+            }
+            if (spatialClusterDominant) spatialClusterDominant.textContent = '—';
+            if (spatialClusterEnergy) spatialClusterEnergy.textContent = 'Motion —';
+        };
+
+        resetSpatialClusterUi();
+
+        const applyVarianceClass = value => {
+            if (!spatialClusterVariance) return;
+            spatialClusterVariance.classList.remove('cluster-value--warning', 'cluster-value--alert');
+            if (value > 0.12) {
+                spatialClusterVariance.classList.add('cluster-value--alert');
+            } else if (value > 0.06) {
+                spatialClusterVariance.classList.add('cluster-value--warning');
+            }
+        };
+
         // Initialize modular VIB34D system
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 VIB34D Modular System: Initializing ALL 4 SYSTEMS');
@@ -569,7 +668,80 @@
                 console.log('🌌 Quantum: Enhanced 3D lattice with holographic effects');
                 console.log('✨ Holographic: Audio-reactive with pink/magenta theme');
                 console.log('🔮 Polychora: True 4D polytope mathematics');
-                
+
+                const adaptiveSDK = createAdaptiveSDK();
+                const synchronizer = adaptiveSDK.createShaderQuaternionSynchronizer({
+                    rotationScale: 1.6,
+                    baseAlpha: 0.55,
+                    energySmoothing: 0.4
+                });
+
+                const binder = adaptiveSDK.createSpatialQuaternionSceneBinder({
+                    synchronizer,
+                    logger: console
+                }).attach();
+
+                binder.addObserver(update => {
+                    const cluster = update?.multiDeviceCluster;
+                    if (!cluster) {
+                        resetSpatialClusterUi();
+                        return;
+                    }
+
+                    if (spatialClusterStatus) {
+                        const count = cluster.deviceCount ?? 0;
+                        spatialClusterStatus.textContent = `${count} device${count === 1 ? '' : 's'} synchronised`;
+                    }
+
+                    if (spatialClusterConfidence) {
+                        spatialClusterConfidence.textContent = `${(cluster.confidence * 100).toFixed(1)}% confidence`;
+                    }
+
+                    if (spatialClusterVariance) {
+                        spatialClusterVariance.textContent = `Variance ${(cluster.variance ?? 0).toFixed(3)}`;
+                        applyVarianceClass(cluster.variance ?? 0);
+                    }
+
+                    if (spatialClusterDominant) {
+                        spatialClusterDominant.textContent = cluster.dominantDeviceId || '—';
+                    }
+
+                    if (spatialClusterDevices) {
+                        const snapshot = binder.getSnapshot();
+                        const devices = snapshot.devices || [];
+                        if (devices.length === 0) {
+                            spatialClusterDevices.textContent = 'No active devices';
+                        } else {
+                            spatialClusterDevices.textContent = devices
+                                .map(device => {
+                                    const id = device.deviceId || 'device';
+                                    const confidence = Number(device.lastConfidence ?? cluster.confidence ?? 0);
+                                    return `${id}: ${(confidence * 100).toFixed(0)}%`;
+                                })
+                                .join(' · ');
+                        }
+                    }
+                });
+
+                synchronizer.addObserver(update => {
+                    if (update.source !== 'spatial.multi-device') {
+                        return;
+                    }
+                    if (spatialClusterEnergy) {
+                        const energy = Math.max(0, Math.min(1, update.motionEnergy ?? 0));
+                        spatialClusterEnergy.textContent = `Motion ${(energy * 100).toFixed(0)}%`;
+                    }
+                });
+
+                binder.loadTrace(DEMO_AR_VISOR_SPATIAL_TRACE);
+                const stopSpatialPlayback = binder.playTrace({ loop: true, interval: 240 });
+                window.stopSpatialPlayback = stopSpatialPlayback;
+
+                adaptiveSDK.createShaderQuaternionDiagnosticsOverlay({
+                    synchronizer,
+                    autoMount: true
+                });
+
             } catch (error) {
                 console.error('❌ VIB34D Modular System: Initialization failed:', error);
             }
