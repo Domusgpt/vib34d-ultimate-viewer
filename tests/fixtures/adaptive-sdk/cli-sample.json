@@ -1,0 +1,18 @@
+{
+  "plugins": [
+    {
+      "id": "sample-plugin",
+      "name": "Sample Plugin",
+      "description": "Provides sample commands for CLI tests.",
+      "tags": ["sample", "test"],
+      "capabilities": ["commands"],
+      "commands": [
+        {
+          "name": "sample-command",
+          "description": "Demonstration command for CLI tests.",
+          "response": "ok"
+        }
+      ]
+    }
+  ]
+}
