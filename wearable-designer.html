@@ -695,7 +695,7 @@
         const projectionSimulateBtn = document.getElementById('projectionSimulateBtn');
         const projectionLegend = document.getElementById('projectionLegend');
 
-        let adaptiveSDKRef;
+        let adaptiveSDKRef = null;
         let stopSnapshotSchedule = null;
 
         const remoteUploadLog = [];
@@ -826,23 +826,6 @@
         window.addEventListener('resize', () => blueprintRenderer.resize());
 
         renderBlueprintPanel(null);
-
-        const projectionComposer = adaptiveSDKRef?.projectionComposer || adaptiveSDK.projectionComposer;
-        const projectionBaseCanvas = document.getElementById('projection-base');
-        const projectionBandCanvas = document.getElementById('projection-bands');
-        const projectionHaloCanvas = document.getElementById('projection-halo');
-        const projectionContourCanvas = document.getElementById('projection-contours');
-
-        projectionComposer.attachLayer('base', projectionBaseCanvas);
-        projectionComposer.attachLayer('bands', projectionBandCanvas);
-        projectionComposer.attachLayer('halo', projectionHaloCanvas);
-        projectionComposer.attachLayer('contours', projectionContourCanvas);
-        projectionComposer.observeResize?.();
-        projectionComposer.resize();
-        window.addEventListener('resize', () => projectionComposer.resize());
-
-        renderProjectionPanel(null);
-        initializeProjectionScenarios();
 
         const formatLabel = (value) => {
             if (!value) return 'Unspecified';
@@ -1063,8 +1046,13 @@
             realtimeOption.textContent = 'Realtime Field';
             projectionScenarioSelect.appendChild(realtimeOption);
 
+            const sdk = adaptiveSDKRef;
+            if (!sdk) {
+                return;
+            }
+
             for (const scenario of scenarios) {
-                adaptiveSDK.registerProjectionScenario(scenario);
+                sdk.registerProjectionScenario(scenario);
                 const option = document.createElement('option');
                 option.value = scenario.id;
                 option.textContent = scenario.name;
@@ -1078,23 +1066,27 @@
                 if (activeProjectionScenario === '__realtime__') {
                     return;
                 }
-                adaptiveSDK.setActiveProjectionScenario(activeProjectionScenario);
+                sdk.setActiveProjectionScenario(activeProjectionScenario);
             });
 
             projectionSimulateBtn?.addEventListener('click', () => {
+                const activeSdk = adaptiveSDKRef;
+                if (!activeSdk) {
+                    return;
+                }
                 if (!latestBlueprint) {
                     return;
                 }
                 if (activeProjectionScenario === '__realtime__') {
-                    const projectionContext = buildProjectionContextFromAdaptive(adaptiveSDK.engine?.sensoryBridge?.getSnapshot?.());
-                    const composition = adaptiveSDK.composeProjectionField(latestBlueprint, null, projectionContext);
-                    adaptiveSDK.projectionComposer.render(latestBlueprint, projectionContext);
+                    const projectionContext = buildProjectionContextFromAdaptive(activeSdk.engine?.sensoryBridge?.getSnapshot?.());
+                    const composition = activeSdk.composeProjectionField(latestBlueprint, null, projectionContext);
+                    activeSdk.projectionComposer.render(latestBlueprint, projectionContext);
                     renderProjectionPanel(composition, { mode: 'realtime' });
                     return;
                 }
-                const frame = adaptiveSDK.stepProjectionSimulation({});
+                const frame = activeSdk.stepProjectionSimulation({});
                 if (frame?.composition) {
-                    adaptiveSDK.projectionComposer.render(frame.blueprint, frame.context);
+                    activeSdk.projectionComposer.render(frame.blueprint, frame.context);
                     renderProjectionPanel(frame.composition, {
                         mode: 'scenario',
                         scenario: frame.name,
@@ -1330,7 +1322,7 @@
             renderKpiSummary(kpiReport);
         }
 
-        const adaptiveSDK = (adaptiveSDKRef = createAdaptiveSDK({
+        const adaptiveSDKInstance = createAdaptiveSDK({
             telemetry: {
                 enabled: true,
                 defaultConsent: { analytics: false, biometric: false },
@@ -1351,7 +1343,9 @@
                 onPatternChange: updatePatternPanel,
                 onAdaptiveUpdate: handleAdaptiveUpdate
             }
-        }));
+        });
+
+        adaptiveSDKRef = adaptiveSDKInstance;
 
         const {
             engine,
@@ -1362,9 +1356,26 @@
             getLicenseCommercializationSummary,
             setLicenseAttestorFromProfile,
             registerLicenseAttestationProfilePack
-        } = adaptiveSDK;
+        } = adaptiveSDKInstance;
 
-        const telemetryHarness = adaptiveSDK.telemetry;
+        const projectionComposer = adaptiveSDKInstance.projectionComposer;
+        const projectionBaseCanvas = document.getElementById('projection-base');
+        const projectionBandCanvas = document.getElementById('projection-bands');
+        const projectionHaloCanvas = document.getElementById('projection-halo');
+        const projectionContourCanvas = document.getElementById('projection-contours');
+
+        projectionComposer.attachLayer('base', projectionBaseCanvas);
+        projectionComposer.attachLayer('bands', projectionBandCanvas);
+        projectionComposer.attachLayer('halo', projectionHaloCanvas);
+        projectionComposer.attachLayer('contours', projectionContourCanvas);
+        projectionComposer.observeResize?.();
+        projectionComposer.resize();
+        window.addEventListener('resize', () => projectionComposer.resize());
+
+        renderProjectionPanel(null);
+        initializeProjectionScenarios();
+
+        const telemetryHarness = adaptiveSDKInstance.telemetry;
 
         captureSnapshotBtn?.addEventListener('click', () => {
             adaptiveSDKRef?.captureLicenseCommercializationSnapshot({
@@ -1532,6 +1543,11 @@
         }
 
         function handleAdaptiveUpdate({ context, layout, design }) {
+            const sdk = adaptiveSDKRef;
+            if (!sdk) {
+                return;
+            }
+
             focusMetric.textContent = context.focusVector.x.toFixed(2);
             engagementMetric.textContent = context.engagementLevel.toFixed(2);
             velocityMetric.textContent = layout.motion.velocity.toFixed(2);
@@ -1542,9 +1558,9 @@
             renderBlueprintPanel(latestBlueprint);
 
             const projectionContext = buildProjectionContextFromAdaptive(context);
-            const projectionComposition = adaptiveSDK.composeProjectionField(layout, design, projectionContext);
+            const projectionComposition = sdk.composeProjectionField(layout, design, projectionContext);
             if (projectionComposition) {
-                adaptiveSDK.projectionComposer.render(projectionComposition.blueprint, projectionContext);
+                sdk.projectionComposer.render(projectionComposition.blueprint, projectionContext);
                 if (activeProjectionScenario === '__realtime__') {
                     renderProjectionPanel(projectionComposition, { mode: 'realtime' });
                 }
