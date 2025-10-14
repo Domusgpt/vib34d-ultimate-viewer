@@ -827,23 +827,6 @@
 
         renderBlueprintPanel(null);
 
-        const projectionComposer = adaptiveSDKRef?.projectionComposer || adaptiveSDK.projectionComposer;
-        const projectionBaseCanvas = document.getElementById('projection-base');
-        const projectionBandCanvas = document.getElementById('projection-bands');
-        const projectionHaloCanvas = document.getElementById('projection-halo');
-        const projectionContourCanvas = document.getElementById('projection-contours');
-
-        projectionComposer.attachLayer('base', projectionBaseCanvas);
-        projectionComposer.attachLayer('bands', projectionBandCanvas);
-        projectionComposer.attachLayer('halo', projectionHaloCanvas);
-        projectionComposer.attachLayer('contours', projectionContourCanvas);
-        projectionComposer.observeResize?.();
-        projectionComposer.resize();
-        window.addEventListener('resize', () => projectionComposer.resize());
-
-        renderProjectionPanel(null);
-        initializeProjectionScenarios();
-
         const formatLabel = (value) => {
             if (!value) return 'Unspecified';
             return value.split(/[-_]/g).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
@@ -1363,6 +1346,23 @@
             setLicenseAttestorFromProfile,
             registerLicenseAttestationProfilePack
         } = adaptiveSDK;
+
+        const projectionComposer = adaptiveSDK.projectionComposer;
+        const projectionBaseCanvas = document.getElementById('projection-base');
+        const projectionBandCanvas = document.getElementById('projection-bands');
+        const projectionHaloCanvas = document.getElementById('projection-halo');
+        const projectionContourCanvas = document.getElementById('projection-contours');
+
+        projectionComposer.attachLayer('base', projectionBaseCanvas);
+        projectionComposer.attachLayer('bands', projectionBandCanvas);
+        projectionComposer.attachLayer('halo', projectionHaloCanvas);
+        projectionComposer.attachLayer('contours', projectionContourCanvas);
+        projectionComposer.observeResize?.();
+        projectionComposer.resize();
+        window.addEventListener('resize', () => projectionComposer.resize());
+
+        renderProjectionPanel(null);
+        initializeProjectionScenarios();
 
         const telemetryHarness = adaptiveSDK.telemetry;
 
