@@ -1,0 +1,26 @@
+{
+  "plugins": [
+    {
+      "id": "healthy-plugin",
+      "name": "Healthy Plugin",
+      "description": "Provides complete metadata for diagnostics",
+      "tags": ["demo", "healthy"],
+      "capabilities": ["commands"],
+      "commands": [
+        {
+          "name": "hello",
+          "description": "Say hello",
+          "response": "hi"
+        }
+      ]
+    },
+    {
+      "id": "needs-attention",
+      "commands": [
+        { "name": "ping", "response": "pong" },
+        { "name": "no-description", "response": "noop" }
+      ],
+      "activate": false
+    }
+  ]
+}
