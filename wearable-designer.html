@@ -30,6 +30,29 @@
             overflow: hidden;
         }
 
+        .canvas-stack::before,
+        .canvas-stack::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 45% 55%, rgba(46, 132, 255, 0.18), transparent 62%),
+                        radial-gradient(circle at 65% 35%, rgba(255, 122, 255, 0.14), transparent 58%),
+                        radial-gradient(circle at 25% 25%, rgba(76, 255, 196, 0.12), transparent 55%);
+            mix-blend-mode: screen;
+            opacity: 0.4;
+            transform: scale(1.1);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .canvas-stack::before {
+            animation: vib3Pulse 18s ease-in-out infinite;
+        }
+
+        .canvas-stack::after {
+            animation: vib3Drift 24s ease-in-out infinite;
+        }
+
         .canvas-stack canvas {
             position: absolute;
             width: 88vmin;
@@ -38,13 +61,48 @@
             max-height: 880px;
             border-radius: 28px;
             backdrop-filter: blur(20px);
+            z-index: 1;
         }
 
-        .canvas-stack canvas:nth-child(1) { mix-blend-mode: screen; opacity: 0.35; }
-        .canvas-stack canvas:nth-child(2) { mix-blend-mode: lighten; opacity: 0.45; }
+        .canvas-stack canvas.vib3-layer {
+            z-index: 2;
+            filter: saturate(1.25) brightness(1.1);
+        }
+
+        .canvas-stack .blueprint-overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .canvas-stack canvas.blueprint-layer {
+            mix-blend-mode: screen;
+            opacity: 0.6;
+            filter: drop-shadow(0 0 32px rgba(76, 159, 255, 0.35));
+            z-index: 5;
+        }
+
+        .canvas-stack canvas:nth-child(1) { mix-blend-mode: screen; opacity: 0.38; }
+        .canvas-stack canvas:nth-child(2) { mix-blend-mode: lighten; opacity: 0.48; }
         .canvas-stack canvas:nth-child(3) { mix-blend-mode: normal; }
-        .canvas-stack canvas:nth-child(4) { mix-blend-mode: screen; opacity: 0.6; }
-        .canvas-stack canvas:nth-child(5) { mix-blend-mode: screen; opacity: 0.8; }
+        .canvas-stack canvas:nth-child(4) { mix-blend-mode: screen; opacity: 0.62; }
+        .canvas-stack canvas:nth-child(5) { mix-blend-mode: screen; opacity: 0.82; }
+
+        @keyframes vib3Pulse {
+            0% { transform: scale(1.08) rotate(0deg); opacity: 0.28; }
+            50% { transform: scale(1.16) rotate(4deg); opacity: 0.44; }
+            100% { transform: scale(1.08) rotate(-2deg); opacity: 0.32; }
+        }
+
+        @keyframes vib3Drift {
+            0% { transform: scale(1.05) translate(0, 0); opacity: 0.22; }
+            40% { transform: scale(1.15) translate(2%, -1%); opacity: 0.36; }
+            70% { transform: scale(1.12) translate(-1%, 2%); opacity: 0.3; }
+            100% { transform: scale(1.05) translate(0, 0); opacity: 0.24; }
+        }
 
         aside {
             padding: 32px;
@@ -155,6 +213,38 @@
             color: rgba(255, 255, 255, 0.55);
             margin-top: 4px;
             letter-spacing: 0.03em;
+        }
+
+        .overlay-control {
+            margin: 16px 0 18px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .overlay-control label {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .overlay-control__range {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .overlay-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        .overlay-control__value {
+            min-width: 3ch;
+            text-align: right;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .meta-line {
@@ -569,11 +659,18 @@
 </head>
 <body>
     <div class="canvas-stack" id="canvasStack">
-        <canvas id="background-canvas"></canvas>
-        <canvas id="shadow-canvas"></canvas>
-        <canvas id="content-canvas"></canvas>
-        <canvas id="highlight-canvas"></canvas>
-        <canvas id="accent-canvas"></canvas>
+        <canvas id="background-canvas" class="vib3-layer"></canvas>
+        <canvas id="shadow-canvas" class="vib3-layer"></canvas>
+        <canvas id="content-canvas" class="vib3-layer"></canvas>
+        <canvas id="highlight-canvas" class="vib3-layer"></canvas>
+        <canvas id="accent-canvas" class="vib3-layer"></canvas>
+        <div class="blueprint-overlay" aria-hidden="true">
+            <canvas id="blueprint-background" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-shadow" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-content" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-highlight" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-accent" class="blueprint-layer"></canvas>
+        </div>
     </div>
     <aside>
         <section class="panel">
@@ -601,6 +698,13 @@
                 <div class="blueprint-metric"><span>Velocity</span><span id="blueprintVelocity">0.00</span></div>
                 <div class="blueprint-metric"><span>Engagement</span><span id="blueprintEngagement">0.40</span></div>
                 <div class="blueprint-metric"><span>Stress</span><span id="blueprintStress">0.20</span></div>
+            </div>
+            <div class="overlay-control">
+                <label for="blueprintOverlayOpacity">Overlay intensity</label>
+                <div class="overlay-control__range">
+                    <input type="range" min="10" max="100" value="70" id="blueprintOverlayOpacity">
+                    <span class="overlay-control__value" id="blueprintOverlayOpacityValue">70%</span>
+                </div>
             </div>
             <ul class="blueprint-zone-list" id="blueprintZoneList"></ul>
             <button class="secondary" id="downloadBlueprintBtn" type="button">Download Blueprint</button>
@@ -687,6 +791,9 @@
         const blueprintStress = document.getElementById('blueprintStress');
         const blueprintZoneList = document.getElementById('blueprintZoneList');
         const downloadBlueprintBtn = document.getElementById('downloadBlueprintBtn');
+        const blueprintOverlayElement = document.querySelector('.blueprint-overlay');
+        const blueprintOverlayOpacitySlider = document.getElementById('blueprintOverlayOpacity');
+        const blueprintOverlayOpacityValue = document.getElementById('blueprintOverlayOpacityValue');
         const projectionHaloRadius = document.getElementById('projectionHaloRadius');
         const projectionDepthBias = document.getElementById('projectionDepthBias');
         const projectionContourCount = document.getElementById('projectionContourCount');
@@ -694,14 +801,29 @@
         const projectionScenarioSelect = document.getElementById('projectionScenarioSelect');
         const projectionSimulateBtn = document.getElementById('projectionSimulateBtn');
         const projectionLegend = document.getElementById('projectionLegend');
+        const variationSlider = document.getElementById('variationSlider');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const variationLabel = document.getElementById('variationLabel');
+        const focusMetric = document.getElementById('focusMetric');
+        const engagementMetric = document.getElementById('engagementMetric');
+        const velocityMetric = document.getElementById('velocityMetric');
+        const stressMetric = document.getElementById('stressMetric');
+        const consentPanelContainer = document.getElementById('telemetryConsentPanel');
 
-        let adaptiveSDKRef;
+        let adaptiveSDKRef = null;
+        // Maintain a backward-compatible alias for legacy inline handlers or
+        // diagnostics snippets that still expect a global `adaptiveSDK`
+        // reference. Initializing it up front avoids temporal dead zone
+        // lookups before the SDK instance is created.
+        let adaptiveSDKGlobal = null;
         let stopSnapshotSchedule = null;
 
         const remoteUploadLog = [];
         let latestBlueprint = null;
         let latestProjectionComposition = null;
         let activeProjectionScenario = '__realtime__';
+
+        const getAdaptiveSDK = () => adaptiveSDKRef || adaptiveSDKGlobal || window.adaptiveSDK || null;
 
         const formatTime = (value) => {
             if (!value) return 'unknown';
@@ -814,35 +936,30 @@
 
         const blueprintRenderer = createLayoutBlueprintRenderer({
             layers: {
-                background: document.getElementById('background-canvas'),
-                shadow: document.getElementById('shadow-canvas'),
-                content: document.getElementById('content-canvas'),
-                highlight: document.getElementById('highlight-canvas'),
-                accent: document.getElementById('accent-canvas')
-            }
+                background: document.getElementById('blueprint-background'),
+                shadow: document.getElementById('blueprint-shadow'),
+                content: document.getElementById('blueprint-content'),
+                highlight: document.getElementById('blueprint-highlight'),
+                accent: document.getElementById('blueprint-accent')
+            },
+            background: {
+                inner: 'rgba(64, 148, 255, 0.24)',
+                outer: 'rgba(10, 24, 48, 0.48)'
+            },
+            zoneColors: {
+                primary: 'rgba(76, 159, 255, 0.85)',
+                peripheral: 'rgba(178, 107, 255, 0.8)',
+                ambient: 'rgba(255, 196, 122, 0.75)'
+            },
+            backgroundBlendMode: 'screen',
+            backgroundOpacity: 0.72,
+            devicePadding: 0.1
         });
 
         blueprintRenderer.resize();
         window.addEventListener('resize', () => blueprintRenderer.resize());
 
         renderBlueprintPanel(null);
-
-        const projectionComposer = adaptiveSDKRef?.projectionComposer || adaptiveSDK.projectionComposer;
-        const projectionBaseCanvas = document.getElementById('projection-base');
-        const projectionBandCanvas = document.getElementById('projection-bands');
-        const projectionHaloCanvas = document.getElementById('projection-halo');
-        const projectionContourCanvas = document.getElementById('projection-contours');
-
-        projectionComposer.attachLayer('base', projectionBaseCanvas);
-        projectionComposer.attachLayer('bands', projectionBandCanvas);
-        projectionComposer.attachLayer('halo', projectionHaloCanvas);
-        projectionComposer.attachLayer('contours', projectionContourCanvas);
-        projectionComposer.observeResize?.();
-        projectionComposer.resize();
-        window.addEventListener('resize', () => projectionComposer.resize());
-
-        renderProjectionPanel(null);
-        initializeProjectionScenarios();
 
         const formatLabel = (value) => {
             if (!value) return 'Unspecified';
@@ -856,6 +973,42 @@
         };
 
         const formatPercent = (value) => `${Math.round(clamp(value, 0, 1) * 100)}%`;
+
+        const applyBlueprintOverlayIntensity = (rawValue) => {
+            if (!blueprintRenderer) {
+                return;
+            }
+            const numeric = clamp(Number(rawValue), 0.1, 1);
+            const overlayOpacity = 0.25 + numeric * 0.75;
+            if (blueprintOverlayElement) {
+                blueprintOverlayElement.style.opacity = overlayOpacity.toFixed(2);
+            }
+
+            const layerOpacity = 0.35 + numeric * 0.6;
+            blueprintRenderer.setVisualOptions({
+                backgroundOpacity: overlayOpacity,
+                zoneOpacityFactor: layerOpacity,
+                highlightOpacityFactor: layerOpacity,
+                accentOpacityFactor: layerOpacity
+            });
+
+            if (blueprintOverlayOpacityValue) {
+                blueprintOverlayOpacityValue.textContent = `${Math.round(numeric * 100)}%`;
+            }
+        };
+
+        if (blueprintOverlayOpacitySlider) {
+            const initial = Number(blueprintOverlayOpacitySlider.value);
+            const normalized = Number.isFinite(initial) ? initial / 100 : 0.7;
+            applyBlueprintOverlayIntensity(normalized);
+            blueprintOverlayOpacitySlider.addEventListener('input', event => {
+                const raw = Number(event.target.value);
+                const next = Number.isFinite(raw) ? raw / 100 : 0.7;
+                applyBlueprintOverlayIntensity(next);
+            });
+        } else {
+            applyBlueprintOverlayIntensity(0.7);
+        }
 
         function renderBlueprintPanel(blueprint) {
             if (!blueprint) {
@@ -1063,8 +1216,13 @@
             realtimeOption.textContent = 'Realtime Field';
             projectionScenarioSelect.appendChild(realtimeOption);
 
+            const sdk = getAdaptiveSDK();
+            if (!sdk) {
+                return;
+            }
+
             for (const scenario of scenarios) {
-                adaptiveSDK.registerProjectionScenario(scenario);
+                sdk.registerProjectionScenario(scenario);
                 const option = document.createElement('option');
                 option.value = scenario.id;
                 option.textContent = scenario.name;
@@ -1078,23 +1236,27 @@
                 if (activeProjectionScenario === '__realtime__') {
                     return;
                 }
-                adaptiveSDK.setActiveProjectionScenario(activeProjectionScenario);
+                sdk.setActiveProjectionScenario(activeProjectionScenario);
             });
 
             projectionSimulateBtn?.addEventListener('click', () => {
+                const activeSdk = getAdaptiveSDK();
+                if (!activeSdk) {
+                    return;
+                }
                 if (!latestBlueprint) {
                     return;
                 }
                 if (activeProjectionScenario === '__realtime__') {
-                    const projectionContext = buildProjectionContextFromAdaptive(adaptiveSDK.engine?.sensoryBridge?.getSnapshot?.());
-                    const composition = adaptiveSDK.composeProjectionField(latestBlueprint, null, projectionContext);
-                    adaptiveSDK.projectionComposer.render(latestBlueprint, projectionContext);
+                    const projectionContext = buildProjectionContextFromAdaptive(activeSdk.engine?.sensoryBridge?.getSnapshot?.());
+                    const composition = activeSdk.composeProjectionField(latestBlueprint, null, projectionContext);
+                    activeSdk.projectionComposer.render(latestBlueprint, projectionContext);
                     renderProjectionPanel(composition, { mode: 'realtime' });
                     return;
                 }
-                const frame = adaptiveSDK.stepProjectionSimulation({});
+                const frame = activeSdk.stepProjectionSimulation({});
                 if (frame?.composition) {
-                    adaptiveSDK.projectionComposer.render(frame.blueprint, frame.context);
+                    activeSdk.projectionComposer.render(frame.blueprint, frame.context);
                     renderProjectionPanel(frame.composition, {
                         mode: 'scenario',
                         scenario: frame.name,
@@ -1154,7 +1316,7 @@
                 commercializationKpiSummary.innerHTML = '';
                 snapshotList.innerHTML = '';
                 commercializationUpdated.textContent = 'No commercialization activity yet';
-                if (adaptiveSDKRef) {
+                if (getAdaptiveSDK()) {
                     refreshCommercializationSnapshots();
                 }
                 return;
@@ -1224,7 +1386,7 @@
                 commercializationUpdated.textContent = 'No commercialization activity yet';
             }
 
-            if (adaptiveSDKRef) {
+            if (getAdaptiveSDK()) {
                 refreshCommercializationSnapshots();
             }
         }
@@ -1319,18 +1481,19 @@
         }
 
         function refreshCommercializationSnapshots() {
-            if (!adaptiveSDKRef) {
+            const sdk = getAdaptiveSDK();
+            if (!sdk) {
                 commercializationKpiSummary.innerHTML = '';
                 snapshotList.innerHTML = '';
                 return;
             }
-            const snapshots = adaptiveSDKRef.getLicenseCommercializationSnapshots({ limit: 5, withSummary: false });
+            const snapshots = sdk.getLicenseCommercializationSnapshots({ limit: 5, withSummary: false });
             renderSnapshotHistory(snapshots);
-            const kpiReport = adaptiveSDKRef.getLicenseCommercializationKpiReport();
+            const kpiReport = sdk.getLicenseCommercializationKpiReport();
             renderKpiSummary(kpiReport);
         }
 
-        const adaptiveSDK = (adaptiveSDKRef = createAdaptiveSDK({
+        const adaptiveSDKInstance = createAdaptiveSDK({
             telemetry: {
                 enabled: true,
                 defaultConsent: { analytics: false, biometric: false },
@@ -1351,7 +1514,11 @@
                 onPatternChange: updatePatternPanel,
                 onAdaptiveUpdate: handleAdaptiveUpdate
             }
-        }));
+        });
+
+        adaptiveSDKRef = adaptiveSDKInstance;
+        adaptiveSDKGlobal = adaptiveSDKInstance;
+        window.adaptiveSDK = adaptiveSDKInstance;
 
         const {
             engine,
@@ -1360,14 +1527,34 @@
             getTelemetryConsent,
             getTelemetryAuditTrail,
             getLicenseCommercializationSummary,
-            setLicenseAttestorFromProfile,
             registerLicenseAttestationProfilePack
-        } = adaptiveSDK;
+        } = adaptiveSDKInstance;
 
-        const telemetryHarness = adaptiveSDK.telemetry;
+        const setLicenseAttestorFromProfile = (...args) => adaptiveSDKInstance.setLicenseAttestorFromProfile(...args);
+
+        const projectionComposer = adaptiveSDKInstance.projectionComposer;
+        const projectionBaseCanvas = document.getElementById('projection-base');
+        const projectionBandCanvas = document.getElementById('projection-bands');
+        const projectionHaloCanvas = document.getElementById('projection-halo');
+        const projectionContourCanvas = document.getElementById('projection-contours');
+
+        projectionComposer.attachLayer('base', projectionBaseCanvas);
+        projectionComposer.attachLayer('bands', projectionBandCanvas);
+        projectionComposer.attachLayer('halo', projectionHaloCanvas);
+        projectionComposer.attachLayer('contours', projectionContourCanvas);
+        projectionComposer.observeResize?.();
+        projectionComposer.resize();
+        window.addEventListener('resize', () => projectionComposer.resize());
+
+        renderProjectionPanel(null);
+        initializeProjectionScenarios();
+
+        const telemetryHarness = adaptiveSDKInstance.telemetry;
 
         captureSnapshotBtn?.addEventListener('click', () => {
-            adaptiveSDKRef?.captureLicenseCommercializationSnapshot({
+            const sdk = getAdaptiveSDK();
+            if (!sdk) return;
+            sdk.captureLicenseCommercializationSnapshot({
                 trigger: 'demo-manual',
                 capturedBy: 'wearable-designer'
             });
@@ -1375,8 +1562,9 @@
         });
 
         exportSnapshotsBtn?.addEventListener('click', () => {
-            if (!adaptiveSDKRef) return;
-            const exportPayload = adaptiveSDKRef.exportLicenseCommercializationSnapshots({
+            const sdk = getAdaptiveSDK();
+            if (!sdk) return;
+            const exportPayload = sdk.exportLicenseCommercializationSnapshots({
                 format: 'json',
                 includeSummary: false
             });
@@ -1442,14 +1630,15 @@
         renderCommercializationSummary(getLicenseCommercializationSummary());
         refreshCommercializationSnapshots();
 
-        const snapshotStore = adaptiveSDKRef.getLicenseCommercializationSnapshotStore?.();
+        const snapshotStore = getAdaptiveSDK()?.getLicenseCommercializationSnapshotStore?.();
         snapshotStore?.whenReady?.().then(() => {
             refreshCommercializationSnapshots();
             renderRemoteStorageStatus();
         });
 
-        if (typeof adaptiveSDKRef?.startLicenseCommercializationSnapshotSchedule === 'function') {
-            stopSnapshotSchedule = adaptiveSDKRef.startLicenseCommercializationSnapshotSchedule(60000, {
+        const snapshotScheduler = getAdaptiveSDK();
+        if (typeof snapshotScheduler?.startLicenseCommercializationSnapshotSchedule === 'function') {
+            stopSnapshotSchedule = snapshotScheduler.startLicenseCommercializationSnapshotSchedule(60000, {
                 trigger: 'demo-schedule',
                 capturedBy: 'wearable-designer'
             }) || null;
@@ -1459,16 +1648,12 @@
             if (typeof stopSnapshotSchedule === 'function') {
                 stopSnapshotSchedule();
             }
+            adaptiveSDKRef = null;
+            adaptiveSDKGlobal = null;
+            if (window.adaptiveSDK) {
+                window.adaptiveSDK = null;
+            }
         });
-
-        const variationSlider = document.getElementById('variationSlider');
-        const randomizeBtn = document.getElementById('randomizeBtn');
-        const variationLabel = document.getElementById('variationLabel');
-        const focusMetric = document.getElementById('focusMetric');
-        const engagementMetric = document.getElementById('engagementMetric');
-        const velocityMetric = document.getElementById('velocityMetric');
-        const stressMetric = document.getElementById('stressMetric');
-        const consentPanelContainer = document.getElementById('telemetryConsentPanel');
 
         consentPanel = createConsentPanel({
             container: consentPanelContainer,
@@ -1532,6 +1717,11 @@
         }
 
         function handleAdaptiveUpdate({ context, layout, design }) {
+            const sdk = getAdaptiveSDK();
+            if (!sdk) {
+                return;
+            }
+
             focusMetric.textContent = context.focusVector.x.toFixed(2);
             engagementMetric.textContent = context.engagementLevel.toFixed(2);
             velocityMetric.textContent = layout.motion.velocity.toFixed(2);
@@ -1542,9 +1732,9 @@
             renderBlueprintPanel(latestBlueprint);
 
             const projectionContext = buildProjectionContextFromAdaptive(context);
-            const projectionComposition = adaptiveSDK.composeProjectionField(layout, design, projectionContext);
+            const projectionComposition = sdk.composeProjectionField(layout, design, projectionContext);
             if (projectionComposition) {
-                adaptiveSDK.projectionComposer.render(projectionComposition.blueprint, projectionContext);
+                sdk.projectionComposer.render(projectionComposition.blueprint, projectionContext);
                 if (activeProjectionScenario === '__realtime__') {
                     renderProjectionPanel(projectionComposition, { mode: 'realtime' });
                 }
