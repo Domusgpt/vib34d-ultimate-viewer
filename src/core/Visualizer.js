@@ -4,6 +4,7 @@
  */
 
 import { GeometryLibrary } from '../geometry/GeometryLibrary.js';
+import { TopologyLibrary } from './TopologyLibrary.js';
 
 export class IntegratedHolographicVisualizer {
     constructor(canvasId, role, reactivity, variant) {
@@ -41,8 +42,13 @@ export class IntegratedHolographicVisualizer {
         this.startTime = Date.now();
         
         // Default parameters
+        const defaultGeometry = 0;
+        const defaultTopologyFamily = TopologyLibrary.resolveFamily(null, defaultGeometry);
+        const defaultTopologyVariant = TopologyLibrary.getDefaultVariantId(defaultTopologyFamily);
+        const defaultTopology = TopologyLibrary.getDefaults(defaultTopologyFamily, defaultTopologyVariant);
+
         this.params = {
-            geometry: 0,
+            geometry: defaultGeometry,
             gridDensity: 15,
             morphFactor: 1.0,
             chaos: 0.2,
@@ -53,8 +59,14 @@ export class IntegratedHolographicVisualizer {
             dimension: 3.5,
             rot4dXW: 0.0,
             rot4dYW: 0.0,
-            rot4dZW: 0.0
+            rot4dZW: 0.0,
+            topologyFamily: defaultTopologyFamily,
+            topologyVariant: defaultTopologyVariant,
+            topologyShellWidth: defaultTopology.shellWidth,
+            topologyPlaneThickness: defaultTopology.planeThickness
         };
+
+        this.applyTopologyDefaults(defaultTopologyFamily, defaultTopologyVariant);
         
         // Initialization now happens in ensureCanvasSizedThenInitWebGL after sizing
         // this.init(); // MOVED
@@ -176,6 +188,10 @@ uniform float u_speed;
 uniform float u_hue;
 uniform float u_intensity;
 uniform float u_saturation;
+uniform float u_topologyFamily;
+uniform float u_topologyVariant;
+uniform float u_topologyShellWidth;
+uniform float u_topologyPlaneThickness;
 uniform float u_dimension;
 uniform float u_rot4dXW;
 uniform float u_rot4dYW;
@@ -208,31 +224,213 @@ vec3 project4Dto3D(vec4 p) {
     return vec3(p.x * w, p.y * w, p.z * w);
 }
 
+float hypercubeClassicTopology(vec4 p) {
+    vec4 cell = fract(p * u_gridDensity * 0.08 + 0.5) - 0.5;
+    vec4 dist = abs(cell);
+    float thickness = max(0.003, u_topologyPlaneThickness * 0.75);
+    float minDist = min(min(dist.x, dist.y), min(dist.z, dist.w));
+    float lattice = 1.0 - smoothstep(0.0, thickness, minDist);
+    return (lattice - 0.5) * (0.9 + u_morphFactor * 0.2);
+}
+
+float hypercubePhasedTopology(vec4 p) {
+    float timeFactor = u_time * 0.0002 * u_speed;
+    vec4 cell = fract(p * u_gridDensity * 0.08 + vec4(timeFactor)) - 0.5;
+    vec4 dist = abs(cell);
+    float thickness = max(0.0025, u_topologyShellWidth * 0.5 + 0.005);
+    float minDist = min(min(dist.x, dist.y), min(dist.z, dist.w));
+    float lattice = 1.0 - smoothstep(0.0, thickness, minDist);
+    float phase = sin((p.x + p.y + p.z + p.w) * 1.7 + timeFactor * 4.0) * 0.25;
+    return (lattice + phase) * (0.85 + u_morphFactor * 0.3) - 0.45;
+}
+
+float hypercubeCrystalTopology(vec4 p) {
+    vec4 cell = fract(p * u_gridDensity * 0.1) - 0.5;
+    float edge = max(max(abs(cell.x), abs(cell.y)), max(abs(cell.z), abs(cell.w)));
+    float shell = smoothstep(0.2, 0.5, 0.5 - edge);
+    float pulse = sin(length(p.xyz) * 2.5 + u_time * 0.0003 * u_speed) * 0.2;
+    return (shell + pulse) * (0.8 + u_intensity * 0.4) - 0.5;
+}
+
+float hypersphereClassicTopology(vec4 p) {
+    float r = length(p);
+    float density = u_gridDensity * 0.06;
+    float shells = abs(fract(r * density) - 0.5) * 2.0;
+    float shellWidth = max(0.01, u_topologyShellWidth + 0.01);
+    float smoothShell = smoothstep(0.0, shellWidth, 1.0 - shells);
+    float theta = atan(p.y, p.x);
+    float harmonics = sin(theta * 3.0) * 0.2;
+    float lattice = smoothShell + harmonics * 0.3;
+    return (lattice - 0.5) * (0.9 + u_morphFactor * 0.2);
+}
+
+float hypersphereQuantumShellTopology(vec4 p) {
+    vec3 pos3 = project4Dto3D(p);
+    float radius3D = length(pos3);
+    float densityFactor = max(0.05, u_gridDensity * 0.03);
+    float dynamicShellWidth = max(0.003, u_topologyShellWidth);
+    float timeFactor = u_time * 0.0002 * u_speed;
+
+    float phase = radius3D * densityFactor * 6.28318 - timeFactor;
+    float shells3D = 0.5 + 0.5 * sin(phase);
+    shells3D = smoothstep(1.0 - dynamicShellWidth, 1.0, shells3D);
+
+    float finalLattice = shells3D;
+    float dimFactor = smoothstep(3.0, 4.5, u_dimension);
+
+    if (dimFactor > 0.01) {
+        float harmonic = dot(pos3, vec3(1.0, 1.3, -0.7));
+        float wCoord = cos(radius3D * 2.5 - timeFactor * 0.8)
+                     * sin(harmonic + timeFactor * 0.3)
+                     * dimFactor * (0.6 + u_morphFactor * 0.4);
+
+        vec4 p4d = vec4(pos3, wCoord);
+        float baseSpeed = 0.8 + u_speed * 0.4;
+        float rot1 = timeFactor * 1.1 * baseSpeed;
+        float rot2 = timeFactor * 0.9 * baseSpeed + u_morphFactor * 0.6;
+        float rot3 = -timeFactor * 0.7 * baseSpeed + u_chaos * 2.0;
+        p4d = rotateXW(rot1) * rotateYW(rot2) * rotateZW(rot3) * p4d;
+
+        vec3 projected = project4Dto3D(p4d);
+        float radius4D = length(projected);
+        float phase4D = radius4D * densityFactor * 6.28318 - timeFactor * 1.2;
+        float shells4D = 0.5 + 0.5 * sin(phase4D);
+        shells4D = smoothstep(1.0 - dynamicShellWidth, 1.0, shells4D);
+        finalLattice = mix(shells3D, shells4D, clamp(u_morphFactor, 0.0, 1.0));
+    }
+
+    return (finalLattice - 0.5) * (0.8 + u_intensity * 0.4);
+}
+
+float hypersphereTetrahedralTopology(vec4 p) {
+    vec3 pos3 = project4Dto3D(p);
+    float density = max(0.1, u_gridDensity * 0.03);
+    float thickness = max(0.002, u_topologyPlaneThickness);
+    vec3 c1 = normalize(vec3(1.0, 1.0, 1.0));
+    vec3 c2 = normalize(vec3(-1.0, -1.0, 1.0));
+    vec3 c3 = normalize(vec3(-1.0, 1.0, -1.0));
+    vec3 c4 = normalize(vec3(1.0, -1.0, -1.0));
+
+    vec3 mod3D = fract(pos3 * density * 0.5 + 0.5) - 0.5;
+    float minDist3D = min(min(abs(dot(mod3D, c1)), abs(dot(mod3D, c2))),
+                          min(abs(dot(mod3D, c3)), abs(dot(mod3D, c4))));
+    float lattice3D = 1.0 - smoothstep(0.0, thickness, minDist3D);
+
+    float finalLattice = lattice3D;
+    float dimFactor = smoothstep(3.0, 4.5, u_dimension);
+
+    if (dimFactor > 0.01) {
+        float timeFactor = u_time * 0.0002 * u_speed;
+        float wCoord = cos(dot(pos3, vec3(1.8, -1.5, 1.2)) + timeFactor * 0.6)
+                     * sin(length(pos3) * 1.4 + timeFactor * 0.4)
+                     * dimFactor * (0.5 + u_morphFactor * 0.5);
+
+        vec4 p4d = vec4(pos3, wCoord);
+        float baseSpeed = 1.0 + u_speed * 0.5;
+        float rot1 = timeFactor * 0.8 * baseSpeed + u_chaos * 1.5;
+        float rot2 = timeFactor * 0.9 * baseSpeed - u_morphFactor * 0.5;
+        float rot3 = timeFactor * 0.7 * baseSpeed + u_intensity * 1.2;
+        p4d = rotateXW(rot1) * rotateYW(rot2) * rotateZW(rot3) * p4d;
+
+        vec3 projected = project4Dto3D(p4d);
+        vec3 mod4D = fract(projected * density * 0.5 + 0.5) - 0.5;
+        float minDist4D = min(min(abs(dot(mod4D, c1)), abs(dot(mod4D, c2))),
+                              min(abs(dot(mod4D, c3)), abs(dot(mod4D, c4))));
+        float lattice4D = 1.0 - smoothstep(0.0, thickness, minDist4D);
+        finalLattice = mix(lattice3D, lattice4D, clamp(u_morphFactor, 0.0, 1.0));
+    }
+
+    return (finalLattice - 0.5) * (0.9 + u_morphFactor * 0.3);
+}
+
+float hypertetraClassicTopology(vec4 p) {
+    vec4 cell = fract(p * u_gridDensity * 0.08 + 0.5) - 0.5;
+    vec4 dist = abs(cell);
+    float thickness = max(0.003, u_topologyPlaneThickness);
+    float minDist = min(min(dist.x, dist.y), min(dist.z, dist.w));
+    float lattice = 1.0 - smoothstep(0.0, thickness, minDist);
+    return (lattice - 0.5) * (0.9 + u_morphFactor * 0.2);
+}
+
+float hypertetraTwistedTopology(vec4 p) {
+    float timeFactor = u_time * 0.00025 * u_speed;
+    vec4 rotated = rotateXW(timeFactor * 1.3) * rotateYW(timeFactor * 0.9) * p;
+    vec4 cell = fract(rotated * u_gridDensity * 0.08 + 0.5) - 0.5;
+    vec4 dist = abs(cell);
+    float thickness = max(0.0025, u_topologyShellWidth * 0.6 + 0.005);
+    float minDist = min(min(dist.x, dist.y), min(dist.z, dist.w));
+    float lattice = 1.0 - smoothstep(0.0, thickness, minDist);
+    float ribbon = sin((rotated.x + rotated.y + rotated.z) * 2.2 + timeFactor * 3.0) * 0.25;
+    return (lattice + ribbon) * (0.85 + u_morphFactor * 0.25) - 0.45;
+}
+
+float hypertetraPrismaticTopology(vec4 p) {
+    vec4 wave = sin(p * u_gridDensity * 0.05 + u_time * 0.0003 * u_speed);
+    float prism = abs(wave.x) + abs(wave.y) + abs(wave.z) + abs(wave.w);
+    float shell = smoothstep(0.0, 4.0 * max(0.002, u_topologyShellWidth + 0.01), prism);
+    return (1.0 - shell) * (0.8 + u_intensity * 0.3) - 0.5;
+}
+
+float evaluateHypercubeTopology(vec4 p, int variant) {
+    if (variant == 1) {
+        return hypercubePhasedTopology(p);
+    }
+    if (variant == 2) {
+        return hypercubeCrystalTopology(p);
+    }
+    return hypercubeClassicTopology(p);
+}
+
+float evaluateHypersphereTopology(vec4 p, int variant) {
+    if (variant == 1) {
+        return hypersphereQuantumShellTopology(p);
+    }
+    if (variant == 2) {
+        return hypersphereTetrahedralTopology(p);
+    }
+    return hypersphereClassicTopology(p);
+}
+
+float evaluateHypertetraTopology(vec4 p, int variant) {
+    if (variant == 1) {
+        return hypertetraTwistedTopology(p);
+    }
+    if (variant == 2) {
+        return hypertetraPrismaticTopology(p);
+    }
+    return hypertetraClassicTopology(p);
+}
+
+float evaluateTopology(vec4 p, int geometryType) {
+    int family = int(floor(u_topologyFamily + 0.5));
+    int variant = int(floor(u_topologyVariant + 0.5));
+
+    if (geometryType == 0) {
+        return evaluateHypertetraTopology(p, family == 2 ? variant : 0);
+    }
+    if (geometryType == 1) {
+        return evaluateHypercubeTopology(p, family == 0 ? variant : 0);
+    }
+    if (geometryType == 2) {
+        return evaluateHypersphereTopology(p, family == 1 ? variant : 0);
+    }
+
+    // Fallback: honour selected family even if geometry differs
+    if (family == 0) {
+        return evaluateHypercubeTopology(p, variant);
+    }
+    if (family == 1) {
+        return evaluateHypersphereTopology(p, variant);
+    }
+    return evaluateHypertetraTopology(p, variant);
+}
+
 // Simplified geometry functions for WebGL 1.0 compatibility (ORIGINAL FACETED)
 float geometryFunction(vec4 p) {
     int geomType = int(u_geometry);
-    
-    if (geomType == 0) {
-        // Tetrahedron lattice - UNIFORM GRID DENSITY
-        vec4 pos = fract(p * u_gridDensity * 0.08);
-        vec4 dist = min(pos, 1.0 - pos);
-        return min(min(dist.x, dist.y), min(dist.z, dist.w)) * u_morphFactor;
-    }
-    else if (geomType == 1) {
-        // Hypercube lattice - UNIFORM GRID DENSITY
-        vec4 pos = fract(p * u_gridDensity * 0.08);
-        vec4 dist = min(pos, 1.0 - pos);
-        float minDist = min(min(dist.x, dist.y), min(dist.z, dist.w));
-        return minDist * u_morphFactor;
-    }
-    else if (geomType == 2) {
-        // Sphere lattice - UNIFORM GRID DENSITY
-        float r = length(p);
-        float density = u_gridDensity * 0.08;
-        float spheres = abs(fract(r * density) - 0.5) * 2.0;
-        float theta = atan(p.y, p.x);
-        float harmonics = sin(theta * 3.0) * 0.2;
-        return (spheres + harmonics) * u_morphFactor;
+
+    if (geomType == 0 || geomType == 1 || geomType == 2) {
+        return evaluateTopology(p, geomType);
     }
     else if (geomType == 3) {
         // Torus lattice - UNIFORM GRID DENSITY
@@ -336,6 +534,10 @@ void main() {
             hue: this.gl.getUniformLocation(this.program, 'u_hue'),
             intensity: this.gl.getUniformLocation(this.program, 'u_intensity'),
             saturation: this.gl.getUniformLocation(this.program, 'u_saturation'),
+            topologyFamily: this.gl.getUniformLocation(this.program, 'u_topologyFamily'),
+            topologyVariant: this.gl.getUniformLocation(this.program, 'u_topologyVariant'),
+            topologyShellWidth: this.gl.getUniformLocation(this.program, 'u_topologyShellWidth'),
+            topologyPlaneThickness: this.gl.getUniformLocation(this.program, 'u_topologyPlaneThickness'),
             dimension: this.gl.getUniformLocation(this.program, 'u_dimension'),
             rot4dXW: this.gl.getUniformLocation(this.program, 'u_rot4dXW'),
             rot4dYW: this.gl.getUniformLocation(this.program, 'u_rot4dYW'),
@@ -522,7 +724,62 @@ void main() {
      * Update visualization parameters
      */
     updateParameters(params) {
-        this.params = { ...this.params, ...params };
+        if (!params) {
+            return;
+        }
+
+        const nextParams = { ...params };
+
+        if (Object.prototype.hasOwnProperty.call(nextParams, 'topologyFamily')) {
+            this.setTopologyFamily(nextParams.topologyFamily);
+            delete nextParams.topologyFamily;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(nextParams, 'topologyVariant')) {
+            this.setTopologyVariant(nextParams.topologyVariant);
+            delete nextParams.topologyVariant;
+        }
+
+        this.params = { ...this.params, ...nextParams };
+
+        if (Object.prototype.hasOwnProperty.call(params, 'geometry')) {
+            this.ensureTopologyMatchesGeometry();
+        }
+    }
+
+    getTopologyFamilies() {
+        return TopologyLibrary.getFamilyEntries();
+    }
+
+    getTopologyVariants(familyId = this.params.topologyFamily) {
+        return TopologyLibrary.getVariantEntries(familyId);
+    }
+
+    setTopologyFamily(familyId) {
+        const resolvedFamily = TopologyLibrary.resolveFamily(familyId, this.params.geometry);
+        const resolvedVariant = TopologyLibrary.getDefaultVariantId(resolvedFamily);
+        this.params.topologyFamily = resolvedFamily;
+        this.params.topologyVariant = resolvedVariant;
+        this.applyTopologyDefaults(resolvedFamily, resolvedVariant);
+    }
+
+    setTopologyVariant(variantId) {
+        const resolvedVariant = TopologyLibrary.resolveVariant(this.params.topologyFamily, variantId);
+        this.params.topologyVariant = resolvedVariant;
+        this.applyTopologyDefaults(this.params.topologyFamily, resolvedVariant);
+    }
+
+    applyTopologyDefaults(familyId, variantId) {
+        const defaults = TopologyLibrary.getDefaults(familyId, variantId);
+        this.params.topologyShellWidth = defaults.shellWidth;
+        this.params.topologyPlaneThickness = defaults.planeThickness;
+    }
+
+    ensureTopologyMatchesGeometry() {
+        const matchingFamily = TopologyLibrary.getFamilyForGeometry(Math.round(this.params.geometry));
+        if (matchingFamily !== null && matchingFamily !== this.params.topologyFamily) {
+            this.setTopologyFamily(matchingFamily);
+        }
     }
     
     /**
@@ -610,6 +867,10 @@ void main() {
         this.gl.uniform1f(this.uniforms.hue, hue % 360);
         this.gl.uniform1f(this.uniforms.intensity, Math.min(1, intensity));
         this.gl.uniform1f(this.uniforms.saturation, this.params.saturation);
+        this.gl.uniform1f(this.uniforms.topologyFamily, this.params.topologyFamily);
+        this.gl.uniform1f(this.uniforms.topologyVariant, this.params.topologyVariant);
+        this.gl.uniform1f(this.uniforms.topologyShellWidth, this.params.topologyShellWidth);
+        this.gl.uniform1f(this.uniforms.topologyPlaneThickness, this.params.topologyPlaneThickness);
         this.gl.uniform1f(this.uniforms.dimension, this.params.dimension);
         this.gl.uniform1f(this.uniforms.rot4dXW, this.params.rot4dXW);
         this.gl.uniform1f(this.uniforms.rot4dYW, this.params.rot4dYW);
