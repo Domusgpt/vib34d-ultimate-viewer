@@ -97,6 +97,10 @@ export class LayoutBlueprintRenderer {
         this.layers = new Map();
         this.zoneColors = { ...DEFAULT_ZONE_COLORS, ...(options.zoneColors || {}) };
         this.background = { ...DEFAULT_BACKGROUND, ...(options.background || {}) };
+        this.backgroundBlendMode = options.backgroundBlendMode || 'source-over';
+        this.backgroundOpacity = typeof options.backgroundOpacity === 'number'
+            ? clamp(options.backgroundOpacity, 0, 1)
+            : 1;
         this.devicePadding = options.devicePadding ?? 0.12;
         this.lastSize = 0;
         this.lastRenderPayload = null;
@@ -203,11 +207,17 @@ export class LayoutBlueprintRenderer {
         if (!layer) return;
         const { context, canvas } = layer;
         context.clearRect(0, 0, canvas.width, canvas.height);
+        context.save();
+        if (this.backgroundBlendMode && this.backgroundBlendMode !== 'source-over') {
+            context.globalCompositeOperation = this.backgroundBlendMode;
+        }
+        context.globalAlpha = this.backgroundOpacity;
         const gradient = context.createRadialGradient(size / 2, size / 2, size * 0.1, size / 2, size / 2, size * 0.55);
         gradient.addColorStop(0, this.background.inner);
         gradient.addColorStop(1, this.background.outer);
         context.fillStyle = gradient;
         context.fillRect(0, 0, canvas.width, canvas.height);
+        context.restore();
     }
 
     drawShadow(size, center, radius) {
