@@ -30,6 +30,29 @@
             overflow: hidden;
         }
 
+        .canvas-stack::before,
+        .canvas-stack::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 45% 55%, rgba(46, 132, 255, 0.18), transparent 62%),
+                        radial-gradient(circle at 65% 35%, rgba(255, 122, 255, 0.14), transparent 58%),
+                        radial-gradient(circle at 25% 25%, rgba(76, 255, 196, 0.12), transparent 55%);
+            mix-blend-mode: screen;
+            opacity: 0.4;
+            transform: scale(1.1);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .canvas-stack::before {
+            animation: vib3Pulse 18s ease-in-out infinite;
+        }
+
+        .canvas-stack::after {
+            animation: vib3Drift 24s ease-in-out infinite;
+        }
+
         .canvas-stack canvas {
             position: absolute;
             width: 88vmin;
@@ -38,13 +61,55 @@
             max-height: 880px;
             border-radius: 28px;
             backdrop-filter: blur(20px);
+            z-index: 1;
         }
 
-        .canvas-stack canvas:nth-child(1) { mix-blend-mode: screen; opacity: 0.35; }
-        .canvas-stack canvas:nth-child(2) { mix-blend-mode: lighten; opacity: 0.45; }
+        .canvas-stack canvas.vib3-layer {
+            z-index: 2;
+            filter: saturate(1.25) brightness(1.1);
+        }
+
+        .canvas-stack .blueprint-overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .canvas-stack canvas.blueprint-layer {
+            mix-blend-mode: screen;
+            opacity: 0.6;
+            filter: drop-shadow(0 0 32px rgba(76, 159, 255, 0.35));
+            z-index: 5;
+        }
+
+        .canvas-stack canvas.grid-layer {
+            mix-blend-mode: screen;
+            opacity: 0.55;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .canvas-stack canvas:nth-child(1) { mix-blend-mode: screen; opacity: 0.38; }
+        .canvas-stack canvas:nth-child(2) { mix-blend-mode: lighten; opacity: 0.48; }
         .canvas-stack canvas:nth-child(3) { mix-blend-mode: normal; }
-        .canvas-stack canvas:nth-child(4) { mix-blend-mode: screen; opacity: 0.6; }
-        .canvas-stack canvas:nth-child(5) { mix-blend-mode: screen; opacity: 0.8; }
+        .canvas-stack canvas:nth-child(4) { mix-blend-mode: screen; opacity: 0.62; }
+        .canvas-stack canvas:nth-child(5) { mix-blend-mode: screen; opacity: 0.82; }
+
+        @keyframes vib3Pulse {
+            0% { transform: scale(1.08) rotate(0deg); opacity: 0.28; }
+            50% { transform: scale(1.16) rotate(4deg); opacity: 0.44; }
+            100% { transform: scale(1.08) rotate(-2deg); opacity: 0.32; }
+        }
+
+        @keyframes vib3Drift {
+            0% { transform: scale(1.05) translate(0, 0); opacity: 0.22; }
+            40% { transform: scale(1.15) translate(2%, -1%); opacity: 0.36; }
+            70% { transform: scale(1.12) translate(-1%, 2%); opacity: 0.3; }
+            100% { transform: scale(1.05) translate(0, 0); opacity: 0.24; }
+        }
 
         aside {
             padding: 32px;
@@ -62,6 +127,13 @@
             padding: 24px;
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: 0 20px 40px rgba(10, 20, 40, 0.35);
+        }
+
+        .panel-description {
+            margin: 0 0 16px;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .panel h2 {
@@ -155,6 +227,38 @@
             color: rgba(255, 255, 255, 0.55);
             margin-top: 4px;
             letter-spacing: 0.03em;
+        }
+
+        .overlay-control {
+            margin: 16px 0 18px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .overlay-control label {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .overlay-control__range {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .overlay-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        .overlay-control__value {
+            min-width: 3ch;
+            text-align: right;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .meta-line {
@@ -472,6 +576,195 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
+        .layout-grid-controls {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .layout-grid-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .grid-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .grid-control span {
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        .grid-control input[type='number'] {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: #f5f7fb;
+            font-size: 0.95rem;
+        }
+
+        .grid-range {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .grid-range__label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        .grid-range input[type='range'] {
+            width: 100%;
+        }
+
+        .shader-control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .shader-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
+        .shader-control label {
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .shader-control__input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shader-control__input input[type='range'],
+        .shader-control__input input[type='number'] {
+            flex: 1;
+        }
+
+        .shader-control__value {
+            min-width: 52px;
+            text-align: right;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .shader-config-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .shader-config-editor textarea {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            color: #f5f7fb;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+            padding: 14px 16px;
+            min-height: 160px;
+            resize: vertical;
+        }
+
+        .shader-config-editor textarea:focus {
+            outline: none;
+            border-color: rgba(76, 159, 255, 0.5);
+            box-shadow: 0 0 0 1px rgba(76, 159, 255, 0.35);
+        }
+
+        .shader-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .shader-actions .file-input-label {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-size: 0.82rem;
+            letter-spacing: 0.02em;
+        }
+
+        .shader-actions .file-input-label:hover {
+            border-color: rgba(76, 159, 255, 0.35);
+            color: #fff;
+        }
+
+        .shader-actions .file-input-label input[type='file'] {
+            display: none;
+        }
+
+        .shader-status {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.65);
+            min-height: 1.2em;
+        }
+
+        .shader-status[data-tone='error'] {
+            color: rgba(255, 138, 138, 0.85);
+        }
+
+        .shader-status[data-tone='success'] {
+            color: rgba(148, 255, 208, 0.9);
+        }
+
+        .grid-import {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 12px 0 0;
+        }
+
+        .grid-summary {
+            margin: 16px 0 0;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.62);
+        }
+
+        .grid-status {
+            margin: 6px 0 0;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            min-height: 1em;
+        }
+
         .projection-stack {
             position: relative;
             width: 100%;
@@ -569,11 +862,19 @@
 </head>
 <body>
     <div class="canvas-stack" id="canvasStack">
-        <canvas id="background-canvas"></canvas>
-        <canvas id="shadow-canvas"></canvas>
-        <canvas id="content-canvas"></canvas>
-        <canvas id="highlight-canvas"></canvas>
-        <canvas id="accent-canvas"></canvas>
+        <canvas id="background-canvas" class="vib3-layer"></canvas>
+        <canvas id="shadow-canvas" class="vib3-layer"></canvas>
+        <canvas id="content-canvas" class="vib3-layer"></canvas>
+        <canvas id="highlight-canvas" class="vib3-layer"></canvas>
+        <canvas id="accent-canvas" class="vib3-layer"></canvas>
+        <div class="blueprint-overlay" aria-hidden="true">
+            <canvas id="visualizer-grid" class="blueprint-layer grid-layer"></canvas>
+            <canvas id="blueprint-background" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-shadow" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-content" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-highlight" class="blueprint-layer"></canvas>
+            <canvas id="blueprint-accent" class="blueprint-layer"></canvas>
+        </div>
     </div>
     <aside>
         <section class="panel">
@@ -602,8 +903,122 @@
                 <div class="blueprint-metric"><span>Engagement</span><span id="blueprintEngagement">0.40</span></div>
                 <div class="blueprint-metric"><span>Stress</span><span id="blueprintStress">0.20</span></div>
             </div>
+            <div class="overlay-control">
+                <label for="blueprintOverlayOpacity">Overlay intensity</label>
+                <div class="overlay-control__range">
+                    <input type="range" min="10" max="100" value="70" id="blueprintOverlayOpacity">
+                    <span class="overlay-control__value" id="blueprintOverlayOpacityValue">70%</span>
+                </div>
+            </div>
             <ul class="blueprint-zone-list" id="blueprintZoneList"></ul>
             <button class="secondary" id="downloadBlueprintBtn" type="button">Download Blueprint</button>
+        </section>
+        <section class="panel" id="visualizerGridPanel">
+            <h2>Visualizer Alignment</h2>
+            <p class="panel-description">Tune the Vib3 stack to your layout grid or import card coordinates from design tools.</p>
+            <div class="layout-grid-controls">
+                <div class="layout-grid-row">
+                    <label class="grid-control" for="gridColumnInput">
+                        <span>Columns</span>
+                        <input type="number" min="1" max="8" value="3" id="gridColumnInput">
+                    </label>
+                    <label class="grid-control" for="gridRowInput">
+                        <span>Rows</span>
+                        <input type="number" min="1" max="8" value="2" id="gridRowInput">
+                    </label>
+                </div>
+                <div class="grid-range">
+                    <div class="grid-range__label">
+                        <span>Gutter</span>
+                        <span id="gridGutterValue">8%</span>
+                    </div>
+                    <input type="range" min="2" max="18" value="8" id="gridGutterInput">
+                </div>
+                <div class="grid-range">
+                    <div class="grid-range__label">
+                        <span>Card width</span>
+                        <span id="gridCardWidthValue">88%</span>
+                    </div>
+                    <input type="range" min="50" max="100" value="88" id="gridCardWidthInput">
+                </div>
+                <div class="grid-range">
+                    <div class="grid-range__label">
+                        <span>Card height</span>
+                        <span id="gridCardHeightValue">72%</span>
+                    </div>
+                    <input type="range" min="50" max="120" value="72" id="gridCardHeightInput">
+                </div>
+            </div>
+            <div class="grid-import">
+                <button class="secondary" id="gridImportButton" type="button">Import layout JSON</button>
+                <button class="secondary" id="gridPresetButton" type="button">Load sample</button>
+                <button class="secondary" id="gridClearButton" type="button">Reset grid</button>
+                <input type="file" id="gridImportInput" accept="application/json" hidden>
+            </div>
+            <p class="grid-summary" id="gridSummary">Generated grid · 3 columns · 2 rows · 6 cards</p>
+            <p class="grid-status" id="gridStatus" aria-live="polite"></p>
+        </section>
+        <section class="panel" id="shaderComposerPanel">
+            <h2>Shader Composer</h2>
+            <p class="panel-description">Author the live shader layers that drive the Vib3 visualizer stack and export configurations for production builds.</p>
+            <div class="shader-control-grid">
+                <div class="shader-control">
+                    <label for="shaderBackgroundHue">Background hue</label>
+                    <div class="shader-control__input">
+                        <input type="range" min="0" max="360" value="200" id="shaderBackgroundHue">
+                        <span class="shader-control__value" id="shaderBackgroundHueValue">200°</span>
+                    </div>
+                </div>
+                <div class="shader-control">
+                    <label for="shaderHueSwing">Hue swing</label>
+                    <div class="shader-control__input">
+                        <input type="range" min="0" max="120" value="18" id="shaderHueSwing">
+                        <span class="shader-control__value" id="shaderHueSwingValue">18°</span>
+                    </div>
+                </div>
+                <div class="shader-control">
+                    <label for="shaderArcCount">Arc layers</label>
+                    <div class="shader-control__input">
+                        <input type="number" min="1" max="12" value="6" id="shaderArcCount">
+                        <span class="shader-control__value" id="shaderArcCountValue">6</span>
+                    </div>
+                </div>
+                <div class="shader-control">
+                    <label for="shaderArcSpeed">Arc velocity</label>
+                    <div class="shader-control__input">
+                        <input type="range" min="10" max="160" value="45" id="shaderArcSpeed">
+                        <span class="shader-control__value" id="shaderArcSpeedValue">0.45×</span>
+                    </div>
+                </div>
+                <div class="shader-control">
+                    <label for="shaderHighlightIntensity">Highlight intensity</label>
+                    <div class="shader-control__input">
+                        <input type="range" min="10" max="120" value="90" id="shaderHighlightIntensity">
+                        <span class="shader-control__value" id="shaderHighlightIntensityValue">90%</span>
+                    </div>
+                </div>
+                <div class="shader-control">
+                    <label for="shaderAccentParticles">Accent particles</label>
+                    <div class="shader-control__input">
+                        <input type="range" min="4" max="36" value="18" id="shaderAccentParticles">
+                        <span class="shader-control__value" id="shaderAccentParticlesValue">18</span>
+                    </div>
+                </div>
+            </div>
+            <div class="shader-config-editor">
+                <label for="shaderConfigText">Shader configuration</label>
+                <textarea id="shaderConfigText" spellcheck="false"></textarea>
+            </div>
+            <div class="shader-actions">
+                <button id="shaderApplyBtn" type="button">Apply JSON</button>
+                <button class="secondary" id="shaderExportBtn" type="button">Download JSON</button>
+                <label class="file-input-label" for="shaderImportInput">
+                    <span>Import JSON</span>
+                    <input type="file" id="shaderImportInput" accept="application/json">
+                </label>
+                <button class="secondary" id="shaderResetBtn" type="button">Reset to defaults</button>
+            </div>
+            <p class="shader-status" id="shaderStatus" aria-live="polite"></p>
         </section>
         <section class="panel" id="projectionPanel">
             <h2>4D Projection Field</h2>
@@ -687,6 +1102,1473 @@
         const blueprintStress = document.getElementById('blueprintStress');
         const blueprintZoneList = document.getElementById('blueprintZoneList');
         const downloadBlueprintBtn = document.getElementById('downloadBlueprintBtn');
+        const blueprintOverlayElement = document.querySelector('.blueprint-overlay');
+        const blueprintOverlayOpacitySlider = document.getElementById('blueprintOverlayOpacity');
+        const blueprintOverlayOpacityValue = document.getElementById('blueprintOverlayOpacityValue');
+        const visualizerGridCanvas = document.getElementById('visualizer-grid');
+        const gridImportButton = document.getElementById('gridImportButton');
+        const gridImportInput = document.getElementById('gridImportInput');
+        const gridPresetButton = document.getElementById('gridPresetButton');
+        const gridClearButton = document.getElementById('gridClearButton');
+        const gridColumnInput = document.getElementById('gridColumnInput');
+        const gridRowInput = document.getElementById('gridRowInput');
+        const gridGutterInput = document.getElementById('gridGutterInput');
+        const gridCardWidthInput = document.getElementById('gridCardWidthInput');
+        const gridCardHeightInput = document.getElementById('gridCardHeightInput');
+        const gridSummary = document.getElementById('gridSummary');
+        const gridStatus = document.getElementById('gridStatus');
+        const gridGutterValue = document.getElementById('gridGutterValue');
+        const gridCardWidthValue = document.getElementById('gridCardWidthValue');
+        const gridCardHeightValue = document.getElementById('gridCardHeightValue');
+        const shaderBackgroundHueInput = document.getElementById('shaderBackgroundHue');
+        const shaderBackgroundHueValue = document.getElementById('shaderBackgroundHueValue');
+        const shaderHueSwingInput = document.getElementById('shaderHueSwing');
+        const shaderHueSwingValue = document.getElementById('shaderHueSwingValue');
+        const shaderArcCountInput = document.getElementById('shaderArcCount');
+        const shaderArcCountValue = document.getElementById('shaderArcCountValue');
+        const shaderArcSpeedInput = document.getElementById('shaderArcSpeed');
+        const shaderArcSpeedValue = document.getElementById('shaderArcSpeedValue');
+        const shaderHighlightIntensityInput = document.getElementById('shaderHighlightIntensity');
+        const shaderHighlightIntensityValue = document.getElementById('shaderHighlightIntensityValue');
+        const shaderAccentParticlesInput = document.getElementById('shaderAccentParticles');
+        const shaderAccentParticlesValue = document.getElementById('shaderAccentParticlesValue');
+        const shaderConfigText = document.getElementById('shaderConfigText');
+        const shaderApplyBtn = document.getElementById('shaderApplyBtn');
+        const shaderExportBtn = document.getElementById('shaderExportBtn');
+        const shaderImportInput = document.getElementById('shaderImportInput');
+        const shaderResetBtn = document.getElementById('shaderResetBtn');
+        const shaderStatus = document.getElementById('shaderStatus');
+        const canvasStackElement = document.getElementById('canvasStack');
+        const vib3LayerCanvases = {
+            background: document.getElementById('background-canvas'),
+            shadow: document.getElementById('shadow-canvas'),
+            content: document.getElementById('content-canvas'),
+            highlight: document.getElementById('highlight-canvas'),
+            accent: document.getElementById('accent-canvas')
+        };
+
+        const toNumeric = (value, fallback = 0) => {
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric : fallback;
+        };
+
+        const clampNormalized = (value, min = 0, max = 1) => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return min;
+            }
+            return Math.min(max, Math.max(min, numeric));
+        };
+
+        const clampRange = (value, min, max, fallback) => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return fallback;
+            }
+            return Math.min(max, Math.max(min, numeric));
+        };
+
+        const clampCount = (value) => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return 1;
+            }
+            return Math.min(8, Math.max(1, Math.round(numeric)));
+        };
+
+        function createDefaultShaderConfig() {
+            return {
+                background: {
+                    baseHue: 200,
+                    hueSwing: 18,
+                    hueSpeed: 0.25,
+                    gradientInner: 0.12,
+                    gradientOuter: 0.75,
+                    ringCount: 4,
+                    ringOpacity: 0.28,
+                    ringOpacityFalloff: 0.05,
+                    ringHueStep: 6,
+                    rotationSpeed: 0.05
+                },
+                arcs: {
+                    loopCount: 6,
+                    radiusStart: 0.22,
+                    radiusStep: 0.08,
+                    arcBase: 0.32,
+                    arcSwing: 0.12,
+                    speed: 0.45,
+                    lineWidth: 0.015,
+                    widthFalloff: 0.12,
+                    alphaBase: 0.8,
+                    alphaFalloff: 0.1,
+                    color: [76, 159, 255]
+                },
+                highlight: {
+                    orbitRadius: 0.32,
+                    rotationSpeed: 0.8,
+                    intensity: 0.9,
+                    lightenAlpha: 0.4,
+                    lightenWidthScale: 0.085
+                },
+                accent: {
+                    particleCount: 18,
+                    baseRadius: 0.18,
+                    radiusSwing: 0.28,
+                    particleSize: 0.012,
+                    sizeSwing: 0.3,
+                    orbitSpeed: 0.35,
+                    wobbleSpeed: 0.7
+                },
+                anchored: {
+                    arcSpeedBase: 0.6,
+                    arcSpeedVariance: 0.05,
+                    arcSpanBase: 0.4,
+                    arcSpanSwing: 0.18,
+                    arcWidthScale: 0.24,
+                    highlightGlow: 0.4,
+                    accentParticleCount: 8,
+                    accentOrbitScale: 0.6
+                }
+            };
+        }
+
+        const shaderBounds = {
+            background: {
+                baseHue: [0, 360],
+                hueSwing: [0, 120],
+                hueSpeed: [0.05, 1.5],
+                gradientInner: [0.05, 0.4],
+                gradientOuter: [0.5, 1.2],
+                ringCount: [1, 8],
+                ringOpacity: [0, 1],
+                ringOpacityFalloff: [0, 0.4],
+                ringHueStep: [0, 90],
+                rotationSpeed: [0, 0.3]
+            },
+            arcs: {
+                loopCount: [1, 12],
+                radiusStart: [0.05, 0.5],
+                radiusStep: [0, 0.4],
+                arcBase: [0.1, 1.2],
+                arcSwing: [0, 0.6],
+                speed: [0.1, 2],
+                lineWidth: [0.002, 0.05],
+                widthFalloff: [0, 0.4],
+                alphaBase: [0, 1],
+                alphaFalloff: [0, 0.5]
+            },
+            highlight: {
+                orbitRadius: [0.05, 0.6],
+                rotationSpeed: [0.1, 2],
+                intensity: [0, 1.2],
+                lightenAlpha: [0, 1],
+                lightenWidthScale: [0.02, 0.2]
+            },
+            accent: {
+                particleCount: [1, 64],
+                baseRadius: [0.05, 0.5],
+                radiusSwing: [0, 0.5],
+                particleSize: [0.002, 0.05],
+                sizeSwing: [0, 0.8],
+                orbitSpeed: [0.05, 2],
+                wobbleSpeed: [0.05, 2]
+            },
+            anchored: {
+                arcSpeedBase: [0.1, 2],
+                arcSpeedVariance: [0, 0.5],
+                arcSpanBase: [0.1, 1],
+                arcSpanSwing: [0, 0.6],
+                arcWidthScale: [0.05, 0.6],
+                highlightGlow: [0, 1],
+                accentParticleCount: [1, 24],
+                accentOrbitScale: [0.2, 1.2]
+            }
+        };
+
+        function cloneShaderConfig(config = createDefaultShaderConfig()) {
+            return JSON.parse(JSON.stringify(config));
+        }
+
+        function mergeShaderConfig(base, partial) {
+            const target = cloneShaderConfig(base);
+            if (!partial || typeof partial !== 'object') {
+                return target;
+            }
+            for (const [section, values] of Object.entries(partial)) {
+                if (!(section in target)) continue;
+                if (!values || typeof values !== 'object') continue;
+                for (const [key, value] of Object.entries(values)) {
+                    if (!(key in target[section])) continue;
+                    if (Array.isArray(target[section][key])) {
+                        if (Array.isArray(value)) {
+                            target[section][key] = value.map((entry, index) => {
+                                const numeric = Number(entry);
+                                if (Number.isFinite(numeric)) {
+                                    return numeric;
+                                }
+                                const fallback = target[section][key][index] ?? 0;
+                                return Number(fallback) || 0;
+                            });
+                        }
+                        continue;
+                    }
+                    const numeric = Number(value);
+                    if (Number.isFinite(numeric)) {
+                        target[section][key] = numeric;
+                    }
+                }
+            }
+            return target;
+        }
+
+        function clampShaderValue(section, key, value) {
+            const bounds = shaderBounds[section]?.[key];
+            if (!bounds) {
+                return value;
+            }
+            const [min, max] = bounds;
+            if (!Number.isFinite(value)) {
+                return min;
+            }
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function sanitizeShaderConfig(partial) {
+            const merged = mergeShaderConfig(createDefaultShaderConfig(), partial);
+            for (const [section, values] of Object.entries(merged)) {
+                if (!values || typeof values !== 'object') continue;
+                for (const [key, value] of Object.entries(values)) {
+                    if (Array.isArray(value)) {
+                        merged[section][key] = value.map((entry) => clampShaderValue(section, key, Number(entry)));
+                        continue;
+                    }
+                    merged[section][key] = clampShaderValue(section, key, Number(value));
+                }
+            }
+            merged.background.ringCount = Math.round(merged.background.ringCount);
+            merged.arcs.loopCount = Math.round(merged.arcs.loopCount);
+            merged.accent.particleCount = Math.round(merged.accent.particleCount);
+            merged.anchored.accentParticleCount = Math.round(merged.anchored.accentParticleCount);
+            return merged;
+        }
+
+        const shaderDefaults = createDefaultShaderConfig();
+        let currentShaderConfig = cloneShaderConfig(shaderDefaults);
+
+        function drawRoundedRectPath(context, x, y, width, height, radius) {
+            const safeRadius = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
+            context.moveTo(x + safeRadius, y);
+            context.lineTo(x + width - safeRadius, y);
+            context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+            context.lineTo(x + width, y + height - safeRadius);
+            context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+            context.lineTo(x + safeRadius, y + height);
+            context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+            context.lineTo(x, y + safeRadius);
+            context.quadraticCurveTo(x, y, x + safeRadius, y);
+        }
+
+        const gridOverlayState = {
+            canvas: visualizerGridCanvas || null,
+            context: visualizerGridCanvas ? visualizerGridCanvas.getContext('2d') : null,
+            size: 0,
+            ratio: window.devicePixelRatio || 1
+        };
+
+        let latestGridSpec = null;
+        let gridOverlayResizeObserver = null;
+
+        function renderGridOverlay(spec = latestGridSpec) {
+            const { context, size } = gridOverlayState;
+            if (!context || !size) {
+                return;
+            }
+
+            context.clearRect(0, 0, size, size);
+            const cards = Array.isArray(spec?.cards) ? spec.cards : [];
+            if (!cards.length) {
+                return;
+            }
+
+            context.save();
+            context.globalAlpha = 0.85;
+            context.lineWidth = Math.max(1.2, size * 0.0025);
+            context.strokeStyle = 'rgba(76, 159, 255, 0.38)';
+            context.fillStyle = 'rgba(76, 159, 255, 0.12)';
+            context.font = `${Math.max(11, size * 0.03)}px 'Inter', system-ui`;
+            context.textAlign = 'left';
+            context.textBaseline = 'top';
+
+            cards.forEach((card, index) => {
+                const x = clampNormalized(card.x, 0, 1) * size;
+                const y = clampNormalized(card.y, 0, 1) * size;
+                const width = clampNormalized(card.width, 0, 1) * size;
+                const height = clampNormalized(card.height, 0, 1) * size;
+                const radius = Math.min(width, height) * 0.18;
+
+                context.beginPath();
+                drawRoundedRectPath(context, x, y, width, height, radius);
+                context.fill();
+                context.stroke();
+
+                const label = `Card ${index + 1}`;
+                context.fillStyle = 'rgba(245, 247, 251, 0.68)';
+                context.fillText(label, x + 10, y + 8);
+                context.fillStyle = 'rgba(76, 159, 255, 0.12)';
+            });
+
+            context.restore();
+        }
+
+        function resizeGridOverlay(force = false) {
+            const { canvas, context } = gridOverlayState;
+            if (!canvas || !context || !blueprintOverlayElement) {
+                return;
+            }
+
+            const rect = blueprintOverlayElement.getBoundingClientRect();
+            const nextSize = Math.floor(Math.min(rect.width || 0, rect.height || 0));
+            if (!nextSize || (!force && nextSize === gridOverlayState.size)) {
+                return;
+            }
+
+            const ratio = window.devicePixelRatio || 1;
+            gridOverlayState.size = nextSize;
+            gridOverlayState.ratio = ratio;
+
+            canvas.width = Math.floor(nextSize * ratio);
+            canvas.height = Math.floor(nextSize * ratio);
+            canvas.style.width = `${nextSize}px`;
+            canvas.style.height = `${nextSize}px`;
+
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.scale(ratio, ratio);
+            renderGridOverlay();
+        }
+
+        function createVib3VisualizerStack({ container, canvases = {}, config } = {}) {
+            if (!container) {
+                return {
+                    start() {},
+                    stop() {},
+                    resize() {},
+                    setGridSpec() { return null; },
+                    getGridSpec() { return null; }
+                };
+            }
+
+            const contexts = new Map();
+            for (const [layer, canvas] of Object.entries(canvases)) {
+                if (!canvas) continue;
+                const context = canvas.getContext('2d');
+                if (context) {
+                    contexts.set(layer, { canvas, context });
+                }
+            }
+
+            const state = {
+                frameId: null,
+                size: 0,
+                time: 0,
+                grid: null,
+                gridAnchors: [],
+                gridBuckets: { columns: [], rows: [] },
+                shader: sanitizeShaderConfig(config ?? shaderDefaults)
+            };
+
+            const clamp = (value, min = 0, max = 1) => {
+                const numeric = Number(value);
+                if (!Number.isFinite(numeric)) {
+                    return min;
+                }
+                return Math.min(max, Math.max(min, numeric));
+            };
+
+            const getRatio = () => window.devicePixelRatio || 1;
+
+            function resize() {
+                const rect = container.getBoundingClientRect();
+                const nextSize = Math.floor(Math.min(rect.width || 0, rect.height || 0));
+                if (!nextSize || nextSize === state.size) {
+                    return;
+                }
+                state.size = nextSize;
+                const ratio = getRatio();
+                for (const { canvas, context } of contexts.values()) {
+                    canvas.width = Math.floor(nextSize * ratio);
+                    canvas.height = Math.floor(nextSize * ratio);
+                    context.setTransform(1, 0, 0, 1, 0, 0);
+                    context.scale(ratio, ratio);
+                }
+            }
+
+            function clearContext(context) {
+                if (!context || !state.size) return;
+                context.clearRect(0, 0, state.size, state.size);
+            }
+
+            function drawBackground(context, time) {
+                if (!context || !state.size) return;
+                clearContext(context);
+                const size = state.size;
+                const center = size / 2;
+                const options = state.shader.background;
+                const hue = options.baseHue + Math.sin(time * options.hueSpeed) * options.hueSwing;
+                const gradient = context.createRadialGradient(
+                    center,
+                    center,
+                    size * options.gradientInner,
+                    center,
+                    center,
+                    size * options.gradientOuter
+                );
+                gradient.addColorStop(0, `hsla(${hue}, 95%, 70%, 0.45)`);
+                gradient.addColorStop(0.52, `hsla(${hue - 28}, 75%, 32%, 0.35)`);
+                gradient.addColorStop(1, 'rgba(4, 9, 20, 0.96)');
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, size, size);
+
+                context.save();
+                context.translate(center, center);
+                context.rotate(time * options.rotationSpeed);
+                const ringCount = Math.max(1, Math.round(options.ringCount));
+                for (let ring = 0; ring < ringCount; ring += 1) {
+                    const ringOpacity = Math.max(0, options.ringOpacity - ring * options.ringOpacityFalloff);
+                    context.globalAlpha = ringOpacity;
+                    context.beginPath();
+                    context.ellipse(0, 0, size * (0.22 + ring * 0.12), size * (0.18 + ring * 0.1), 0, 0, Math.PI * 2);
+                    context.strokeStyle = `hsla(${hue + ring * options.ringHueStep}, 88%, ${68 - ring * 8}%, ${ringOpacity})`;
+                    context.lineWidth = size * 0.004 * (1 - ring * 0.12);
+                    context.stroke();
+                    context.rotate(Math.PI / 7);
+                }
+                context.restore();
+            }
+
+            function drawShadow(context) {
+                if (!context || !state.size) return;
+                clearContext(context);
+                const size = state.size;
+                const center = size / 2;
+                context.save();
+                context.fillStyle = 'rgba(2, 6, 12, 0.6)';
+                context.filter = 'blur(32px)';
+                context.beginPath();
+                context.ellipse(center, center * 1.08, size * 0.42, size * 0.22, 0, 0, Math.PI * 2);
+                context.fill();
+                context.restore();
+            }
+
+            function drawDefaultContent(context, time) {
+                const size = state.size;
+                const center = size / 2;
+                const arcs = state.shader.arcs;
+                const loopCount = Math.max(1, Math.round(arcs.loopCount));
+                const [r, g, b] = Array.isArray(arcs.color) && arcs.color.length >= 3
+                    ? arcs.color
+                    : [76, 159, 255];
+                context.save();
+                context.translate(center, center);
+                for (let index = 0; index < loopCount; index += 1) {
+                    const radius = size * Math.max(0.05, arcs.radiusStart + index * arcs.radiusStep);
+                    const arcSpan = Math.PI * Math.max(0.05, arcs.arcBase + arcs.arcSwing * Math.sin(time * 0.5 + index));
+                    const offset = time * (arcs.speed + index * 0.08);
+                    const layerAlpha = Math.max(0, Math.min(1, arcs.alphaBase - index * arcs.alphaFalloff));
+                    const widthFactor = Math.max(0.1, 1 - index * arcs.widthFalloff);
+                    context.beginPath();
+                    context.arc(0, 0, radius, offset, offset + arcSpan);
+                    context.strokeStyle = `rgba(${r}, ${g}, ${b}, ${layerAlpha || 0})`;
+                    context.lineWidth = size * arcs.lineWidth * widthFactor;
+                    context.lineCap = 'round';
+                    context.globalAlpha = Math.min(1, layerAlpha + 0.2);
+                    context.stroke();
+                }
+                context.restore();
+            }
+
+            function drawGridCardGlow(context, anchor, time, index, size) {
+                const width = Math.max(size * 0.05, anchor.width * size);
+                const height = Math.max(size * 0.05, anchor.height * size);
+                const x = anchor.x * size - width / 2;
+                const y = anchor.y * size - height / 2;
+                const radius = Math.min(width, height) * 0.22;
+                const glow = Math.max(0, Math.min(1, state.shader.anchored.highlightGlow));
+
+                context.save();
+                context.globalCompositeOperation = 'lighter';
+                context.lineWidth = Math.max(1.2, Math.min(width, height) * 0.08);
+                const strokeAlpha = glow * (0.4 + 0.2 * Math.sin(time * 0.8 + index));
+                context.strokeStyle = `rgba(118, 202, 255, ${Math.max(0, Math.min(1, strokeAlpha))})`;
+                context.beginPath();
+                drawRoundedRectPath(context, x, y, width, height, radius);
+                context.stroke();
+                context.restore();
+
+                context.save();
+                context.globalAlpha = glow * (0.16 + 0.1 * Math.sin(time * 0.9 + index));
+                context.fillStyle = 'rgba(76, 159, 255, 0.22)';
+                context.beginPath();
+                drawRoundedRectPath(context, x, y, width, height, radius);
+                context.fill();
+                context.restore();
+            }
+
+            function drawContent(context, time) {
+                if (!context || !state.size) return;
+                clearContext(context);
+                const anchors = state.gridAnchors;
+                if (!anchors.length) {
+                    drawDefaultContent(context, time);
+                    return;
+                }
+
+                const size = state.size;
+                const arcs = state.shader.arcs;
+                const anchored = state.shader.anchored;
+                const [r, g, b] = Array.isArray(arcs.color) && arcs.color.length >= 3
+                    ? arcs.color
+                    : [76, 159, 255];
+                context.save();
+                anchors.forEach((anchor, index) => {
+                    const cx = anchor.x * size;
+                    const cy = anchor.y * size;
+                    const baseRadius = Math.min(anchor.width, anchor.height) * size * 0.48;
+                    const offset = time * (anchored.arcSpeedBase + (anchor.column ?? index) * anchored.arcSpeedVariance);
+                    const arcSpan = Math.PI * Math.max(0.05, anchored.arcSpanBase + anchored.arcSpanSwing * Math.sin(time * 0.6 + index));
+                    const strokeAlpha = Math.max(0, Math.min(1, arcs.alphaBase + 0.16 * Math.sin(time * 0.4 + index)));
+                    context.beginPath();
+                    context.arc(cx, cy, Math.max(baseRadius, size * 0.06), offset, offset + arcSpan);
+                    context.strokeStyle = `rgba(${r}, ${g}, ${b}, ${strokeAlpha})`;
+                    context.lineWidth = Math.max(1.4, Math.min(baseRadius, size * 0.18) * anchored.arcWidthScale);
+                    context.lineCap = 'round';
+                    context.globalAlpha = Math.min(1, arcs.alphaBase + 0.3);
+                    context.stroke();
+
+                    drawGridCardGlow(context, anchor, time, index, size);
+                });
+                context.restore();
+            }
+
+            function drawDefaultHighlight(context, time) {
+                const size = state.size;
+                const center = size / 2;
+                const highlight = state.shader.highlight;
+                const orbitRadius = size * highlight.orbitRadius;
+                const angle = time * highlight.rotationSpeed;
+                const x = center + Math.cos(angle) * orbitRadius;
+                const y = center + Math.sin(angle * 0.9) * orbitRadius * 0.7;
+                const gradient = context.createRadialGradient(x, y, size * 0.04, x, y, size * 0.25);
+                gradient.addColorStop(0, 'rgba(120, 212, 255, 0.9)');
+                gradient.addColorStop(0.45, 'rgba(120, 212, 255, 0.35)');
+                gradient.addColorStop(1, 'rgba(120, 212, 255, 0)');
+                context.globalAlpha = Math.min(1, highlight.intensity);
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, size, size);
+
+                context.save();
+                context.globalCompositeOperation = 'lighter';
+                context.globalAlpha = Math.min(1, highlight.lightenAlpha);
+                context.translate(center, center);
+                context.rotate(angle * 0.6);
+                context.beginPath();
+                context.ellipse(0, 0, size * 0.36, size * 0.18, 0, 0, Math.PI * 2);
+                context.strokeStyle = 'rgba(76, 159, 255, 0.45)';
+                context.lineWidth = size * highlight.lightenWidthScale;
+                context.stroke();
+                context.restore();
+            }
+
+            function drawHighlight(context, time) {
+                if (!context || !state.size) return;
+                clearContext(context);
+                const anchors = state.gridAnchors;
+                if (!anchors.length) {
+                    drawDefaultHighlight(context, time);
+                    return;
+                }
+
+                const size = state.size;
+                const highlight = state.shader.highlight;
+                const sequence = time * 0.75;
+                const count = anchors.length;
+                const activeIndex = Math.floor(sequence % count);
+                const blend = count > 1 ? sequence % 1 : 0;
+                const anchor = anchors[activeIndex];
+                const nextAnchor = anchors[(activeIndex + 1) % count];
+                const cx = (anchor.x * (1 - blend) + nextAnchor.x * blend) * size;
+                const cy = (anchor.y * (1 - blend) + nextAnchor.y * blend) * size;
+                const radius = Math.min(anchor.width, anchor.height) * size * 0.85;
+                const gradient = context.createRadialGradient(cx, cy, radius * 0.12, cx, cy, radius);
+                gradient.addColorStop(0, 'rgba(120, 212, 255, 0.95)');
+                gradient.addColorStop(0.45, 'rgba(120, 212, 255, 0.35)');
+                gradient.addColorStop(1, 'rgba(120, 212, 255, 0)');
+                context.globalAlpha = Math.min(1, highlight.intensity);
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, size, size);
+
+                context.save();
+                context.globalCompositeOperation = 'lighter';
+                context.globalAlpha = Math.min(1, highlight.lightenAlpha + 0.05);
+                const width = Math.max(size * 0.12, anchor.width * size * 1.25);
+                const height = Math.max(size * 0.08, anchor.height * size * 1.05);
+                context.beginPath();
+                drawRoundedRectPath(context, cx - width / 2, cy - height / 2, width, height, Math.min(width, height) * 0.32);
+                context.strokeStyle = 'rgba(76, 159, 255, 0.45)';
+                context.lineWidth = Math.max(1.2, Math.min(width, height) * highlight.lightenWidthScale);
+                context.stroke();
+                context.restore();
+            }
+
+            function drawDefaultAccent(context, time) {
+                const size = state.size;
+                const center = size / 2;
+                const accent = state.shader.accent;
+                const particleCount = Math.max(1, Math.round(accent.particleCount));
+                context.save();
+                context.translate(center, center);
+                context.globalCompositeOperation = 'lighter';
+                for (let index = 0; index < particleCount; index += 1) {
+                    const theta = (index / particleCount) * Math.PI * 2 + time * accent.orbitSpeed;
+                    const radius = size * Math.max(0.05, accent.baseRadius + accent.radiusSwing * Math.sin(time * 0.6 + index));
+                    const x = Math.cos(theta) * radius;
+                    const y = Math.sin(theta) * radius * 0.9;
+                    context.beginPath();
+                    context.fillStyle = `rgba(118, 202, 255, ${0.55 - index * 0.01})`;
+                    context.globalAlpha = 0.45 + 0.35 * Math.sin(time * accent.wobbleSpeed + index);
+                    context.arc(
+                        x,
+                        y,
+                        size * accent.particleSize * (1 + accent.sizeSwing * Math.sin(time * accent.wobbleSpeed + index)),
+                        0,
+                        Math.PI * 2
+                    );
+                    context.fill();
+                }
+                context.restore();
+            }
+
+            function drawAccent(context, time) {
+                if (!context || !state.size) return;
+                clearContext(context);
+                const anchors = state.gridAnchors;
+                if (!anchors.length) {
+                    drawDefaultAccent(context, time);
+                    return;
+                }
+
+                const size = state.size;
+                const accent = state.shader.accent;
+                const anchored = state.shader.anchored;
+                context.save();
+                context.globalCompositeOperation = 'lighter';
+                anchors.forEach((anchor, index) => {
+                    const cx = anchor.x * size;
+                    const cy = anchor.y * size;
+                    const orbital = Math.min(anchor.width, anchor.height) * size * anchored.accentOrbitScale;
+                    const particles = Math.max(1, Math.round(anchored.accentParticleCount));
+                    for (let i = 0; i < particles; i += 1) {
+                        const theta = time * accent.orbitSpeed * 2.7 + (index + i) * (Math.PI * 2 / particles);
+                        const radius = orbital * (0.45 + 0.25 * Math.sin(time * accent.wobbleSpeed + i));
+                        const wobble = 0.8 + 0.2 * Math.sin(time * accent.wobbleSpeed + index + i);
+                        const x = cx + Math.cos(theta) * radius;
+                        const y = cy + Math.sin(theta * 0.92) * radius * 0.9;
+                        context.beginPath();
+                        context.fillStyle = `rgba(118, 202, 255, ${0.45 + 0.2 * Math.sin(time * accent.orbitSpeed + index + i)})`;
+                        context.globalAlpha = 0.45 + 0.35 * Math.sin(time * accent.wobbleSpeed + index + i);
+                        const particleRadius = Math.max(1.2, Math.min(anchor.width, anchor.height) * size * accent.particleSize * wobble);
+                        context.arc(x, y, particleRadius, 0, Math.PI * 2);
+                        context.fill();
+                    }
+                });
+                context.restore();
+            }
+
+            function buildBuckets(cards, axis) {
+                if (!Array.isArray(cards) || cards.length === 0) {
+                    return [];
+                }
+                const tolerance = 0.04;
+                const centers = cards
+                    .map(card => {
+                        const dimension = axis === 'x' ? card.width : card.height;
+                        const position = axis === 'x' ? card.x : card.y;
+                        return clamp(position + dimension / 2, 0, 1);
+                    })
+                    .sort((a, b) => a - b);
+                const buckets = [];
+                centers.forEach(center => {
+                    if (!buckets.some(value => Math.abs(value - center) <= tolerance)) {
+                        buckets.push(center);
+                    }
+                });
+                return buckets;
+            }
+
+            function findBucket(value, buckets) {
+                if (!Array.isArray(buckets) || buckets.length === 0) {
+                    return 0;
+                }
+                let closestIndex = 0;
+                let closestDistance = Number.POSITIVE_INFINITY;
+                for (let index = 0; index < buckets.length; index += 1) {
+                    const distance = Math.abs(buckets[index] - value);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestIndex = index;
+                    }
+                }
+                return closestIndex;
+            }
+
+            function setGridSpec(spec = null) {
+                if (!spec) {
+                    state.grid = null;
+                    state.gridAnchors = [];
+                    state.gridBuckets = { columns: [], rows: [] };
+                    return null;
+                }
+
+                const normalizedCards = Array.isArray(spec.cards)
+                    ? spec.cards
+                        .map(card => ({
+                            x: clamp(card.x ?? card.left ?? 0, 0, 1),
+                            y: clamp(card.y ?? card.top ?? 0, 0, 1),
+                            width: clamp(card.width ?? card.w ?? 0, 0, 1),
+                            height: clamp(card.height ?? card.h ?? 0, 0, 1)
+                        }))
+                        .filter(card => card.width > 0 && card.height > 0)
+                    : [];
+
+                const columnBuckets = buildBuckets(normalizedCards, 'x');
+                const rowBuckets = buildBuckets(normalizedCards, 'y');
+                const anchors = normalizedCards.map(card => {
+                    const anchor = {
+                        x: clamp(card.x + card.width / 2, 0, 1),
+                        y: clamp(card.y + card.height / 2, 0, 1),
+                        width: clamp(card.width, 0, 1),
+                        height: clamp(card.height, 0, 1)
+                    };
+                    anchor.column = findBucket(anchor.x, columnBuckets);
+                    anchor.row = findBucket(anchor.y, rowBuckets);
+                    return anchor;
+                });
+
+                const columnValue = Number(spec.columns);
+                const rowValue = Number(spec.rows);
+                const resolvedColumns = Number.isFinite(columnValue) && columnValue > 0
+                    ? Math.min(12, Math.floor(columnValue))
+                    : columnBuckets.length;
+                const resolvedRows = Number.isFinite(rowValue) && rowValue > 0
+                    ? Math.min(12, Math.floor(rowValue))
+                    : rowBuckets.length;
+
+                state.grid = {
+                    mode: spec.mode || 'generated',
+                    label: spec.label || null,
+                    columns: resolvedColumns,
+                    rows: resolvedRows,
+                    cards: normalizedCards
+                };
+                state.gridAnchors = anchors;
+                state.gridBuckets = { columns: columnBuckets, rows: rowBuckets };
+                return getGridSpec();
+            }
+
+            function getGridSpec() {
+                if (!state.grid) {
+                    return null;
+                }
+                return {
+                    mode: state.grid.mode,
+                    label: state.grid.label,
+                    columns: state.grid.columns,
+                    rows: state.grid.rows,
+                    cards: state.grid.cards.map(card => ({ ...card }))
+                };
+            }
+
+            function getShaderConfig() {
+                return cloneShaderConfig(state.shader);
+            }
+
+            function setShaderConfig(nextConfig, options = {}) {
+                if (options.merge) {
+                    state.shader = sanitizeShaderConfig(mergeShaderConfig(state.shader, nextConfig));
+                } else {
+                    state.shader = sanitizeShaderConfig(nextConfig ?? state.shader);
+                }
+                return getShaderConfig();
+            }
+
+            function renderFrame(timestamp) {
+                state.frameId = window.requestAnimationFrame(renderFrame);
+                resize();
+                if (!state.size) {
+                    return;
+                }
+                state.time = timestamp / 1000;
+                const time = state.time;
+                const background = contexts.get('background')?.context;
+                const shadow = contexts.get('shadow')?.context;
+                const content = contexts.get('content')?.context;
+                const highlight = contexts.get('highlight')?.context;
+                const accent = contexts.get('accent')?.context;
+
+                drawBackground(background, time);
+                drawShadow(shadow);
+                drawContent(content, time);
+                drawHighlight(highlight, time);
+                drawAccent(accent, time);
+            }
+
+            function start() {
+                if (state.frameId !== null) {
+                    return;
+                }
+                resize();
+                state.frameId = window.requestAnimationFrame(renderFrame);
+            }
+
+            function stop() {
+                if (state.frameId !== null) {
+                    window.cancelAnimationFrame(state.frameId);
+                    state.frameId = null;
+                }
+            }
+
+            return { start, stop, resize, setGridSpec, getGridSpec, setShaderConfig, getShaderConfig };
+        }
+
+        const vib3Visualizer = createVib3VisualizerStack({
+            container: canvasStackElement,
+            canvases: vib3LayerCanvases,
+            config: currentShaderConfig
+        });
+        vib3Visualizer.start();
+        window.addEventListener('resize', () => {
+            vib3Visualizer.resize();
+            resizeGridOverlay(true);
+        });
+        window.vib3Visualizer = vib3Visualizer;
+        if (typeof vib3Visualizer.getShaderConfig === 'function') {
+            currentShaderConfig = vib3Visualizer.getShaderConfig();
+        }
+
+        let shaderFormSyncing = false;
+
+        function updateShaderStatus(message, tone = 'info') {
+            if (!shaderStatus) return;
+            shaderStatus.textContent = message || '';
+            shaderStatus.dataset.tone = tone;
+        }
+
+        function refreshShaderConfigUI({ preserveText = false } = {}) {
+            if (shaderFormSyncing) {
+                return;
+            }
+            shaderFormSyncing = true;
+            const shader = currentShaderConfig;
+            if (shaderBackgroundHueInput) {
+                shaderBackgroundHueInput.value = Math.round(shader.background.baseHue);
+                if (shaderBackgroundHueValue) {
+                    shaderBackgroundHueValue.textContent = `${Math.round(shader.background.baseHue)}°`;
+                }
+            }
+            if (shaderHueSwingInput) {
+                shaderHueSwingInput.value = Math.round(shader.background.hueSwing);
+                if (shaderHueSwingValue) {
+                    shaderHueSwingValue.textContent = `${Math.round(shader.background.hueSwing)}°`;
+                }
+            }
+            if (shaderArcCountInput) {
+                shaderArcCountInput.value = Math.max(1, Math.round(shader.arcs.loopCount));
+                if (shaderArcCountValue) {
+                    shaderArcCountValue.textContent = `${Math.max(1, Math.round(shader.arcs.loopCount))}`;
+                }
+            }
+            if (shaderArcSpeedInput) {
+                shaderArcSpeedInput.value = Math.round(shader.arcs.speed * 100);
+                if (shaderArcSpeedValue) {
+                    shaderArcSpeedValue.textContent = `${shader.arcs.speed.toFixed(2)}×`;
+                }
+            }
+            if (shaderHighlightIntensityInput) {
+                shaderHighlightIntensityInput.value = Math.round(shader.highlight.intensity * 100);
+                if (shaderHighlightIntensityValue) {
+                    shaderHighlightIntensityValue.textContent = `${Math.round(shader.highlight.intensity * 100)}%`;
+                }
+            }
+            if (shaderAccentParticlesInput) {
+                shaderAccentParticlesInput.value = Math.max(1, Math.round(shader.accent.particleCount));
+                if (shaderAccentParticlesValue) {
+                    shaderAccentParticlesValue.textContent = `${Math.max(1, Math.round(shader.accent.particleCount))}`;
+                }
+            }
+            if (shaderConfigText && !preserveText) {
+                shaderConfigText.value = JSON.stringify(shader, null, 2);
+            }
+            shaderFormSyncing = false;
+        }
+
+        function applyShaderConfig(config, { merge = false, message } = {}) {
+            if (!vib3Visualizer?.setShaderConfig) {
+                return;
+            }
+            if (merge) {
+                currentShaderConfig = vib3Visualizer.setShaderConfig(config, { merge: true });
+            } else {
+                currentShaderConfig = vib3Visualizer.setShaderConfig(config);
+            }
+            refreshShaderConfigUI();
+            if (message) {
+                updateShaderStatus(message, 'success');
+            }
+        }
+
+        function handleShaderRangeUpdate(input, formatter, update) {
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const nextValue = update();
+                applyShaderConfig(currentShaderConfig, { message: 'Live shader preview updated.' });
+                if (typeof formatter === 'function') {
+                    formatter(nextValue);
+                }
+            });
+        }
+
+        handleShaderRangeUpdate(shaderBackgroundHueInput, (value) => {
+            if (shaderBackgroundHueValue) {
+                shaderBackgroundHueValue.textContent = `${Math.round(value)}°`;
+            }
+        }, () => {
+            currentShaderConfig.background.baseHue = shaderBackgroundHueInput.valueAsNumber;
+            return currentShaderConfig.background.baseHue;
+        });
+
+        handleShaderRangeUpdate(shaderHueSwingInput, (value) => {
+            if (shaderHueSwingValue) {
+                shaderHueSwingValue.textContent = `${Math.round(value)}°`;
+            }
+        }, () => {
+            currentShaderConfig.background.hueSwing = shaderHueSwingInput.valueAsNumber;
+            return currentShaderConfig.background.hueSwing;
+        });
+
+        if (shaderArcCountInput) {
+            shaderArcCountInput.addEventListener('change', () => {
+                const numeric = Number(shaderArcCountInput.value);
+                const next = Number.isFinite(numeric) ? Math.min(12, Math.max(1, Math.round(numeric))) : 6;
+                currentShaderConfig.arcs.loopCount = next;
+                applyShaderConfig(currentShaderConfig, { message: 'Arc layers updated.' });
+            });
+        }
+
+        handleShaderRangeUpdate(shaderArcSpeedInput, (value) => {
+            if (shaderArcSpeedValue) {
+                shaderArcSpeedValue.textContent = `${(value / 100).toFixed(2)}×`;
+            }
+        }, () => {
+            currentShaderConfig.arcs.speed = shaderArcSpeedInput.valueAsNumber / 100;
+            return currentShaderConfig.arcs.speed;
+        });
+
+        handleShaderRangeUpdate(shaderHighlightIntensityInput, (value) => {
+            if (shaderHighlightIntensityValue) {
+                shaderHighlightIntensityValue.textContent = `${Math.round(value)}%`;
+            }
+        }, () => {
+            currentShaderConfig.highlight.intensity = shaderHighlightIntensityInput.valueAsNumber / 100;
+            return currentShaderConfig.highlight.intensity;
+        });
+
+        handleShaderRangeUpdate(shaderAccentParticlesInput, (value) => {
+            if (shaderAccentParticlesValue) {
+                shaderAccentParticlesValue.textContent = `${Math.round(value)}`;
+            }
+        }, () => {
+            currentShaderConfig.accent.particleCount = shaderAccentParticlesInput.valueAsNumber;
+            currentShaderConfig.anchored.accentParticleCount = Math.max(
+                currentShaderConfig.anchored.accentParticleCount,
+                shaderAccentParticlesInput.valueAsNumber / 2
+            );
+            return currentShaderConfig.accent.particleCount;
+        });
+
+        shaderApplyBtn?.addEventListener('click', () => {
+            if (!shaderConfigText) {
+                return;
+            }
+            try {
+                const parsed = JSON.parse(shaderConfigText.value);
+                applyShaderConfig(parsed, { message: 'Shader configuration applied.' });
+            } catch (error) {
+                updateShaderStatus(`Invalid shader JSON: ${error.message}`, 'error');
+            }
+        });
+
+        shaderExportBtn?.addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(currentShaderConfig, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `vib3-shader-config-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            updateShaderStatus('Shader configuration downloaded.', 'success');
+        });
+
+        shaderImportInput?.addEventListener('change', (event) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const parsed = JSON.parse(reader.result);
+                    applyShaderConfig(parsed, { message: `Loaded shader from ${file.name}.` });
+                } catch (error) {
+                    updateShaderStatus(`Failed to import shader: ${error.message}`, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        });
+
+        shaderResetBtn?.addEventListener('click', () => {
+            currentShaderConfig = cloneShaderConfig(shaderDefaults);
+            applyShaderConfig(currentShaderConfig, { message: 'Shader configuration reset to defaults.' });
+        });
+
+        refreshShaderConfigUI();
+
+        const layoutGridState = {
+            mode: 'generated',
+            columns: clampCount(gridColumnInput?.value ?? 3),
+            rows: clampCount(gridRowInput?.value ?? 2),
+            gutter: clampRange(Number(gridGutterInput?.value ?? 8) / 100, 0.02, 0.18, 0.08),
+            cardWidthRatio: clampRange(Number(gridCardWidthInput?.value ?? 88) / 100, 0.4, 1, 0.88),
+            cardHeightRatio: clampRange(Number(gridCardHeightInput?.value ?? 72) / 100, 0.4, 1.2, 0.72),
+            cards: []
+        };
+
+        function resolveSpacing(count, requested) {
+            if (count <= 0) {
+                return { spacing: 0, available: 1 };
+            }
+            const absoluteMax = 0.35 / Math.max(count, 1);
+            let spacing = Math.min(Math.max(requested, 0), absoluteMax);
+            let available = 1 - spacing * (count + 1);
+            if (available <= 0.05) {
+                spacing = Math.max(0.005, (1 - 0.05) / (count + 1));
+                available = Math.max(0.05, 1 - spacing * (count + 1));
+            }
+            return { spacing, available };
+        }
+
+        function generateCardsFromState(state = layoutGridState) {
+            const columns = clampCount(state.columns);
+            const rows = clampCount(state.rows);
+            const horizontal = resolveSpacing(columns, state.gutter);
+            const vertical = resolveSpacing(rows, state.gutter);
+            const widthRatio = clampRange(state.cardWidthRatio, 0.4, 1, 0.88);
+            const heightRatio = clampRange(state.cardHeightRatio, 0.4, 1.2, 0.72);
+            const cellWidth = columns > 0 ? horizontal.available / columns : 1;
+            const cellHeight = rows > 0 ? vertical.available / rows : 1;
+            const cardWidth = cellWidth * widthRatio;
+            const cardHeight = cellHeight * heightRatio;
+            const offsetX = (cellWidth - cardWidth) / 2;
+            const offsetY = (cellHeight - cardHeight) / 2;
+            const cards = [];
+            for (let row = 0; row < rows; row += 1) {
+                for (let column = 0; column < columns; column += 1) {
+                    const x = horizontal.spacing + column * (cellWidth + horizontal.spacing) + offsetX;
+                    const y = vertical.spacing + row * (cellHeight + vertical.spacing) + offsetY;
+                    cards.push({
+                        x: clampNormalized(x, 0, 1),
+                        y: clampNormalized(y, 0, 1),
+                        width: clampNormalized(cardWidth, 0, 1),
+                        height: clampNormalized(cardHeight, 0, 1)
+                    });
+                }
+            }
+            return cards;
+        }
+
+        function updateGridRangeLabels() {
+            if (gridGutterValue) {
+                gridGutterValue.textContent = `${Math.round(layoutGridState.gutter * 100)}%`;
+            }
+            if (gridCardWidthValue) {
+                gridCardWidthValue.textContent = `${Math.round(layoutGridState.cardWidthRatio * 100)}%`;
+            }
+            if (gridCardHeightValue) {
+                gridCardHeightValue.textContent = `${Math.round(layoutGridState.cardHeightRatio * 100)}%`;
+            }
+        }
+
+        function inferDimensionFromCards(cards, axis) {
+            if (!Array.isArray(cards) || cards.length === 0) {
+                return 0;
+            }
+            const tolerance = 0.05;
+            const centers = cards
+                .map(card => {
+                    const dimension = axis === 'x' ? card.width : card.height;
+                    const position = axis === 'x' ? card.x : card.y;
+                    return clampNormalized(position + dimension / 2, 0, 1);
+                })
+                .sort((a, b) => a - b);
+            const buckets = [];
+            centers.forEach(center => {
+                if (!buckets.some(value => Math.abs(value - center) <= tolerance)) {
+                    buckets.push(center);
+                }
+            });
+            return buckets.length || cards.length;
+        }
+
+        function updateGridSummary(spec, { mode, message } = {}) {
+            if (!gridSummary) {
+                if (gridStatus && message) {
+                    gridStatus.textContent = message;
+                }
+                return;
+            }
+
+            if (!spec || !Array.isArray(spec.cards) || spec.cards.length === 0) {
+                gridSummary.textContent = 'No alignment grid active';
+                if (gridStatus && message) {
+                    gridStatus.textContent = message;
+                }
+                return;
+            }
+
+            const origin = mode === 'custom' || spec.mode === 'custom' ? 'Imported grid' : 'Generated grid';
+            const parts = [];
+            if (Number.isFinite(spec.columns) && spec.columns > 0) {
+                parts.push(`${spec.columns} column${spec.columns === 1 ? '' : 's'}`);
+            }
+            if (Number.isFinite(spec.rows) && spec.rows > 0) {
+                parts.push(`${spec.rows} row${spec.rows === 1 ? '' : 's'}`);
+            }
+            parts.push(`${spec.cards.length} card${spec.cards.length === 1 ? '' : 's'}`);
+            gridSummary.textContent = `${origin} · ${parts.join(' · ')}`;
+            if (gridStatus && message) {
+                gridStatus.textContent = message;
+            }
+        }
+
+        function applyGridSpec(spec, options = {}) {
+            if (!vib3Visualizer?.setGridSpec) {
+                latestGridSpec = spec;
+                renderGridOverlay(spec);
+                updateGridSummary(spec, options);
+                return spec;
+            }
+            latestGridSpec = vib3Visualizer.setGridSpec(spec) || spec;
+            renderGridOverlay(latestGridSpec);
+            updateGridSummary(latestGridSpec, options);
+            return latestGridSpec;
+        }
+
+        function rebuildGeneratedGrid(message) {
+            layoutGridState.mode = 'generated';
+            layoutGridState.columns = clampCount(layoutGridState.columns);
+            layoutGridState.rows = clampCount(layoutGridState.rows);
+            layoutGridState.cards = generateCardsFromState(layoutGridState);
+            const spec = {
+                mode: 'generated',
+                label: 'Generated grid',
+                columns: layoutGridState.columns,
+                rows: layoutGridState.rows,
+                cards: layoutGridState.cards
+            };
+            applyGridSpec(spec, {
+                mode: 'generated',
+                message: message || `Generated ${layoutGridState.columns}×${layoutGridState.rows} grid (${spec.cards.length} cards)`
+            });
+        }
+
+        function normalizeImportedSpec(raw) {
+            let source;
+            try {
+                source = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            } catch (error) {
+                throw new Error('Invalid grid JSON.');
+            }
+
+            if (!source || typeof source !== 'object') {
+                throw new Error('Grid specification is empty.');
+            }
+
+            const cardSource = Array.isArray(source.cards)
+                ? source.cards
+                : Array.isArray(source.grid?.cards)
+                    ? source.grid.cards
+                    : Array.isArray(source.items)
+                        ? source.items
+                        : Array.isArray(source.frames)
+                            ? source.frames
+                            : [];
+
+            if (!cardSource.length) {
+                throw new Error('No cards found in grid file.');
+            }
+
+            const processed = cardSource
+                .map((card) => {
+                    const x = toNumeric(card.x ?? card.left ?? card.frame?.x ?? card.origin?.x, 0);
+                    const y = toNumeric(card.y ?? card.top ?? card.frame?.y ?? card.origin?.y, 0);
+                    let width = toNumeric(card.width ?? card.frame?.width ?? card.size?.width ?? card.w, 0);
+                    let height = toNumeric(card.height ?? card.frame?.height ?? card.size?.height ?? card.h, 0);
+                    if (!width && Number.isFinite(card.right)) {
+                        width = toNumeric(card.right, 0) - x;
+                    }
+                    if (!height && Number.isFinite(card.bottom)) {
+                        height = toNumeric(card.bottom, 0) - y;
+                    }
+                    return { x, y, width, height };
+                })
+                .filter(card => card.width > 0 && card.height > 0);
+
+            if (!processed.length) {
+                throw new Error('All cards in the grid file have zero size.');
+            }
+
+            let scaleX = toNumeric(source.viewportWidth ?? source.viewport?.width ?? source.frame?.width ?? source.size?.width ?? source.width, 0);
+            let scaleY = toNumeric(source.viewportHeight ?? source.viewport?.height ?? source.frame?.height ?? source.size?.height ?? source.height, 0);
+            const maxRight = Math.max(...processed.map(card => card.x + card.width));
+            const maxBottom = Math.max(...processed.map(card => card.y + card.height));
+
+            if (!scaleX) {
+                scaleX = maxRight || 1;
+            }
+            if (!scaleY) {
+                scaleY = maxBottom || 1;
+            }
+
+            if (maxRight <= 1.01 && maxBottom <= 1.01) {
+                scaleX = 1;
+                scaleY = 1;
+            } else if (maxRight <= 100.01 && maxBottom <= 100.01 && scaleX > 1 && scaleY > 1) {
+                scaleX = 100;
+                scaleY = 100;
+            }
+
+            const normalizedCards = processed
+                .map(card => ({
+                    x: clampNormalized(scaleX ? card.x / scaleX : 0, 0, 1),
+                    y: clampNormalized(scaleY ? card.y / scaleY : 0, 0, 1),
+                    width: clampNormalized(scaleX ? card.width / scaleX : 0, 0, 1),
+                    height: clampNormalized(scaleY ? card.height / scaleY : 0, 0, 1)
+                }))
+                .filter(card => card.width > 0 && card.height > 0);
+
+            if (!normalizedCards.length) {
+                throw new Error('Grid could not be normalized.');
+            }
+
+            const columns = toNumeric(source.columns ?? source.columnCount, 0) || inferDimensionFromCards(normalizedCards, 'x');
+            const rows = toNumeric(source.rows ?? source.rowCount, 0) || inferDimensionFromCards(normalizedCards, 'y');
+            const gutterValue = source.gutter ?? source.spacing ?? null;
+            let normalizedGutter;
+            if (typeof gutterValue === 'number') {
+                normalizedGutter = gutterValue > 1
+                    ? clampNormalized(gutterValue / (scaleX || 1000), 0, 0.35)
+                    : clampNormalized(gutterValue, 0, 0.35);
+            }
+
+            const label = source.name || source.title || source.label || 'Imported grid';
+
+            return {
+                mode: 'custom',
+                label,
+                columns: columns ? Math.min(12, Math.max(1, Math.round(columns))) : undefined,
+                rows: rows ? Math.min(12, Math.max(1, Math.round(rows))) : undefined,
+                gutter: typeof normalizedGutter === 'number' ? normalizedGutter : undefined,
+                cards: normalizedCards
+            };
+        }
+
+        function applyImportedGrid(raw, { source } = {}) {
+            try {
+                const normalized = normalizeImportedSpec(raw);
+                layoutGridState.mode = 'custom';
+                layoutGridState.cards = normalized.cards;
+
+                if (Number.isFinite(normalized.columns)) {
+                    layoutGridState.columns = clampCount(normalized.columns);
+                    if (gridColumnInput) {
+                        gridColumnInput.value = layoutGridState.columns;
+                    }
+                }
+
+                if (Number.isFinite(normalized.rows)) {
+                    layoutGridState.rows = clampCount(normalized.rows);
+                    if (gridRowInput) {
+                        gridRowInput.value = layoutGridState.rows;
+                    }
+                }
+
+                if (typeof normalized.gutter === 'number') {
+                    layoutGridState.gutter = clampRange(normalized.gutter, 0.02, 0.18, layoutGridState.gutter);
+                    if (gridGutterInput) {
+                        gridGutterInput.value = Math.round(layoutGridState.gutter * 100);
+                    }
+                }
+
+                const spec = {
+                    mode: 'custom',
+                    label: normalized.label,
+                    columns: normalized.columns ?? layoutGridState.columns,
+                    rows: normalized.rows ?? layoutGridState.rows,
+                    cards: normalized.cards
+                };
+
+                applyGridSpec(spec, {
+                    mode: 'custom',
+                    message: source ? `Loaded ${source} (${normalized.cards.length} cards)` : `${normalized.label} ready (${normalized.cards.length} cards)`
+                });
+
+                updateGridRangeLabels();
+            } catch (error) {
+                if (gridStatus) {
+                    gridStatus.textContent = error?.message || 'Unable to import grid.';
+                }
+            }
+        }
+
+        const sampleGridSpec = {
+            mode: 'custom',
+            label: 'Wearable story grid',
+            columns: 3,
+            rows: 2,
+            cards: [
+                { x: 0.08, y: 0.08, width: 0.24, height: 0.2 },
+                { x: 0.38, y: 0.08, width: 0.24, height: 0.2 },
+                { x: 0.68, y: 0.08, width: 0.24, height: 0.2 },
+                { x: 0.08, y: 0.44, width: 0.24, height: 0.2 },
+                { x: 0.38, y: 0.44, width: 0.24, height: 0.2 },
+                { x: 0.68, y: 0.44, width: 0.24, height: 0.2 }
+            ]
+        };
+
+        gridColumnInput?.addEventListener('input', event => {
+            layoutGridState.columns = clampCount(event.target.value);
+            event.target.value = layoutGridState.columns;
+            layoutGridState.mode = 'generated';
+            rebuildGeneratedGrid();
+        });
+
+        gridRowInput?.addEventListener('input', event => {
+            layoutGridState.rows = clampCount(event.target.value);
+            event.target.value = layoutGridState.rows;
+            layoutGridState.mode = 'generated';
+            rebuildGeneratedGrid();
+        });
+
+        gridGutterInput?.addEventListener('input', event => {
+            layoutGridState.gutter = clampRange(Number(event.target.value) / 100, 0.02, 0.18, layoutGridState.gutter);
+            layoutGridState.mode = 'generated';
+            updateGridRangeLabels();
+            rebuildGeneratedGrid();
+        });
+
+        gridCardWidthInput?.addEventListener('input', event => {
+            layoutGridState.cardWidthRatio = clampRange(Number(event.target.value) / 100, 0.4, 1, layoutGridState.cardWidthRatio);
+            layoutGridState.mode = 'generated';
+            updateGridRangeLabels();
+            rebuildGeneratedGrid();
+        });
+
+        gridCardHeightInput?.addEventListener('input', event => {
+            layoutGridState.cardHeightRatio = clampRange(Number(event.target.value) / 100, 0.4, 1.2, layoutGridState.cardHeightRatio);
+            layoutGridState.mode = 'generated';
+            updateGridRangeLabels();
+            rebuildGeneratedGrid();
+        });
+
+        gridImportButton?.addEventListener('click', () => {
+            gridImportInput?.click();
+        });
+
+        gridImportInput?.addEventListener('change', event => {
+            const files = Array.from(event.target.files || []);
+            const [file] = files;
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                applyImportedGrid(reader.result, { source: file.name });
+            };
+            reader.onerror = () => {
+                if (gridStatus) {
+                    gridStatus.textContent = 'Failed to read grid file.';
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        });
+
+        gridClearButton?.addEventListener('click', () => {
+            layoutGridState.mode = 'generated';
+            if (gridStatus) {
+                gridStatus.textContent = 'Grid reset to generated layout.';
+            }
+            rebuildGeneratedGrid('Grid reset to generated layout.');
+        });
+
+        gridPresetButton?.addEventListener('click', () => {
+            applyImportedGrid(sampleGridSpec, { source: 'Sample grid' });
+        });
+
+        updateGridRangeLabels();
+        rebuildGeneratedGrid('Generated starter grid');
+        resizeGridOverlay(true);
+        if (typeof ResizeObserver !== 'undefined' && blueprintOverlayElement) {
+            gridOverlayResizeObserver = new ResizeObserver(() => resizeGridOverlay(true));
+            gridOverlayResizeObserver.observe(blueprintOverlayElement);
+        }
+
+        window.vib3Grid = {
+            get active() {
+                return latestGridSpec;
+            },
+            set(spec) {
+                applyImportedGrid(spec, { source: 'Console' });
+            },
+            reset() {
+                layoutGridState.mode = 'generated';
+                rebuildGeneratedGrid('Grid reset to generated layout.');
+            },
+            regenerate: rebuildGeneratedGrid,
+            state: layoutGridState
+        };
+
+        window.vib3Shader = {
+            get config() {
+                return cloneShaderConfig(currentShaderConfig);
+            },
+            set config(spec) {
+                applyShaderConfig(spec, { message: 'Shader configuration applied via console.' });
+                return cloneShaderConfig(currentShaderConfig);
+            },
+            merge(partial) {
+                applyShaderConfig(partial, { merge: true, message: 'Shader parameters merged via console.' });
+                return cloneShaderConfig(currentShaderConfig);
+            },
+            reset() {
+                currentShaderConfig = cloneShaderConfig(shaderDefaults);
+                applyShaderConfig(currentShaderConfig, { message: 'Shader configuration reset to defaults.' });
+            },
+            export() {
+                return cloneShaderConfig(currentShaderConfig);
+            }
+        };
         const projectionHaloRadius = document.getElementById('projectionHaloRadius');
         const projectionDepthBias = document.getElementById('projectionDepthBias');
         const projectionContourCount = document.getElementById('projectionContourCount');
@@ -694,14 +2576,29 @@
         const projectionScenarioSelect = document.getElementById('projectionScenarioSelect');
         const projectionSimulateBtn = document.getElementById('projectionSimulateBtn');
         const projectionLegend = document.getElementById('projectionLegend');
+        const variationSlider = document.getElementById('variationSlider');
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        const variationLabel = document.getElementById('variationLabel');
+        const focusMetric = document.getElementById('focusMetric');
+        const engagementMetric = document.getElementById('engagementMetric');
+        const velocityMetric = document.getElementById('velocityMetric');
+        const stressMetric = document.getElementById('stressMetric');
+        const consentPanelContainer = document.getElementById('telemetryConsentPanel');
 
-        let adaptiveSDKRef;
+        let adaptiveSDKRef = null;
+        // Maintain a backward-compatible alias for legacy inline handlers or
+        // diagnostics snippets that still expect a global `adaptiveSDK`
+        // reference. Initializing it up front avoids temporal dead zone
+        // lookups before the SDK instance is created.
+        let adaptiveSDKGlobal = null;
         let stopSnapshotSchedule = null;
 
         const remoteUploadLog = [];
         let latestBlueprint = null;
         let latestProjectionComposition = null;
         let activeProjectionScenario = '__realtime__';
+
+        const getAdaptiveSDK = () => adaptiveSDKRef || adaptiveSDKGlobal || window.adaptiveSDK || null;
 
         const formatTime = (value) => {
             if (!value) return 'unknown';
@@ -814,35 +2711,30 @@
 
         const blueprintRenderer = createLayoutBlueprintRenderer({
             layers: {
-                background: document.getElementById('background-canvas'),
-                shadow: document.getElementById('shadow-canvas'),
-                content: document.getElementById('content-canvas'),
-                highlight: document.getElementById('highlight-canvas'),
-                accent: document.getElementById('accent-canvas')
-            }
+                background: document.getElementById('blueprint-background'),
+                shadow: document.getElementById('blueprint-shadow'),
+                content: document.getElementById('blueprint-content'),
+                highlight: document.getElementById('blueprint-highlight'),
+                accent: document.getElementById('blueprint-accent')
+            },
+            background: {
+                inner: 'rgba(64, 148, 255, 0.24)',
+                outer: 'rgba(10, 24, 48, 0.48)'
+            },
+            zoneColors: {
+                primary: 'rgba(76, 159, 255, 0.85)',
+                peripheral: 'rgba(178, 107, 255, 0.8)',
+                ambient: 'rgba(255, 196, 122, 0.75)'
+            },
+            backgroundBlendMode: 'screen',
+            backgroundOpacity: 0.72,
+            devicePadding: 0.1
         });
 
         blueprintRenderer.resize();
         window.addEventListener('resize', () => blueprintRenderer.resize());
 
         renderBlueprintPanel(null);
-
-        const projectionComposer = adaptiveSDKRef?.projectionComposer || adaptiveSDK.projectionComposer;
-        const projectionBaseCanvas = document.getElementById('projection-base');
-        const projectionBandCanvas = document.getElementById('projection-bands');
-        const projectionHaloCanvas = document.getElementById('projection-halo');
-        const projectionContourCanvas = document.getElementById('projection-contours');
-
-        projectionComposer.attachLayer('base', projectionBaseCanvas);
-        projectionComposer.attachLayer('bands', projectionBandCanvas);
-        projectionComposer.attachLayer('halo', projectionHaloCanvas);
-        projectionComposer.attachLayer('contours', projectionContourCanvas);
-        projectionComposer.observeResize?.();
-        projectionComposer.resize();
-        window.addEventListener('resize', () => projectionComposer.resize());
-
-        renderProjectionPanel(null);
-        initializeProjectionScenarios();
 
         const formatLabel = (value) => {
             if (!value) return 'Unspecified';
@@ -856,6 +2748,42 @@
         };
 
         const formatPercent = (value) => `${Math.round(clamp(value, 0, 1) * 100)}%`;
+
+        const applyBlueprintOverlayIntensity = (rawValue) => {
+            if (!blueprintRenderer) {
+                return;
+            }
+            const numeric = clamp(Number(rawValue), 0.1, 1);
+            const overlayOpacity = 0.25 + numeric * 0.75;
+            if (blueprintOverlayElement) {
+                blueprintOverlayElement.style.opacity = overlayOpacity.toFixed(2);
+            }
+
+            const layerOpacity = 0.35 + numeric * 0.6;
+            blueprintRenderer.setVisualOptions({
+                backgroundOpacity: overlayOpacity,
+                zoneOpacityFactor: layerOpacity,
+                highlightOpacityFactor: layerOpacity,
+                accentOpacityFactor: layerOpacity
+            });
+
+            if (blueprintOverlayOpacityValue) {
+                blueprintOverlayOpacityValue.textContent = `${Math.round(numeric * 100)}%`;
+            }
+        };
+
+        if (blueprintOverlayOpacitySlider) {
+            const initial = Number(blueprintOverlayOpacitySlider.value);
+            const normalized = Number.isFinite(initial) ? initial / 100 : 0.7;
+            applyBlueprintOverlayIntensity(normalized);
+            blueprintOverlayOpacitySlider.addEventListener('input', event => {
+                const raw = Number(event.target.value);
+                const next = Number.isFinite(raw) ? raw / 100 : 0.7;
+                applyBlueprintOverlayIntensity(next);
+            });
+        } else {
+            applyBlueprintOverlayIntensity(0.7);
+        }
 
         function renderBlueprintPanel(blueprint) {
             if (!blueprint) {
@@ -1063,8 +2991,13 @@
             realtimeOption.textContent = 'Realtime Field';
             projectionScenarioSelect.appendChild(realtimeOption);
 
+            const sdk = getAdaptiveSDK();
+            if (!sdk) {
+                return;
+            }
+
             for (const scenario of scenarios) {
-                adaptiveSDK.registerProjectionScenario(scenario);
+                sdk.registerProjectionScenario(scenario);
                 const option = document.createElement('option');
                 option.value = scenario.id;
                 option.textContent = scenario.name;
@@ -1078,23 +3011,27 @@
                 if (activeProjectionScenario === '__realtime__') {
                     return;
                 }
-                adaptiveSDK.setActiveProjectionScenario(activeProjectionScenario);
+                sdk.setActiveProjectionScenario(activeProjectionScenario);
             });
 
             projectionSimulateBtn?.addEventListener('click', () => {
+                const activeSdk = getAdaptiveSDK();
+                if (!activeSdk) {
+                    return;
+                }
                 if (!latestBlueprint) {
                     return;
                 }
                 if (activeProjectionScenario === '__realtime__') {
-                    const projectionContext = buildProjectionContextFromAdaptive(adaptiveSDK.engine?.sensoryBridge?.getSnapshot?.());
-                    const composition = adaptiveSDK.composeProjectionField(latestBlueprint, null, projectionContext);
-                    adaptiveSDK.projectionComposer.render(latestBlueprint, projectionContext);
+                    const projectionContext = buildProjectionContextFromAdaptive(activeSdk.engine?.sensoryBridge?.getSnapshot?.());
+                    const composition = activeSdk.composeProjectionField(latestBlueprint, null, projectionContext);
+                    activeSdk.projectionComposer.render(latestBlueprint, projectionContext);
                     renderProjectionPanel(composition, { mode: 'realtime' });
                     return;
                 }
-                const frame = adaptiveSDK.stepProjectionSimulation({});
+                const frame = activeSdk.stepProjectionSimulation({});
                 if (frame?.composition) {
-                    adaptiveSDK.projectionComposer.render(frame.blueprint, frame.context);
+                    activeSdk.projectionComposer.render(frame.blueprint, frame.context);
                     renderProjectionPanel(frame.composition, {
                         mode: 'scenario',
                         scenario: frame.name,
@@ -1154,7 +3091,7 @@
                 commercializationKpiSummary.innerHTML = '';
                 snapshotList.innerHTML = '';
                 commercializationUpdated.textContent = 'No commercialization activity yet';
-                if (adaptiveSDKRef) {
+                if (getAdaptiveSDK()) {
                     refreshCommercializationSnapshots();
                 }
                 return;
@@ -1224,7 +3161,7 @@
                 commercializationUpdated.textContent = 'No commercialization activity yet';
             }
 
-            if (adaptiveSDKRef) {
+            if (getAdaptiveSDK()) {
                 refreshCommercializationSnapshots();
             }
         }
@@ -1319,18 +3256,19 @@
         }
 
         function refreshCommercializationSnapshots() {
-            if (!adaptiveSDKRef) {
+            const sdk = getAdaptiveSDK();
+            if (!sdk) {
                 commercializationKpiSummary.innerHTML = '';
                 snapshotList.innerHTML = '';
                 return;
             }
-            const snapshots = adaptiveSDKRef.getLicenseCommercializationSnapshots({ limit: 5, withSummary: false });
+            const snapshots = sdk.getLicenseCommercializationSnapshots({ limit: 5, withSummary: false });
             renderSnapshotHistory(snapshots);
-            const kpiReport = adaptiveSDKRef.getLicenseCommercializationKpiReport();
+            const kpiReport = sdk.getLicenseCommercializationKpiReport();
             renderKpiSummary(kpiReport);
         }
 
-        const adaptiveSDK = (adaptiveSDKRef = createAdaptiveSDK({
+        const adaptiveSDKInstance = createAdaptiveSDK({
             telemetry: {
                 enabled: true,
                 defaultConsent: { analytics: false, biometric: false },
@@ -1351,7 +3289,11 @@
                 onPatternChange: updatePatternPanel,
                 onAdaptiveUpdate: handleAdaptiveUpdate
             }
-        }));
+        });
+
+        adaptiveSDKRef = adaptiveSDKInstance;
+        adaptiveSDKGlobal = adaptiveSDKInstance;
+        window.adaptiveSDK = adaptiveSDKInstance;
 
         const {
             engine,
@@ -1360,14 +3302,34 @@
             getTelemetryConsent,
             getTelemetryAuditTrail,
             getLicenseCommercializationSummary,
-            setLicenseAttestorFromProfile,
             registerLicenseAttestationProfilePack
-        } = adaptiveSDK;
+        } = adaptiveSDKInstance;
 
-        const telemetryHarness = adaptiveSDK.telemetry;
+        const setLicenseAttestorFromProfile = (...args) => adaptiveSDKInstance.setLicenseAttestorFromProfile(...args);
+
+        const projectionComposer = adaptiveSDKInstance.projectionComposer;
+        const projectionBaseCanvas = document.getElementById('projection-base');
+        const projectionBandCanvas = document.getElementById('projection-bands');
+        const projectionHaloCanvas = document.getElementById('projection-halo');
+        const projectionContourCanvas = document.getElementById('projection-contours');
+
+        projectionComposer.attachLayer('base', projectionBaseCanvas);
+        projectionComposer.attachLayer('bands', projectionBandCanvas);
+        projectionComposer.attachLayer('halo', projectionHaloCanvas);
+        projectionComposer.attachLayer('contours', projectionContourCanvas);
+        projectionComposer.observeResize?.();
+        projectionComposer.resize();
+        window.addEventListener('resize', () => projectionComposer.resize());
+
+        renderProjectionPanel(null);
+        initializeProjectionScenarios();
+
+        const telemetryHarness = adaptiveSDKInstance.telemetry;
 
         captureSnapshotBtn?.addEventListener('click', () => {
-            adaptiveSDKRef?.captureLicenseCommercializationSnapshot({
+            const sdk = getAdaptiveSDK();
+            if (!sdk) return;
+            sdk.captureLicenseCommercializationSnapshot({
                 trigger: 'demo-manual',
                 capturedBy: 'wearable-designer'
             });
@@ -1375,8 +3337,9 @@
         });
 
         exportSnapshotsBtn?.addEventListener('click', () => {
-            if (!adaptiveSDKRef) return;
-            const exportPayload = adaptiveSDKRef.exportLicenseCommercializationSnapshots({
+            const sdk = getAdaptiveSDK();
+            if (!sdk) return;
+            const exportPayload = sdk.exportLicenseCommercializationSnapshots({
                 format: 'json',
                 includeSummary: false
             });
@@ -1442,14 +3405,15 @@
         renderCommercializationSummary(getLicenseCommercializationSummary());
         refreshCommercializationSnapshots();
 
-        const snapshotStore = adaptiveSDKRef.getLicenseCommercializationSnapshotStore?.();
+        const snapshotStore = getAdaptiveSDK()?.getLicenseCommercializationSnapshotStore?.();
         snapshotStore?.whenReady?.().then(() => {
             refreshCommercializationSnapshots();
             renderRemoteStorageStatus();
         });
 
-        if (typeof adaptiveSDKRef?.startLicenseCommercializationSnapshotSchedule === 'function') {
-            stopSnapshotSchedule = adaptiveSDKRef.startLicenseCommercializationSnapshotSchedule(60000, {
+        const snapshotScheduler = getAdaptiveSDK();
+        if (typeof snapshotScheduler?.startLicenseCommercializationSnapshotSchedule === 'function') {
+            stopSnapshotSchedule = snapshotScheduler.startLicenseCommercializationSnapshotSchedule(60000, {
                 trigger: 'demo-schedule',
                 capturedBy: 'wearable-designer'
             }) || null;
@@ -1459,16 +3423,14 @@
             if (typeof stopSnapshotSchedule === 'function') {
                 stopSnapshotSchedule();
             }
+            adaptiveSDKRef = null;
+            adaptiveSDKGlobal = null;
+            if (window.adaptiveSDK) {
+                window.adaptiveSDK = null;
+            }
+            vib3Visualizer.stop?.();
+            gridOverlayResizeObserver?.disconnect?.();
         });
-
-        const variationSlider = document.getElementById('variationSlider');
-        const randomizeBtn = document.getElementById('randomizeBtn');
-        const variationLabel = document.getElementById('variationLabel');
-        const focusMetric = document.getElementById('focusMetric');
-        const engagementMetric = document.getElementById('engagementMetric');
-        const velocityMetric = document.getElementById('velocityMetric');
-        const stressMetric = document.getElementById('stressMetric');
-        const consentPanelContainer = document.getElementById('telemetryConsentPanel');
 
         consentPanel = createConsentPanel({
             container: consentPanelContainer,
@@ -1532,6 +3494,11 @@
         }
 
         function handleAdaptiveUpdate({ context, layout, design }) {
+            const sdk = getAdaptiveSDK();
+            if (!sdk) {
+                return;
+            }
+
             focusMetric.textContent = context.focusVector.x.toFixed(2);
             engagementMetric.textContent = context.engagementLevel.toFixed(2);
             velocityMetric.textContent = layout.motion.velocity.toFixed(2);
@@ -1542,9 +3509,9 @@
             renderBlueprintPanel(latestBlueprint);
 
             const projectionContext = buildProjectionContextFromAdaptive(context);
-            const projectionComposition = adaptiveSDK.composeProjectionField(layout, design, projectionContext);
+            const projectionComposition = sdk.composeProjectionField(layout, design, projectionContext);
             if (projectionComposition) {
-                adaptiveSDK.projectionComposer.render(projectionComposition.blueprint, projectionContext);
+                sdk.projectionComposer.render(projectionComposition.blueprint, projectionContext);
                 if (activeProjectionScenario === '__realtime__') {
                     renderProjectionPanel(projectionComposition, { mode: 'realtime' });
                 }
