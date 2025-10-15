@@ -63,6 +63,25 @@ All four holographic subsystems remain available for creative workflows and cont
 - Automated testing for the adaptive pipeline now uses Vitest + jsdom (`npm test`). Playwright smoke suites (e.g., `npm run test:e2e:smoke`) remain optional and require a one-time `npx playwright install` to pull Chromium locally.
 - Headless CI or server-side integrations can initialize `createAdaptiveSDK({ environment: { mode: 'headless' } })` to bypass canvas/DOM bootstrapping while still exercising sensory, telemetry, licensing, commercialization, and projection APIs.
 
+## 🛠 Adaptive SDK CLI
+
+The repository ships with a lightweight Node.js bootstrap so teams can exercise Adaptive SDK functionality from scripts or CI environments. It dynamically imports the ESM CLI runner and enforces a `main()` contract so the module surface can evolve without breaking the entry point.
+
+Run the status command (optionally in demo mode) with:
+
+```bash
+node bin/adaptive-sdk-cli.js status --demo
+```
+
+Expected output:
+
+```
+Adaptive SDK CLI
+Status: running in demo mode.
+```
+
+If you omit `--demo`, the CLI reports `production` mode instead.
+
 ## 📊 Reality Check
 
 - ⚠️ Prototype status – Suitable for demonstrations, not production deployments.
