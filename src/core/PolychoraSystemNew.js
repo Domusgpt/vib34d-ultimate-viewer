@@ -12,6 +12,7 @@
  */
 
 import { ParameterManager } from './Parameters.js';
+import { GeometryManager as HypersphereTopologyManager, HypercubeTopologyCore } from './polychora/HypercubeTopologies.js';
 
 /**
  * True4DPolychoraVisualizer - Individual layer renderer for 4D polytopes
@@ -506,7 +507,12 @@ export class NewPolychoraEngine {
         // Polychora-specific enhancement: 4D rotation velocity tracking
         this.rotation4DVelocity = { XW: 0, YW: 0, ZW: 0 };
         this.lastRotation4D = { XW: 0, YW: 0, ZW: 0 };
-        
+
+        // Hypersphere topology management
+        this.hypersphereTopologyManager = new HypersphereTopologyManager();
+        this.availableHypersphereTopologies = this.hypersphereTopologyManager.getGeometryNames();
+        this.currentHypersphereTopology = this.availableHypersphereTopologies[0];
+
         // Set polychora-specific defaults
         this.parameters.setParameter('geometry', 1); // Start with Tesseract
         this.parameters.setParameter('hue', 280); // Purple-blue for 4D
@@ -573,16 +579,47 @@ export class NewPolychoraEngine {
                     YW: this.parameters.getParameter('rot4dYW'),
                     ZW: this.parameters.getParameter('rot4dZW')
                 };
-                
+
                 this.rotation4DVelocity = {
                     XW: currentRot.XW - this.lastRotation4D.XW,
                     YW: currentRot.YW - this.lastRotation4D.YW,
                     ZW: currentRot.ZW - this.lastRotation4D.ZW
                 };
-                
+
                 this.lastRotation4D = currentRot;
             }, 100);
         }
+    }
+
+    /**
+     * Access available hypersphere topologies
+     */
+    getHypersphereTopologies() {
+        return [...this.availableHypersphereTopologies];
+    }
+
+    /**
+     * Set active hypersphere topology for auxiliary renderers
+     */
+    setHypersphereTopology(topology) {
+        if (this.availableHypersphereTopologies.includes(topology)) {
+            this.currentHypersphereTopology = topology;
+            return true;
+        }
+
+        console.warn(`Unknown hypersphere topology: ${topology}`);
+        return false;
+    }
+
+    /**
+     * Create a dedicated topology renderer for hypersphere variations
+     */
+    createHypersphereTopologyRenderer(canvas, options = {}) {
+        const rendererOptions = {
+            geometryType: this.currentHypersphereTopology,
+            ...options
+        };
+        return new HypercubeTopologyCore(canvas, rendererOptions);
     }
     
     startRenderLoop() {
