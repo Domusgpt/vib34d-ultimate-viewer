@@ -97,6 +97,19 @@ export class LayoutBlueprintRenderer {
         this.layers = new Map();
         this.zoneColors = { ...DEFAULT_ZONE_COLORS, ...(options.zoneColors || {}) };
         this.background = { ...DEFAULT_BACKGROUND, ...(options.background || {}) };
+        this.backgroundBlendMode = options.backgroundBlendMode || 'source-over';
+        this.backgroundOpacity = typeof options.backgroundOpacity === 'number'
+            ? clamp(options.backgroundOpacity, 0, 1)
+            : 1;
+        this.zoneOpacityFactor = typeof options.zoneOpacityFactor === 'number'
+            ? clamp(options.zoneOpacityFactor, 0, 1)
+            : 1;
+        this.highlightOpacityFactor = typeof options.highlightOpacityFactor === 'number'
+            ? clamp(options.highlightOpacityFactor, 0, 1)
+            : 1;
+        this.accentOpacityFactor = typeof options.accentOpacityFactor === 'number'
+            ? clamp(options.accentOpacityFactor, 0, 1)
+            : 1;
         this.devicePadding = options.devicePadding ?? 0.12;
         this.lastSize = 0;
         this.lastRenderPayload = null;
@@ -180,6 +193,55 @@ export class LayoutBlueprintRenderer {
         }
     }
 
+    setVisualOptions(options = {}) {
+        let shouldRerender = false;
+
+        if (Object.prototype.hasOwnProperty.call(options, 'backgroundOpacity')) {
+            const next = clamp(toNumber(options.backgroundOpacity, this.backgroundOpacity), 0, 1);
+            if (next !== this.backgroundOpacity) {
+                this.backgroundOpacity = next;
+                shouldRerender = true;
+            }
+        }
+
+        if (Object.prototype.hasOwnProperty.call(options, 'backgroundBlendMode')) {
+            const nextBlend = options.backgroundBlendMode || 'source-over';
+            if (nextBlend !== this.backgroundBlendMode) {
+                this.backgroundBlendMode = nextBlend;
+                shouldRerender = true;
+            }
+        }
+
+        if (Object.prototype.hasOwnProperty.call(options, 'zoneOpacityFactor')) {
+            const nextZone = clamp(toNumber(options.zoneOpacityFactor, this.zoneOpacityFactor), 0, 1);
+            if (nextZone !== this.zoneOpacityFactor) {
+                this.zoneOpacityFactor = nextZone;
+                shouldRerender = true;
+            }
+        }
+
+        if (Object.prototype.hasOwnProperty.call(options, 'highlightOpacityFactor')) {
+            const nextHighlight = clamp(toNumber(options.highlightOpacityFactor, this.highlightOpacityFactor), 0, 1);
+            if (nextHighlight !== this.highlightOpacityFactor) {
+                this.highlightOpacityFactor = nextHighlight;
+                shouldRerender = true;
+            }
+        }
+
+        if (Object.prototype.hasOwnProperty.call(options, 'accentOpacityFactor')) {
+            const nextAccent = clamp(toNumber(options.accentOpacityFactor, this.accentOpacityFactor), 0, 1);
+            if (nextAccent !== this.accentOpacityFactor) {
+                this.accentOpacityFactor = nextAccent;
+                shouldRerender = true;
+            }
+        }
+
+        if (shouldRerender && this.lastRenderPayload) {
+            const { layout, design, context } = this.lastRenderPayload;
+            this.render(layout, design, context);
+        }
+    }
+
     render(layout, design, context) {
         if (!layout) return;
         this.lastRenderPayload = { layout, design, context };
@@ -203,11 +265,17 @@ export class LayoutBlueprintRenderer {
         if (!layer) return;
         const { context, canvas } = layer;
         context.clearRect(0, 0, canvas.width, canvas.height);
+        context.save();
+        if (this.backgroundBlendMode && this.backgroundBlendMode !== 'source-over') {
+            context.globalCompositeOperation = this.backgroundBlendMode;
+        }
+        context.globalAlpha = this.backgroundOpacity;
         const gradient = context.createRadialGradient(size / 2, size / 2, size * 0.1, size / 2, size / 2, size * 0.55);
         gradient.addColorStop(0, this.background.inner);
         gradient.addColorStop(1, this.background.outer);
         context.fillStyle = gradient;
         context.fillRect(0, 0, canvas.width, canvas.height);
+        context.restore();
     }
 
     drawShadow(size, center, radius) {
@@ -250,7 +318,13 @@ export class LayoutBlueprintRenderer {
             context.save();
             context.strokeStyle = color;
             context.lineWidth = thickness;
-            context.globalAlpha = 0.65 + (occupancy * 0.25);
+            const zoneAlpha = clamp((0.65 + occupancy * 0.25) * this.zoneOpacityFactor, 0, 1);
+            if (zoneAlpha <= 0) {
+                context.restore();
+                currentRadius -= thickness * 0.8;
+                continue;
+            }
+            context.globalAlpha = zoneAlpha;
             context.lineCap = 'round';
             context.beginPath();
             context.arc(center, center, currentRadius, start, end);
@@ -263,11 +337,14 @@ export class LayoutBlueprintRenderer {
                 const x = center + Math.cos(angle) * pointRadius;
                 const y = center + Math.sin(angle) * pointRadius;
                 context.save();
-                context.fillStyle = color;
-                context.globalAlpha = 0.6;
-                context.beginPath();
-                context.arc(x, y, Math.max(4, thickness * 0.15), 0, Math.PI * 2);
-                context.fill();
+                const markerAlpha = clamp(this.zoneOpacityFactor * 0.8, 0, 1);
+                if (markerAlpha > 0) {
+                    context.fillStyle = color;
+                    context.globalAlpha = markerAlpha;
+                    context.beginPath();
+                    context.arc(x, y, Math.max(4, thickness * 0.15), 0, Math.PI * 2);
+                    context.fill();
+                }
                 context.restore();
             }
 
@@ -280,6 +357,10 @@ export class LayoutBlueprintRenderer {
         if (!layer) return;
         const { context, canvas } = layer;
         context.clearRect(0, 0, canvas.width, canvas.height);
+        const highlightAlpha = clamp(this.highlightOpacityFactor, 0, 1);
+        if (highlightAlpha <= 0) {
+            return;
+        }
         const focus = normalizeFocusVector(contextSnapshot?.focusVector);
         const radius = size * 0.12;
         const x = focus.x * size;
@@ -288,10 +369,14 @@ export class LayoutBlueprintRenderer {
         const gradient = context.createRadialGradient(x, y, size * 0.01, x, y, radius);
         gradient.addColorStop(0, 'rgba(76, 159, 255, 0.5)');
         gradient.addColorStop(1, 'rgba(76, 159, 255, 0)');
+        context.save();
+        context.globalAlpha = highlightAlpha;
         context.fillStyle = gradient;
         context.fillRect(0, 0, canvas.width, canvas.height);
+        context.restore();
 
         context.save();
+        context.globalAlpha = clamp(this.highlightOpacityFactor * 1.15, 0, 1);
         context.fillStyle = 'rgba(255, 255, 255, 0.9)';
         context.beginPath();
         context.arc(x, y, size * (0.01 + clamp(toNumber(layout.intensity, 0.5), 0, 1) * 0.015), 0, Math.PI * 2);
@@ -304,6 +389,10 @@ export class LayoutBlueprintRenderer {
         if (!layer) return;
         const { context, canvas } = layer;
         context.clearRect(0, 0, canvas.width, canvas.height);
+        const accentAlpha = clamp(this.accentOpacityFactor, 0, 1);
+        if (accentAlpha <= 0) {
+            return;
+        }
 
         const patternName = design?.pattern?.name || 'Adaptive Pattern';
         const tier = design?.monetization?.tier || 'starter';
@@ -318,6 +407,7 @@ export class LayoutBlueprintRenderer {
         const componentLine = Array.from(components).join('  •  ');
 
         context.save();
+        context.globalAlpha = accentAlpha;
         context.fillStyle = 'rgba(255, 255, 255, 0.82)';
         context.textAlign = 'center';
         context.font = `${Math.round(size * 0.04)}px "Inter", "Segoe UI", sans-serif`;
