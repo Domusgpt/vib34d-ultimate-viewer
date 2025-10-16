@@ -821,12 +821,17 @@
                 console.warn('RealHolographicSystem not available');
             }
             
+            // Placeholder: disable the unfinished polychora engine until the shared
+            // topology layer is fully adopted by every renderer.
+            /*
             try {
                 const polychoraModule = await import('./src/core/PolychoraSystemNew.js');
                 NewPolychoraEngine = polychoraModule.NewPolychoraEngine;
             } catch (e) {
                 console.warn('NewPolychoraEngine not available');
             }
+            */
+            NewPolychoraEngine = null;
             
             // Hide all layers first
             document.querySelectorAll('#canvasContainer > div').forEach(div => {
@@ -857,10 +862,7 @@
                     break;
                     
                 case 'polychora':
-                    if (NewPolychoraEngine) {
-                        activeEngine = new NewPolychoraEngine();
-                        document.getElementById('polychoraLayers').style.display = 'block';
-                    }
+                    console.warn('Polychora system placeholder is disabled pending topology integration.');
                     break;
             }
             
