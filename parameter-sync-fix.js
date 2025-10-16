@@ -67,8 +67,11 @@ function createParameterSyncSystem() {
     function updateAllDisplays(uiState) {
         const displayMappings = {
             rot4dXW: 'xwValue',
-            rot4dYW: 'ywValue', 
+            rot4dYW: 'ywValue',
             rot4dZW: 'zwValue',
+            rot4dXY: 'xyValue',
+            rot4dXZ: 'xzValue',
+            rot4dYZ: 'yzValue',
             gridDensity: 'densityValue',
             morphFactor: 'morphValue',
             chaos: 'chaosValue',

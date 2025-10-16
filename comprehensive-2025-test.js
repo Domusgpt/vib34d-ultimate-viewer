@@ -10,7 +10,7 @@ const TEST_CONFIG = {
     baseURL: 'http://localhost:8080',
     timeout: 30000,
     systems: ['faceted', 'quantum', 'holographic', 'polychora'],
-    parameters: ['rot4dXW', 'rot4dYW', 'rot4dZW', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'],
+    parameters: ['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'],
     mobileViewports: [
         { name: 'iPhone 12', width: 390, height: 844 },
         { name: 'Pixel 5', width: 393, height: 851 },

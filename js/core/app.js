@@ -208,11 +208,22 @@ export class VIB34DApp {
         // Update base rotations for tilt system when parameters change
         window.updateTiltBaseRotations = () => {
             if (window.deviceTiltHandler && this.userParameterState) {
-                window.deviceTiltHandler.updateBaseRotation(
-                    this.userParameterState.rot4dXW || 0,
-                    this.userParameterState.rot4dYW || 0,
-                    this.userParameterState.rot4dZW || 0
-                );
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: this.userParameterState.rot4dXW || 0,
+                    rot4dYW: this.userParameterState.rot4dYW || 0,
+                    rot4dZW: this.userParameterState.rot4dZW || 0,
+                    rot4dXY: this.userParameterState.rot4dXY || 0,
+                    rot4dXZ: this.userParameterState.rot4dXZ || 0,
+                    rot4dYZ: this.userParameterState.rot4dYZ || 0
+                });
+
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: this.userParameterState.dimension || 3.5,
+                    morphFactor: this.userParameterState.morphFactor || 1.0,
+                    chaos: this.userParameterState.chaos || 0.2,
+                    intensity: this.userParameterState.intensity || 0.8,
+                    gridDensity: this.userParameterState.gridDensity || 15
+                });
             }
         };
     }
