@@ -85,7 +85,7 @@ export class UnifiedSaveManager {
         } else {
             // Even if we got some parameters, ensure we have all the core ones
             const manualParams = this.captureManualParameters();
-            const coreParams = ['geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
+            const coreParams = ['geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
             
             let missingCount = 0;
             coreParams.forEach(param => {

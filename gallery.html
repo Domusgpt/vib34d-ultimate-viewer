@@ -2095,12 +2095,17 @@
                 const alphaRad = (alphaNorm * Math.PI / 180) * dramatic4DScale * 0.5;
                 const betaRad = (betaNorm * Math.PI / 180) * dramatic4DScale;
                 const gammaRad = (gammaNorm * Math.PI / 180) * dramatic4DScale;
-                
+                const crossScale = dramatic4DScale * 0.45;
+                const diagonalScale = dramatic4DScale * 0.35;
+
                 const perspective4D = {
                     rot4dXW: betaRad,     // DRAMATICALLY enhanced front-back tilt -> XW rotation
                     rot4dYW: gammaRad,    // DRAMATICALLY enhanced left-right tilt -> YW rotation
                     rot4dZW: alphaRad,    // DRAMATICALLY enhanced compass rotation -> ZW rotation
-                    
+                    rot4dXY: ((gammaNorm - betaNorm) * Math.PI / 180) * crossScale, // NEW: card shear between X & Y
+                    rot4dXZ: ((alphaNorm - betaNorm * 0.5) * Math.PI / 180) * diagonalScale, // NEW: compass vs. vertical tilt
+                    rot4dYZ: ((alphaNorm - gammaNorm * 0.5) * Math.PI / 180) * diagonalScale, // NEW: compass vs. horizontal tilt
+
                     // SMOOTH parameters that change with tilt intensity (reduced ranges)
                     morphFactor: 1 + tiltIntensity * 0.4 + transformativeScale, // Back to original 0.4
                     intensity: 0.8 + tiltIntensity * 0.25 + (extremeTilt ? 0.2 : 0), // Back to original 0.25, 0.2
@@ -2166,10 +2171,10 @@
                     navigator.vibrate(vibrationPattern);
                 }
                 
-                console.log(`🌐 DRAMATIC GALLERY PERSPECTIVE: 
+                console.log(`🌐 DRAMATIC GALLERY PERSPECTIVE:
                     Tilt: ${tiltIntensity.toFixed(2)} ${extremeTilt ? '(EXTREME)' : ''}
                     BG: (${bgOffsetX.toFixed(1)}, ${bgOffsetY.toFixed(1)}) Scale: ${bgScale.toFixed(2)}
-                    4D: XW:${perspective4D.rot4dXW.toFixed(3)} YW:${perspective4D.rot4dYW.toFixed(3)} ZW:${perspective4D.rot4dZW.toFixed(3)}`);
+                    4D: XW:${perspective4D.rot4dXW.toFixed(3)} YW:${perspective4D.rot4dYW.toFixed(3)} ZW:${perspective4D.rot4dZW.toFixed(3)} XY:${perspective4D.rot4dXY.toFixed(3)} XZ:${perspective4D.rot4dXZ.toFixed(3)} YZ:${perspective4D.rot4dYZ.toFixed(3)}`);
             },
             
             sendMouse4DPerspective(mouseX, mouseY, card) {
@@ -2191,15 +2196,21 @@
                 // 🌐 SUBTLE 4D PERSPECTIVE: Mouse creates sensible viewing angle changes (like viewer)
                 const mouse4DScale = 0.15; // Very subtle, logical 4D changes (matching viewer)
                 
+                const crossMouseScale = mouse4DScale * 0.5;
+                const diagonalMouseScale = mouse4DScale * 0.35;
+
                 const mouse4D = {
                     // Mouse up/down changes which XW "slice" of 4D object we see
                     rot4dXW: mouseOffsetY * mouse4DScale,  // Vertical -> XW (looking up/down through 4D)
-                    
-                    // Mouse left/right changes which YW "slice" of 4D object we see  
+
+                    // Mouse left/right changes which YW "slice" of 4D object we see
                     rot4dYW: mouseOffsetX * mouse4DScale,  // Horizontal -> YW (looking left/right through 4D)
-                    
-                    rot4dZW: 0,  // Keep stable for mouse
-                    
+
+                    rot4dZW: (mouseOffsetX + mouseOffsetY) * mouse4DScale * 0.15,  // Gentle compass twist while panning
+                    rot4dXY: (mouseOffsetX - mouseOffsetY) * crossMouseScale * 0.6,
+                    rot4dXZ: mouseOffsetY * diagonalMouseScale * 0.5,
+                    rot4dYZ: mouseOffsetX * diagonalMouseScale * 0.5,
+
                     // LOGICAL morph based on distance from center (like focal depth)
                     morphFactor: 1 + mouseIntensity * 0.05,
                     
@@ -2250,7 +2261,7 @@
                     } catch (e) { /* Cross-origin safety */ }
                 }
                 
-                console.log(`🌐 LOGICAL GALLERY PERSPECTIVE: Mouse(${mouseOffsetX.toFixed(2)}, ${mouseOffsetY.toFixed(2)}) → 4D(XW:${mouse4D.rot4dXW.toFixed(3)}, YW:${mouse4D.rot4dYW.toFixed(3)}) Intensity:${mouseIntensity.toFixed(2)}`);
+                console.log(`🌐 LOGICAL GALLERY PERSPECTIVE: Mouse(${mouseOffsetX.toFixed(2)}, ${mouseOffsetY.toFixed(2)}) → 4D(XW:${mouse4D.rot4dXW.toFixed(3)}, YW:${mouse4D.rot4dYW.toFixed(3)}, XY:${mouse4D.rot4dXY.toFixed(3)}, XZ:${mouse4D.rot4dXZ.toFixed(3)}, YZ:${mouse4D.rot4dYZ.toFixed(3)}) Intensity:${mouseIntensity.toFixed(2)}`);
             },
             
             // 🌐 UNIFIED MESSAGE SYSTEM: Single consolidated postMessage to prevent parameter conflicts
@@ -2258,9 +2269,13 @@
                 if (!this.state.mouse) return;
                 
                 // 🎯 UNIFIED MOUSE DATA: All mouse interaction data in single message
+                const normalizedX = (cardX / 100 - 0.5) * 2; // -1 to 1
+                const normalizedY = (cardY / 100 - 0.5) * 2; // -1 to 1
+                const bendRadBase = bendIntensity * Math.PI * 0.2;
+
                 const unifiedData = {
                     type: 'unifiedMouseInteraction',
-                    
+
                     // RGB Flash System Data
                     rgb: {
                         intensity: bendIntensity * 0.8,
@@ -2274,11 +2289,21 @@
                         y: cardY,
                         bendIntensity: bendIntensity,
                         normalized: {
-                            x: (cardX / 100 - 0.5) * 2, // -1 to 1
-                            y: (cardY / 100 - 0.5) * 2  // -1 to 1
+                            x: normalizedX, // -1 to 1
+                            y: normalizedY  // -1 to 1
                         }
                     },
-                    
+
+                    // Full 6D rotation data derived from card bend (matches geometric tilt visuals)
+                    rotations: {
+                        rot4dXW: normalizedY * bendRadBase * 0.8,
+                        rot4dYW: normalizedX * bendRadBase * 0.8,
+                        rot4dZW: (normalizedX + normalizedY) * bendRadBase * 0.5,
+                        rot4dXY: (normalizedX - normalizedY) * bendRadBase * 0.6,
+                        rot4dXZ: normalizedY * bendRadBase * 0.4,
+                        rot4dYZ: normalizedX * bendRadBase * 0.4
+                    },
+
                     // Performance Data
                     performance: {
                         timestamp: Date.now(),
