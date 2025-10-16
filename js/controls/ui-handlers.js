@@ -16,11 +16,14 @@ window.updateParameter = function(param, value) {
     // CRITICAL: Store user's parameter choice for persistence
     window.userParameterState[param] = parseFloat(value);
     console.log(`💾 User parameter: ${param} = ${value}`);
-    
+
     const displays = {
         rot4dXW: 'xwValue',
-        rot4dYW: 'ywValue', 
+        rot4dYW: 'ywValue',
         rot4dZW: 'zwValue',
+        rot4dXY: 'xyValue',
+        rot4dXZ: 'xzValue',
+        rot4dYZ: 'yzValue',
         gridDensity: 'densityValue',
         morphFactor: 'morphValue',
         chaos: 'chaosValue',
@@ -29,7 +32,7 @@ window.updateParameter = function(param, value) {
         intensity: 'intensityValue',
         saturation: 'saturationValue'
     };
-    
+
     const display = document.getElementById(displays[param]);
     if (display) {
         if (param === 'hue') {
@@ -38,6 +41,17 @@ window.updateParameter = function(param, value) {
             display.textContent = parseFloat(value).toFixed(2);
         } else {
             display.textContent = parseFloat(value).toFixed(1);
+        }
+    }
+
+    const numericValue = Number.parseFloat(value);
+    if (window.deviceTiltHandler && Number.isFinite(numericValue)) {
+        if (['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ'].includes(param)) {
+            window.deviceTiltHandler.updateBaseRotation({ [param]: numericValue });
+        }
+
+        if (['dimension', 'morphFactor', 'chaos', 'intensity', 'gridDensity'].includes(param)) {
+            window.deviceTiltHandler.updateBaseParameters({ [param]: numericValue });
         }
     }
     

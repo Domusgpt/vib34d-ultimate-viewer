@@ -253,6 +253,9 @@ export class ParameterManager {
         this.updateDisplayText('rot4dXWDisplay', this.params.rot4dXW.toFixed(2));
         this.updateDisplayText('rot4dYWDisplay', this.params.rot4dYW.toFixed(2));
         this.updateDisplayText('rot4dZWDisplay', this.params.rot4dZW.toFixed(2));
+        this.updateDisplayText('rot4dXYDisplay', this.params.rot4dXY.toFixed(2));
+        this.updateDisplayText('rot4dXZDisplay', this.params.rot4dXZ.toFixed(2));
+        this.updateDisplayText('rot4dYZDisplay', this.params.rot4dYZ.toFixed(2));
         this.updateDisplayText('dimensionDisplay', this.params.dimension.toFixed(2));
         this.updateDisplayText('gridDensityDisplay', this.params.gridDensity.toFixed(1));
         this.updateDisplayText('morphFactorDisplay', this.params.morphFactor.toFixed(2));
@@ -314,6 +317,9 @@ export class ParameterManager {
         this.params.rot4dXW = Math.random() * 4 - 2;
         this.params.rot4dYW = Math.random() * 4 - 2;
         this.params.rot4dZW = Math.random() * 4 - 2;
+        this.params.rot4dXY = Math.random() * 4 - 2;
+        this.params.rot4dXZ = Math.random() * 4 - 2;
+        this.params.rot4dYZ = Math.random() * 4 - 2;
         this.params.dimension = 3.0 + Math.random() * 1.5;
         this.params.gridDensity = 4 + Math.random() * 26;
         this.params.morphFactor = Math.random() * 2;
@@ -391,6 +397,9 @@ export class ParameterManager {
                 rot4dXW: (level - 1.5) * 0.5,
                 rot4dYW: (geometryType % 2) * 0.3,
                 rot4dZW: ((geometryType + level) % 3) * 0.2,
+                rot4dXY: (level - 1.5) * 0.35,
+                rot4dXZ: ((geometryType % 4) - 1.5) * 0.25,
+                rot4dYZ: (((geometryType + level) % 4) - 1.5) * 0.25,
                 dimension: 3.2 + (level * 0.2)
             };
         } else {

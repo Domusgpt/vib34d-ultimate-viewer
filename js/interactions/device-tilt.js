@@ -46,6 +46,64 @@ export class DeviceTiltHandler {
         
         this.boundHandleDeviceOrientation = this.handleDeviceOrientation.bind(this);
     }
+
+    /**
+     * Update the baseline 4D rotation values that tilt effects build upon.
+     * Accepts either individual arguments or an object map so callers can
+     * update a subset of the rotation planes.
+     */
+    updateBaseRotation(rot4dXW, rot4dYW, rot4dZW, rot4dXY, rot4dXZ, rot4dYZ) {
+        const rotationKeys = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ'];
+        const source = (typeof rot4dXW === 'object' && rot4dXW !== null)
+            ? rot4dXW
+            : {
+                rot4dXW,
+                rot4dYW,
+                rot4dZW,
+                rot4dXY,
+                rot4dXZ,
+                rot4dYZ
+            };
+
+        rotationKeys.forEach(key => {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                const value = Number(source[key]);
+                if (Number.isFinite(value)) {
+                    this.baseRotation[key] = value;
+                }
+            }
+        });
+
+        return { ...this.baseRotation };
+    }
+
+    /**
+     * Update the baseline dimensional parameters that are blended during tilt.
+     * Works similarly to updateBaseRotation and accepts partial updates.
+     */
+    updateBaseParameters(dimension, morphFactor, chaos, intensity, gridDensity) {
+        const parameterKeys = ['dimension', 'morphFactor', 'chaos', 'intensity', 'gridDensity'];
+        const source = (typeof dimension === 'object' && dimension !== null)
+            ? dimension
+            : {
+                dimension,
+                morphFactor,
+                chaos,
+                intensity,
+                gridDensity
+            };
+
+        parameterKeys.forEach(key => {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                const value = Number(source[key]);
+                if (Number.isFinite(value)) {
+                    this.baseParameters[key] = value;
+                }
+            }
+        });
+
+        return { ...this.baseParameters };
+    }
     
     /**
      * 🌐 GEOMETRIC TILT WINDOW SYSTEM
@@ -281,17 +339,22 @@ export class DeviceTiltHandler {
         
         // Store current parameter values as base
         if (window.userParameterState) {
-            this.baseRotation.rot4dXW = window.userParameterState.rot4dXW || 0;
-            this.baseRotation.rot4dYW = window.userParameterState.rot4dYW || 0;
-            this.baseRotation.rot4dZW = window.userParameterState.rot4dZW || 0;
-            this.baseRotation.rot4dXY = window.userParameterState.rot4dXY || 0;
-            this.baseRotation.rot4dXZ = window.userParameterState.rot4dXZ || 0;
-            this.baseRotation.rot4dYZ = window.userParameterState.rot4dYZ || 0;
-            this.baseParameters.dimension = window.userParameterState.dimension || 3.5;
-            this.baseParameters.morphFactor = window.userParameterState.morphFactor || 1.0;
-            this.baseParameters.chaos = window.userParameterState.chaos || 0.2;
-            this.baseParameters.intensity = window.userParameterState.intensity || 0.8;
-            this.baseParameters.gridDensity = window.userParameterState.gridDensity || 15;
+            this.updateBaseRotation({
+                rot4dXW: window.userParameterState.rot4dXW || 0,
+                rot4dYW: window.userParameterState.rot4dYW || 0,
+                rot4dZW: window.userParameterState.rot4dZW || 0,
+                rot4dXY: window.userParameterState.rot4dXY || 0,
+                rot4dXZ: window.userParameterState.rot4dXZ || 0,
+                rot4dYZ: window.userParameterState.rot4dYZ || 0
+            });
+
+            this.updateBaseParameters({
+                dimension: window.userParameterState.dimension || 3.5,
+                morphFactor: window.userParameterState.morphFactor || 1.0,
+                chaos: window.userParameterState.chaos || 0.2,
+                intensity: window.userParameterState.intensity || 0.8,
+                gridDensity: window.userParameterState.gridDensity || 15
+            });
         }
         
         // Initialize smoothed values

@@ -1197,7 +1197,7 @@
         window.getCurrentUIParameterState = function() {
             const parameterIds = [
                 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
-                'gridDensity', 'morphFactor', 'chaos',
+                'dimension', 'gridDensity', 'morphFactor', 'chaos',
                 'speed', 'hue', 'intensity', 'saturation',
                 'topologyFamily', 'topologyVariant'
             ];
@@ -1269,13 +1269,27 @@
             window.updateAllParameterDisplays(uiState);
             
             // CRITICAL: Update device tilt base rotation values after system switch
-            if (window.deviceTiltHandler && window.deviceTiltHandler.isEnabled) {
-                window.deviceTiltHandler.updateBaseRotation(
-                    uiState.rot4dXW || 0,
-                    uiState.rot4dYW || 0,
-                    uiState.rot4dZW || 0
-                );
-                console.log('🎯 Device tilt base rotation updated for new system');
+            if (window.deviceTiltHandler) {
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: uiState.rot4dXW || 0,
+                    rot4dYW: uiState.rot4dYW || 0,
+                    rot4dZW: uiState.rot4dZW || 0,
+                    rot4dXY: uiState.rot4dXY || 0,
+                    rot4dXZ: uiState.rot4dXZ || 0,
+                    rot4dYZ: uiState.rot4dYZ || 0
+                });
+
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: uiState.dimension || 3.5,
+                    morphFactor: uiState.morphFactor || 1.0,
+                    chaos: uiState.chaos || 0.2,
+                    intensity: uiState.intensity || 0.8,
+                    gridDensity: uiState.gridDensity || 15
+                });
+
+                if (window.deviceTiltHandler.isEnabled) {
+                    console.log('🎯 Device tilt base rotation updated for new system');
+                }
             }
             
             // ✅ NEW: INJECT REACTIVITY STATE INTO NEW SYSTEM
@@ -1398,11 +1412,21 @@
             if (window.deviceTiltHandler && window.deviceTiltHandler.isEnabled) {
                 // Ensure current parameter state is preserved as base
                 const currentParams = window.getCurrentUIParameterState();
-                window.deviceTiltHandler.updateBaseRotation(
-                    currentParams.rot4dXW || 0,
-                    currentParams.rot4dYW || 0,
-                    currentParams.rot4dZW || 0
-                );
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: currentParams.rot4dXW || 0,
+                    rot4dYW: currentParams.rot4dYW || 0,
+                    rot4dZW: currentParams.rot4dZW || 0,
+                    rot4dXY: currentParams.rot4dXY || 0,
+                    rot4dXZ: currentParams.rot4dXZ || 0,
+                    rot4dYZ: currentParams.rot4dYZ || 0
+                });
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: currentParams.dimension || 3.5,
+                    morphFactor: currentParams.morphFactor || 1.0,
+                    chaos: currentParams.chaos || 0.2,
+                    intensity: currentParams.intensity || 0.8,
+                    gridDensity: currentParams.gridDensity || 15
+                });
                 console.log('✅ Device tilt base rotation updated');
             }
             
@@ -1634,6 +1658,9 @@
                 rot4dXW: 'xwValue',
                 rot4dYW: 'ywValue',
                 rot4dZW: 'zwValue',
+                rot4dXY: 'xyValue',
+                rot4dXZ: 'xzValue',
+                rot4dYZ: 'yzValue',
                 gridDensity: 'densityValue',
                 morphFactor: 'morphValue',
                 chaos: 'chaosValue',
@@ -2411,6 +2438,9 @@
                 rot4dXW: 'xwValue',
                 rot4dYW: 'ywValue',
                 rot4dZW: 'zwValue',
+                rot4dXY: 'xyValue',
+                rot4dXZ: 'xzValue',
+                rot4dYZ: 'yzValue',
                 gridDensity: 'densityValue',
                 morphFactor: 'morphValue',
                 chaos: 'chaosValue',
@@ -2428,6 +2458,16 @@
                     display.textContent = numericValue.toFixed(2);
                 } else {
                     display.textContent = numericValue.toFixed(1);
+                }
+            }
+
+            if (window.deviceTiltHandler && hasNumeric) {
+                if (['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ'].includes(param)) {
+                    window.deviceTiltHandler.updateBaseRotation({ [param]: numericValue });
+                }
+
+                if (['dimension', 'morphFactor', 'chaos', 'intensity', 'gridDensity'].includes(param)) {
+                    window.deviceTiltHandler.updateBaseParameters({ [param]: numericValue });
                 }
             }
 
