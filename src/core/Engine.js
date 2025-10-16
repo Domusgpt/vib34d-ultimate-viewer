@@ -119,7 +119,7 @@ export class VIB34DIntegratedEngine {
     
     setupParameterControls() {
         const controls = [
-            'variationSlider', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'dimension',
+            'variationSlider', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'dimension',
             'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue'
         ];
         
@@ -234,26 +234,32 @@ export class VIB34DIntegratedEngine {
         // X position controls XW and YW planes
         const rot4dXW = (x - 0.5) * rotationRange; // -6.28 to +6.28
         const rot4dYW = (x - 0.5) * rotationRange * 0.7; // Slightly different scaling
-        
-        // Y position controls ZW plane  
+
+        // Y position controls additional planes
         const rot4dZW = (y - 0.5) * rotationRange;
-        
+        const rot4dXY = (y - 0.5) * rotationRange * 0.45;
+        const rot4dXZ = (x - 0.5) * rotationRange * 0.45;
+        const rot4dYZ = ((x + y) * 0.5 - 0.5) * rotationRange * 0.35;
+
         // SUBTLE MOUSE HUE CHANGES (fluid, not extreme)
         if (!this.mouseHue) this.mouseHue = this.scrollHue || 200; // Use current scroll hue or default
-        
+
         // Gentle hue shifts based on mouse position (subtle)
         const hueOffset = (x - 0.5) * 30; // ±15 degree gentle shift
         const mouseHue = (this.mouseHue + hueOffset) % 360;
-        
+
         // Update parameters through the global parameter system
         if (window.updateParameter) {
             window.updateParameter('rot4dXW', rot4dXW.toFixed(2));
             window.updateParameter('rot4dYW', rot4dYW.toFixed(2));
             window.updateParameter('rot4dZW', rot4dZW.toFixed(2));
+            window.updateParameter('rot4dXY', rot4dXY.toFixed(2));
+            window.updateParameter('rot4dXZ', rot4dXZ.toFixed(2));
+            window.updateParameter('rot4dYZ', rot4dYZ.toFixed(2));
             window.updateParameter('hue', Math.round(mouseHue)); // Gentle hue changes
         }
-        
-        console.log(`🔷 Smooth 4D + Hue: XW=${rot4dXW.toFixed(2)}, ZW=${rot4dZW.toFixed(2)}, Hue=${Math.round(mouseHue)}`);
+
+        console.log(`🔷 Smooth 4D + Hue: XW=${rot4dXW.toFixed(2)}, YW=${rot4dYW.toFixed(2)}, ZW=${rot4dZW.toFixed(2)}, XY=${rot4dXY.toFixed(2)}, XZ=${rot4dXZ.toFixed(2)}, YZ=${rot4dYZ.toFixed(2)}, Hue=${Math.round(mouseHue)}`);
     }
     
     triggerColorFlash() {
@@ -418,7 +424,7 @@ export class VIB34DIntegratedEngine {
      */
     updateVisualizers() {
         const params = this.parameterManager.getAllParameters();
-        
+
         // Add interaction state
         params.mouseX = this.mouseX;
         params.mouseY = this.mouseY;
@@ -435,6 +441,69 @@ export class VIB34DIntegratedEngine {
         this.mouseIntensity *= 0.95;
         this.clickIntensity *= 0.92;
     }
+
+    updateParameter(param, value) {
+        let parsedValue = value;
+        if (typeof parsedValue === 'string' && parsedValue.trim() !== '') {
+            const numeric = Number(parsedValue);
+            if (!Number.isNaN(numeric)) {
+                parsedValue = numeric;
+            }
+        }
+
+        let handled = false;
+
+        switch (param) {
+            case 'geometry':
+                handled = this.parameterManager.setGeometry(parsedValue);
+                break;
+            case 'topologyFamily':
+                this.parameterManager.setTopologyFamily(parsedValue);
+                handled = true;
+                break;
+            case 'topologyVariant':
+                this.parameterManager.setTopologyVariant(parsedValue);
+                handled = true;
+                break;
+            default:
+                handled = this.parameterManager.setParameter(param, parsedValue);
+                break;
+        }
+
+        if (handled) {
+            this.updateDisplayValues();
+            this.updateVisualizers();
+        }
+    }
+
+    setTopologyFamily(familyId) {
+        this.updateParameter('topologyFamily', familyId);
+    }
+
+    setTopologyVariant(variantId) {
+        this.updateParameter('topologyVariant', variantId);
+    }
+
+    getTopologyFamilies() {
+        return this.parameterManager.getTopologyFamilies();
+    }
+
+    getTopologyVariants(familyId) {
+        return this.parameterManager.getTopologyVariants(familyId);
+    }
+
+    getTopologyVariantsForGeometry(geometryIndex) {
+        return this.parameterManager.getTopologyOptionsForGeometry(geometryIndex);
+    }
+
+    getTopologyState() {
+        return {
+            family: this.parameterManager.getParameter('topologyFamily'),
+            variant: this.parameterManager.getParameter('topologyVariant'),
+            shellWidth: this.parameterManager.getParameter('topologyShellWidth'),
+            planeThickness: this.parameterManager.getParameter('topologyPlaneThickness')
+        };
+    }
     
     /**
      * Update parameters from UI controls
@@ -449,6 +518,13 @@ export class VIB34DIntegratedEngine {
      */
     updateDisplayValues() {
         this.parameterManager.updateDisplayValues();
+        if (typeof window !== 'undefined' && typeof window.syncTopologyUI === 'function') {
+            try {
+                window.syncTopologyUI();
+            } catch (error) {
+                console.warn('⚠️ Failed to sync topology UI from engine:', error);
+            }
+        }
     }
     
     /**

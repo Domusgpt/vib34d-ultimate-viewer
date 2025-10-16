@@ -420,9 +420,17 @@
             const display = document.getElementById('parameterDisplay');
             const params = [
                 { name: 'Geometry', key: 'geometry', formatter: (v) => Math.floor(v) },
+                { name: 'Topology Family', key: 'topologyFamily', formatter: (v) => Math.floor(v) },
+                { name: 'Topology Variant', key: 'topologyVariant', formatter: (v) => Math.floor(v) },
+                { name: 'Shell Width', key: 'topologyShellWidth', formatter: (v) => v.toFixed(3) },
+                { name: 'Plane Thickness', key: 'topologyPlaneThickness', formatter: (v) => v.toFixed(3) },
+                { name: 'Dimension', key: 'dimension', formatter: (v) => v.toFixed(2) },
                 { name: '4D-XW', key: 'rot4dXW', formatter: (v) => v.toFixed(2) },
                 { name: '4D-YW', key: 'rot4dYW', formatter: (v) => v.toFixed(2) },
                 { name: '4D-ZW', key: 'rot4dZW', formatter: (v) => v.toFixed(2) },
+                { name: '4D-XY', key: 'rot4dXY', formatter: (v) => v.toFixed(2) },
+                { name: '4D-XZ', key: 'rot4dXZ', formatter: (v) => v.toFixed(2) },
+                { name: '4D-YZ', key: 'rot4dYZ', formatter: (v) => v.toFixed(2) },
                 { name: 'Grid', key: 'gridDensity', formatter: (v) => Math.floor(v) },
                 { name: 'Morph', key: 'morphFactor', formatter: (v) => v.toFixed(2) },
                 { name: 'Chaos', key: 'chaos', formatter: (v) => v.toFixed(2) },
@@ -495,12 +503,17 @@
                 console.warn('⚠️ RealHolographicSystem not available');
             }
             
+            // Placeholder: disable the unfinished polychora engine until the shared
+            // topology layer is wired through every system.
+            /*
             try {
                 const polychoraModule = await import('./src/core/PolychoraSystemNew.js');
                 NewPolychoraEngine = polychoraModule.NewPolychoraEngine;
             } catch (e) {
                 console.warn('⚠️ NewPolychoraEngine not available');
             }
+            */
+            NewPolychoraEngine = null;
             
             // Initialize the appropriate engine
             switch (system) {
@@ -529,11 +542,7 @@
                     break;
                     
                 case 'polychora':
-                    if (NewPolychoraEngine) {
-                        activeEngine = new NewPolychoraEngine();
-                        document.getElementById('polychoraLayers').style.display = 'block';
-                        document.getElementById('systemIndicator').textContent = 'POLYCHORA SYSTEM - TRUE 4D';
-                    }
+                    console.warn('Polychora system placeholder is disabled pending topology integration.');
                     break;
             }
             

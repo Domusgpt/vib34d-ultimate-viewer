@@ -106,66 +106,138 @@ export class VIB34DApp {
         // Get all current UI parameter values (prefers user-stored values)
         window.getCurrentUIParameterState = () => {
             const parameterIds = [
-                'rot4dXW', 'rot4dYW', 'rot4dZW', 
-                'gridDensity', 'morphFactor', 'chaos', 
-                'speed', 'hue', 'intensity', 'saturation'
+                'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
+                'dimension', 'gridDensity', 'morphFactor', 'chaos',
+                'speed', 'hue', 'intensity', 'saturation',
+                'topologyFamily', 'topologyVariant',
+                'topologyShellWidth', 'topologyPlaneThickness'
             ];
-            
+
             const currentState = {};
             parameterIds.forEach(paramId => {
-                // PREFER: User-stored values over slider defaults
                 if (this.userParameterState[paramId] !== undefined) {
                     currentState[paramId] = this.userParameterState[paramId];
-                } else {
-                    // FALLBACK: Get current slider value
-                    const slider = document.getElementById(paramId);
-                    if (slider) {
-                        currentState[paramId] = parseFloat(slider.value);
-                        console.log(`📊 UI read ${paramId} = ${slider.value} (from slider)`);
+                    return;
+                }
+
+                const element = document.getElementById(paramId);
+                if (element) {
+                    const rawValue = element.value;
+                    const numericValue = element.tagName === 'SELECT'
+                        ? parseInt(rawValue, 10)
+                        : parseFloat(rawValue);
+
+                    if (!Number.isNaN(numericValue)) {
+                        currentState[paramId] = numericValue;
+                    }
+                    return;
+                }
+
+                if (window.engine?.parameterManager && typeof window.engine.parameterManager.getParameter === 'function') {
+                    const engineValue = window.engine.parameterManager.getParameter(paramId);
+                    if (engineValue !== undefined) {
+                        currentState[paramId] = engineValue;
                     }
                 }
             });
-            
+
             return currentState;
         };
 
         // Sync sliders to stored values
         window.syncSlidersToStoredValues = () => {
             console.log('🔄 Syncing sliders to stored values...');
-            
+
             Object.entries(this.userParameterState).forEach(([param, value]) => {
-                const slider = document.getElementById(param);
-                if (slider && !isNaN(value)) {
-                    slider.value = value;
-                    
-                    // Update display value
-                    const display = slider.parentElement?.querySelector('.control-value');
-                    if (display) {
-                        display.textContent = value;
+                const element = document.getElementById(param);
+                const skipMissingLog = ['topologyShellWidth', 'topologyPlaneThickness'].includes(param);
+                if (!element || Number.isNaN(value)) {
+                    if (!element && !skipMissingLog) {
+                        console.warn(`⚠️ Control not found for parameter: ${param}`);
                     }
-                    
-                    console.log(`🔄 Synced ${param} slider to ${value}`);
-                } else if (!slider) {
-                    console.warn(`⚠️ Slider not found for parameter: ${param}`);
+                    return;
                 }
+
+                element.value = value;
+
+                const display = element.parentElement?.querySelector('.control-value');
+                if (display) {
+                    display.textContent = value;
+                }
+
+                console.log(`🔄 Synced ${param} control to ${value}`);
             });
         };
 
         // Function to sync visualizer to UI state
         window.syncVisualizerToUI = (systemName, engine) => {
             console.log(`🔄 Syncing ${systemName} visualizer to UI state...`);
-            
+
+            window.syncSlidersToStoredValues();
             const currentParams = window.getCurrentUIParameterState();
             console.log('📊 Current UI parameter state:', currentParams);
-            
-            // Apply each parameter to the visualizer
+
             Object.entries(currentParams).forEach(([param, value]) => {
-                if (window.updateParameter) {
-                    window.updateParameter(param, value);
-                    console.log(`✅ Applied ${param} = ${value} to ${systemName}`);
+                try {
+                    if (systemName === 'faceted' && engine?.parameterManager) {
+                        engine.parameterManager.setParameter(param, value);
+                    } else if (systemName === 'quantum' && typeof engine?.updateParameter === 'function') {
+                        engine.updateParameter(param, value);
+                    } else if (systemName === 'holographic' && typeof engine?.updateParameters === 'function') {
+                        engine.updateParameters({ [param]: value });
+                    } else if (systemName === 'polychora' && typeof engine?.updateParameter === 'function') {
+                        engine.updateParameter(param, value);
+                    } else if (typeof window.updateParameter === 'function') {
+                        window.updateParameter(param, value);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ ${param} sync failed for ${systemName}:`, error);
                 }
             });
-            
+
+            if (typeof window.updateAllParameterDisplays === 'function') {
+                window.updateAllParameterDisplays(currentParams);
+            }
+
+            if (window.deviceTiltHandler) {
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: currentParams.rot4dXW || 0,
+                    rot4dYW: currentParams.rot4dYW || 0,
+                    rot4dZW: currentParams.rot4dZW || 0,
+                    rot4dXY: currentParams.rot4dXY || 0,
+                    rot4dXZ: currentParams.rot4dXZ || 0,
+                    rot4dYZ: currentParams.rot4dYZ || 0
+                });
+
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: currentParams.dimension || 3.5,
+                    morphFactor: currentParams.morphFactor || 1.0,
+                    chaos: currentParams.chaos || 0.2,
+                    intensity: currentParams.intensity || 0.8,
+                    gridDensity: currentParams.gridDensity || 15
+                });
+            }
+
+            if (typeof window.injectReactivityState === 'function') {
+                window.injectReactivityState(systemName, engine);
+            }
+
+            setTimeout(() => {
+                if (typeof window.restoreAllToggleStates === 'function') {
+                    window.restoreAllToggleStates();
+                }
+
+                setTimeout(() => {
+                    if (typeof window.synchronizeEngineStates === 'function') {
+                        window.synchronizeEngineStates();
+                    }
+                }, 200);
+            }, 400);
+
+            if (typeof window.syncTopologyUI === 'function') {
+                window.syncTopologyUI();
+            }
+
             console.log(`✅ ${systemName} visualizer synced to UI`);
         };
         
@@ -208,11 +280,22 @@ export class VIB34DApp {
         // Update base rotations for tilt system when parameters change
         window.updateTiltBaseRotations = () => {
             if (window.deviceTiltHandler && this.userParameterState) {
-                window.deviceTiltHandler.updateBaseRotation(
-                    this.userParameterState.rot4dXW || 0,
-                    this.userParameterState.rot4dYW || 0,
-                    this.userParameterState.rot4dZW || 0
-                );
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: this.userParameterState.rot4dXW || 0,
+                    rot4dYW: this.userParameterState.rot4dYW || 0,
+                    rot4dZW: this.userParameterState.rot4dZW || 0,
+                    rot4dXY: this.userParameterState.rot4dXY || 0,
+                    rot4dXZ: this.userParameterState.rot4dXZ || 0,
+                    rot4dYZ: this.userParameterState.rot4dYZ || 0
+                });
+
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: this.userParameterState.dimension || 3.5,
+                    morphFactor: this.userParameterState.morphFactor || 1.0,
+                    chaos: this.userParameterState.chaos || 0.2,
+                    intensity: this.userParameterState.intensity || 0.8,
+                    gridDensity: this.userParameterState.gridDensity || 15
+                });
             }
         };
     }
