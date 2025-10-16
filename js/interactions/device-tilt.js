@@ -29,7 +29,10 @@ export class DeviceTiltHandler {
         this.baseRotation = {
             rot4dXW: 0,
             rot4dYW: 0,
-            rot4dZW: 0
+            rot4dZW: 0,
+            rot4dXY: 0,
+            rot4dXZ: 0,
+            rot4dYZ: 0
         };
         
         // Base parameters for restoration
@@ -80,11 +83,20 @@ export class DeviceTiltHandler {
         };
         
         // 4. 4D ROTATION BASED ON VIEWING ANGLE
+        const degToRad = Math.PI / 180;
+        const diagonalScale = windowDepth.depthMultiplier * 0.02;
+        const compassScale = windowDepth.depthMultiplier * 0.015;
+
         const viewingAngle4D = {
             // Combine base rotation with tilt-based 4D exploration
-            rot4dXW: this.baseRotation.rot4dXW + (betaDeg * Math.PI / 180) * 0.025 * windowDepth.depthMultiplier,
-            rot4dYW: this.baseRotation.rot4dYW + (gammaDeg * Math.PI / 180) * 0.035 * windowDepth.depthMultiplier,  
-            rot4dZW: this.baseRotation.rot4dZW + (alphaDeg * Math.PI / 180) * 0.015 * windowDepth.depthMultiplier
+            rot4dXW: this.baseRotation.rot4dXW + (betaDeg * degToRad) * 0.025 * windowDepth.depthMultiplier,
+            rot4dYW: this.baseRotation.rot4dYW + (gammaDeg * degToRad) * 0.035 * windowDepth.depthMultiplier,
+            rot4dZW: this.baseRotation.rot4dZW + (alphaDeg * degToRad) * 0.015 * windowDepth.depthMultiplier,
+
+            // Newly exposed cross-plane rotations for full 6D control
+            rot4dXY: this.baseRotation.rot4dXY + ((gammaDeg - betaDeg) * degToRad) * diagonalScale,
+            rot4dXZ: this.baseRotation.rot4dXZ + ((alphaDeg - betaDeg * 0.5) * degToRad) * compassScale,
+            rot4dYZ: this.baseRotation.rot4dYZ + ((alphaDeg - gammaDeg * 0.5) * degToRad) * compassScale
         };
         
         // 5. PERSPECTIVE DISTORTION EFFECTS
@@ -159,6 +171,9 @@ export class DeviceTiltHandler {
             window.updateParameter('rot4dXW', viewingAngle4D.rot4dXW);
             window.updateParameter('rot4dYW', viewingAngle4D.rot4dYW);
             window.updateParameter('rot4dZW', viewingAngle4D.rot4dZW);
+            window.updateParameter('rot4dXY', viewingAngle4D.rot4dXY);
+            window.updateParameter('rot4dXZ', viewingAngle4D.rot4dXZ);
+            window.updateParameter('rot4dYZ', viewingAngle4D.rot4dYZ);
         }
         
         // 3. Update window depth parameters
@@ -193,6 +208,9 @@ export class DeviceTiltHandler {
             window.updateParameter('rot4dXW', this.baseRotation.rot4dXW);
             window.updateParameter('rot4dYW', this.baseRotation.rot4dYW);
             window.updateParameter('rot4dZW', this.baseRotation.rot4dZW);
+            window.updateParameter('rot4dXY', this.baseRotation.rot4dXY);
+            window.updateParameter('rot4dXZ', this.baseRotation.rot4dXZ);
+            window.updateParameter('rot4dYZ', this.baseRotation.rot4dYZ);
             window.updateParameter('dimension', this.baseParameters.dimension);
             window.updateParameter('morphFactor', this.baseParameters.morphFactor);
             window.updateParameter('chaos', this.baseParameters.chaos);
@@ -266,6 +284,9 @@ export class DeviceTiltHandler {
             this.baseRotation.rot4dXW = window.userParameterState.rot4dXW || 0;
             this.baseRotation.rot4dYW = window.userParameterState.rot4dYW || 0;
             this.baseRotation.rot4dZW = window.userParameterState.rot4dZW || 0;
+            this.baseRotation.rot4dXY = window.userParameterState.rot4dXY || 0;
+            this.baseRotation.rot4dXZ = window.userParameterState.rot4dXZ || 0;
+            this.baseRotation.rot4dYZ = window.userParameterState.rot4dYZ || 0;
             this.baseParameters.dimension = window.userParameterState.dimension || 3.5;
             this.baseParameters.morphFactor = window.userParameterState.morphFactor || 1.0;
             this.baseParameters.chaos = window.userParameterState.chaos || 0.2;

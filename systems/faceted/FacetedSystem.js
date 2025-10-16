@@ -3,6 +3,8 @@
  * Preserves ALL functionality from original index.html
  */
 
+import { TopologyLibrary } from '../../src/core/TopologyLibrary.js';
+
 export class FacetedSystem {
     constructor() {
         this.name = 'faceted';
@@ -147,10 +149,12 @@ export class FacetedSystem {
             if (success) {
                 // Make visualizers accessible
                 this.visualizers = this.engine.visualizers || [];
-                
+
                 // Setup parameter listeners exactly like index.html
                 this.setupParameterListeners();
-                
+
+                this.syncTopologyParametersFromEngine();
+
                 console.log('✅ FacetedSystem: Engine created successfully');
                 return true;
             } else {
@@ -223,8 +227,11 @@ export class FacetedSystem {
         const defaultParams = {
             geometry: 0,
             rot4dXW: 0,
-            rot4dYW: 0, 
+            rot4dYW: 0,
             rot4dZW: 0,
+            rot4dXY: 0,
+            rot4dXZ: 0,
+            rot4dYZ: 0,
             gridDensity: 15,
             morphFactor: 1.0,
             chaos: 0.2,
@@ -233,11 +240,20 @@ export class FacetedSystem {
             intensity: 0.5,
             saturation: 0.8
         };
-        
+
         Object.entries(defaultParams).forEach(([param, value]) => {
             this.parameters.set(param, value);
         });
-        
+
+        const defaultFamily = TopologyLibrary.getFamilyForGeometry(defaultParams.geometry) ?? 0;
+        const defaultVariant = TopologyLibrary.getDefaultVariantId(defaultFamily);
+        const topologyDefaults = TopologyLibrary.getDefaults(defaultFamily, defaultVariant);
+
+        this.parameters.set('topologyFamily', defaultFamily);
+        this.parameters.set('topologyVariant', defaultVariant);
+        this.parameters.set('topologyShellWidth', topologyDefaults.shellWidth);
+        this.parameters.set('topologyPlaneThickness', topologyDefaults.planeThickness);
+
         console.log('🔷 FacetedSystem: Default parameters initialized');
     }
 
@@ -262,6 +278,49 @@ export class FacetedSystem {
                 }
             };
         }
+
+        if (!window.setTopologyFamily) {
+            window.setTopologyFamily = (familyId) => {
+                if (window.systemManager && window.systemManager.getCurrentSystemName() === 'faceted') {
+                    this.updateParameter('topologyFamily', familyId);
+                }
+            };
+        }
+
+        if (!window.setTopologyVariant) {
+            window.setTopologyVariant = (variantId) => {
+                if (window.systemManager && window.systemManager.getCurrentSystemName() === 'faceted') {
+                    this.updateParameter('topologyVariant', variantId);
+                }
+            };
+        }
+
+        if (!window.getTopologyFamilies) {
+            window.getTopologyFamilies = () => {
+                if (this.engine && this.engine.getTopologyFamilies) {
+                    return this.engine.getTopologyFamilies();
+                }
+                return [];
+            };
+        }
+
+        if (!window.getTopologyVariants) {
+            window.getTopologyVariants = (familyId) => {
+                if (this.engine && this.engine.getTopologyVariants) {
+                    return this.engine.getTopologyVariants(familyId);
+                }
+                return [];
+            };
+        }
+
+        if (!window.getTopologyVariantsForGeometry) {
+            window.getTopologyVariantsForGeometry = (geometryIndex) => {
+                if (this.engine && this.engine.getTopologyVariantsForGeometry) {
+                    return this.engine.getTopologyVariantsForGeometry(geometryIndex);
+                }
+                return [];
+            };
+        }
     }
 
     /**
@@ -283,6 +342,10 @@ export class FacetedSystem {
             } catch (error) {
                 console.warn(`🔷 FacetedSystem: Parameter update failed for ${param}:`, error);
             }
+        }
+
+        if (param === 'geometry' || param === 'topologyFamily' || param === 'topologyVariant') {
+            this.syncTopologyParametersFromEngine();
         }
     }
 
@@ -338,6 +401,22 @@ export class FacetedSystem {
         
         // Update parameter
         this.updateParameter('geometry', index);
+    }
+
+    syncTopologyParametersFromEngine() {
+        if (!this.engine || !this.engine.getTopologyState) {
+            return;
+        }
+
+        const state = this.engine.getTopologyState();
+        if (!state) {
+            return;
+        }
+
+        this.parameters.set('topologyFamily', state.family);
+        this.parameters.set('topologyVariant', state.variant);
+        this.parameters.set('topologyShellWidth', state.shellWidth);
+        this.parameters.set('topologyPlaneThickness', state.planeThickness);
     }
 
     /**

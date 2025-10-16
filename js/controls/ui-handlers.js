@@ -343,7 +343,7 @@ window.toggleAudioReactivity = function(sensitivity, visualMode, enabled) {
             visualModes: {
                 color: ['hue', 'saturation', 'intensity'],
                 geometry: ['morphFactor', 'gridDensity', 'chaos'],  
-                movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW']
+                movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ']
             },
             // Active modes
             activeSensitivity: 'medium',
