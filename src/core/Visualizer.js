@@ -209,19 +209,55 @@ uniform float u_roleIntensity;
 mat4 rotateXW(float theta) {
     float c = cos(theta);
     float s = sin(theta);
-    return mat4(c, 0.0, 0.0, -s, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, s, 0.0, 0.0, c);
+    return mat4(c, 0.0, 0.0, -s,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                s, 0.0, 0.0, c);
 }
 
 mat4 rotateYW(float theta) {
     float c = cos(theta);
     float s = sin(theta);
-    return mat4(1.0, 0.0, 0.0, 0.0, 0.0, c, 0.0, -s, 0.0, 0.0, 1.0, 0.0, 0.0, s, 0.0, c);
+    return mat4(1.0, 0.0, 0.0, 0.0,
+                0.0, c, 0.0, -s,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, s, 0.0, c);
 }
 
 mat4 rotateZW(float theta) {
     float c = cos(theta);
     float s = sin(theta);
-    return mat4(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, c, -s, 0.0, 0.0, s, c);
+    return mat4(1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, c, -s,
+                0.0, 0.0, s, c);
+}
+
+mat4 rotateXY(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat4(c, s, 0.0, 0.0,
+                -s, c, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0);
+}
+
+mat4 rotateXZ(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat4(c, 0.0, s, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                -s, 0.0, c, 0.0,
+                0.0, 0.0, 0.0, 1.0);
+}
+
+mat4 rotateYZ(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat4(1.0, 0.0, 0.0, 0.0,
+                0.0, c, s, 0.0,
+                0.0, -s, c, 0.0,
+                0.0, 0.0, 0.0, 1.0);
 }
 
 vec3 project4Dto3D(vec4 p) {
@@ -295,6 +331,7 @@ float hypersphereQuantumShellTopology(vec4 p) {
         float rot2 = timeFactor * 0.9 * baseSpeed + u_morphFactor * 0.6;
         float rot3 = -timeFactor * 0.7 * baseSpeed + u_chaos * 2.0;
         p4d = rotateXW(rot1) * rotateYW(rot2) * rotateZW(rot3) * p4d;
+        p4d = rotateXY(u_rot4dXY) * rotateXZ(u_rot4dXZ) * rotateYZ(u_rot4dYZ) * p4d;
 
         vec3 projected = project4Dto3D(p4d);
         float radius4D = length(projected);
@@ -336,6 +373,7 @@ float hypersphereTetrahedralTopology(vec4 p) {
         float rot2 = timeFactor * 0.9 * baseSpeed - u_morphFactor * 0.5;
         float rot3 = timeFactor * 0.7 * baseSpeed + u_intensity * 1.2;
         p4d = rotateXW(rot1) * rotateYW(rot2) * rotateZW(rot3) * p4d;
+        p4d = rotateXY(u_rot4dXY) * rotateXZ(u_rot4dXZ) * rotateYZ(u_rot4dYZ) * p4d;
 
         vec3 projected = project4Dto3D(p4d);
         vec3 mod4D = fract(projected * density * 0.5 + 0.5) - 0.5;
@@ -359,7 +397,8 @@ float hypertetraClassicTopology(vec4 p) {
 
 float hypertetraTwistedTopology(vec4 p) {
     float timeFactor = u_time * 0.00025 * u_speed;
-    vec4 rotated = rotateXW(timeFactor * 1.3) * rotateYW(timeFactor * 0.9) * p;
+    vec4 rotated = rotateXW(timeFactor * 1.3) * rotateYW(timeFactor * 0.9) * rotateZW(timeFactor * 0.7) * p;
+    rotated = rotateXY(u_rot4dXY) * rotateXZ(u_rot4dXZ) * rotateYZ(u_rot4dYZ) * rotated;
     vec4 cell = fract(rotated * u_gridDensity * 0.08 + 0.5) - 0.5;
     vec4 dist = abs(cell);
     float thickness = max(0.0025, u_topologyShellWidth * 0.6 + 0.005);
@@ -491,10 +530,13 @@ void main() {
     vec4 pos = vec4(uv * 3.0, sin(timeSpeed * 3.0), cos(timeSpeed * 2.0));
     pos.xy += (u_mouse - 0.5) * u_mouseIntensity * 2.0;
     
-    // Apply 4D rotations
+    // Apply user-controlled rotations across all 4D planes
     pos = rotateXW(u_rot4dXW) * pos;
     pos = rotateYW(u_rot4dYW) * pos;
     pos = rotateZW(u_rot4dZW) * pos;
+    pos = rotateXY(u_rot4dXY) * pos;
+    pos = rotateXZ(u_rot4dXZ) * pos;
+    pos = rotateYZ(u_rot4dYZ) * pos;
     
     // Calculate geometry value
     float value = geometryFunction(pos);
