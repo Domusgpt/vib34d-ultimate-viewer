@@ -511,6 +511,7 @@
         import { IntegratedHolographicVisualizer } from './src/core/Visualizer.js';
         import { QuantumHolographicVisualizer } from './src/quantum/QuantumVisualizer.js';
         import { HolographicVisualizer } from './src/holograms/HolographicVisualizer.js';
+        import { TopologyLibrary } from './src/core/TopologyLibrary.js';
         
         class PortalEngine {
             constructor() {
@@ -540,7 +541,10 @@
                 this.baseRotations = {
                     rot4dXW: 0,
                     rot4dYW: 0,
-                    rot4dZW: 0
+                    rot4dZW: 0,
+                    rot4dXY: 0,
+                    rot4dXZ: 0,
+                    rot4dYZ: 0
                 };
                 
                 // Device orientation tracking for realistic 4D perspective
@@ -564,6 +568,9 @@
                 this.baseRotations.rot4dXW = this.params.rot4dXW;
                 this.baseRotations.rot4dYW = this.params.rot4dYW;
                 this.baseRotations.rot4dZW = this.params.rot4dZW;
+                this.baseRotations.rot4dXY = this.params.rot4dXY;
+                this.baseRotations.rot4dXZ = this.params.rot4dXZ;
+                this.baseRotations.rot4dYZ = this.params.rot4dYZ;
                 
                 this.updateInfoDisplay();
                 
@@ -678,9 +685,17 @@
                         hue: this.params.hue,
                         intensity: this.params.intensity,
                         saturation: this.params.saturation,
+                        dimension: this.params.dimension,
                         rot4dXW: this.params.rot4dXW,
                         rot4dYW: this.params.rot4dYW,
-                        rot4dZW: this.params.rot4dZW
+                        rot4dZW: this.params.rot4dZW,
+                        rot4dXY: this.params.rot4dXY,
+                        rot4dXZ: this.params.rot4dXZ,
+                        rot4dYZ: this.params.rot4dYZ,
+                        topologyFamily: this.params.topologyFamily,
+                        topologyVariant: this.params.topologyVariant,
+                        topologyShellWidth: this.params.topologyShellWidth,
+                        topologyPlaneThickness: this.params.topologyPlaneThickness
                     };
                     
                     console.log(`🔧 Applying parameters to ${this.params.system} visualizer:`, standardParams);
@@ -695,7 +710,18 @@
                         speed: this.params.speed,
                         hue: this.params.hue,
                         intensity: this.params.intensity,
-                        saturation: this.params.saturation
+                        saturation: this.params.saturation,
+                        dimension: this.params.dimension,
+                        rot4dXW: this.params.rot4dXW,
+                        rot4dYW: this.params.rot4dYW,
+                        rot4dZW: this.params.rot4dZW,
+                        rot4dXY: this.params.rot4dXY,
+                        rot4dXZ: this.params.rot4dXZ,
+                        rot4dYZ: this.params.rot4dYZ,
+                        topologyFamily: this.params.topologyFamily,
+                        topologyVariant: this.params.topologyVariant,
+                        topologyShellWidth: this.params.topologyShellWidth,
+                        topologyPlaneThickness: this.params.topologyPlaneThickness
                     });
                 } else {
                     console.warn(`⚠️ No parameter setting method found for ${this.params.system} visualizer`);
@@ -984,24 +1010,37 @@
                 const dramatic4DScale = extremeTilt ? 0.8 : 0.5; // 8x more dramatic than before!
                 const transformativeScale = tiltIntensity * 0.2;  // Additional transformative scaling
                 
+                const crossScale = dramatic4DScale * 0.45;
+                const diagonalScale = dramatic4DScale * 0.35;
+
                 const perspective4D = {
                     // DRAMATICALLY enhanced 4D rotations
                     rot4dXW: this.baseRotations.rot4dXW + (betaNorm * Math.PI / 180 * dramatic4DScale),
                     rot4dYW: this.baseRotations.rot4dYW + (gammaNorm * Math.PI / 180 * dramatic4DScale),
                     rot4dZW: this.baseRotations.rot4dZW + (alphaNorm * Math.PI / 180 * dramatic4DScale * 0.5),
-                    
+                    rot4dXY: this.baseRotations.rot4dXY + ((gammaNorm - betaNorm) * Math.PI / 180) * crossScale,
+                    rot4dXZ: this.baseRotations.rot4dXZ + ((alphaNorm - betaNorm * 0.5) * Math.PI / 180) * diagonalScale,
+                    rot4dYZ: this.baseRotations.rot4dYZ + ((alphaNorm - gammaNorm * 0.5) * Math.PI / 180) * diagonalScale,
+
                     // TRANSFORMATIVE morphing based on tilt intensity
                     morphFactor: (this.params.morph || 1) + tiltIntensity * 0.4 + transformativeScale,
-                    
+
                     // DRAMATIC intensity changes that make tilting feel alive
                     intensity: (this.params.intensity || 0.8) + tiltIntensity * 0.25 + (extremeTilt ? 0.2 : 0),
-                    
+
                     // ORGANIC chaos increases with extreme tilts
                     chaos: (this.params.chaos || 0.2) + Math.pow(tiltIntensity, 2) * 0.15,
-                    
+
                     // DYNAMIC grid density shifts create dramatic depth perception
                     gridDensity: (this.params.density || 15) * (1 + tiltIntensity * 0.3),
-                    
+
+                    // Maintain dimensional and topology context during tilt-driven updates
+                    dimension: this.params.dimension || 3.5,
+                    topologyFamily: this.params.topologyFamily,
+                    topologyVariant: this.params.topologyVariant,
+                    topologyShellWidth: this.params.topologyShellWidth,
+                    topologyPlaneThickness: this.params.topologyPlaneThickness,
+
                     // TRANSFORMATIVE color shifts for dimensional feel
                     hue: (this.params.hue || 200) + (alphaNorm - 180) * 0.8 + (extremeTilt ? Math.sin(Date.now() * 0.005) * 20 : 0),
                     saturation: (this.params.saturation || 0.8) + tiltIntensity * 0.15 + (extremeTilt ? 0.1 : 0)
@@ -1049,11 +1088,12 @@
                     navigator.vibrate(vibrationPattern);
                 }
                 
-                console.log(`🌐 DRAMATIC HOLOGRAPHIC WINDOW: 
+                console.log(`🌐 DRAMATIC HOLOGRAPHIC WINDOW:
                     Tilt: ${tiltIntensity.toFixed(2)} ${extremeTilt ? '(EXTREME)' : ''}
                     BG: (${bgOffsetX.toFixed(1)}, ${bgOffsetY.toFixed(1)}) Scale: ${bgScale.toFixed(2)}
                     Counter: (${counterRotateX.toFixed(1)}°, ${counterRotateY.toFixed(1)}°, ${counterRotateZ.toFixed(1)}°)
-                    4D: XW:${perspective4D.rot4dXW.toFixed(3)} YW:${perspective4D.rot4dYW.toFixed(3)} ZW:${perspective4D.rot4dZW.toFixed(3)}
+                    4D: XW:${perspective4D.rot4dXW.toFixed(3)} YW:${perspective4D.rot4dYW.toFixed(3)} ZW:${perspective4D.rot4dZW.toFixed(3)} XY:${perspective4D.rot4dXY.toFixed(3)} XZ:${perspective4D.rot4dXZ.toFixed(3)} YZ:${perspective4D.rot4dYZ.toFixed(3)}
+                    Topology: family:${perspective4D.topologyFamily} variant:${perspective4D.topologyVariant} shell:${perspective4D.topologyShellWidth.toFixed(3)} plane:${perspective4D.topologyPlaneThickness.toFixed(3)} dim:${perspective4D.dimension.toFixed(2)}
                     Transforms: morph:${perspective4D.morphFactor.toFixed(2)} intensity:${perspective4D.intensity.toFixed(2)}`);
             }
             
@@ -1106,15 +1146,27 @@
                 // 🌐 SUBTLE 4D PERSPECTIVE: Mouse creates different viewing angles
                 const mouse4DScale = 0.15; // Very subtle 4D changes
                 
+                const diagonalMouseScale = mouse4DScale * 0.6;
+
                 const mouse4DPerspective = {
                     // Mouse movement subtly changes which 4D slice we see
                     rot4dXW: this.baseRotations.rot4dXW + (mouseOffsetY * mouse4DScale),
                     rot4dYW: this.baseRotations.rot4dYW + (mouseOffsetX * mouse4DScale),
                     rot4dZW: this.baseRotations.rot4dZW,
-                    
+                    rot4dXY: this.baseRotations.rot4dXY + ((mouseOffsetX - mouseOffsetY) * diagonalMouseScale),
+                    rot4dXZ: this.baseRotations.rot4dXZ + (mouseOffsetY * diagonalMouseScale * 0.5),
+                    rot4dYZ: this.baseRotations.rot4dYZ + (mouseOffsetX * diagonalMouseScale * 0.5),
+
                     // Slight morph based on distance from center (like focal depth)
-                    morphFactor: (this.params.morph || 1) + 
-                               (Math.sqrt(mouseOffsetX*mouseOffsetX + mouseOffsetY*mouseOffsetY) * 0.05)
+                    morphFactor: (this.params.morph || 1) +
+                               (Math.sqrt(mouseOffsetX*mouseOffsetX + mouseOffsetY*mouseOffsetY) * 0.05),
+
+                    // Preserve dimension and topology information during updates
+                    dimension: this.params.dimension || 3.5,
+                    topologyFamily: this.params.topologyFamily,
+                    topologyVariant: this.params.topologyVariant,
+                    topologyShellWidth: this.params.topologyShellWidth,
+                    topologyPlaneThickness: this.params.topologyPlaneThickness
                 };
                 
                 // If device tilt is active, combine the effects
@@ -1126,6 +1178,9 @@
                     mouse4DPerspective.rot4dXW += (betaNorm * Math.PI / 180 * 0.1);
                     mouse4DPerspective.rot4dYW += (gammaNorm * Math.PI / 180 * 0.1);
                     mouse4DPerspective.rot4dZW += (alpha * Math.PI / 180 * 0.05);
+                    mouse4DPerspective.rot4dXY += ((gammaNorm - betaNorm) * Math.PI / 180) * 0.05;
+                    mouse4DPerspective.rot4dXZ += ((alpha - betaNorm * 0.5) * Math.PI / 180) * 0.04;
+                    mouse4DPerspective.rot4dYZ += ((alpha - gammaNorm * 0.5) * Math.PI / 180) * 0.04;
                 }
                 
                 // Apply subtle 4D transformations
@@ -1317,29 +1372,83 @@
             
             parseUrlParameters() {
                 const params = new URLSearchParams(window.location.search);
-                
-                // Enhanced parameter parsing with better fallbacks and normalized names
-                const parsedParams = {
-                    system: params.get('system') || 'faceted', // Default to faceted, not quantum
-                    name: params.get('name') || 'Portal View',
-                    
-                    // Support both normalized (saved) and original parameter names
-                    geometryType: parseInt(params.get('geometryType') || params.get('geometry')) || 0,
-                    density: parseFloat(params.get('density') || params.get('gridDensity')) || 15,
-                    morph: parseFloat(params.get('morph') || params.get('morphFactor')) || 1,
-                    speed: parseFloat(params.get('speed')) || 1,
-                    chaos: parseFloat(params.get('chaos')) || 0.2,
-                    hue: parseFloat(params.get('hue')) || 200,
-                    saturation: parseFloat(params.get('saturation')) || 0.8,
-                    intensity: parseFloat(params.get('intensity')) || 0.8,
-                    
-                    // 4D rotation parameters
-                    rot4dXW: parseFloat(params.get('rot4dXW')) || 0,
-                    rot4dYW: parseFloat(params.get('rot4dYW')) || 0,
-                    rot4dZW: parseFloat(params.get('rot4dZW')) || 0,
-                    dimension: parseFloat(params.get('dimension')) || 3.5
+
+                const readNumber = (keys, fallback, parser = (value) => parseFloat(value)) => {
+                    for (const key of keys) {
+                        const raw = params.get(key);
+                        if (raw !== null) {
+                            const parsed = parser(raw);
+                            if (!Number.isNaN(parsed)) {
+                                return parsed;
+                            }
+                        }
+                    }
+                    return fallback;
                 };
-                
+
+                const readFloat = (keys, fallback) => readNumber(keys, fallback, (value) => parseFloat(value));
+                const readInt = (keys, fallback) => readNumber(keys, fallback, (value) => parseInt(value, 10));
+
+                // Enhanced parameter parsing with better fallbacks and normalized names
+                const system = params.get('system') || 'faceted';
+                const name = params.get('name') || 'Portal View';
+
+                const geometryType = readInt(['geometryType', 'geometry'], 0);
+                const density = readFloat(['density', 'gridDensity'], 15);
+                const morph = readFloat(['morph', 'morphFactor'], 1);
+                const speed = readFloat(['speed'], 1);
+                const chaos = readFloat(['chaos'], 0.2);
+                const hue = readFloat(['hue'], 200);
+                const saturation = readFloat(['saturation'], 0.8);
+                const intensity = readFloat(['intensity'], 0.8);
+                const dimension = readFloat(['dimension'], 3.5);
+
+                const rot4dXW = readFloat(['rot4dXW'], 0);
+                const rot4dYW = readFloat(['rot4dYW'], 0);
+                const rot4dZW = readFloat(['rot4dZW'], 0);
+                const rot4dXY = readFloat(['rot4dXY'], 0);
+                const rot4dXZ = readFloat(['rot4dXZ'], 0);
+                const rot4dYZ = readFloat(['rot4dYZ'], 0);
+
+                const defaultFamily = (() => {
+                    const fromGeometry = TopologyLibrary.getFamilyForGeometry(geometryType);
+                    return fromGeometry !== null ? fromGeometry : TopologyLibrary.FAMILIES[0].id;
+                })();
+                const rawFamily = readInt(['topologyFamily'], defaultFamily);
+                const resolvedFamily = TopologyLibrary.resolveFamily(rawFamily, geometryType);
+
+                const defaultVariant = TopologyLibrary.getDefaultVariantId(resolvedFamily);
+                const rawVariant = readInt(['topologyVariant'], defaultVariant);
+                const resolvedVariant = TopologyLibrary.resolveVariant(resolvedFamily, rawVariant);
+                const topologyDefaults = TopologyLibrary.getDefaults(resolvedFamily, resolvedVariant);
+
+                const topologyShellWidth = readFloat(['topologyShellWidth'], topologyDefaults.shellWidth);
+                const topologyPlaneThickness = readFloat(['topologyPlaneThickness'], topologyDefaults.planeThickness);
+
+                const parsedParams = {
+                    system,
+                    name,
+                    geometryType,
+                    density,
+                    morph,
+                    speed,
+                    chaos,
+                    hue,
+                    saturation,
+                    intensity,
+                    dimension,
+                    rot4dXW,
+                    rot4dYW,
+                    rot4dZW,
+                    rot4dXY,
+                    rot4dXZ,
+                    rot4dYZ,
+                    topologyFamily: resolvedFamily,
+                    topologyVariant: resolvedVariant,
+                    topologyShellWidth,
+                    topologyPlaneThickness
+                };
+
                 console.log('🔍 Parsed URL parameters:', parsedParams);
                 return parsedParams;
             }

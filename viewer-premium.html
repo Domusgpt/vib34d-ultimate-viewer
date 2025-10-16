@@ -578,10 +578,18 @@
         // Parameter icons and formatters
         const parameterConfig = [
             { key: 'geometry', icon: '🔷', label: 'Shape', formatter: (v) => ['Tetra', 'Cube', 'Sphere', 'Torus', 'Klein', 'Fractal', 'Wave', 'Crystal'][Math.floor(v)] || 'Unknown' },
-            { key: 'rot4dXW', icon: '🔄', label: '4D-X', formatter: (v) => v.toFixed(2) },
-            { key: 'rot4dYW', icon: '🔀', label: '4D-Y', formatter: (v) => v.toFixed(2) },
-            { key: 'rot4dZW', icon: '🔁', label: '4D-Z', formatter: (v) => v.toFixed(2) },
-            { key: 'gridDensity', icon: '📐', label: 'Grid', formatter: (v) => Math.floor(v) },
+            { key: 'topologyFamily', icon: '🧬', label: 'Family', formatter: (v) => Math.floor(v) },
+            { key: 'topologyVariant', icon: '🎚️', label: 'Variant', formatter: (v) => Math.floor(v) },
+            { key: 'topologyShellWidth', icon: '📏', label: 'Shell', formatter: (v) => v.toFixed(3) },
+            { key: 'topologyPlaneThickness', icon: '📐', label: 'Plane', formatter: (v) => v.toFixed(3) },
+            { key: 'dimension', icon: '🧭', label: 'Dim', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dXW', icon: '🔄', label: '4D-XW', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dYW', icon: '🔀', label: '4D-YW', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dZW', icon: '🔁', label: '4D-ZW', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dXY', icon: '🧿', label: '4D-XY', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dXZ', icon: '🪞', label: '4D-XZ', formatter: (v) => v.toFixed(2) },
+            { key: 'rot4dYZ', icon: '🌀', label: '4D-YZ', formatter: (v) => v.toFixed(2) },
+            { key: 'gridDensity', icon: '🧱', label: 'Grid', formatter: (v) => Math.floor(v) },
             { key: 'morphFactor', icon: '🌀', label: 'Morph', formatter: (v) => v.toFixed(1) },
             { key: 'chaos', icon: '⚡', label: 'Chaos', formatter: (v) => (v * 100).toFixed(0) + '%' },
             { key: 'speed', icon: '⏱️', label: 'Speed', formatter: (v) => v.toFixed(1) + 'x' },
@@ -821,12 +829,17 @@
                 console.warn('RealHolographicSystem not available');
             }
             
+            // Placeholder: disable the unfinished polychora engine until the shared
+            // topology layer is fully adopted by every renderer.
+            /*
             try {
                 const polychoraModule = await import('./src/core/PolychoraSystemNew.js');
                 NewPolychoraEngine = polychoraModule.NewPolychoraEngine;
             } catch (e) {
                 console.warn('NewPolychoraEngine not available');
             }
+            */
+            NewPolychoraEngine = null;
             
             // Hide all layers first
             document.querySelectorAll('#canvasContainer > div').forEach(div => {
@@ -857,10 +870,7 @@
                     break;
                     
                 case 'polychora':
-                    if (NewPolychoraEngine) {
-                        activeEngine = new NewPolychoraEngine();
-                        document.getElementById('polychoraLayers').style.display = 'block';
-                    }
+                    console.warn('Polychora system placeholder is disabled pending topology integration.');
                     break;
             }
             

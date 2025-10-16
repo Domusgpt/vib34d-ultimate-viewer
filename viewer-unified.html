@@ -418,6 +418,7 @@
     <script type="module">
         // Import unified architecture
         import { VIB34DUnifiedEngine } from './src/core/UnifiedEngine.js';
+        import { TopologyLibrary } from './src/core/TopologyLibrary.js';
         
         // Global state
         let unifiedEngine = null;
@@ -480,9 +481,11 @@
             
             // Parse all parameter values from URL
             const parameterNames = [
-                'geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW',
+                'geometry',
+                'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
                 'gridDensity', 'morphFactor', 'chaos', 'speed',
-                'hue', 'intensity', 'saturation'
+                'hue', 'intensity', 'saturation', 'dimension',
+                'topologyFamily', 'topologyVariant', 'topologyShellWidth', 'topologyPlaneThickness'
             ];
             
             parameterNames.forEach(name => {
@@ -498,26 +501,42 @@
             });
             
             // Set defaults for missing parameters
+            const geometry = variation.parameters.geometry ?? 0;
+            const familyFromGeometry = TopologyLibrary.getFamilyForGeometry(geometry);
+            const fallbackFamily = familyFromGeometry !== null ? familyFromGeometry : TopologyLibrary.FAMILIES[0].id;
+            const resolvedFamily = TopologyLibrary.resolveFamily(variation.parameters.topologyFamily ?? fallbackFamily, geometry);
+            const resolvedVariant = TopologyLibrary.resolveVariant(resolvedFamily, variation.parameters.topologyVariant ?? TopologyLibrary.getDefaultVariantId(resolvedFamily));
+            const topologyDefaults = TopologyLibrary.getDefaults(resolvedFamily, resolvedVariant);
+
             const defaults = {
-                geometry: 0,
+                geometry: geometry,
                 rot4dXW: 0,
                 rot4dYW: 0,
                 rot4dZW: 0,
+                rot4dXY: 0,
+                rot4dXZ: 0,
+                rot4dYZ: 0,
                 gridDensity: 15,
                 morphFactor: 1.0,
                 chaos: 0.3,
                 speed: 1.0,
                 hue: 200,
                 intensity: 0.8,
-                saturation: 0.7
+                saturation: 0.7,
+                dimension: 3.5,
+                topologyFamily: resolvedFamily,
+                topologyVariant: resolvedVariant,
+                topologyShellWidth: topologyDefaults.shellWidth,
+                topologyPlaneThickness: topologyDefaults.planeThickness
             };
-            
+
             Object.entries(defaults).forEach(([key, value]) => {
-                if (!(key in variation.parameters)) {
+                const current = variation.parameters[key];
+                if (current === undefined || current === null || Number.isNaN(current)) {
                     variation.parameters[key] = value;
                 }
             });
-            
+
             return variation;
         }
         
@@ -567,20 +586,45 @@
         function updateParametersDisplay() {
             const container = document.getElementById('parameters-grid');
             container.innerHTML = '';
-            
-            Object.entries(currentVariation.parameters).forEach(([name, value]) => {
+
+            const orderedParameters = [
+                { key: 'geometry', label: 'Geometry', formatter: (v) => Math.round(v) },
+                { key: 'topologyFamily', label: 'Topology Family', formatter: (v) => Math.round(v) },
+                { key: 'topologyVariant', label: 'Topology Variant', formatter: (v) => Math.round(v) },
+                { key: 'topologyShellWidth', label: 'Shell Width', formatter: (v) => v.toFixed(3) },
+                { key: 'topologyPlaneThickness', label: 'Plane Thickness', formatter: (v) => v.toFixed(3) },
+                { key: 'dimension', label: 'Dimension', formatter: (v) => v.toFixed(2) },
+                { key: 'rot4dXW', label: 'Rot 4D XW', formatter: (v) => v.toFixed(2) },
+                { key: 'rot4dYW', label: 'Rot 4D YW', formatter: (v) => v.toFixed(2) },
+                { key: 'rot4dZW', label: 'Rot 4D ZW', formatter: (v) => v.toFixed(2) },
+                { key: 'rot4dXY', label: 'Rot 4D XY', formatter: (v) => v.toFixed(2) },
+                { key: 'rot4dXZ', label: 'Rot 4D XZ', formatter: (v) => v.toFixed(2) },
+                { key: 'rot4dYZ', label: 'Rot 4D YZ', formatter: (v) => v.toFixed(2) },
+                { key: 'gridDensity', label: 'Grid Density', formatter: (v) => v.toFixed(1) },
+                { key: 'morphFactor', label: 'Morph Factor', formatter: (v) => v.toFixed(2) },
+                { key: 'chaos', label: 'Chaos', formatter: (v) => v.toFixed(2) },
+                { key: 'speed', label: 'Speed', formatter: (v) => v.toFixed(2) },
+                { key: 'hue', label: 'Hue', formatter: (v) => `${Math.round(v)}°` },
+                { key: 'intensity', label: 'Intensity', formatter: (v) => v.toFixed(2) },
+                { key: 'saturation', label: 'Saturation', formatter: (v) => v.toFixed(2) }
+            ];
+
+            orderedParameters.forEach(({ key, label, formatter }) => {
+                if (!(key in currentVariation.parameters)) {
+                    return;
+                }
+
+                const rawValue = currentVariation.parameters[key];
+                const numericValue = Number(rawValue);
+                const formatted = Number.isFinite(numericValue) ? formatter(numericValue) : rawValue;
+
                 const item = document.createElement('div');
                 item.className = 'parameter-item';
-                
-                const displayValue = typeof value === 'number' 
-                    ? (value % 1 === 0 ? value.toString() : value.toFixed(2))
-                    : value;
-                
                 item.innerHTML = `
-                    <span class="parameter-label">${name}</span>
-                    <span class="parameter-value">${displayValue}</span>
+                    <span class="parameter-label">${label}</span>
+                    <span class="parameter-value">${formatted}</span>
                 `;
-                
+
                 container.appendChild(item);
             });
         }
