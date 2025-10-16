@@ -189,7 +189,7 @@ export class GalleryPreviewFix {
             }
             
             // Apply 4D rotation parameters first (critical for spatial positioning)
-            const rotationParams = ['rot4dXW', 'rot4dYW', 'rot4dZW'];
+            const rotationParams = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ'];
             rotationParams.forEach(param => {
                 if (parameters[param] !== undefined) {
                     try {
