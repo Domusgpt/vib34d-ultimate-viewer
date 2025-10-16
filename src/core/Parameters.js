@@ -3,9 +3,16 @@
  * Unified parameter control for both holographic and polytopal systems
  */
 
+import { TopologyLibrary } from './TopologyLibrary.js';
+import { TopologyManager } from './TopologyManager.js';
+
 export class ParameterManager {
     constructor() {
         // Default parameter set combining both systems
+        const defaultGeometry = 0;
+        this.topologyManager = new TopologyManager(defaultGeometry);
+        const topologyState = this.topologyManager.getState();
+
         this.params = {
             // Current variation
             variation: 0,
@@ -24,11 +31,17 @@ export class ParameterManager {
             hue: 200,          // Color rotation (0 to 360)
             intensity: 0.5,    // Visual intensity (0 to 1)
             saturation: 0.8,   // Color saturation (0 to 1)
-            
+
             // Geometry selection
-            geometry: 0        // Current geometry type (0-7)
+            geometry: 0,       // Current geometry type (0-7)
+
+            // Topology selection (sits above geometry)
+            topologyFamily: topologyState.family,
+            topologyVariant: topologyState.variant,
+            topologyShellWidth: topologyState.shellWidth,
+            topologyPlaneThickness: topologyState.planeThickness
         };
-        
+
         // Parameter definitions for validation and UI
         this.parameterDefs = {
             variation: { min: 0, max: 99, step: 1, type: 'int' },
@@ -43,9 +56,13 @@ export class ParameterManager {
             hue: { min: 0, max: 360, step: 1, type: 'int' },
             intensity: { min: 0, max: 1, step: 0.01, type: 'float' },
             saturation: { min: 0, max: 1, step: 0.01, type: 'float' },
-            geometry: { min: 0, max: 7, step: 1, type: 'int' }
+            geometry: { min: 0, max: 7, step: 1, type: 'int' },
+            topologyFamily: { min: 0, max: TopologyLibrary.getFamilyEntries().length - 1, step: 1, type: 'int' },
+            topologyVariant: { min: 0, max: TopologyLibrary.getMaxVariantCount() - 1, step: 1, type: 'int' },
+            topologyShellWidth: { min: 0, max: 0.2, step: 0.001, type: 'float' },
+            topologyPlaneThickness: { min: 0, max: 0.2, step: 0.001, type: 'float' }
         };
-        
+
         // Default parameter backup for reset
         this.defaults = { ...this.params };
     }
@@ -61,21 +78,33 @@ export class ParameterManager {
      * Set a specific parameter with validation
      */
     setParameter(name, value) {
+        if (name === 'geometry') {
+            return this.setGeometry(value);
+        }
+
+        if (name === 'topologyFamily') {
+            return this.setTopologyFamily(value);
+        }
+
+        if (name === 'topologyVariant') {
+            return this.setTopologyVariant(value);
+        }
+
         if (this.parameterDefs[name]) {
             const def = this.parameterDefs[name];
-            
+
             // Clamp value to valid range
             value = Math.max(def.min, Math.min(def.max, value));
-            
+
             // Apply type conversion
             if (def.type === 'int') {
                 value = Math.round(value);
             }
-            
+
             this.params[name] = value;
             return true;
         }
-        
+
         console.warn(`Unknown parameter: ${name}`);
         return false;
     }
@@ -84,7 +113,26 @@ export class ParameterManager {
      * Set multiple parameters at once
      */
     setParameters(paramObj) {
+        if (!paramObj || typeof paramObj !== 'object') {
+            return;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(paramObj, 'geometry')) {
+            this.setParameter('geometry', paramObj.geometry);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(paramObj, 'topologyFamily')) {
+            this.setTopologyFamily(paramObj.topologyFamily);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(paramObj, 'topologyVariant')) {
+            this.setTopologyVariant(paramObj.topologyVariant);
+        }
+
         for (const [name, value] of Object.entries(paramObj)) {
+            if (name === 'geometry' || name === 'topologyFamily' || name === 'topologyVariant') {
+                continue;
+            }
             this.setParameter(name, value);
         }
     }
@@ -95,12 +143,60 @@ export class ParameterManager {
     getParameter(name) {
         return this.params[name];
     }
-    
+
+    getTopologyFamilies() {
+        return this.topologyManager.getFamilies();
+    }
+
+    getTopologyVariants(familyId = this.params.topologyFamily) {
+        return this.topologyManager.getVariants(familyId);
+    }
+
+    setTopologyFamily(familyId) {
+        const changed = this.topologyManager.setFamily(familyId);
+        this.syncTopologyParams();
+        return changed;
+    }
+
+    setTopologyVariant(variantId) {
+        const changed = this.topologyManager.setVariant(variantId);
+        this.syncTopologyParams();
+        return changed;
+    }
+
+    getTopologyOptionsForGeometry(geometryIndex) {
+        return this.topologyManager.getVariantsForGeometry(geometryIndex);
+    }
+
     /**
      * Set geometry type with validation
      */
     setGeometry(geometryType) {
-        this.setParameter('geometry', geometryType);
+        const def = this.parameterDefs.geometry;
+        let value = Number(geometryType);
+        if (!Number.isFinite(value)) {
+            value = this.params.geometry;
+        }
+
+        value = Math.max(def.min, Math.min(def.max, value));
+        value = Math.round(value);
+
+        this.params.geometry = value;
+
+        const topologyChanged = this.topologyManager.setGeometry(value);
+        if (topologyChanged) {
+            this.syncTopologyParams();
+        }
+
+        return true;
+    }
+
+    syncTopologyParams() {
+        const state = this.topologyManager.getState();
+        this.params.topologyFamily = state.family;
+        this.params.topologyVariant = state.variant;
+        this.params.topologyShellWidth = state.shellWidth;
+        this.params.topologyPlaneThickness = state.planeThickness;
     }
     
     /**
@@ -215,7 +311,15 @@ export class ParameterManager {
         this.params.chaos = Math.random();
         this.params.speed = 0.1 + Math.random() * 2.9;
         this.params.hue = Math.random() * 360;
-        this.params.geometry = Math.floor(Math.random() * 8);
+
+        const randomGeometry = Math.floor(Math.random() * 8);
+        this.setGeometry(randomGeometry);
+
+        const availableVariants = this.getTopologyVariants(this.params.topologyFamily);
+        if (availableVariants.length > 0) {
+            const randomVariant = availableVariants[Math.floor(Math.random() * availableVariants.length)];
+            this.setTopologyVariant(randomVariant.id);
+        }
     }
     
     /**
@@ -223,6 +327,11 @@ export class ParameterManager {
      */
     resetToDefaults() {
         this.params = { ...this.defaults };
+
+        this.topologyManager = new TopologyManager(this.params.geometry);
+        this.topologyManager.setFamily(this.params.topologyFamily);
+        this.topologyManager.setVariant(this.params.topologyVariant);
+        this.syncTopologyParams();
     }
     
     /**

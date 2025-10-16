@@ -506,7 +506,9 @@ export class NewPolychoraEngine {
         // Polychora-specific enhancement: 4D rotation velocity tracking
         this.rotation4DVelocity = { XW: 0, YW: 0, ZW: 0 };
         this.lastRotation4D = { XW: 0, YW: 0, ZW: 0 };
-        
+
+        // Topology integration placeholder – this engine will adopt the shared topology layer later
+
         // Set polychora-specific defaults
         this.parameters.setParameter('geometry', 1); // Start with Tesseract
         this.parameters.setParameter('hue', 280); // Purple-blue for 4D
@@ -573,18 +575,18 @@ export class NewPolychoraEngine {
                     YW: this.parameters.getParameter('rot4dYW'),
                     ZW: this.parameters.getParameter('rot4dZW')
                 };
-                
+
                 this.rotation4DVelocity = {
                     XW: currentRot.XW - this.lastRotation4D.XW,
                     YW: currentRot.YW - this.lastRotation4D.YW,
                     ZW: currentRot.ZW - this.lastRotation4D.ZW
                 };
-                
+
                 this.lastRotation4D = currentRot;
             }, 100);
         }
     }
-    
+
     startRenderLoop() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
