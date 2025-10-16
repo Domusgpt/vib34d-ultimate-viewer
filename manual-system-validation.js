@@ -78,7 +78,7 @@ function runComprehensiveTests() {
     
     // Test 3: Parameter Control Validation
     console.log('\n📋 Test 3: Parameter Controls');
-    const parameters = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
+    const parameters = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
     let foundParams = 0;
     
     parameters.forEach(param => {

@@ -84,7 +84,7 @@
             const test3 = document.createElement('div');
             test3.className = 'test';
             try {
-                const expectedParams = ['geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'gridDensity', 
+                const expectedParams = ['geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'gridDensity', 
                                        'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
                                        
                 // Check if we have saved variations to test
@@ -98,7 +98,7 @@
                         );
                         
                         if (hasAllParams) {
-                            test3.innerHTML = `<div class="pass">✅ TEST 3 PASSED: All 11 parameters found in saved data</div>`;
+                            test3.innerHTML = `<div class="pass">✅ TEST 3 PASSED: All 14 parameters found in saved data</div>`;
                             passedTests++;
                         } else {
                             const missing = expectedParams.filter(p => !params.includes(p));

@@ -11,8 +11,9 @@ function createParameterSyncSystem() {
     // Get all current UI parameter values
     function getCurrentUIParameterState() {
         const parameterIds = [
-            'rot4dXW', 'rot4dYW', 'rot4dZW', 
-            'gridDensity', 'morphFactor', 'chaos', 
+            'rot4dXW', 'rot4dYW', 'rot4dZW',
+            'rot4dXY', 'rot4dXZ', 'rot4dYZ',
+            'gridDensity', 'morphFactor', 'chaos',
             'speed', 'hue', 'intensity', 'saturation'
         ];
         
@@ -67,8 +68,11 @@ function createParameterSyncSystem() {
     function updateAllDisplays(uiState) {
         const displayMappings = {
             rot4dXW: 'xwValue',
-            rot4dYW: 'ywValue', 
+            rot4dYW: 'ywValue',
             rot4dZW: 'zwValue',
+            rot4dXY: 'xyValue',
+            rot4dXZ: 'xzValue',
+            rot4dYZ: 'yzValue',
             gridDensity: 'densityValue',
             morphFactor: 'morphValue',
             chaos: 'chaosValue',
