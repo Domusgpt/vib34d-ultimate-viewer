@@ -418,7 +418,7 @@ export class VIB34DIntegratedEngine {
      */
     updateVisualizers() {
         const params = this.parameterManager.getAllParameters();
-        
+
         // Add interaction state
         params.mouseX = this.mouseX;
         params.mouseY = this.mouseY;
@@ -434,6 +434,69 @@ export class VIB34DIntegratedEngine {
         // Decay interaction intensities
         this.mouseIntensity *= 0.95;
         this.clickIntensity *= 0.92;
+    }
+
+    updateParameter(param, value) {
+        let parsedValue = value;
+        if (typeof parsedValue === 'string' && parsedValue.trim() !== '') {
+            const numeric = Number(parsedValue);
+            if (!Number.isNaN(numeric)) {
+                parsedValue = numeric;
+            }
+        }
+
+        let handled = false;
+
+        switch (param) {
+            case 'geometry':
+                handled = this.parameterManager.setGeometry(parsedValue);
+                break;
+            case 'topologyFamily':
+                this.parameterManager.setTopologyFamily(parsedValue);
+                handled = true;
+                break;
+            case 'topologyVariant':
+                this.parameterManager.setTopologyVariant(parsedValue);
+                handled = true;
+                break;
+            default:
+                handled = this.parameterManager.setParameter(param, parsedValue);
+                break;
+        }
+
+        if (handled) {
+            this.updateDisplayValues();
+            this.updateVisualizers();
+        }
+    }
+
+    setTopologyFamily(familyId) {
+        this.updateParameter('topologyFamily', familyId);
+    }
+
+    setTopologyVariant(variantId) {
+        this.updateParameter('topologyVariant', variantId);
+    }
+
+    getTopologyFamilies() {
+        return this.parameterManager.getTopologyFamilies();
+    }
+
+    getTopologyVariants(familyId) {
+        return this.parameterManager.getTopologyVariants(familyId);
+    }
+
+    getTopologyVariantsForGeometry(geometryIndex) {
+        return this.parameterManager.getTopologyOptionsForGeometry(geometryIndex);
+    }
+
+    getTopologyState() {
+        return {
+            family: this.parameterManager.getParameter('topologyFamily'),
+            variant: this.parameterManager.getParameter('topologyVariant'),
+            shellWidth: this.parameterManager.getParameter('topologyShellWidth'),
+            planeThickness: this.parameterManager.getParameter('topologyPlaneThickness')
+        };
     }
     
     /**
