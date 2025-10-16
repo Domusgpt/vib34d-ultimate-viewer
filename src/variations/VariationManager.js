@@ -4,6 +4,7 @@
  */
 
 import { GeometryLibrary } from '../geometry/GeometryLibrary.js';
+import { TopologyLibrary } from '../core/TopologyLibrary.js';
 
 export class VariationManager {
     constructor(engine) {
@@ -63,7 +64,7 @@ export class VariationManager {
         if (index >= 30) return null;
         
         const geometryType = Math.floor(index / 4);
-        const level = index % 4;
+        let level = index % 4;
         
         // Special handling for reduced geometry sets
         let adjustedGeometryType = geometryType;
@@ -76,7 +77,7 @@ export class VariationManager {
             level = 2;
         }
         
-        return {
+        const variation = {
             variation: index,
             geometry: adjustedGeometryType,
             gridDensity: 8 + adjustedGeometryType * 2 + level * 1.5,
@@ -87,7 +88,30 @@ export class VariationManager {
             rot4dXW: (level - 1.5) * 0.3,
             rot4dYW: (adjustedGeometryType % 2) * 0.2,
             rot4dZW: ((adjustedGeometryType + level) % 3) * 0.15,
+            rot4dXY: (level - 1.5) * 0.25,
+            rot4dXZ: ((adjustedGeometryType % 3) - 1) * 0.2,
+            rot4dYZ: ((level + adjustedGeometryType) % 4 - 1.5) * 0.18,
             dimension: 3.2 + level * 0.2
+        };
+
+        const topologyDefaults = this.getTopologyDefaultsForGeometry(adjustedGeometryType);
+        return topologyDefaults ? { ...variation, ...topologyDefaults } : variation;
+    }
+
+    getTopologyDefaultsForGeometry(geometryType) {
+        const familyId = TopologyLibrary.getFamilyForGeometry(geometryType);
+        if (familyId === null || familyId === undefined) {
+            return null;
+        }
+
+        const variantId = TopologyLibrary.getDefaultVariantId(familyId);
+        const defaults = TopologyLibrary.getDefaults(familyId, variantId);
+
+        return {
+            topologyFamily: familyId,
+            topologyVariant: variantId,
+            topologyShellWidth: defaults.shellWidth,
+            topologyPlaneThickness: defaults.planeThickness
         };
     }
     

@@ -258,6 +258,10 @@
                     console.warn('⚠️ RealHolographicSystem not available:', e.message);
                 }
                 
+                // Placeholder: the polychora engines remain disabled until the new
+                // topology manager is wired through every system. Keep the import
+                // commented so we do not ship unfinished behaviour.
+                /*
                 try {
                     const newPolySystem = await import('./src/core/PolychoraSystemNew.js');
                     NewPolychoraEngine = newPolySystem.NewPolychoraEngine;
@@ -273,6 +277,8 @@
                         console.warn('⚠️ No Polychora system available:', e2.message);
                     }
                 }
+                */
+                NewPolychoraEngine = null;
                 
                 // Import other components with fallbacks
                 try {
@@ -418,7 +424,7 @@
                     logTest('Faceted Layers exist', !!document.getElementById('vib34dLayers'));
                     
                     // Test parameter controls
-                    const params = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
+                    const params = ['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
                     params.forEach(param => {
                         const slider = document.getElementById(param);
                         logTest(`${param} slider exists`, !!slider);

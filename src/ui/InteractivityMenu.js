@@ -387,8 +387,9 @@ export class InteractivityMenu {
         const parametersContainer = document.getElementById('parameter-values');
         
         const parameters = [
-            'rot4dXW', 'rot4dYW', 'rot4dZW', 
-            'speed', 'hue', 'gridDensity', 
+            'rot4dXW', 'rot4dYW', 'rot4dZW',
+            'rot4dXY', 'rot4dXZ', 'rot4dYZ',
+            'speed', 'hue', 'gridDensity',
             'morphFactor', 'chaos'
         ];
         
