@@ -109,7 +109,8 @@ export class VIB34DApp {
                 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
                 'dimension', 'gridDensity', 'morphFactor', 'chaos',
                 'speed', 'hue', 'intensity', 'saturation',
-                'topologyFamily', 'topologyVariant'
+                'topologyFamily', 'topologyVariant',
+                'topologyShellWidth', 'topologyPlaneThickness'
             ];
 
             const currentState = {};
@@ -149,8 +150,9 @@ export class VIB34DApp {
 
             Object.entries(this.userParameterState).forEach(([param, value]) => {
                 const element = document.getElementById(param);
+                const skipMissingLog = ['topologyShellWidth', 'topologyPlaneThickness'].includes(param);
                 if (!element || Number.isNaN(value)) {
-                    if (!element) {
+                    if (!element && !skipMissingLog) {
                         console.warn(`⚠️ Control not found for parameter: ${param}`);
                     }
                     return;

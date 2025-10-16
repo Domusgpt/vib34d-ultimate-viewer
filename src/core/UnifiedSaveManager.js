@@ -85,7 +85,12 @@ export class UnifiedSaveManager {
         } else {
             // Even if we got some parameters, ensure we have all the core ones
             const manualParams = this.captureManualParameters();
-            const coreParams = ['geometry', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ', 'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation'];
+            const coreParams = [
+                'geometry',
+                'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
+                'gridDensity', 'morphFactor', 'chaos', 'speed', 'hue', 'intensity', 'saturation',
+                'topologyFamily', 'topologyVariant', 'topologyShellWidth', 'topologyPlaneThickness'
+            ];
             
             let missingCount = 0;
             coreParams.forEach(param => {
@@ -241,6 +246,27 @@ export class UnifiedSaveManager {
                 captureMethod = captureMethod === 'unknown' ? 'DOM-geometry' : `${captureMethod}+DOM-geometry`;
             }
             
+            // Topology selectors capture (dropdowns)
+            const topologySelects = [
+                { id: 'topologyFamily', key: 'topologyFamily' },
+                { id: 'topologyVariant', key: 'topologyVariant' }
+            ];
+
+            topologySelects.forEach(({ id, key }) => {
+                const element = document.getElementById(id);
+                if (!element || element.value === '') {
+                    return;
+                }
+
+                const parsed = parseInt(element.value, 10);
+                if (!Number.isNaN(parsed)) {
+                    params[key] = parsed;
+                    captureMethod = captureMethod === 'unknown'
+                        ? `DOM-${key}`
+                        : `${captureMethod}+DOM-${key}`;
+                }
+            });
+
             // Enhanced slider parameter capture with validation
             const sliderIds = [
                 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
@@ -265,6 +291,24 @@ export class UnifiedSaveManager {
                 captureMethod = captureMethod === 'unknown' ? 'DOM-sliders' : `${captureMethod}+DOM-sliders`;
             }
             
+            // ENGINE FALLBACK: Pull topology metrics directly from parameter manager when available
+            const engineParams = window.engine?.parameterManager;
+            if (engineParams?.getParameter) {
+                ['topologyFamily', 'topologyVariant', 'topologyShellWidth', 'topologyPlaneThickness'].forEach(key => {
+                    if (params[key] !== undefined) {
+                        return;
+                    }
+
+                    const engineValue = engineParams.getParameter(key);
+                    if (engineValue !== undefined && engineValue !== null) {
+                        params[key] = engineValue;
+                        captureMethod = captureMethod === 'unknown'
+                            ? `engine-${key}`
+                            : `${captureMethod}+engine-${key}`;
+                    }
+                });
+            }
+
             // THIRD PRIORITY: Apply reasonable defaults for missing critical parameters
             const defaults = {
                 geometry: 0,
@@ -278,7 +322,12 @@ export class UnifiedSaveManager {
                 speed: 1,
                 hue: 200,
                 intensity: 0.7,
-                saturation: 0.8
+                saturation: 0.8,
+                dimension: 3.5,
+                topologyFamily: 0,
+                topologyVariant: 0,
+                topologyShellWidth: 0.03,
+                topologyPlaneThickness: 0.04
             };
             
             let defaultsApplied = 0;
@@ -310,7 +359,12 @@ export class UnifiedSaveManager {
                 speed: 1,
                 hue: 200,
                 intensity: 0.7,
-                saturation: 0.8
+                saturation: 0.8,
+                dimension: 3.5,
+                topologyFamily: 0,
+                topologyVariant: 0,
+                topologyShellWidth: 0.03,
+                topologyPlaneThickness: 0.04
             });
         }
         
