@@ -4,10 +4,10 @@
   "description": "**Revolutionary transformation: 20+ WebGL contexts → 1 unified context**",
   "main": "index.js",
   "scripts": {
-    "test": "npx playwright test",
-    "test:headed": "npx playwright test --headed",
-    "test:debug": "npx playwright test --debug",
-    "test:report": "npx playwright show-report",
+    "test": "node ./node_modules/@playwright/test/cli.js test",
+    "test:headed": "node ./node_modules/@playwright/test/cli.js test --headed",
+    "test:debug": "node ./node_modules/@playwright/test/cli.js test --debug",
+    "test:report": "node ./node_modules/@playwright/test/cli.js show-report",
     "dev": "python3 -m http.server 8145"
   },
   "repository": {

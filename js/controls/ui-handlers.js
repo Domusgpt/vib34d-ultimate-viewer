@@ -13,14 +13,31 @@ let interactivityEnabled = false;
  * Routes parameters to appropriate engine based on current system
  */
 window.updateParameter = function(param, value) {
-    // CRITICAL: Store user's parameter choice for persistence
-    window.userParameterState[param] = parseFloat(value);
-    console.log(`💾 User parameter: ${param} = ${value}`);
-    
+    let numericValue;
+    if (typeof value === 'number') {
+        numericValue = value;
+    } else if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (param === 'geometry' || param === 'topologyFamily' || param === 'topologyVariant') {
+            numericValue = parseInt(trimmed, 10);
+        } else {
+            numericValue = parseFloat(trimmed);
+        }
+    } else {
+        numericValue = Number(value);
+    }
+
+    const hasNumeric = Number.isFinite(numericValue);
+    window.userParameterState[param] = hasNumeric ? numericValue : value;
+    console.log(`💾 User parameter: ${param} = ${hasNumeric ? numericValue : value}`);
+
     const displays = {
         rot4dXW: 'xwValue',
-        rot4dYW: 'ywValue', 
+        rot4dYW: 'ywValue',
         rot4dZW: 'zwValue',
+        rot4dXY: 'xyValue',
+        rot4dXZ: 'xzValue',
+        rot4dYZ: 'yzValue',
         gridDensity: 'densityValue',
         morphFactor: 'morphValue',
         chaos: 'chaosValue',
@@ -29,19 +46,28 @@ window.updateParameter = function(param, value) {
         intensity: 'intensityValue',
         saturation: 'saturationValue'
     };
-    
+
     const display = document.getElementById(displays[param]);
-    if (display) {
+    if (display && hasNumeric) {
         if (param === 'hue') {
-            display.textContent = value + '°';
+            display.textContent = `${numericValue}°`;
         } else if (param.startsWith('rot4d')) {
-            display.textContent = parseFloat(value).toFixed(2);
+            display.textContent = numericValue.toFixed(2);
         } else {
-            display.textContent = parseFloat(value).toFixed(1);
+            display.textContent = numericValue.toFixed(1);
         }
     }
-    
-    // SURGICAL FIX: Unified parameter router - eliminates scope confusion
+
+    if (window.deviceTiltHandler && hasNumeric) {
+        if (['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ'].includes(param)) {
+            window.deviceTiltHandler.updateBaseRotation({ [param]: numericValue });
+        }
+
+        if (['dimension', 'morphFactor', 'chaos', 'intensity', 'gridDensity'].includes(param)) {
+            window.deviceTiltHandler.updateBaseParameters({ [param]: numericValue });
+        }
+    }
+
     try {
         const activeSystem = window.currentSystem || 'faceted';
         const engines = {
@@ -50,17 +76,15 @@ window.updateParameter = function(param, value) {
             holographic: window.holographicSystem,
             polychora: window.polychoraSystem
         };
-        
+
         const engine = engines[activeSystem];
         if (!engine) {
             console.warn(`⚠️ System ${activeSystem} not available - engines:`, Object.keys(engines).map(k => `${k}:${!!engines[k]}`).join(', '));
-            
-            // CRITICAL FIX: Track retry count to prevent infinite loops
+
             if (!window.parameterRetryCount) window.parameterRetryCount = {};
             const retryKey = `${param}_${value}_${activeSystem}`;
             const currentRetries = window.parameterRetryCount[retryKey] || 0;
-            
-            // Only retry once, then give up to prevent infinite loops
+
             if (currentRetries < 1) {
                 window.parameterRetryCount[retryKey] = currentRetries + 1;
                 console.log(`🔄 Retrying parameter ${param} = ${value} for ${activeSystem} (attempt ${currentRetries + 2})`);
@@ -69,29 +93,33 @@ window.updateParameter = function(param, value) {
                 }, 100);
             } else {
                 console.warn(`❌ Parameter ${param} = ${value} failed for ${activeSystem} - system not available, giving up after 2 attempts`);
-                // Clean up retry tracking for this parameter
                 delete window.parameterRetryCount[retryKey];
             }
             return;
         }
-        
-        // Route to appropriate engine method
-        if (activeSystem === 'faceted') {
-            engine.parameterManager.setParameter(param, parseFloat(value));
+
+        if (activeSystem === 'faceted' && engine.parameterManager) {
+            engine.parameterManager.setParameter(param, hasNumeric ? numericValue : value);
+            if (typeof engine.updateDisplayValues === 'function') {
+                engine.updateDisplayValues();
+            }
             engine.updateVisualizers();
-        } else if (activeSystem === 'quantum') {
-            engine.updateParameter(param, parseFloat(value));
-        } else if (activeSystem === 'holographic') {
-            engine.updateParameter(param, parseFloat(value));
-        } else if (activeSystem === 'polychora') {
-            engine.updateParameters({ [param]: parseFloat(value) });
+        } else if (activeSystem === 'quantum' && typeof engine.updateParameter === 'function') {
+            engine.updateParameter(param, hasNumeric ? numericValue : value);
+        } else if (activeSystem === 'holographic' && typeof engine.updateParameter === 'function') {
+            engine.updateParameter(param, hasNumeric ? numericValue : value);
+        } else if (activeSystem === 'polychora' && typeof engine.updateParameters === 'function') {
+            engine.updateParameters({ [param]: hasNumeric ? numericValue : value });
         }
-        
-        console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${value}`);
-        
+
+        console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${hasNumeric ? numericValue : value}`);
+
     } catch (error) {
         console.error(`❌ Parameter update error in ${window.currentSystem || 'unknown'} for ${param}:`, error);
-        // Don't break the UI, just log the error
+    }
+
+    if (typeof window.syncTopologyUI === 'function') {
+        window.syncTopologyUI();
     }
 };
 
@@ -343,7 +371,7 @@ window.toggleAudioReactivity = function(sensitivity, visualMode, enabled) {
             visualModes: {
                 color: ['hue', 'saturation', 'intensity'],
                 geometry: ['morphFactor', 'gridDensity', 'chaos'],  
-                movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW']
+                movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ']
             },
             // Active modes
             activeSensitivity: 'medium',

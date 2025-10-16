@@ -489,6 +489,48 @@
             cursor: pointer;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
+
+        .control-select {
+            width: 100%;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: 4px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+        }
+
+        .topology-info {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 8px;
+            line-height: 1.4;
+            min-height: 32px;
+        }
+
+        .topology-metrics {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: rgba(0, 255, 255, 0.8);
+            margin-top: 6px;
+            gap: 8px;
+        }
+
+        .topology-metrics span {
+            color: #ff64ff;
+            font-weight: bold;
+        }
         
         /* Action Buttons */
         .action-row {
@@ -601,7 +643,28 @@
                 <!-- Will be populated based on system -->
             </div>
         </div>
-        
+
+        <div class="control-section" id="topologySection">
+            <div class="section-title">TOPOLOGY</div>
+            <div class="control-group">
+                <label class="control-label" for="topologyFamily">
+                    <span>Family</span>
+                </label>
+                <select id="topologyFamily" class="control-select"></select>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="topologyVariant">
+                    <span>Variant</span>
+                </label>
+                <select id="topologyVariant" class="control-select"></select>
+            </div>
+            <div class="topology-info" id="topologyDescription"></div>
+            <div class="topology-metrics">
+                <div>Shell <span id="topologyShellWidthValue">--</span></div>
+                <div>Plane <span id="topologyPlaneThicknessValue">--</span></div>
+            </div>
+        </div>
+
         <!-- HOLOGRAPHIC PARAMETERS (Audio Reactive) -->
         <div class="control-section" id="holographicSection" style="display: none;">
             <div class="section-title">AUDIO REACTIVE</div>
@@ -614,38 +677,67 @@
         <!-- 4D ROTATION SECTION -->
         <div class="control-section">
             <div class="section-title">4D ROTATION</div>
-            
             <div class="control-group">
                 <div class="control-label">
                     <span>XW Plane</span>
                     <span class="control-value" id="xwValue">0.00</span>
                 </div>
-                <input type="range" class="control-slider" id="rot4dXW" 
-                       min="-6.28" max="6.28" step="0.01" value="0" 
+                <input type="range" class="control-slider" id="rot4dXW"
+                       min="-6.28" max="6.28" step="0.01" value="0"
                        oninput="updateParameter('rot4dXW', this.value)">
             </div>
-            
+
             <div class="control-group">
                 <div class="control-label">
                     <span>YW Plane</span>
                     <span class="control-value" id="ywValue">0.00</span>
                 </div>
-                <input type="range" class="control-slider" id="rot4dYW" 
-                       min="-6.28" max="6.28" step="0.01" value="0" 
+                <input type="range" class="control-slider" id="rot4dYW"
+                       min="-6.28" max="6.28" step="0.01" value="0"
                        oninput="updateParameter('rot4dYW', this.value)">
             </div>
-            
+
             <div class="control-group">
                 <div class="control-label">
                     <span>ZW Plane</span>
                     <span class="control-value" id="zwValue">0.00</span>
                 </div>
-                <input type="range" class="control-slider" id="rot4dZW" 
-                       min="-6.28" max="6.28" step="0.01" value="0" 
+                <input type="range" class="control-slider" id="rot4dZW"
+                       min="-6.28" max="6.28" step="0.01" value="0"
                        oninput="updateParameter('rot4dZW', this.value)">
             </div>
-        </div>
-        
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>XY Plane</span>
+                    <span class="control-value" id="xyValue">0.00</span>
+                </div>
+                <input type="range" class="control-slider" id="rot4dXY"
+                       min="-6.28" max="6.28" step="0.01" value="0"
+                       oninput="updateParameter('rot4dXY', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>XZ Plane</span>
+                    <span class="control-value" id="xzValue">0.00</span>
+                </div>
+                <input type="range" class="control-slider" id="rot4dXZ"
+                       min="-6.28" max="6.28" step="0.01" value="0"
+                       oninput="updateParameter('rot4dXZ', this.value)">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>YZ Plane</span>
+                    <span class="control-value" id="yzValue">0.00</span>
+                </div>
+                <input type="range" class="control-slider" id="rot4dYZ"
+                       min="-6.28" max="6.28" step="0.01" value="0"
+                       oninput="updateParameter('rot4dYZ', this.value)">
+            </div>
+
+
         <!-- VISUAL PARAMETERS SECTION -->
         <div class="control-section">
             <div class="section-title">VISUAL</div>
@@ -1035,13 +1127,28 @@
                         // Update panel header
                         const headers = {
                             faceted: 'FACETED SYSTEM',
-                            quantum: 'QUANTUM SYSTEM', 
+                            quantum: 'QUANTUM SYSTEM',
                             holographic: 'HOLOGRAPHIC SYSTEM',
                             polychora: 'POLYCHORA SYSTEM'
                         };
                         const panelHeader = document.getElementById('panelHeader');
                         if (panelHeader) panelHeader.textContent = headers[system] || 'VIB34D SYSTEM';
-                        
+
+                        const topologySection = document.getElementById('topologySection');
+                        if (topologySection) {
+                            const showTopology = system === 'faceted';
+                            topologySection.style.display = showTopology ? 'block' : 'none';
+                            topologySection.setAttribute('aria-hidden', showTopology ? 'false' : 'true');
+                        }
+
+                        if (system === 'faceted' && window.initializeTopologyControls) {
+                            window.initializeTopologyControls();
+                        }
+
+                        if (window.syncTopologyUI) {
+                            window.syncTopologyUI();
+                        }
+
                         console.log(`✅ Switched to ${system} system successfully`);
                         return; // Success - exit early
                     } else if (system === 'polychora') {
@@ -1089,9 +1196,10 @@
         // Get all current UI parameter values (prefers user-stored values)
         window.getCurrentUIParameterState = function() {
             const parameterIds = [
-                'rot4dXW', 'rot4dYW', 'rot4dZW', 
-                'gridDensity', 'morphFactor', 'chaos', 
-                'speed', 'hue', 'intensity', 'saturation'
+                'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ',
+                'dimension', 'gridDensity', 'morphFactor', 'chaos',
+                'speed', 'hue', 'intensity', 'saturation',
+                'topologyFamily', 'topologyVariant'
             ];
             
             const currentState = {};
@@ -1161,13 +1269,27 @@
             window.updateAllParameterDisplays(uiState);
             
             // CRITICAL: Update device tilt base rotation values after system switch
-            if (window.deviceTiltHandler && window.deviceTiltHandler.isEnabled) {
-                window.deviceTiltHandler.updateBaseRotation(
-                    uiState.rot4dXW || 0,
-                    uiState.rot4dYW || 0,
-                    uiState.rot4dZW || 0
-                );
-                console.log('🎯 Device tilt base rotation updated for new system');
+            if (window.deviceTiltHandler) {
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: uiState.rot4dXW || 0,
+                    rot4dYW: uiState.rot4dYW || 0,
+                    rot4dZW: uiState.rot4dZW || 0,
+                    rot4dXY: uiState.rot4dXY || 0,
+                    rot4dXZ: uiState.rot4dXZ || 0,
+                    rot4dYZ: uiState.rot4dYZ || 0
+                });
+
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: uiState.dimension || 3.5,
+                    morphFactor: uiState.morphFactor || 1.0,
+                    chaos: uiState.chaos || 0.2,
+                    intensity: uiState.intensity || 0.8,
+                    gridDensity: uiState.gridDensity || 15
+                });
+
+                if (window.deviceTiltHandler.isEnabled) {
+                    console.log('🎯 Device tilt base rotation updated for new system');
+                }
             }
             
             // ✅ NEW: INJECT REACTIVITY STATE INTO NEW SYSTEM
@@ -1290,11 +1412,21 @@
             if (window.deviceTiltHandler && window.deviceTiltHandler.isEnabled) {
                 // Ensure current parameter state is preserved as base
                 const currentParams = window.getCurrentUIParameterState();
-                window.deviceTiltHandler.updateBaseRotation(
-                    currentParams.rot4dXW || 0,
-                    currentParams.rot4dYW || 0,
-                    currentParams.rot4dZW || 0
-                );
+                window.deviceTiltHandler.updateBaseRotation({
+                    rot4dXW: currentParams.rot4dXW || 0,
+                    rot4dYW: currentParams.rot4dYW || 0,
+                    rot4dZW: currentParams.rot4dZW || 0,
+                    rot4dXY: currentParams.rot4dXY || 0,
+                    rot4dXZ: currentParams.rot4dXZ || 0,
+                    rot4dYZ: currentParams.rot4dYZ || 0
+                });
+                window.deviceTiltHandler.updateBaseParameters({
+                    dimension: currentParams.dimension || 3.5,
+                    morphFactor: currentParams.morphFactor || 1.0,
+                    chaos: currentParams.chaos || 0.2,
+                    intensity: currentParams.intensity || 0.8,
+                    gridDensity: currentParams.gridDensity || 15
+                });
                 console.log('✅ Device tilt base rotation updated');
             }
             
@@ -1524,8 +1656,11 @@
         window.updateAllParameterDisplays = function(uiState) {
             const displayMappings = {
                 rot4dXW: 'xwValue',
-                rot4dYW: 'ywValue', 
+                rot4dYW: 'ywValue',
                 rot4dZW: 'zwValue',
+                rot4dXY: 'xyValue',
+                rot4dXZ: 'xzValue',
+                rot4dYZ: 'yzValue',
                 gridDensity: 'densityValue',
                 morphFactor: 'morphValue',
                 chaos: 'chaosValue',
@@ -1534,11 +1669,11 @@
                 intensity: 'intensityValue',
                 saturation: 'saturationValue'
             };
-            
+
             for (const [param, displayId] of Object.entries(displayMappings)) {
                 const display = document.getElementById(displayId);
                 const value = uiState[param];
-                
+
                 if (display && value !== undefined) {
                     if (param === 'hue') {
                         display.textContent = value + '°';
@@ -1548,6 +1683,10 @@
                         display.textContent = value.toFixed(1);
                     }
                 }
+            }
+
+            if (window.syncTopologyUI) {
+                window.syncTopologyUI();
             }
         }
 
@@ -1586,7 +1725,150 @@
         let parameterMapper = null;
         let savedVariationsCount = 0;
         let reactivityManager = null;
-        
+        let topologyControlsInitialized = false;
+
+        function getFacetedEngineInstance() {
+            return window.engine;
+        }
+
+        function buildOptionsString(entries) {
+            return entries.map(entry => `<option value='${entry.id}'>${entry.label}</option>`).join('');
+        }
+
+        function syncTopologyUI() {
+            const familySelect = document.getElementById('topologyFamily');
+            const variantSelect = document.getElementById('topologyVariant');
+            const descriptionEl = document.getElementById('topologyDescription');
+            const shellEl = document.getElementById('topologyShellWidthValue');
+            const planeEl = document.getElementById('topologyPlaneThicknessValue');
+
+            if (!familySelect || !variantSelect) {
+                return;
+            }
+
+            const activeSystem = window.currentSystem || 'faceted';
+            if (activeSystem !== 'faceted') {
+                familySelect.disabled = true;
+                variantSelect.disabled = true;
+                if (descriptionEl) {
+                    descriptionEl.textContent = 'Switch to the Faceted system to adjust topology behaviour.';
+                }
+                if (shellEl) shellEl.textContent = '--';
+                if (planeEl) planeEl.textContent = '--';
+                return;
+            }
+
+            const engineInstance = getFacetedEngineInstance();
+            if (!engineInstance || typeof engineInstance.getTopologyState !== 'function') {
+                familySelect.disabled = true;
+                variantSelect.disabled = true;
+                if (descriptionEl) {
+                    descriptionEl.textContent = 'Topology manager unavailable.';
+                }
+                if (shellEl) shellEl.textContent = '--';
+                if (planeEl) planeEl.textContent = '--';
+                return;
+            }
+
+            familySelect.disabled = false;
+            variantSelect.disabled = false;
+
+            const families = engineInstance.getTopologyFamilies ? engineInstance.getTopologyFamilies() : [];
+            if (!families.length) {
+                familySelect.innerHTML = '';
+                familySelect.dataset.optionsHash = '';
+                variantSelect.innerHTML = '';
+                variantSelect.dataset.optionsHash = '';
+                if (descriptionEl) {
+                    descriptionEl.textContent = 'No topology families registered.';
+                }
+                if (shellEl) shellEl.textContent = '--';
+                if (planeEl) planeEl.textContent = '--';
+                return;
+            }
+
+            const state = engineInstance.getTopologyState ? engineInstance.getTopologyState() : null;
+            const selectedFamily = state ? state.family : families[0].id;
+
+            const familyOptions = buildOptionsString(families);
+            if (familySelect.dataset.optionsHash !== familyOptions) {
+                familySelect.innerHTML = familyOptions;
+                familySelect.dataset.optionsHash = familyOptions;
+            }
+            familySelect.value = String(selectedFamily);
+
+            const variants = engineInstance.getTopologyVariants ? engineInstance.getTopologyVariants(selectedFamily) : [];
+            const variantOptions = buildOptionsString(variants);
+            if (variantSelect.dataset.optionsHash !== variantOptions) {
+                variantSelect.innerHTML = variantOptions;
+                variantSelect.dataset.optionsHash = variantOptions;
+            }
+
+            let selectedVariant = state ? state.variant : (variants[0] ? variants[0].id : null);
+            if (variants.length && !variants.some(entry => entry.id === selectedVariant)) {
+                selectedVariant = variants[0].id;
+            }
+            if (selectedVariant !== null && selectedVariant !== undefined) {
+                variantSelect.value = String(selectedVariant);
+            } else {
+                variantSelect.value = '';
+            }
+
+            if (descriptionEl) {
+                const familyEntry = families.find(entry => entry.id === selectedFamily);
+                const variantEntry = variants.find(entry => entry.id === selectedVariant);
+                descriptionEl.textContent = (variantEntry && variantEntry.description) || (familyEntry && familyEntry.description) || '';
+            }
+
+            if (shellEl) {
+                const value = state && Number.isFinite(state.shellWidth) ? state.shellWidth.toFixed(3) : '--';
+                shellEl.textContent = value;
+            }
+
+            if (planeEl) {
+                const value = state && Number.isFinite(state.planeThickness) ? state.planeThickness.toFixed(3) : '--';
+                planeEl.textContent = value;
+            }
+        }
+
+        function initializeTopologyControls() {
+            const familySelect = document.getElementById('topologyFamily');
+            const variantSelect = document.getElementById('topologyVariant');
+
+            if (!familySelect || !variantSelect) {
+                return;
+            }
+
+            if (topologyControlsInitialized) {
+                return;
+            }
+
+            familySelect.addEventListener('change', () => {
+                const value = parseInt(familySelect.value, 10);
+                if (!Number.isFinite(value)) {
+                    return;
+                }
+                if (window.updateParameter) {
+                    window.updateParameter('topologyFamily', value);
+                }
+            });
+
+            variantSelect.addEventListener('change', () => {
+                const value = parseInt(variantSelect.value, 10);
+                if (!Number.isFinite(value)) {
+                    return;
+                }
+                if (window.updateParameter) {
+                    window.updateParameter('topologyVariant', value);
+                }
+            });
+
+            topologyControlsInitialized = true;
+        }
+
+        window.syncTopologyUI = syncTopologyUI;
+        window.initializeTopologyControls = initializeTopologyControls;
+
         // Geometry configurations
         const geometries = {
             faceted: [
@@ -1608,8 +1890,9 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             setupGeometry('faceted');
+            initializeTopologyControls();
             const success = await initializeEngine();
-            
+
             // Make engines globally accessible for switchSystem function
             window.engine = engine;
             window.quantumEngine = quantumEngine;
@@ -1620,6 +1903,10 @@
             window.geometries = geometries;
             window.initializePolychora = initializePolychora;
             window.updateParameter = updateParameter;
+
+            if (window.syncTopologyUI) {
+                window.syncTopologyUI();
+            }
             
             // Initialize ReactivityManager
             reactivityManager = new ReactivityManager();
@@ -1741,8 +2028,11 @@
                     await applyGalleryPreviewData();
                 } else {
                     console.log('ℹ️ No gallery preview data found - normal index.html usage');
-                    
+
                     await switchSystem('faceted');
+                    if (window.syncTopologyUI) {
+                        window.syncTopologyUI();
+                    }
                 }
                 
                 // SURGICAL FIX: Force gallery preview to start animating immediately
@@ -2126,14 +2416,31 @@
         
         // Update parameter with enhanced error handling and system integration
         window.updateParameter = function(param, value) {
-            // CRITICAL: Store user's parameter choice for persistence
-            window.userParameterState[param] = parseFloat(value);
-            console.log(`💾 User parameter: ${param} = ${value}`);
-            
+            let numericValue;
+            if (typeof value === 'number') {
+                numericValue = value;
+            } else if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (param === 'geometry' || param === 'topologyFamily' || param === 'topologyVariant') {
+                    numericValue = parseInt(trimmed, 10);
+                } else {
+                    numericValue = parseFloat(trimmed);
+                }
+            } else {
+                numericValue = Number(value);
+            }
+
+            const hasNumeric = Number.isFinite(numericValue);
+            window.userParameterState[param] = hasNumeric ? numericValue : value;
+            console.log(`💾 User parameter: ${param} = ${hasNumeric ? numericValue : value}`);
+
             const displays = {
                 rot4dXW: 'xwValue',
-                rot4dYW: 'ywValue', 
+                rot4dYW: 'ywValue',
                 rot4dZW: 'zwValue',
+                rot4dXY: 'xyValue',
+                rot4dXZ: 'xzValue',
+                rot4dYZ: 'yzValue',
                 gridDensity: 'densityValue',
                 morphFactor: 'morphValue',
                 chaos: 'chaosValue',
@@ -2144,16 +2451,26 @@
             };
             
             const display = document.getElementById(displays[param]);
-            if (display) {
+            if (display && hasNumeric) {
                 if (param === 'hue') {
-                    display.textContent = value + '°';
+                    display.textContent = `${numericValue}°`;
                 } else if (param.startsWith('rot4d')) {
-                    display.textContent = parseFloat(value).toFixed(2);
+                    display.textContent = numericValue.toFixed(2);
                 } else {
-                    display.textContent = parseFloat(value).toFixed(1);
+                    display.textContent = numericValue.toFixed(1);
                 }
             }
-            
+
+            if (window.deviceTiltHandler && hasNumeric) {
+                if (['rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ'].includes(param)) {
+                    window.deviceTiltHandler.updateBaseRotation({ [param]: numericValue });
+                }
+
+                if (['dimension', 'morphFactor', 'chaos', 'intensity', 'gridDensity'].includes(param)) {
+                    window.deviceTiltHandler.updateBaseParameters({ [param]: numericValue });
+                }
+            }
+
             // SURGICAL FIX: Unified parameter router - eliminates scope confusion
             try {
                 const activeSystem = window.currentSystem || 'faceted';
@@ -2167,7 +2484,7 @@
                 const engine = engines[activeSystem];
                 if (!engine) {
                     console.warn(`⚠️ System ${activeSystem} not available - engines:`, Object.keys(engines).map(k => `${k}:${!!engines[k]}`).join(', '));
-                    
+
                     // RETRY: Gallery previews might call this before engines are ready
                     setTimeout(() => {
                         console.log(`🔄 Retrying parameter ${param} = ${value} for ${activeSystem} (attempt 2)`);
@@ -2175,24 +2492,32 @@
                     }, 100); // Quick retry
                     return;
                 }
-                
+
                 // Route to appropriate engine method
                 if (activeSystem === 'faceted') {
-                    engine.parameterManager.setParameter(param, parseFloat(value));
+                    const appliedValue = hasNumeric ? numericValue : value;
+                    engine.parameterManager.setParameter(param, appliedValue);
+                    if (engine.updateDisplayValues) {
+                        engine.updateDisplayValues();
+                    }
                     engine.updateVisualizers();
                 } else if (activeSystem === 'quantum') {
-                    engine.updateParameter(param, parseFloat(value));
+                    engine.updateParameter(param, hasNumeric ? numericValue : value);
                 } else if (activeSystem === 'holographic') {
-                    engine.updateParameter(param, parseFloat(value));
+                    engine.updateParameter(param, hasNumeric ? numericValue : value);
                 } else if (activeSystem === 'polychora') {
-                    engine.updateParameters({ [param]: parseFloat(value) });
+                    engine.updateParameters({ [param]: hasNumeric ? numericValue : value });
                 }
-                
-                console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${value}`);
-                
+
+                console.log(`📊 ${activeSystem.toUpperCase()}: ${param} = ${hasNumeric ? numericValue : value}`);
+
             } catch (error) {
                 console.error(`❌ Parameter update error in ${window.currentSystem || 'unknown'} for ${param}:`, error);
                 // Don't break the UI, just log the error
+            }
+
+            if (window.syncTopologyUI && activeSystem !== 'faceted') {
+                window.syncTopologyUI();
             }
         }
         
@@ -2777,7 +3102,7 @@
                     visualModes: {
                         color: ['hue', 'saturation', 'intensity'],
                         geometry: ['morphFactor', 'gridDensity', 'chaos'],  
-                        movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW']
+                        movement: ['speed', 'rot4dXW', 'rot4dYW', 'rot4dZW', 'rot4dXY', 'rot4dXZ', 'rot4dYZ']
                     },
                     // Active modes
                     activeSensitivity: 'medium',
