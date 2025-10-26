@@ -1,0 +1,23 @@
+{
+  "name": "Lattice Pulse",
+  "short_name": "LatticePulse",
+  "start_url": "./lattice-pulse.html",
+  "display": "standalone",
+  "background_color": "#020407",
+  "theme_color": "#020407",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icons/lattice-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/lattice-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">Lattice Pulse Icon</title>
+  <desc id="desc">Abstract lattice grid representing the Lattice Pulse rhythm game.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e" />
+      <stop offset="100%" stop-color="#6622cc" />
+    </linearGradient>
+    <linearGradient id="pulse" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff6ad5" />
+      <stop offset="100%" stop-color="#ffe45e" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" fill="url(#bg)" rx="24" ry="24" />
+  <g stroke="#2de2e6" stroke-width="6" opacity="0.45">
+    <path d="M32 32h128M32 64h128M32 96h128M32 128h128M32 160h128" />
+    <path d="M32 32v128M64 32v128M96 32v128M128 32v128M160 32v128" />
+  </g>
+  <path d="M48 132l36-60 24 36 18-28 18 28" fill="none" stroke="url(#pulse)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="84" cy="72" r="10" fill="#ffe45e" />
+  <circle cx="126" cy="100" r="12" fill="#ff6ad5" />
+</svg>

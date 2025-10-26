@@ -1,0 +1,27 @@
+{
+  "id": "lvl-01-faceted-torus",
+  "system": "faceted",
+  "geometryIndex": 3,
+  "variantIndex": 12,
+  "track": {
+    "id": "suno:track_001",
+    "url": null
+  },
+  "bpm": 128,
+  "seed": 4711,
+  "planes": ["XW", "YW"],
+  "windowMs": 150,
+  "spawn": { "pattern": "belt", "density": 0.85 },
+  "powerups": ["pulse+"],
+  "targetBeats": 64,
+  "difficulty": {
+    "speed": 1.0,
+    "chaos": 0.12,
+    "density": 0.95
+  },
+  "color": {
+    "hue": 210,
+    "intensity": 0.6,
+    "saturation": 0.88
+  }
+}

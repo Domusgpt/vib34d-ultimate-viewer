@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Lattice Pulse Icon Large</title>
+  <desc id="desc">Large icon featuring the lattice pulse motif.</desc>
+  <defs>
+    <linearGradient id="bg512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1321" />
+      <stop offset="100%" stop-color="#5f0f99" />
+    </linearGradient>
+    <linearGradient id="pulse512" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff8ae2" />
+      <stop offset="100%" stop-color="#f9ff9d" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg512)" rx="72" ry="72" />
+  <g stroke="#41ead4" stroke-width="16" opacity="0.45">
+    <path d="M96 96h320M96 160h320M96 224h320M96 288h320M96 352h320M96 416h320" />
+    <path d="M96 96v320M160 96v320M224 96v320M288 96v320M352 96v320M416 96v320" />
+  </g>
+  <path d="M128 368l92-160 64 96 48-76 48 76" fill="none" stroke="url(#pulse512)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="220" cy="212" r="32" fill="#f9ff9d" />
+  <circle cx="332" cy="272" r="38" fill="#ff8ae2" />
+</svg>
