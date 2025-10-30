@@ -4,6 +4,7 @@
  * Audio reactive only - no mouse/touch/scroll interference
  */
 import { HolographicVisualizer } from './HolographicVisualizer.js';
+import { getPerformanceSuiteHost } from '../ui/PerformanceSuiteHost.js';
 
 export class RealHolographicSystem {
     constructor() {
@@ -42,8 +43,9 @@ export class RealHolographicSystem {
             // 26-29: CRYSTAL variations
             'CRYSTAL LATTICE', 'CRYSTAL FIELD', 'CRYSTAL MATRIX', 'CRYSTAL QUANTUM'
         ];
-        
+
         this.initialize();
+        this.initializePerformanceSuite();
     }
     
     initialize() {
@@ -52,6 +54,19 @@ export class RealHolographicSystem {
         this.setupCenterDistanceReactivity(); // NEW: Center-distance grid density changes
         this.updateVariantDisplay();
         this.startRenderLoop();
+    }
+
+    initializePerformanceSuite() {
+        if (typeof document === 'undefined') return;
+
+        try {
+            const host = getPerformanceSuiteHost();
+            this.performanceSuite = host.activateEngine(this, {
+                systemName: 'holographic'
+            });
+        } catch (error) {
+            console.warn('⚠️ Holographic performance suite initialization failed:', error);
+        }
     }
     
     createVisualizers() {
@@ -717,7 +732,13 @@ export class RealHolographicSystem {
         if (this.audioContext) {
             this.audioContext.close();
         }
-        
+
+        const host = typeof window !== 'undefined' ? window.performanceSuiteHost : null;
+        if (host?.detachEngine) {
+            host.detachEngine(this);
+            this.performanceSuite = null;
+        }
+
         console.log('🧹 REAL Holographic System destroyed');
     }
 }
